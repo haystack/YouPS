@@ -1,5 +1,6 @@
 import sys
 import traceback
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -21,7 +22,7 @@ import base64
 
 
 def authenticate(imap_account):
-    res = {'status' : False, 'imap_error': False, 'imap_log': "", 'imap': None}
+    res = {'status': False, 'imap_error': False, 'imap_log': "", 'imap': None}
     email_addr = ""
     try:
         imap = IMAPClient(imap_account.host, use_uid=True)
@@ -31,13 +32,13 @@ def authenticate(imap_account):
             imap.oauth2_login(imap_account.email, imap_account.access_token)
         else:
             aes = AES.new(IMAP_SECRET, AES.MODE_CBC, 'This is an IV456')
-            password = aes.decrypt( base64.b64decode(imap_account.password) )
+            password = aes.decrypt(base64.b64decode(imap_account.password))
 
             index = 0
             last_string = password[-1]
             for c in reversed(password):
                 if last_string != c:
-                    password = password[:(-1)*index]
+                    password = password[:(-1) * index]
                     break
                 index = index + 1
 
@@ -89,6 +90,7 @@ def authenticate(imap_account):
 
     return res
 
+
 def append(imap, subject, content):
     new_message = message.Message()
     new_message["From"] = "mailbot-log@" + BASE_URL
@@ -96,6 +98,7 @@ def append(imap, subject, content):
     new_message.set_payload(content)
 
     imap.append('INBOX', str(new_message), ('murmur-log'))
+
 
 def fetch_latest_email_id(imap_account, imap_client):
     imap_client.select_folder("INBOX")
@@ -114,25 +117,29 @@ def fetch_latest_email_id(imap_account, imap_client):
 
     return max(uid_list)
 
-def format_log(msg, is_error=False, subject = ""):
+
+def format_log(msg, is_error=False, subject=""):
     s = "Subject: " + subject + " | "
     if is_error:
         return "[Error] " + s + msg
     else:
         return "[Info] " + s + msg
 
+
 def wrapper(imap_account, imap, code, search_creteria, is_test=False, email_content=None):
     interpret(imap_account, imap, code, search_creteria, is_test, email_content)
 
-def interpret(imap_account, imap, code, search_creteria, is_test=False, email_content=None):
-    res = {'status' : False, 'imap_error': False, 'imap_log': ""}
-    messages = imap.search( search_creteria )
+
+# TODO what is email_content??? why are we not using get_content
+def interpret(imap_account, imap, code, search_criteria, is_test=False, email_content=None):
+    res = {'status': False, 'imap_error': False, 'imap_log': ""}
+    messages = imap.search(search_criteria)
     is_valid = True
 
     if len(messages) == 0:
         is_valid = False
 
-    pile = Pile(imap, search_creteria)
+    pile = Pile(imap, search_criteria)
     if not pile.check_email():
         is_valid = False
 
@@ -160,28 +167,90 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             res['imap_error'] = True
 
         def send(subject="", to_addr="", body=""):
+            """Send an email with a specified subject and body.
+            Args:
+                subject (str): The subject of the email
+                to_addr (str): The person receiving the email
+                body (str): The body of the email
+            """
             if len(to_addr) == 0:
                 raise Exception('send(): recipient email address is not provided')
 
             if not is_test:
                 send_email(subject, imap_account.email, to_addr, body)
-            # print to_addr
             print format_log("send(): send a message to  %s" % str(to_addr), False, get_subject())
 
         def add_gmail_labels(flags):
-            pile.add_gmail_labels(flags, is_test)
+            """Add gmail labels to the emails in the pile.
+
+            Args:
+                flags (List[str]): List of flags to add to the email
+            """
+            print format_log("add_gmail_labels(): add gmail labels to a message %s" % str(flags), False,
+                             pile.get_subject())
+            if not is_test:
+                pile.add_gmail_labels(flags)
 
         def add_labels(flags):
-            add_notes(flags)
+            """Alias for add_notes.
 
-        def add_notes(flags):
-            pile.add_notes(flags, is_test)
+            Adds flags to the emails in the pile.
+
+            Args:
+                flags (List[str]): list of flags to add to the email(s)
+
+            """
+            add_notes(flags, "add_labels")
+
+        def add_notes(flags, alias="add_notes"):
+            """Adds flags to the emails in the pile.
+
+            Args:
+                flags (List[str]): list of flags to add to the email(s)
+                alias (str): the alias used for logging
+            """
+            if type(flags) is not list:
+                raise Exception(alias + '(): args flags must be a list of strings')
+
+            for f in flags:
+                if not isinstance(f, str):
+                    raise Exception(alias + '(): args flags must be a list of strings')
+
+            for f in range(len(flags)):
+                flags[f] = flags[f].strip()
+
+            if not is_test:
+                pile.add_notes(flags)
+
+            print alias + "(): successfully added " + str(flags)
 
         def copy(dst_folder):
-            pile.copy(dst_folder, is_test)
+            """Copy emails in the pile to the destination folder.
+
+            Args:
+                dst_folder (str): the folder the emails are going to be copied into. Is created if it does not exist.
+            """
+            if not dst_folder:
+                print format_log('copy(): dst_folder must contain at least one letter or number', True,
+                                 pile.get_subject())
+
+            if not pile.folder_exists(dst_folder):
+                print format_log('copy(): folder %s does not exist' % dst_folder, False, pile.get_subject())
+                pile.create_folder(dst_folder)
+                print format_log('copy(): created folder %s' % dst_folder, False, pile.get_subject())
+
+            if not is_test:
+                pile.copy(dst_folder)
+
+            print format_log('copy(): copied email to folder %s' % dst_folder, False, pile.get_subject())
 
         def delete():
-            pile.delete(is_test)
+            if not is_test:
+                pile.delete()
+            print format_log(
+                'delete(): deleting a message \n **WARNING: following actions can throw errors since you have deleted '
+                'the message',
+                False, pile.get_subject())
 
         def get_history(email, hours=24, cond=True):
             if len(email) == 0:
@@ -192,10 +261,11 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
 
             # get uid of emails within interval
             now = datetime.now()
-            start_time = now - timedelta(hours = hours)
-            heuristic_id = imap_account.newest_msg_id -100 if imap_account.newest_msg_id -100 > 1 else 1
+            start_time = now - timedelta(hours=hours)
+            heuristic_id = imap_account.newest_msg_id - 100 if imap_account.newest_msg_id - 100 > 1 else 1
             name, sender_addr = parseaddr(get_sender().lower())
-            today_email_ids = imap.search( 'FROM %s SINCE "%d-%s-%d"' % (sender_addr, start_time.day, calendar.month_abbr[start_time.month], start_time.year) )
+            today_email_ids = imap.search('FROM %s SINCE "%d-%s-%d"' % (
+                sender_addr, start_time.day, calendar.month_abbr[start_time.month], start_time.year))
 
             # today_email = Pile(imap, 'UID %d:* SINCE "%d-%s-%d"' % (heuristic_id, start_time.day, calendar.month_abbr[start_time.month], start_time.year))
             # min_msgid = 99999
@@ -251,7 +321,6 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             #         if start_time < local_date:
             #             emails.append( msgid )
 
-
             # for i in range(len(emails)):
             #     p = Pile(imap, "UID %d" % (emails[i]))
 
@@ -297,20 +366,21 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             return pile.get_date()
 
         def get_attachment():
-            pass
+            print format_log('get_attachment() NOT IMPLEMENTED', False, pile.get_subject())
+            return None
 
         def get_subject():
             return pile.get_subject()
 
         def get_recipients():
-            return pile.get_recipients()
-
+            return pile.get_recipient()
 
         def get_attachments():
-            pass
+            print format_log('get_attachments() NOT IMPLEMENTED', False, pile.get_subject())
+            return None
 
         def get_labels():
-            return get_notes()
+            return pile.get_notes()
 
         def get_notes():
             return pile.get_notes()
@@ -319,24 +389,60 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             return pile.get_gmail_labels()
 
         def mark_read(is_seen=True):
-            pile.mark_read(is_seen, is_test)
 
+            if not is_test:
+                pile.mark_read(is_seen)
+            print format_log("Mark Message a message %s" % ("read" if is_seen else "unread"), False, pile.get_subject())
 
         def move(dst_folder):
-            pile.move(dst_folder, is_test)
+            if not dst_folder:
+                print format_log('move(): dst_folder must contain at least one letter or number', True,
+                                 pile.get_subject())
+
+            if not pile.folder_exists(dst_folder):
+                print format_log('move(): folder %s does not exist' % dst_folder, False, pile.get_subject())
+                pile.create_folder(dst_folder)
+                print format_log('move(): created folder %s' % dst_folder, False, pile.get_subject())
+
+            if not is_test:
+                pile.move(dst_folder)
+            print format_log(
+                "move(): moved message \n**Warning: your following action might throw errors as you move the message"
+                , False, pile.get_subject())
 
         def remove_labels(flags):
             remove_notes(flags)
 
         def remove_notes(flags):
-            pile.remove_notes(flags, is_test)
+            if type(flags) is not list:
+                print format_log('remove_labels(): args flags must be a list of strings', True, pile.get_subject())
+
+            for f in flags:
+                if not isinstance(f, str):
+                    print format_log('remove_labels(): args flags must be a list of strings', True, pile.get_subject())
+
+            if not is_test:
+                pile.remove_notes(flags)
+
+            print format_log("Remove labels %s of a message" % flags, False, pile.get_subject())
 
         def remove_gmail_labels(flags):
-            pile.remove_gmail_labels(flags, is_test)
+            if type(flags) is not list:
+                raise Exception('remove_gmail_labels(): args flags must be a list of strings')
+
+            for f in flags:
+                if not isinstance(f, str):
+                    raise Exception('remove_gmail_labels(): args flags must be a list of strings')
+
+            if not is_test:
+                pile.remove_gmail_labels(flags)
+
+            print format_log("Remove labels %s of a message" % flags, False, pile.get_subject())
 
         # return a list of email UIDs
         def search(criteria=u'ALL', charset=None, folder=None):
             # TODO how to deal with folders
+            # TODO this could perform an intersection with the current pile. Otherwise this exposes emails which are not in the current scope
             # iterate through all the functions
             if folder is None:
                 pass
@@ -356,7 +462,7 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             bodys = []
             for msgid, data in response.items():
                 body = message_from_string(data[b'BODY[TEXT]'].decode('utf-8'))
-                bodys.append( get_body(body) )
+                bodys.append(get_body(body))
                 # print (body)
 
             # email_message = email.message_from_string(str(message))
@@ -365,15 +471,36 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             return bodys
 
         def create_folder(folder):
-            pile.create_folder(folder, is_test)
+            if not folder:
+                print format_log('create_folder(): folder must contain at least one character or number', True,
+                                 pile.get_subject())
+
+            if pile.folder_exists(folder):
+                print format_log('create_folder(): the folder %s already exists' % folder, True, pile.get_subject())
+
+            if not is_test:
+                pile.create_folder(folder)
+
+            print format_log('create_folder(): created folder %s' % folder, False, pile.get_subject())
 
         def delete_folder(folder):
-            pile.delete_folder(folder, is_test)
+            if not folder:
+                print format_log('delete_folder(): folder must contain at least one character or number', True,
+                                 pile.get_subject())
+
+            if not pile.folder_exists(folder):
+                print format_log('delete_folder(): the folder %s does not exist' % folder, True, pile.get_subject())
+
+            if not is_test:
+                pile.delete_folder(folder)
+
+            print format_log('delete_folder(): deleted folder %s' % folder, False, pile.get_subject())
 
         def list_folders(directory=u'', pattern=u'*'):
             return pile.list_folders(directory, pattern)
 
         def select_folder(folder):
+            # TODO this is an odd method since we don't use Pile in this case...
             if not imap.folder_exists(folder):
                 format_log("Select folder; folder %s not exist" % folder, True, get_subject())
                 return
@@ -382,8 +509,20 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             print "Select a folder " + folder
 
         def rename_folder(old_name, new_name):
-            pile.rename_folder(old_name, new_name, is_test)
+            if not old_name:
+                print format_log('rename_folder(): old_name must contain at least one character or number', True,
+                                 pile.get_subject())
+            if not new_name:
+                print format_log('rename_folder(): new_name must contain at least one character or number', True,
+                                 pile.get_subject())
 
+            if pile.folder_exists(new_name):
+                print format_log('rename_folder(): the folder %s already exists' % new_name, True, pile.get_subject())
+
+            if not is_test:
+                pile.rename_folder(old_name, new_name, is_test)
+
+            print format_log("Rename a folder %s to %s" % (old_name, new_name), False, self.get_subject())
 
         def get_mode():
             if imap_account.current_mode:
@@ -397,7 +536,6 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
                 mode_index = int(mode_index)
             except ValueError:
                 raise Exception('set_mode(): args mode_index must be a index (integer)')
-
 
             mm = MailbotMode.objects.filter(uid=mode_index, imap_account=imap_account)
             if mm.exists():
@@ -422,7 +560,3 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
         res['imap_log'] = s.getvalue() + res['imap_log']
 
         return res
-
-
-
-
