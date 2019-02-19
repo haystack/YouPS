@@ -173,11 +173,13 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
                 to_addr (str): The person receiving the email
                 body (str): The body of the email
             """
-            if len(to_addr) == 0:
-                raise Exception('send(): recipient email address is not provided')
+            if not to_addr:
+                print format_log('send(): recipient email address is not provided', True, pile.get_subject())
+                return 
 
             if not is_test:
                 send_email(subject, imap_account.email, to_addr, body)
+
             print format_log("send(): send a message to  %s" % str(to_addr), False, get_subject())
 
         def add_gmail_labels(flags):
@@ -186,10 +188,11 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
             Args:
                 flags (List[str]): List of flags to add to the email
             """
-            print format_log("add_gmail_labels(): add gmail labels to a message %s" % str(flags), False,
-                             pile.get_subject())
             if not is_test:
                 pile.add_gmail_labels(flags)
+
+            print format_log("add_gmail_labels(): add gmail labels to a message %s" % str(flags), False,
+                             pile.get_subject())
 
         def add_labels(flags):
             """Alias for add_notes.
@@ -210,11 +213,12 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
                 alias (str): the alias used for logging
             """
             if type(flags) is not list:
-                raise Exception(alias + '(): args flags must be a list of strings')
+                print format_log(alias + '(): args flags must be a list of strings', True, pile.get_subject())
+                return 
 
             for f in flags:
                 if not isinstance(f, str):
-                    raise Exception(alias + '(): args flags must be a list of strings')
+                    print format_log(alias + '(): args flags must be a list of strings', True, pile.get_subject())
 
             for f in range(len(flags)):
                 flags[f] = flags[f].strip()
@@ -233,6 +237,7 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
             if not dst_folder:
                 print format_log('copy(): dst_folder must contain at least one letter or number', True,
                                  pile.get_subject())
+                return 
 
             if not pile.folder_exists(dst_folder):
                 print format_log('copy(): folder %s does not exist' % dst_folder, False, pile.get_subject())
@@ -398,6 +403,7 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
             if not dst_folder:
                 print format_log('move(): dst_folder must contain at least one letter or number', True,
                                  pile.get_subject())
+                return 
 
             if not pile.folder_exists(dst_folder):
                 print format_log('move(): folder %s does not exist' % dst_folder, False, pile.get_subject())
@@ -416,10 +422,12 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
         def remove_notes(flags):
             if type(flags) is not list:
                 print format_log('remove_labels(): args flags must be a list of strings', True, pile.get_subject())
+                return 
 
             for f in flags:
                 if not isinstance(f, str):
                     print format_log('remove_labels(): args flags must be a list of strings', True, pile.get_subject())
+                return
 
             if not is_test:
                 pile.remove_notes(flags)
@@ -474,9 +482,11 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
             if not folder:
                 print format_log('create_folder(): folder must contain at least one character or number', True,
                                  pile.get_subject())
+                return
 
             if pile.folder_exists(folder):
                 print format_log('create_folder(): the folder %s already exists' % folder, True, pile.get_subject())
+                return
 
             if not is_test:
                 pile.create_folder(folder)
@@ -487,9 +497,11 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
             if not folder:
                 print format_log('delete_folder(): folder must contain at least one character or number', True,
                                  pile.get_subject())
+                return
 
             if not pile.folder_exists(folder):
                 print format_log('delete_folder(): the folder %s does not exist' % folder, True, pile.get_subject())
+                return
 
             if not is_test:
                 pile.delete_folder(folder)
@@ -512,17 +524,21 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
             if not old_name:
                 print format_log('rename_folder(): old_name must contain at least one character or number', True,
                                  pile.get_subject())
+                return
+
             if not new_name:
                 print format_log('rename_folder(): new_name must contain at least one character or number', True,
                                  pile.get_subject())
+                return
 
             if pile.folder_exists(new_name):
                 print format_log('rename_folder(): the folder %s already exists' % new_name, True, pile.get_subject())
+                return
 
             if not is_test:
-                pile.rename_folder(old_name, new_name, is_test)
+                pile.rename_folder(old_name, new_name)
 
-            print format_log("Rename a folder %s to %s" % (old_name, new_name), False, self.get_subject())
+            print format_log("Rename a folder %s to %s" % (old_name, new_name), False, pile.get_subject())
 
         def get_mode():
             if imap_account.current_mode:
@@ -553,7 +569,7 @@ def interpret(imap_account, imap, code, search_criteria, is_test=False, email_co
         try:
             if is_valid:
                 exec code in globals(), locals()
-                pile.add_flags(['YouPS'])
+                pile.add_notes(['YouPS'])
         except Exception as e:
             catch_exception(e)
 
