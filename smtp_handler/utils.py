@@ -10,6 +10,7 @@ from email import message_from_string
 from hashlib import sha1
 from html2text import html2text
 from markdown2 import markdown
+import chardet
 
 '''
 Murmur Mail Utils and Constants
@@ -739,3 +740,30 @@ def check_if_sender_approved_for_thread(group_name, sender_addr, subject):
 def check_if_sender_moderated_for_thread(group_name, sender_addr, subject):
 	hashed = get_sender_subject_hash(sender_addr, subject)
 	return ThreadHash.objects.filter(sender_subject_hash=hashed, group__name=group_name, moderate=True).exists()
+
+
+
+def encoded_str_to_utf8_str(encoded_str, orginal_encoding=None):
+	"""Convert a string in one encoding to a utf8 encoded string.
+
+	If you know the original encoding then fill it in. If you don't know then
+	we will try to guess.
+	
+	Args:
+		encoded_str (str): encoded string i.e. iso-8859-1 string 
+		orginal_encoding (str, optional): Defaults to None. the original 
+			encoding of the string i.e. iso-8859-1. If None we will use chardet
+			to try to guess the encoding 
+	
+	Returns:
+		str: string of bytes encoded with utf8 
+	"""
+
+	if original_encoding is None:
+		# TODO this also returns a confidence in ['confidence']
+		# we could log that value which ranges from 0-1
+		original_encoding = chardet.detect(encoded_str)['encoding']
+
+	return unicode(encoded_str, orginal_encoding, "ignore").encode('utf8', 'replace')
+
+	

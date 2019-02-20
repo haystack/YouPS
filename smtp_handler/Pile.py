@@ -1,7 +1,7 @@
 from email.parser import HeaderParser
 import heapq
 import email
-from smtp_handler.utils import logging
+from smtp_handler.utils import logging, encoded_str_to_utf8_str
 
 def get_text(msg):
     if msg.is_multipart():
@@ -428,7 +428,7 @@ class Pile():
                     decoded = part.get_payload(decode=True)
                     charset = part.get_content_charset()
                     if charset is not None:
-                        decoded = unicode(part.get_payload(decode=True), str(charset), "ignore").encode('utf8', 'replace')
+                        decoded = encoded_str_to_utf8_str(part.get_payload(decode=True), str(charset))
 
                     content_type = part.get_content_type()
                     if content_type == 'text/plain':
