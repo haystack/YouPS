@@ -3,7 +3,7 @@ import base64, email, hashlib, json, logging, random, re, requests, sys, time, t
 from browser.imap import *
 
 from schema.youps import ImapAccount, MailbotMode
-
+from smtp_handler.utils import logging, encoded_str_to_utf8_str
 from Crypto.Cipher import AES
 from imapclient import IMAPClient
 import string
@@ -163,8 +163,10 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, is_running, push=T
 
         for key, value in modes.iteritems():
             mode_id = value['id']
-            mode_name = value['name'].encode('utf-8')
-            code = value['code'].encode('utf-8')
+	    mode_name = encoded_str_to_utf8_str(value['name'])
+	    code = encoded_str_to_utf8_str(value['code'])
+            #mode_name = value['name'].encode('utf-8')
+            #code = value['code'].encode('utf-8')
             print mode_id
             print mode_name
             print code
