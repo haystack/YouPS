@@ -743,7 +743,7 @@ def check_if_sender_moderated_for_thread(group_name, sender_addr, subject):
 
 
 
-def encoded_str_to_utf8_str(encoded_str, orginal_encoding=None):
+def encoded_str_to_utf8_str(encoded_str, original_encoding=None):
 	"""Convert a string in one encoding to a utf8 encoded string.
 
 	If you know the original encoding then fill it in. If you don't know then
