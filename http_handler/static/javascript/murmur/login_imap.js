@@ -75,21 +75,35 @@ $(document).ready(function() {
     $(".current-date").text(format_date());
 
     // Intialize accordin listener
+    $(".tab-content").prepend(`<div class="container-namespace panel panel-info">
+        <div class="panel-heading">
+            <h3 class="panel-title">Packages <span id="preview-namespace"></span></h3>
+            <span class="pull-right clickable"><i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i></span>
+        </div>
+        <div class="panel-body" style="display:none;">import re, datetime, spacy</div>
+    </div>`);
+
     $("#preview-namespace").text( $(".container-namespace .panel-body").text().split("import ")[1].trim() );
+    $(".container-namespace .panel-body").hide();
+    $('.container-namespace .fa-chevron-down').show();
+    $('.container-namespace .fa-chevron-up').hide();
+
     $(".panel-heading").click(function (e) {
         e.preventDefault();
-        
+
         var $this = $(this);
-        if(!$this.hasClass('panel-collapsed')) { // open the panel
+        if(!$this.hasClass('panel-collapsed')) { // close the panel
             $this.parents('.panel').find('.panel-body').slideUp();
             $this.addClass('panel-collapsed');
-            $this.find('i').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
-            $("#preview-namespace").hide();
-        } else { // close the panel
+            $this.find('.fa-chevron-down').hide();
+            $this.find('.fa-chevron-up').show();
+            $("#preview-namespace").show();
+        } else { // open the panel
             $this.parents('.panel').find('.panel-body').slideDown();
             $this.removeClass('panel-collapsed');
-            $this.find('i').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
-            $("#preview-namespace").show();
+            $this.find('.fa-chevron-up').hide();
+            $this.find('.fa-chevron-down').show();
+            $("#preview-namespace").hide();
         }
     });
 

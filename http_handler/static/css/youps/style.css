@@ -190,6 +190,15 @@
   /* border: 0; */
 }
 
+.container-namespace .fas {
+  margin-top: -20px;
+}
+
 #preview-namespace {
   opacity: 0.5;
+}
+
+
+.panel-title {
+  font-size: 12px;
 }
