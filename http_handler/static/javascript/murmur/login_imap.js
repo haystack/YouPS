@@ -74,6 +74,26 @@ $(document).ready(function() {
     // for demo; set date to now
     $(".current-date").text(format_date());
 
+    // Intialize accordin listener
+    $("#preview-namespace").text( $(".container-namespace .panel-body").text().split("import ")[1].trim() );
+    $(".panel-heading").click(function (e) {
+        e.preventDefault();
+        
+        var $this = $(this);
+        if(!$this.hasClass('panel-collapsed')) { // open the panel
+            $this.parents('.panel').find('.panel-body').slideUp();
+            $this.addClass('panel-collapsed');
+            $this.find('i').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+            $("#preview-namespace").hide();
+        } else { // close the panel
+            $this.parents('.panel').find('.panel-body').slideDown();
+            $this.removeClass('panel-collapsed');
+            $this.find('i').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+            $("#preview-namespace").show();
+        }
+    });
+
+
     // Create the sandbox:
     // window.sandbox = new Sandbox.View({
     //     el : $('#sandbox'),

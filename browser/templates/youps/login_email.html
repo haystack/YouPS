@@ -116,6 +116,13 @@
 									<li><a href="#" class="add-contact">+ Add Mode</a></li>
 								</ul>
 								<div class="tab-content">
+									<div class="container-namespace panel panel-info">
+										<div class="panel-heading">
+											<h3 class="panel-title">Packages <span id="preview-namespace"></span></h3>
+											<span class="pull-right clickable"><i class="glyphicon glyphicon-chevron-down"></i></span>
+										</div>
+										<div class="panel-body">import re, datetime, spacy</div>
+									</div>
 									{% for mode in modes %}
 										{% if current_mode == mode %}
 											<div class="tab-pane active" id="editor-tab_{{mode.uid}}">

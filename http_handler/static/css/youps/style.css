@@ -184,3 +184,12 @@
 #console {
   margin-bottom: 90px;
 }
+
+.container-namespace {
+  margin-bottom: 0;
+  /* border: 0; */
+}
+
+#preview-namespace {
+  opacity: 0.5;
+}
