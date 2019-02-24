@@ -190,7 +190,11 @@
   /* border: 0; */
 }
 
-.container-namespace .fas {
+.container-namespace .panel-heading {
+  cursor: pointer;
+}
+
+.container-namespace .svg {
   margin-top: -20px;
 }
 

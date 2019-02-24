@@ -76,17 +76,14 @@ $(document).ready(function() {
 
     // Intialize accordin listener
     $(".tab-content").prepend(`<div class="container-namespace panel panel-info">
-        <div class="panel-heading">
+        <div class="panel-heading panel-collapsed">
             <h3 class="panel-title">Packages <span id="preview-namespace"></span></h3>
-            <span class="pull-right clickable"><i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i></span>
+            <span class="pull-right"><i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i></span>
         </div>
         <div class="panel-body" style="display:none;">import re, datetime, spacy</div>
     </div>`);
 
     $("#preview-namespace").text( $(".container-namespace .panel-body").text().split("import ")[1].trim() );
-    $(".container-namespace .panel-body").hide();
-    $('.container-namespace .fa-chevron-down').show();
-    $('.container-namespace .fa-chevron-up').hide();
 
     $(".panel-heading").click(function (e) {
         e.preventDefault();
