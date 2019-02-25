@@ -194,6 +194,10 @@
   cursor: pointer;
 }
 
+.container-namespace .panel-body {
+  cursor: not-allowed;
+}
+
 .container-namespace .pull-right {
   margin-top: -15px;
 }
