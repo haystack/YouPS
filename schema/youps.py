@@ -1,7 +1,5 @@
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
-@python_2_unicode_compatible
 class ImapAccount(models.Model): 
     id = models.AutoField(primary_key=True)
     newest_msg_id = models.IntegerField(default=-1)
@@ -29,7 +27,6 @@ class ImapAccount(models.Model):
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 
-@python_2_unicode_compatible
 class MailbotMode(models.Model):
     uid = models.IntegerField()
 
@@ -41,7 +38,6 @@ class MailbotMode(models.Model):
     class Meta:
         unique_together = ("uid", "imap_account")
 
-@python_2_unicode_compatible
 class Message_Thread(models.Model):
     id = models.AutoField(primary_key=True)
     imap_account = models.ForeignKey('ImapAccount')
@@ -57,7 +53,6 @@ class Message_Thread(models.Model):
         db_table = "youps_threads"
         unique_together = ("id", "imap_account")
 
-@python_2_unicode_compatible
 class Message(models.Model):
     message_id = models.CharField('message_id', max_length=300)
 
@@ -75,7 +70,6 @@ class Message(models.Model):
         db_table = "youps_messages"
         unique_together = ("message_id", "imap_account")
 
-@python_2_unicode_compatible
 class Contact(models.Model):
     name = models.CharField('contact_name', max_length=100)
     email = models.EmailField(

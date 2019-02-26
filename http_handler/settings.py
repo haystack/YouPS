@@ -86,16 +86,17 @@ DEFAULT_FROM_EMAIL = DEFAULT_EMAIL
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': MYSQL["NAME"],# Or path to database file if using sqlite3.
-        'USER': MYSQL["USER"], # Not used with sqlite3.
-        'PASSWORD': MYSQL["PASSWORD"],# Not used with sqlite3.
-        'HOST': MYSQL["HOST"], # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '', # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': MYSQL["NAME"],  # Or path to database file if using sqlite3.
+        'USER': MYSQL["USER"],  # Not used with sqlite3.
+        'PASSWORD': MYSQL["PASSWORD"],  # Not used with sqlite3.
+        'HOST': MYSQL["HOST"],  # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',  # Set to empty string for default. Not used with sqlite3.
         'STORAGE_ENGINE': 'MyISAM',
         'OPTIONS': {'charset': 'utf8mb4'},
     }
 }
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -276,17 +277,17 @@ LOGGING = {
 
 # celery settings
 try:
-        from celeryconfig import *
+    from celeryconfig import *
 except ImportError:
-        pass
+    pass
 
 
 
 # local Settings - overriden by local_settings.py
 try:
-        from local_settings import *
+    from local_settings import *
 except ImportError:
-        pass
+    pass 
 
 # Storage for attachments
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
