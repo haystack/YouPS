@@ -21,14 +21,14 @@
             <h3>API docs</h3>
             <a href="/editor">Back to editor</a>
 			<hr>
-            <main 
+            <main
             mv-app="api"
             mv-storage="https://github.com/soyapark/mailbot"
             mv-unauthenticated-permissions="read"
             mv-autosave="0"
             mv-server-push="true">
                 <h3>Retreive metadata of an email</h3>
-                <div property="getter" mv-multiple>
+                <div id="[name]" property="getter" mv-multiple>
                     <h4>[name] ([params]) </h4>
                     <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
                     <p style="margin:0;">[description]</p>
@@ -40,7 +40,7 @@
                 </div>
                 <br>
                 <h3>Action on an email</h3>
-                <div property="methods"  mv-multiple>
+                <div id="[name]" property="methods"  mv-multiple>
                     <h4>[name] ([params]) </h4>
                     <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
                     <p style="margin:0;">[description]</p>
@@ -52,7 +52,7 @@
                   </div>
                   <br>
                 <h3>Action on a folder</h3>
-                <div property="folder"  mv-multiple>
+                <div id="[name]" property="folder"  mv-multiple>
                         <h4>[name] ([params])</h4>
                         <p style="margin:0;">[description]</p>
                         <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
@@ -62,7 +62,7 @@
                         </pre>
                 </div>
                 <h3>Manage your email mode</h3>
-                <div property="mode"  mv-multiple>
+                <div id="[name]" property="mode"  mv-multiple>
                         <h4>[name] ([params])</h4>
                         <p style="margin:0;">[description]</p>
                         <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
@@ -74,7 +74,7 @@
             </main>
 		</div>
     </div>
-	  
+
 	<!-- <a href="/groups/{{group_info.name}}">Back to group info page</a> -->
 {% endblock %}
 
@@ -88,27 +88,27 @@
 	<script type="text/javascript" src="/static/javascript/youps/python.js"></script>
 
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
-	
+
 	<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
 	<script type="text/javascript" src="/static/javascript/youps/console/underscore.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/backbone.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/backbone-localStorage.min.js"></script>
-	
+
 	<!-- Some extras for the demo: -->
 	<script type="text/javascript" src="/static/javascript/youps/console/lettering.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/prettify.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/DAT.GUI.min.js"></script>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
-    
+
     <script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
-	
+
 	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
 	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
 
     <script src="https://get.mavo.io/mavo.js"></script>
-    
+
     <script>
         document.addEventListener("mv-load", function(){
             init_syntax();
