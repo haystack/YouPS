@@ -74,6 +74,10 @@ dd + dt {
 ul {
   padding-left: 1em; }
 
+ul .sidebar-list {
+    list-style-type: none;
+}
+
 section pre {
   padding: 1em 1.5em;
   margin: .5em -1.5em;
@@ -306,6 +310,11 @@ body > div,
       max-width: 100vw;
       padding-left: 1rem;
       padding-right: 1rem; } }
+      
+body > div
+.flex-container {
+    display: flex;
+}
 
 body > footer {
   display: -ms-flexbox;
