@@ -8,6 +8,7 @@ from engine.constants import msg_code
 from smtp_handler.Pile import Pile
 from http_handler.settings import WEBSITE
 import traceback
+from smtp_handler.utils import utf8_str_to_utf8_unicode
 
 class Command(BaseCommand):
     args = ''
@@ -57,7 +58,7 @@ class Command(BaseCommand):
                     print execution_logs
                     if execution_logs != "":
                         # append(imap, "Murmur mailbot log", res['imap_log'])
-                        imapAccount.execution_log = execution_logs + imapAccount.execution_log
+                        imapAccount.execution_log = utf8_str_to_utf8_unicode(execution_logs) + imapAccount.execution_log
 
                     imapAccount.save()
 

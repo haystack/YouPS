@@ -764,6 +764,9 @@ def encoded_str_to_utf8_str(encoded_str, original_encoding=None):
 		# we could log that value which ranges from 0-1
 		original_encoding = chardet.detect(encoded_str)['encoding']
 
-	return unicode(encoded_str, original_encoding, "ignore").encode('utf8', 'replace')
+	return unicode(encoded_str, original_encoding, 'replace').encode('utf8', 'replace')
+
+def utf8_str_to_utf8_unicode(encoded_str):
+	return unicode(encoded_str, 'utf8', 'replace')
 
 	
