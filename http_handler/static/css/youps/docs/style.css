@@ -310,8 +310,7 @@ body > div,
       max-width: 100vw;
       padding-left: 1rem;
       padding-right: 1rem; } }
-      
-body > div
+
 .flex-container {
     display: flex;
 }
