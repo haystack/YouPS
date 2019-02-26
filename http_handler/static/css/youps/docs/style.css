@@ -74,7 +74,7 @@ dd + dt {
 ul {
   padding-left: 1em; }
 
-ul .sidebar-list {
+.sidebar-list {
     list-style-type: none;
 }
 
