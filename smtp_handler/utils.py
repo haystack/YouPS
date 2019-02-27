@@ -767,6 +767,18 @@ def encoded_str_to_utf8_str(encoded_str, original_encoding=None):
 	return unicode(encoded_str, original_encoding, 'replace').encode('utf8', 'replace')
 
 def utf8_str_to_utf8_unicode(encoded_str):
+	"""Convert a utf8 encoded string into a utf8 encoded unicode object.
+
+	Should be used for libraries which only accept unicode objects. 
+
+
+	Args:
+		encoded_str (str): utf8 encoded string. 
+
+	Returns:
+		unicode: utf8 encoded unicode string 
+	"""
+
 	return unicode(encoded_str, 'utf8', 'replace')
 
 	
