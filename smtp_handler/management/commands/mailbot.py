@@ -55,12 +55,10 @@ class Command(BaseCommand):
 
                     imapAccount.newest_msg_id = new_uid
 
-                    print type(execution_logs) 
                     if execution_logs != "":
                         # append(imap, "Murmur mailbot log", res['imap_log'])
                         imapAccount.execution_log = utf8_str_to_utf8_unicode(execution_logs) + imapAccount.execution_log
 
-                    print(imapAccount.execution_log)
                     imapAccount.save()
 
                     # TODO send the error msg via email to the user
