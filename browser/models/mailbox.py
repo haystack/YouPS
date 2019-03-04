@@ -88,7 +88,7 @@ newMessage += test_new_message
             newMessage = self.newMessage
             assert newMessage is not None
             assert newMessage.getHandlerCount() == 0
-            exec(user_code)
+            exec(user_code, globals())
             assert newMessage.getHandlerCount() == 1
             for event_data in iter(self.event_queue.get, None):
                 if event_data is None:
