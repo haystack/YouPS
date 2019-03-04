@@ -89,7 +89,7 @@ newMessage += test_new_message
             assert newMessage is not None
             assert newMessage.getHandlerCount() == 0
             exec(user_code)
-            logger.debug("%s added %d newMessage handlers" % (self, newMessage.getHandlerCount()))
+            assert newMessage.getHandlerCount() == 1
             for event_data in iter(self.event_queue.get, None):
                 if event_data is None:
                     break
