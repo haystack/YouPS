@@ -71,7 +71,7 @@ class MailBox(object):
     def _run_user_code(self):
         mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
         for mode in mailbotMode:
-            logger.debug("%s: mode %s" % (self, mode))
+            logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
 
 
     def _find_or_create_folder(self, name):
