@@ -77,10 +77,10 @@ class MailBox(object):
             user_code = mode.code  # type: t.AnyStr
             user_code = """
 def test_new_message(message):
-    print message.flags
-    print message.subject
-    print message.date
-    print message.isRead
+    print(message.flags)
+    print(message.subject)
+    print(message.date)
+    print(message.isRead)
 
 newMessage += test_new_message
             """
