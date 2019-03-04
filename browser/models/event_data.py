@@ -27,5 +27,5 @@ class NewMessageData(AbstractEventData):
 
     def fire_event(self, event):
         # type : (Event) -> None
-        self.message._imap_client.select_folder(self.message._schema.folder.name)
+        self.message._imap_client.select_folder(self.message._schema.folder_schema.name)
         event.fire(self.message)
