@@ -86,6 +86,7 @@ newMessage += test_new_message
             """
             logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
             newMessage = self.newMessage
+            newMessage.getHandlerCount()
             exec(user_code)
             logger.debug("%s added %d newMessage handlers" % (self, newMessage.getHandlerCount()))
             for event_data in iter(self.event_queue.get, None):
