@@ -74,17 +74,17 @@ class MailBox(object):
     def _run_user_code(self):
         mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
         for mode in mailbotMode:
-            # user_code = mode.code  # type: t.AnyStr
-            user_code = """
-def test_new_message(message):
-    print(message.flags)
-    print(message.subject)
-    print(message.date)
-    print(message.isRead)
+            user_code = mode.code  # type: t.AnyStr
+#             user_code = """
+# def test_new_message(message):
+#     print(message.flags)
+#     print(message.subject)
+#     print(message.date)
+#     print(message.isRead)
 
-newMessage += test_new_message
-            """
-            # logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
+# newMessage += test_new_message
+#             """
+            logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
             newMessage = self.newMessage
             assert newMessage is not None
             assert newMessage.getHandlerCount() == 0
