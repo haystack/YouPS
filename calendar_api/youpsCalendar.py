@@ -1,4 +1,4 @@
-import ics
+from ics import Calendar
 import requests
 import datetime
 
@@ -16,8 +16,9 @@ class YoupsCalendar:
         """
         self.name = name
         self.source = link
-        self.calendar = ics.Calendar(requests.get(link).text)
-        self.timeline = self.calendar.timeline
+        print(requests.get(link).text)
+        self.calendar = Calendar(requests.get(link).text)
+        # self.timeline = self.calendar.timeline
 
     def is_available(self, startTime, endTime):
         """Check the calendar to see if the specified time is available.
