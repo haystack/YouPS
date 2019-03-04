@@ -1,6 +1,7 @@
-from ics import Calendar
+from ics import Calendar, Event
 import requests
 import datetime
+import arrow
 
 
 class YoupsCalendar:
@@ -16,9 +17,32 @@ class YoupsCalendar:
         """
         self.name = name
         self.source = link
-        print(requests.get(link).text)
-        self.calendar = Calendar(requests.get(link).text)
-        # self.timeline = self.calendar.timeline
+
+        clean = self.get_and_clean_cal(link)
+        # print(clean)
+        self.calendar = Calendar(clean)
+
+        self.timeline = self.calendar.timeline
+
+    def get_and_clean_cal(self, link):
+        """Request and clean calendar data.
+
+        Parameters:
+        link (String) -- public ics link to the calendar
+
+        Returns:
+        String: ics representation of calendar
+
+        """
+        source = requests.get(link).text
+
+        # Remove VALARMS from the calendar
+        while 'VALARM' in source:
+            begin = source.find('BEGIN:VALARM')
+            end = source.find('END:VALARM') + len('END:VALARM') + 2
+            source = source[:begin] + source[end:]
+
+        return source
 
     def is_available(self, startTime, endTime):
         """Check the calendar to see if the specified time is available.
@@ -31,12 +55,14 @@ class YoupsCalendar:
         boolean: True if there are no conflicts within the time interval, False otherwise
 
         """
-        conflicts = self.timeline.overlapping(startTime, endTime)
+        conflicts = [conflict for conflict in self.timeline.overlapping(arrow.get(startTime), arrow.get(endTime)) if not conflict.all_day]
+        # conflicts = [conflict for conflict in self.timeline.at(arrow.get(startTime))]
+        print(conflicts)
         return len(conflicts) == 0
 
     # TODO: Decide how to clean up new events (cronjob to delete)
 
-    def create_event(self, name, startTime, endTime=None, description="", location=""):
+    def create_event(self, name, startTime, endTime=None, description="", location="", path=""):
         """Create an ics file containing a new event.
 
         Parameters:
@@ -52,14 +78,14 @@ class YoupsCalendar:
         """
         # NOTE(dzhang98): create a new calendar because using the current
         # calendar would have all the current events
-        newCalendar = ics.Calendar()
-        newEvent = ics.Event()
+        newCalendar = Calendar()
+        newEvent = Event()
 
         newEvent.name = name
-        newEvent.startTime = startTime
+        newEvent.begin = startTime
 
         if endTime is not None:
-            newEvent.endTime = endTime
+            newEvent.end = endTime
 
         newEvent.description = description
         newEvent.location = location
@@ -69,10 +95,37 @@ class YoupsCalendar:
         # TODO: decide file path to store .ics files
         # TODO: decide name format that is human friendly and unique
         # Currently - event name + current time + '.ics'
-        path = ""
         timestamp = datetime.datetime.now()
         filename = "%s%s-%s.ics" % (path, name, str(timestamp))
+        # for event in newCalendar.events:
+        #     print(event)
         with open(filename, 'w') as f:
             f.writelines(newCalendar)
 
         return filename
+
+
+if __name__ == "__main__":
+
+    # 6.031 Public Calendar
+    link = 'https://calendar.google.com/calendar/ical/uh0pjuueg6973g214phtapbq3c%40group.calendar.google.com/public/basic.ics'
+
+    classCalendar = YoupsCalendar('6.031', link)
+
+    # Test availablity
+    assert classCalendar.is_available("2019-03-04T14:00:00-05:00", "2019-03-04T15:00:00-05:00")
+    assert (not classCalendar.is_available("2019-03-04T11:00:00-05:00", "2019-03-04T13:00:00-05:00"))
+
+    # Test event
+    name = classCalendar.create_event("Available", "2019-03-04T14:00:00 -05:00", "2019-03-04T15:00:00 -05:00")
+    print(name)
+
+    name = classCalendar.create_event("Unavailable", "2019-03-04T12:00:00 -05:00", "2019-03-04T13:00:00 -05:00")
+    print(name)
+
+    # output = []
+    # for event in classCalendar.calendar.events:
+    #     output.append(str(event.begin))
+    # print("\n".join(sorted(output)))
+
+    print("done")
