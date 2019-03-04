@@ -72,33 +72,39 @@ class MailBox(object):
 
 
     def _run_user_code(self):
-        mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
-        for mode in mailbotMode:
-            user_code = mode.code  # type: t.AnyStr
-#             user_code = """
-# def test_new_message(message):
-#     print(message.flags)
-#     print(message.subject)
-#     print(message.date)
-#     print(message.isRead)
 
-# newMessage += test_new_message
-#             """
-            logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
-            newMessage = self.newMessage
-            assert newMessage is not None
-            assert newMessage.getHandlerCount() == 0
-            exec(user_code, globals(), {'newMessage': newMessage})
-            assert newMessage.getHandlerCount() == 1
-            while True:
-                try:
-                    event_data = self.event_queue.get_nowait()
-                    event_data.fire_event(self.newMessage)
-                except Queue.Empty:
-                    break
-                except Exception:
-                    logger.exception("failure while parsing event data")
-                    break
+        from StringIO import StringIO
+        import sys
+
+        user_std_out = StringIO()
+
+        try:
+            # reassign stdout
+            sys.stdout = user_std_out
+
+            # iterate over the modes
+            mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
+            for mode in mailbotMode:
+                # get the user's code
+                user_code = mode.code  # type: t.AnyStr
+                # make newMessage point to self.newMessage
+                exec(user_code, globals(), {'newMessage': self.newMessage})
+                # fire new message events
+                while True:
+                    try:
+                        event_data = self.event_queue.get_nowait()
+                        event_data.fire_event(self.newMessage)
+                    except Queue.Empty:
+                        break
+                    except Exception:
+                        logger.exception("failure while parsing event data")
+                        break
+
+                logger.info('user output: %s' % user_std_out.getvalue())
+                user_std_out.close()
+        finally:
+            # reassign stdout
+            sys.stdout = sys.__stdout__
 
     def _find_or_create_folder(self, name):
         # type: (t.AnyStr) -> Folder

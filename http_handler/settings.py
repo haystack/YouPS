@@ -300,7 +300,7 @@ LOGGING = {
     },
     'loggers': {
         'youps': {
-            'handlers': ['custom.file', 'custom.console'],
+            'handlers': ['custom.file'],
             'level': 'DEBUG',
             'propagate': True
         },
