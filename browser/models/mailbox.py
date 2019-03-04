@@ -41,9 +41,6 @@ class MailBox(object):
         # type: () -> None
         """Synchronize the mailbox with the imap server.
         """
-
-        return
-
         # should do a couple things based on
         # https://stackoverflow.com/questions/9956324/imap-synchronization
         # and https://tools.ietf.org/html/rfc4549
@@ -78,6 +75,15 @@ class MailBox(object):
         mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
         for mode in mailbotMode:
             user_code = mode.code  # type: t.AnyStr
+            user_code = """
+def test_new_message(message):
+    print message.flags
+    print message.subject
+    print message.date
+    print message.isRead
+
+newMessage += test_new_message
+            """
             logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
             newMessage = self.newMessage
             exec(user_code)
