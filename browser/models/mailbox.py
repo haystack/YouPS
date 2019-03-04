@@ -42,6 +42,8 @@ class MailBox(object):
         """Synchronize the mailbox with the imap server.
         """
 
+        return
+
         # should do a couple things based on
         # https://stackoverflow.com/questions/9956324/imap-synchronization
         # and https://tools.ietf.org/html/rfc4549
