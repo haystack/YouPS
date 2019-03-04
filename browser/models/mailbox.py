@@ -8,6 +8,7 @@ from folder import Folder
 from schema.youps import MailbotMode
 from Queue import Queue
 
+
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 
@@ -90,11 +91,13 @@ class MailBox(object):
             assert newMessage.getHandlerCount() == 0
             exec(user_code, globals(), {'newMessage': newMessage})
             assert newMessage.getHandlerCount() == 1
-            for event_data in iter(self.event_queue.get, None):
-                if event_data is None:
+            while True:
+                try:
+                    event_data = self.event_queue.get_nowait()
+                    event_data.fire_event(self.newMessage)
+                except Exception:
+                    logger.exception("failure while parsing event data")
                     break
-                event_data.fire_event(self.newMessage)
-
 
     def _find_or_create_folder(self, name):
         # type: (t.AnyStr) -> Folder
