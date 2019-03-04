@@ -6,8 +6,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from schema.youps import MailbotMode
-from Queue import Queue
-
+import Queue
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -26,7 +25,7 @@ class MailBox(object):
         self.newMessage = Event()  # type: Event
 
         # event queue
-        self.event_queue = Queue()
+        self.event_queue = Queue.Queue()
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -95,6 +94,8 @@ class MailBox(object):
                 try:
                     event_data = self.event_queue.get_nowait()
                     event_data.fire_event(self.newMessage)
+                except Queue.Empty:
+                    break
                 except Exception:
                     logger.exception("failure while parsing event data")
                     break
