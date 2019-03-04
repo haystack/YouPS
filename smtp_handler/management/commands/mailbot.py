@@ -41,6 +41,8 @@ class Command(BaseCommand):
                 mailbox = MailBox(imapAccount, imap)
                 # sync the mailbox with imap
                 mailbox._sync()
+                # run the user code
+                mailbox._run_user_code()
             except Exception:
                 logger.exception("mailbox sync failed")
 

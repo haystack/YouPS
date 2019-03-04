@@ -5,6 +5,7 @@ import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
+from schema.youps import MailbotMode
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -65,6 +66,13 @@ class MailBox(object):
             # update the folder's uid next and uid validity
             folder._uid_next = uid_next
             folder._uid_validity = uid_validity
+
+
+    def _run_user_code(self):
+        mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
+        for mode in mailbotMode:
+            logger.debug("%s: mode %s" % (self, mode))
+
 
     def _find_or_create_folder(self, name):
         # type: (t.AnyStr) -> Folder
