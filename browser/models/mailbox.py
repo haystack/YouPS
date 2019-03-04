@@ -6,6 +6,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from schema.youps import MailbotMode
+from Queue import Queue
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -22,6 +23,9 @@ class MailBox(object):
 
         # Events
         self.newMessage = Event()  # type: Event
+
+        # event queue
+        self.event_queue = Queue()
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -61,7 +65,7 @@ class MailBox(object):
             if folder._should_completely_refresh(uid_validity):
                 folder._completely_refresh_cache()
             else:
-                folder._refresh_cache(uid_next)
+                folder._refresh_cache(uid_next, self.event_queue)
 
             # update the folder's uid next and uid validity
             folder._uid_next = uid_next
@@ -71,7 +75,15 @@ class MailBox(object):
     def _run_user_code(self):
         mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
         for mode in mailbotMode:
+            user_code = mode.code  # type: t.AnyStr
             logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
+            newMessage = self.newMessage
+            exec(user_code)
+            logger.debug("%s added %d newMessage handlers" % (self, newMessage.getHandlerCount()))
+            for event_data in iter(self.event_queue.get, None):
+                if event_data is None:
+                    break
+                event_data.fire_event(self.newMessage)
 
 
     def _find_or_create_folder(self, name):

@@ -7,6 +7,8 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ImapAccount
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
+from Queue import Queue  # noqa: F401 ignore unused we use it for typing
+from browser.models.event_data import NewMessageData
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -131,8 +133,8 @@ class Folder(object):
             self._last_seen_uid = max_uid
             logger.debug('%s updated max_uid %d' % (self, max_uid))
 
-    def _refresh_cache(self, uid_next):
-        # type: (int) -> None
+    def _refresh_cache(self, uid_next, event_queue):
+        # type: (int, Queue) -> None
         """Called during normal synchronization to refresh the cache.
 
         Should get new messages and build message number to UID map for the
@@ -147,7 +149,7 @@ class Folder(object):
         # if the uid has not changed then we don't need to get new messages
         if uid_next != self._uid_next:
             # get all the descriptors for the new messages
-            self._save_new_messages(self._last_seen_uid)
+            self._save_new_messages(self._last_seen_uid, event_queue)
             # TODO maybe trigger the user
 
         # if the last seen uid is zero we haven't seen any messages
@@ -212,8 +214,8 @@ class Folder(object):
 
         logger.debug("%s updated flags" % self)
 
-    def _save_new_messages(self, last_seen_uid):
-        # type: (int) -> None
+    def _save_new_messages(self, last_seen_uid, event_queue=None):
+        # type: (int, Queue) -> None
         """Save any messages we haven't seen before
 
         Args:
@@ -246,7 +248,7 @@ class Folder(object):
                 logger.critical('Missing ENVELOPE in message data')
                 logger.critical('Message data %s' % message_data)
                 continue
-                
+
             # this is the date the message was received by the server
             internal_date = message_data['INTERNALDATE']  # type: datetime
             envelope = message_data['ENVELOPE']
@@ -283,7 +285,9 @@ class Folder(object):
                 message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
 
             logger.debug("%s saved new message with uid %d" % (self, uid))
-
+            
+            if last_seen_uid != 0:
+                event_queue.put(NewMessageData(Message(message_schema, self._imap_client)))
 
     def _parse_email_subject(self, subject):
         # type: (t.AnyStr) -> t.AnyStr
