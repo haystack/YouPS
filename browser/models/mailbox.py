@@ -74,7 +74,7 @@ class MailBox(object):
     def _run_user_code(self):
         mailbotMode = MailbotMode.objects.filter(imap_account=self._imap_account)  # type: t.List[MailbotMode]
         for mode in mailbotMode:
-            user_code = mode.code  # type: t.AnyStr
+            # user_code = mode.code  # type: t.AnyStr
             user_code = """
 def test_new_message(message):
     print(message.flags)
@@ -84,9 +84,10 @@ def test_new_message(message):
 
 newMessage += test_new_message
             """
-            logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
+            # logger.debug("%s: mode %s, code %s" % (self, mode, mode.code))
             newMessage = self.newMessage
-            newMessage.getHandlerCount()
+            assert newMessage is not None
+            assert newMessage.getHandlerCount() == 0
             exec(user_code)
             logger.debug("%s added %d newMessage handlers" % (self, newMessage.getHandlerCount()))
             for event_data in iter(self.event_queue.get, None):
