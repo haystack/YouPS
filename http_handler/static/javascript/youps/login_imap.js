@@ -504,49 +504,51 @@ $(document).ready(function() {
 
         // When user first try to login to their imap. 
         btn_login.click(function() {
-                show_loader(true);
+            show_loader(true);
 
-                var params = {
-                    'host': $("#input-host").val(),
-                    'password': $('#rdo-oauth').is(":checked") ? $("#input-access-code").val() : $("#input-password").val(),
-                    'is_oauth': $('#rdo-oauth').is(":checked")
-                };
+            var params = {
+                'host': $("#input-host").val(),
+                'password': $('#rdo-oauth').is(":checked") ? $("#input-access-code").val() : $("#input-password").val(),
+                'is_oauth': $('#rdo-oauth').is(":checked")
+            };
         
-                $.post('/login_imap', params,
-                    function(res) {
-                        show_loader(false);
-                        // $('#donotsend-msg').hide();
-                        console.log(res);
+            $.post('/login_imap', params,
+                function(res) {
+                    show_loader(false);
+                    // $('#donotsend-msg').hide();
+                    console.log(res);
+                    
+                    // Auth success
+                    if (res.status) {
+                        // Show coding interfaces 
+                        $("#login-email-form").hide();
+                        $(".btn").prop("disabled",false);
+
+                        if ('imap_code' in res) {
+                            editor.setValue( res['imap_code'] );
+                            spinStatusCog(true);
+                        }
                         
-                        // Auth success
-                        if (res.status) {
-                            // Show coding interfaces 
-                            $("#login-email-form").hide();
-                            $(".btn").prop("disabled",false);
-
-                            if ('imap_code' in res) {
-                                editor.setValue( res['imap_code'] );
-                                spinStatusCog(true);
-                            }
-                            
-                            append_log(res['imap_log'], false)
-                            
-                            if (res.code) { 
-                            }
-                            else {                        
-                                notify(res, true);
-                            }
-
-                            // then ask user to wait until YoUPS intialize their inbox
-                            show_loader(true);
-                            $("#loading-wall").show();
-                            $("#loading-wall span").show();
+                        append_log(res['imap_log'], false)
+                        
+                        if (res.code) { 
                         }
-                        else {
-                            notify(res, false);
+                        else {                        
+                            notify(res, true);
                         }
+
+                        // then ask user to wait until YoUPS intialize their inbox
+                        show_loader(true);
+                        $("#loading-wall").show();
+                        $("#loading-wall span").show();
                     }
-                );
+                    else {
+                        notify(res, false);
+                    }
+                }
+            ).fail(function(res) {
+                alert("Fail to load our system! Can you try using a different browser?");
+            });;
         });
 
         function run_code(is_dry_run, is_running) {
