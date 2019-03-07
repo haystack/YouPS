@@ -102,6 +102,34 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             args = ujson.dumps( [imap_account.id, marshal.dumps(func.func_code), search_creteria, is_test, email_content] )
             add_periodic_task.delay( delay, args, delay * 2 - 0.5 ) # make it expire right before 2nd execution happens 
 
+        def create_draft(subject="", to_addr="", cc_addr="", bcc_addr="", body="", draft_folder="Drafts"):
+            new_message = message.Message()
+            new_message["Subject"] = subject
+
+            if type(to_addr) == 'list':
+                to_addr = ",".join(to_addr)
+            if type(cc_addr) == 'list':
+                cc_addr = ",".join(cc_addr)
+            if type(bcc_addr) == 'list':
+                bcc_addr = ",".join(bcc_addr)
+            
+            new_message["To"] = to_addr
+            new_message["Cc"] = cc_addr
+            new_message["Bcc"] = bcc_addr
+            new_message.set_payload(body) 
+
+            # if Gmail
+            if any("X-" in c for c in imap.capabilities()):
+                imap.append('[Gmail]/Drafts', str(new_message))
+
+            else:
+                try:
+                    imap.append('Drafts', str(new_message))
+                except IMAPClient.Error, e:
+                    if "append failed" in e:
+                        imap.append(draft_folder, str(new_message))
+                
+
         def send(subject="", to_addr="", body=""):
             if len(to_addr) == 0:
                 raise Exception('send(): recipient email address is not provided')
@@ -109,21 +137,6 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             if not is_test:
                 send_email(subject, imap_account.email, to_addr, body)
             logger.debug("send(): sent a message to  %s" % str(to_addr))
-
-        def add_gmail_labels(flags):
-            pile.add_gmail_labels(flags, is_test)
-
-        def add_labels(flags):
-            add_notes(flags)
-
-        def add_notes(flags):
-            pile.add_notes(flags, is_test)
-
-        def copy(dst_folder):
-            pile.copy(dst_folder, is_test)
-
-        def delete():
-            pile.delete(is_test)
 
         def get_history(email, hours=24, cond=True):
             if len(email) == 0:
@@ -225,57 +238,6 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             r = {'received_emails': received_cnt, 'cond': cond_cnt}
 
             return r
-
-        def get_sender():
-            return pile.get_sender()
-
-        def get_content():
-            logger.debug("call get_content")
-            if email_content:
-                return email_content
-            else:
-                return pile.get_content()
-
-        def get_date():
-            return pile.get_date()
-
-        def get_attachment():
-            pass
-
-        def get_subject():
-            return pile.get_subject()
-
-        def get_recipients():
-            return pile.get_recipients()
-
-
-        def get_attachments():
-            pass
-
-        def get_labels():
-            return get_notes()
-
-        def get_notes():
-            return pile.get_notes()
-
-        def get_gmail_labels():
-            return pile.get_gmail_labels()
-
-        def mark_read(is_seen=True):
-            pile.mark_read(is_seen, is_test)
-
-
-        def move(dst_folder):
-            pile.move(dst_folder, is_test)
-
-        def remove_labels(flags):
-            remove_notes(flags)
-
-        def remove_notes(flags):
-            pile.remove_notes(flags, is_test)
-
-        def remove_gmail_labels(flags):
-            pile.remove_gmail_labels(flags, is_test)
 
         # return a list of email UIDs
         def search(criteria=u'ALL', charset=None, folder=None):
