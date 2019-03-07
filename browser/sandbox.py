@@ -119,15 +119,18 @@ def interpret(imap_account, imap, code, search_creteria, is_test=False, email_co
             new_message.set_payload(body) 
 
             # if Gmail
-            if any("X-" in c for c in imap.capabilities()):
+            if any("X-GM" in c for c in imap.capabilities()):
                 imap.append('[Gmail]/Drafts', str(new_message))
 
             else:
                 try:
                     imap.append('Drafts', str(new_message))
                 except IMAPClient.Error, e:
-                    if "append failed" in e:
-                        imap.append(draft_folder, str(new_message))
+                    try:
+                        imap.append('Draft', str(new_message))
+                    except IMAPClient.Error, e:
+                        if "append failed" in e:
+                            imap.append(draft_folder, str(new_message))
                 
 
         def send(subject="", to_addr="", body=""):
