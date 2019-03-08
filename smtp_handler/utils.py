@@ -762,7 +762,7 @@ class CodeTimer:
 
     def __enter__(self):
         self.start = time.clock()  # type: float
-		return self
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.took = (time.clock() - self.start) * 1000.0
