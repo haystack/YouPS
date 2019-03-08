@@ -753,3 +753,16 @@ def codeobject_loads(s):
     """loads a code object pickled with co_dumps() return a code object ready for exec()"""
     r = pickle.loads(s)
     return new.code(r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11])
+	
+class CodeTimer:
+    def __init__(self, name=None):
+        # type(t.AnyStr) -> CodeTimer
+        self.name = " '"  + name + "'" if name else ''  # type: t.AnyStr 
+        self.logger = logging.getLogger('youps')  # type: logging.Logger
+
+    def __enter__(self):
+        self.start = time.clock()  # type: float
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.took = (time.clock() - self.start) * 1000.0
+        self.logger.info('Code block %s took %s ms, %s s' % (self.name, self.took, self.took / 1000.0))

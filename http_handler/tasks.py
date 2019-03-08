@@ -1,20 +1,21 @@
 import logging
 import random
+from contextlib import contextmanager
+from hashlib import md5
+
+from django.core.cache import cache
 
 import ujson
 from browser.imap import authenticate
 from browser.models.mailbox import MailBox
 from celery.decorators import task
+from celery.five import monotonic
 from http_handler.settings import BASE_URL
 from schema.youps import Action, ImapAccount, PeriodicTask, TaskScheduler
 from smtp_handler.utils import codeobject_loads, send_email
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
-from celery.five import monotonic
-from contextlib import contextmanager
-from django.core.cache import cache
-from hashlib import md5
 
 LOCK_EXPIRE = 60 * 10  # Lock expires in 10 minutes
 
@@ -143,6 +144,7 @@ def init_sync_user_inbox(self, imapAccount_email):
     Args:
         imapAccount_email (string):  
     """
+    from smtp_handler.utils import CodeTimer
     try:
         imapAccount = ImapAccount.objects.get(email=imapAccount_email)  # type: ImapAccount
 
@@ -153,8 +155,10 @@ def init_sync_user_inbox(self, imapAccount_email):
             if acquired:
                 logger.debug('Sync lock for %s is acquired', imapAccount_email)
 
+                auth_res = None
                 # authenticate with the user's imap server
-                auth_res = authenticate(imapAccount)
+                with CodeTimer("authenticate"):
+                    auth_res = authenticate(imapAccount)
                 # if authentication failed we can't run anything
                 if not auth_res['status']:
                     # Stop doing loop
@@ -166,9 +170,10 @@ def init_sync_user_inbox(self, imapAccount_email):
 
                 # create the mailbox
                 try:
-                    mailbox = MailBox(imapAccount, imap)
-                    # sync the mailbox with imap
-                    mailbox._sync()
+                    with CodeTimer("MailboxSync"):
+                        mailbox = MailBox(imapAccount, imap)
+                        # sync the mailbox with imap
+                        mailbox._sync()
                 except Exception:
                     logger.exception("Mailbox sync failed")
                     # TODO maybe we should email the user
@@ -176,11 +181,19 @@ def init_sync_user_inbox(self, imapAccount_email):
                 logger.info("Mailbox sync done: %s" % (imapAccount_email))
 
                 try:
-                    mailbox._run_user_code()
+                    with CodeTimer("Mailbox run user code"):
+                        result = mailbox._run_user_code()
                 except Exception():
                     logger.exception("Mailbox run user code failed")
                 # after sync, logout to prevent multi-connection issue
                 imap.logout()
+
+                if result is not None and result.get('imap_log'):
+                    imapAccount.execution_log = result.get('imap_log') + imapAccount.execution_log
+                    imapAccount.save()
+
+                logger.info("execution log %s" % imapAccount.execution_log)
+
                 if imapAccount.is_initialized is False:
                     imapAccount.is_initialized = True
                     imapAccount.save()
@@ -188,7 +201,7 @@ def init_sync_user_inbox(self, imapAccount_email):
                     ptask_name = "sync_%s" % (imapAccount_email)
                     args = ujson.dumps( [imapAccount_email] )
                     TaskScheduler.schedule_every('init_sync_user_inbox', 'seconds', 4, ptask_name, args)
-        
+
         logger.debug(
             'Sync lock for %s is already being imported by another worker', imapAccount_email)
 
@@ -197,5 +210,4 @@ def init_sync_user_inbox(self, imapAccount_email):
         logger.exception("syncing fails Remove periodic tasks. imap_account not exist %s" % (imapAccount_email))
 
     except Exception as e:
-        logger.exception("User inbox syncing fails %s. Stop syncing %s" % (imapAccount_email, e)) 
-
+        logger.exception("User inbox syncing fails %s. Stop syncing %s" % (imapAccount_email, e))
