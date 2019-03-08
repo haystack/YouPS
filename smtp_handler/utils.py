@@ -761,9 +761,9 @@ class CodeTimer:
         self.logger = logging.getLogger('youps')  # type: logging.Logger
 
     def __enter__(self):
-        self.start = time.clock()  # type: float
+        self.start = time.time()  # type: float
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.took = (time.clock() - self.start) * 1000.0
+        self.took = (time.time() - self.start) * 1000.0
         self.logger.info('Code block %s took %s ms, %s s' % (self.name, self.took, self.took / 1000.0))
