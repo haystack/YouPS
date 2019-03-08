@@ -91,7 +91,7 @@ class MailBox(object):
             code = self._imap_account.current_mode.code
             res = interpret(self, code)
             if res['imap_log']:
-                logger.info('user output: %s' % res['imap_log'])
+                logger.debug('user output: %s' % res['imap_log'])
             return res
         return None
 
