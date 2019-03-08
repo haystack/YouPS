@@ -145,6 +145,7 @@ def init_sync_user_inbox(self, imapAccount_email):
         imapAccount_email (string):  
     """
     from smtp_handler.utils import CodeTimer
+    logger.info("syncing %s" % imapAccount_email)
     with CodeTimer('init sync everything'):
         try:
             imapAccount = ImapAccount.objects.get(email=imapAccount_email)  # type: ImapAccount
@@ -179,7 +180,6 @@ def init_sync_user_inbox(self, imapAccount_email):
                         logger.exception("Mailbox sync failed")
                         # TODO maybe we should email the user
                         return
-                    logger.info("Mailbox sync done: %s" % (imapAccount_email))
 
                     try:
                         with CodeTimer("Mailbox run user code"):
@@ -210,3 +210,4 @@ def init_sync_user_inbox(self, imapAccount_email):
 
         except Exception as e:
             logger.exception("User inbox syncing fails %s. Stop syncing %s" % (imapAccount_email, e))
+    logger.info("done syncing %s" % imapAccount_email)
