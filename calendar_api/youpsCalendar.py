@@ -35,7 +35,7 @@ class YoupsCalendar:
 
         """
         source = requests.get(link).text
-
+        print(source)
         # Remove VALARMS from the calendar
         while 'VALARM' in source:
             begin = source.find('BEGIN:VALARM')
@@ -55,9 +55,8 @@ class YoupsCalendar:
         boolean: True if there are no conflicts within the time interval, False otherwise
 
         """
+        # TODO: Find solution for reccuring events
         conflicts = [conflict for conflict in self.timeline.overlapping(arrow.get(startTime), arrow.get(endTime)) if not conflict.all_day]
-        # conflicts = [conflict for conflict in self.timeline.at(arrow.get(startTime))]
-        print(conflicts)
         return len(conflicts) == 0
 
     # TODO: Decide how to clean up new events (cronjob to delete)
@@ -108,24 +107,20 @@ class YoupsCalendar:
 if __name__ == "__main__":
 
     # 6.031 Public Calendar
-    link = 'https://calendar.google.com/calendar/ical/uh0pjuueg6973g214phtapbq3c%40group.calendar.google.com/public/basic.ics'
+    # link = 'https://calendar.google.com/calendar/ical/uh0pjuueg6973g214phtapbq3c%40group.calendar.google.com/public/basic.ics'
+    # YOUPS Test Cal
+    link = 'https://calendar.google.com/calendar/ical/pj6gli5rhicds2hqp5jgl1k9ik%40group.calendar.google.com/public/basic.ics'
 
-    classCalendar = YoupsCalendar('6.031', link)
+    classCalendar = YoupsCalendar('YouPS Test', link)
 
     # Test availablity
-    assert classCalendar.is_available("2019-03-04T14:00:00-05:00", "2019-03-04T15:00:00-05:00")
+    assert classCalendar.is_available("2019-03-04T08:00:00-05:00", "2019-03-04T09:00:00-05:00")
+    print("is_available True - PASS")
     assert (not classCalendar.is_available("2019-03-04T11:00:00-05:00", "2019-03-04T13:00:00-05:00"))
-
+    print("is_available False - PASS")
     # Test event
     name = classCalendar.create_event("Available", "2019-03-04T14:00:00 -05:00", "2019-03-04T15:00:00 -05:00")
-    print(name)
+    print("Event Created - " + name)
 
     name = classCalendar.create_event("Unavailable", "2019-03-04T12:00:00 -05:00", "2019-03-04T13:00:00 -05:00")
-    print(name)
-
-    # output = []
-    # for event in classCalendar.calendar.events:
-    #     output.append(str(event.begin))
-    # print("\n".join(sorted(output)))
-
-    print("done")
+    print("Event Created - " + name)
