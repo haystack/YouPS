@@ -799,3 +799,18 @@ def utf8_str_to_utf8_unicode(encoded_str):
 	"""
 
 	return unicode(encoded_str, 'utf8', 'replace')
+
+class CodeTimer:
+    def __init__(self, name=None):
+        # type(t.AnyStr) -> CodeTimer
+        self.name = " '"  + name + "'" if name else ''  # type: t.AnyStr 
+        self.logger = logging.getLogger('youps')  # type: logging.Logger
+
+    def __enter__(self):
+        self.start = time.time()  # type: float
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.took = (time.time() - self.start) * 1000.0
+        self.logger.info('Code block %s took %s ms, %s s' % (self.name, self.took, self.took / 1000.0))
+
