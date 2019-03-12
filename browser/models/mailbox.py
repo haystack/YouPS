@@ -40,8 +40,6 @@ class MailBox(object):
         """Synchronize the mailbox with the imap server.
         """
 
-        assert len(set(self._list_selectable_folders())) == len(list(self._list_selectable_folders()))
-
         # not sure if this is necessary we can just check for highest_mod_seq below
         # supports_cond_store = self._supports_cond_store()
 
