@@ -50,7 +50,8 @@ class MailBox(object):
         for folder in self._list_selectable_folders():
             # response contains folder level information such as
             # uid validity, uid next, and highest mod seq
-            response = self._imap_client.select_folder(folder.name)
+            with CodeTimer("Sync %s %s" % (self, self._imap_account.email)):
+                response = self._imap_client.select_folder(folder.name)
 
             # our algorithm doesn't work without these
             if not ('UIDNEXT' in response and 'UIDVALIDITY' in response):
@@ -66,8 +67,7 @@ class MailBox(object):
             if folder._should_completely_refresh(uid_validity):
                 folder._completely_refresh_cache()
             else:
-                with CodeTimer("Sync %s %s" % (self, self._imap_account.email)):
-                    folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_queue)
+                folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_queue)
 
             # update the folder's uid next and uid validity
             folder._uid_next = uid_next
