@@ -6,7 +6,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 import Queue
-
+from smtp_handler.utils import CodeTimer
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 
@@ -68,7 +68,8 @@ class MailBox(object):
             if folder._should_completely_refresh(uid_validity):
                 folder._completely_refresh_cache()
             else:
-                folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_queue)
+                with CodeTimer("Sync %s %s" % (self, self._imap_account.email)):
+                    folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_queue)
 
             # update the folder's uid next and uid validity
             folder._uid_next = uid_next
