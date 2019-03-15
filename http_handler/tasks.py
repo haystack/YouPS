@@ -9,6 +9,9 @@ from schema.youps import Action, ImapAccount, PeriodicTask, TaskScheduler
 from smtp_handler.utils import codeobject_loads, send_email
 from datetime import timedelta
 import typing as t  # noqa: F401 ignore unused we use it for typing
+import imaplib
+from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
+
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -123,21 +126,41 @@ def register_inbox(imapAccount_email):
         logger.info('first syncing..: %s', imapAccount_email)
         imapAccount = ImapAccount.objects.get(email=imapAccount_email)
 
-        # authenticate with the user's imap server
-        auth_res = authenticate(imapAccount)
-        # if authentication failed we can't run anything
-        if not auth_res['status']:
-            # Stop doing loop
-            # TODO maybe we should email the user
-            return
+        while True:
+            # try to perform a sync
+            try:
+                # authenticate with the user's imap server
+                auth_res = authenticate(imapAccount)
+                # if authentication failed we can't run anything
+                if not auth_res['status']:
+                    # Stop doing loop
+                    # TODO maybe we should email the user
+                    return
 
-        # get an imapclient which is authenticated
-        imap = auth_res['imap']
+                # get an imapclient which is authenticated
+                imap = auth_res['imap']  # type: IMAPClient
 
-        # create the mailbox
-        mailbox = MailBox(imapAccount, imap)
-        # sync the mailbox with imap
-        mailbox._sync()
+                # create the mailbox
+                mailbox = MailBox(imapAccount, imap)
+                # sync the mailbox with imap
+                done = mailbox._sync()
+
+                # if we are done break out of the loop
+                if done:
+                    break
+            # if there is an EOF error logout and try again
+            except imaplib.IMAP4.abort:
+                logger.exception("Imap lib failure while syncing")
+                try:
+                    imap.logout()
+                except Exception:
+                    logger.exception("Failure while logging out")
+                    continue
+                continue
+            # if there is any other Exception log and fail so we don't repeat forever
+            except Exception:
+                logger.critical("Failed while initially syncing")
+                raise
   
         logger.info("Mailbox sync done: %s" % (imapAccount_email))
 
