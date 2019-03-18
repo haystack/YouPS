@@ -9,13 +9,14 @@ from imapclient.response_types import Address  # noqa: F401 ignore unused we use
 from email.header import decode_header
 from Queue import Queue  # noqa: F401 ignore unused we use it for typing
 from browser.models.event_data import NewMessageData
-from smtp_handler.utils import is_gmail
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 
 class Folder(object):
+
+    download_increment = 1000
 
     def __init__(self, folder_schema, imap_client):
         # type: (FolderSchema, IMAPClient) -> Folder
@@ -114,6 +115,22 @@ class Folder(object):
         self._schema.save()
 
     @property
+    def _is_initialized(self):
+        # type: () -> bool
+        return self._schema.is_initialized
+
+    @_is_initialized.setter
+    def _is_initialized(self, value):
+        # type: (bool) -> None
+        self._schema.is_initialized = value
+        self._schema.save()
+
+    @property
+    def _is_initialized(self):
+        # type: () -> bool
+        return self._schema.is_initialized
+
+    @property
     def _imap_account(self):
         # type: () -> ImapAccount
         return self._schema.imap_account
@@ -131,6 +148,9 @@ class Folder(object):
         # delete any messages already stored in the folder
         MessageSchema.objects.filter(folder_schema=self._schema).delete()
 
+        # mark as not initialized
+        self._is_initialized = False
+
         # save new messages starting from the last seen uid of 0
         self._save_new_messages(0)
         # TODO maybe trigger the user
@@ -143,6 +163,7 @@ class Folder(object):
         # type () -> None
         """Updates the last seen uid to be equal to the maximum uid in this folder's cache
         """
+        prev_max_uid = self._last_seen_uid
 
         max_uid = MessageSchema.objects.filter(folder_schema=self._schema).aggregate(
             Max('uid'))  # type: t.Dict[t.AnyStr, int]
@@ -150,6 +171,8 @@ class Folder(object):
         if max_uid is None:
             max_uid = 0
         if self._last_seen_uid != max_uid:
+            if (max_uid - prev_max_uid) < Folder.download_increment:
+                self._is_initialized = True
             self._last_seen_uid = max_uid
             logger.debug('%s updated max_uid %d' % (self, max_uid))
 
@@ -173,7 +196,7 @@ class Folder(object):
             # TODO maybe trigger the user
 
         # if the last seen uid is zero we haven't seen any messages
-        if self._last_seen_uid != 0:
+        if self._last_seen_uid != 0 and self._is_initialized:
             self._update_cached_message_flags(highest_mod_seq)
 
         self._update_last_seen_uid()
@@ -260,8 +283,10 @@ class Folder(object):
         # add thread id to the descriptors if there is a thread id
         descriptors = list(Message._descriptors) + ['X-GM-THRID'] if self._imap_account.is_gmail \
             else list(Message._descriptors)
+        start = last_seen_uid + 1
+        end = '*' if self._is_initialized else start + Folder.download_increment
         fetch_data = self._imap_client.fetch(
-            '%d:*' % (last_seen_uid + 1), descriptors)
+            '%s:%s' % (start, end), descriptors)
 
         # if there is only one item in the return field
         # and we already have it in our database

@@ -125,7 +125,6 @@ def register_inbox(imapAccount_email):
     try:
         logger.info('first syncing..: %s', imapAccount_email)
         imapAccount = ImapAccount.objects.get(email=imapAccount_email)
-
         while True:
             # try to perform a sync
             try:
@@ -163,11 +162,6 @@ def register_inbox(imapAccount_email):
                 raise
   
         logger.info("Mailbox sync done: %s" % (imapAccount_email))
-
-        try:
-            mailbox._run_user_code()
-        except Exception():
-            logger.exception("Mailbox run user code failed")
         
         # after sync, logout to prevent multi-connection issue
         imap.logout()

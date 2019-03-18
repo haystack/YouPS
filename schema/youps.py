@@ -62,8 +62,10 @@ class FolderSchema(models.Model):
     highest_mod_seq = models.IntegerField(default=-1)
     # the flags associated with the folder 
     _flags = models.TextField(db_column="flags")
-
+    # whether or not the folder is selectable
     is_selectable = models.BooleanField(default=False)
+    # whether or not the folder is initialized 
+    is_initialized = models.BooleanField(default=False)
 
     @property
     def flags(self):
