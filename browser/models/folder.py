@@ -126,11 +126,6 @@ class Folder(object):
         self._schema.save()
 
     @property
-    def _is_initialized(self):
-        # type: () -> bool
-        return self._schema.is_initialized
-
-    @property
     def _imap_account(self):
         # type: () -> ImapAccount
         return self._schema.imap_account

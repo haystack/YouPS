@@ -85,6 +85,4 @@ mysql -u root -p$password <<EOF
 
 EOF
 
-echo -e "\e[33mMake sure to update the database name in private.py to \n \e[1m$databaseName\e[0m"
-
 
