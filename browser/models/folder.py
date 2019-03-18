@@ -186,7 +186,7 @@ class Folder(object):
             uid_next (int): UIDNEXT returned from select command
         """
         # if the uid has not changed then we don't need to get new messages
-        if uid_next != self._uid_next:
+        if uid_next != self._uid_next or not self._is_initialized:
             # get all the descriptors for the new messages
             self._save_new_messages(self._last_seen_uid, event_data_queue)
             # TODO maybe trigger the user
