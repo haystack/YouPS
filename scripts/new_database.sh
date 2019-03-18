@@ -21,12 +21,12 @@ read domainName
 echo
 
 # get the name of the mysql database
-echo -n Database Name:
+echo -n 'Enter the database name for example youps':
 read databaseName
 echo 
 
 # get the mysql password
-echo -n MySql Password: 
+echo -n Enter the MySql Password: 
 read -s password
 echo
 
