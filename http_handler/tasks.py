@@ -5,7 +5,7 @@ from browser.imap import authenticate
 from browser.models.mailbox import MailBox
 from celery.decorators import task, periodic_task
 from http_handler.settings import BASE_URL
-from schema.youps import Action, ImapAccount, PeriodicTask, TaskScheduler
+from schema.youps import Action, ImapAccount, PeriodicTask, TaskScheduler, FolderSchema
 from smtp_handler.utils import codeobject_loads, send_email
 from datetime import timedelta
 import typing as t  # noqa: F401 ignore unused we use it for typing
@@ -165,6 +165,16 @@ def register_inbox(imapAccount_email):
         
         # after sync, logout to prevent multi-connection issue
         imap.logout()
+
+        folders = FolderSchema.objects.filter(imap_account = imapAccount)  # type: t.Iterable[FolderSchema]
+        # if any folder is not initialized
+        if any((not f.is_initialized for f in folders)):
+            remaining_folders = filter(lambda f: not f.is_initialized, folders)
+            logger.info("Still initializing folders %s" % (','.join([f.name for f in remaining_folders])))
+
+            # register the task to occur again
+            register_inbox.apply_async(args=[imapAccount.email], queue='new_user', routing_key='new_user.import')
+            return
 
         imapAccount.is_initialized = True
         imapAccount.save()

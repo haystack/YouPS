@@ -158,8 +158,7 @@ class Folder(object):
         # type () -> None
         """Updates the last seen uid to be equal to the maximum uid in this folder's cache
         """
-        prev_max_uid = self._last_seen_uid
-
+        prev_max_uid = self._last_seen_uid if self._last_seen_uid != -1 else 0
         max_uid = MessageSchema.objects.filter(folder_schema=self._schema).aggregate(
             Max('uid'))  # type: t.Dict[t.AnyStr, int]
         max_uid = max_uid['uid__max']
