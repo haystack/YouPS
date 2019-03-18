@@ -167,6 +167,8 @@ class Folder(object):
         if self._last_seen_uid != max_uid:
             if (max_uid - prev_max_uid) < Folder.download_increment:
                 self._is_initialized = True
+            else:
+                logger.info("%s: maxuid: %d, prev_maxuid: %d" % (self, max_uid, prev_max_uid))
             self._last_seen_uid = max_uid
             logger.debug('%s updated max_uid %d' % (self, max_uid))
 
@@ -366,10 +368,6 @@ class Folder(object):
                 logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (self, self._last_seen_uid, last_seen_uid))
                 logger.critical("number of messages returned %d" % (len(fetch_data)))
                 raise
-            if last_seen_uid != 0 and self.is_initialized:
-                event_data_queue.put(NewMessageData(Message(message_schema, self._imap_client)))
-
-            logger.debug("%s finished saving new messages..:" % self)
 
             # create and save the message contacts
             if envelope.from_ is not None:
@@ -384,6 +382,10 @@ class Folder(object):
                 message_schema.cc.add(*self._find_or_create_contacts(envelope.cc))
             if envelope.bcc is not None:
                 message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
+
+            if last_seen_uid != 0 and self.is_initialized:
+                event_data_queue.put(NewMessageData(Message(message_schema, self._imap_client)))
+
 
             logger.debug("%s saved new message with uid %d" % (self, uid))
 
