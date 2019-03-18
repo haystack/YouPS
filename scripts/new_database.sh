@@ -27,6 +27,7 @@ echo
 
 # create the new database
 mysql -u root -p$password <<EOF
+    drop database if exists $databaseName;
     create database $databaseName;
     grant all privileges ON $databaseName.* TO root@localhost;
 EOF
@@ -45,6 +46,8 @@ python manage.py migrate djcelery
 
 # alter tables to utf8
 mysql -u root -p$password <<EOF
+    USE $databaseName;
+
     ALTER TABLE
         youps_folder
         CONVERT TO CHARACTER SET utf8mb4
