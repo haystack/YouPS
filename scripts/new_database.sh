@@ -4,12 +4,12 @@ cd ~/production/mailx || exit;
 # remove previous migrations
 cd schema/migrations || exit;
 # removes all migrations except __init__.py and __init__.pyc
-ls | grep -v __init__.py | xargs rm
+ls | grep -v __init__.py | xargs -r rm;
 cd ~/production/mailx;
 
 # get the name of the mysql database
 echo -n Database Name:
-read -s databaseName
+read databaseName
 echo 
 
 
