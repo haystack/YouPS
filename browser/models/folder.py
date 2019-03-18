@@ -366,7 +366,7 @@ class Folder(object):
                 logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (self, self._last_seen_uid, last_seen_uid))
                 logger.critical("number of messages returned %d" % (len(fetch_data)))
                 raise
-            if last_seen_uid != 0:
+            if last_seen_uid != 0 and self.is_initialized:
                 event_data_queue.put(NewMessageData(Message(message_schema, self._imap_client)))
 
             logger.debug("%s finished saving new messages..:" % self)

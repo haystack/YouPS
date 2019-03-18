@@ -147,7 +147,7 @@ class MailBox(object):
             # do not yield folders which are not selectable
             if '\\Noselect' in flags:
                 folder._is_selectable = False
-                folder.is_initialized = True
+                folder._is_initialized = True
                 continue
             else:
                 # TODO we should verify this in the return from select_folder
