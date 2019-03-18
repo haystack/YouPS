@@ -15,6 +15,11 @@ cd schema/migrations || exit;
 ls | grep -v __init__.py | xargs -r rm;
 cd ~/production/mailx;
 
+# get the domain name
+echo -n 'Enter the domain name for example youps-dev.csail.mit.edu: '
+read domainName
+echo
+
 # get the name of the mysql database
 echo -n Database Name:
 read databaseName
@@ -85,4 +90,10 @@ mysql -u root -p$password <<EOF
 
 EOF
 
-
+# set the domain name for the site
+python manage.py shell <<EOF
+from django.contrib.sites.models import Site
+mysite = Site.objects.get_current()
+mysite.domain = $domainName 
+mysite.save()
+EOF
