@@ -16,7 +16,7 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 class Folder(object):
 
-    download_increment = 1000
+    download_increment = 100
 
     def __init__(self, folder_schema, imap_client):
         # type: (FolderSchema, IMAPClient) -> Folder
