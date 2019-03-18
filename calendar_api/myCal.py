@@ -1,10 +1,11 @@
 from ics import Calendar, Event
 from icalevents.icalevents import events
-from icalevents.icalparser import normalize
+from dateutil.tz import tzlocal
+
 import datetime
 
 
-class YoupsCalendar:
+class MyCalendar:
     """Calendar Module for Youps."""
 
     def __init__(self, name, link):
@@ -18,7 +19,8 @@ class YoupsCalendar:
         self.name = name
         self.link = link
 
-    def get_conflicts(self, startTime, endTime=None, defaultInterval=datetime.timedelta(hours=1)):
+    def get_conflicts(self, startTime, endTime=None,
+                      defaultInterval=datetime.timedelta(hours=1)):
         """Check the calendar to see if the specified time is available.
 
         Parameters:
@@ -26,7 +28,7 @@ class YoupsCalendar:
         endTime (datetime) -- end of the time interval
 
         Returns:
-        boolean: True if there are no conflicts within the time interval, False otherwise
+        list: events conflicting with the interval
 
         """
         if endTime is None:
@@ -34,9 +36,8 @@ class YoupsCalendar:
         conflicts = events(self.link, start=startTime, end=endTime)
         return conflicts
 
-    # TODO: Decide how to clean up new events (cronjob to delete)
-
-    def create_event(self, name, startTime, endTime=None, description="", location="", path=""):
+    def create_event(self, name, startTime, endTime=None, description="",
+                     location="", path=""):
         """Create an ics file containing a new event.
 
         Parameters:
@@ -56,10 +57,10 @@ class YoupsCalendar:
         newEvent = Event()
 
         newEvent.name = name
-        newEvent.begin = normalize(startTime)
+        newEvent.begin = startTime
 
         if endTime is not None:
-            newEvent.end = normalize(endTime)
+            newEvent.end = endTime
 
         newEvent.description = description
         newEvent.location = location
@@ -80,24 +81,32 @@ class YoupsCalendar:
 
 
 if __name__ == "__main__":
+    link = "https://calendar.google.com/calendar/ical/3ffpub8evedp0rkgvnubs5s3qk%40group.calendar.google.com/private-4250a5c9223e2fdeb9b64397e3944922/basic.ics"
+    cal = MyCalendar("My Classes", link)
 
-    # 6.031 Public Calendar
-    # link = 'https://calendar.google.com/calendar/ical/uh0pjuueg6973g214phtapbq3c%40group.calendar.google.com/public/basic.ics'
-    # YOUPS Test Cal
-    link = "https://calendar.google.com/calendar/ical/3ffpub8evedp0rkgvnubs5s3qk%40group.calendar.google.com/private-4250a5c9223e2fdeb9b64397e3944922/basic.ics",
-
-    classCalendar = YoupsCalendar('Classe Test', link)
-
-    # Test availablity
-    noConflicts = classCalendar.get_conflicts(datetime.datetime(2019, 3, 18, 6, 30, 0), datetime.datetime(2019, 3, 18, 7, 30, 0))
+    noConflicts = cal.get_conflicts(
+                            datetime.datetime(2019, 3, 18, hour=6, minute=30),
+                            datetime.datetime(2019, 3, 18, hour=7, minute=30))
     assert len(noConflicts) == 0
-    print("is_available True - PASS")
-    conflict = classCalendar.get_conflicts(datetime.datetime(2019, 3, 18, 10, 30, 0), datetime.datetime(2019, 3, 18, 11, 30, 0))
-    assert len(conflict) == 2
-    print("is_available False - PASS")
+    print("noConflicts ==", [conflict.summary for conflict in noConflicts])
+
+    conflicts = cal.get_conflicts(
+                            datetime.datetime(2019, 3, 18, hour=10, minute=30),
+                            datetime.datetime(2019, 3, 18, hour=11, minute=30))
+    assert len(conflicts) == 2
+    print("conflicts ==", [conflict.summary for conflict in conflicts])
+
     # Test event
-    # name = classCalendar.create_event("Available", "2019-03-04T14:00:00 -05:00", "2019-03-04T15:00:00 -05:00")
-    # print("Event Created - " + name)
-    #
-    # name = classCalendar.create_event("Unavailable", "2019-03-04T12:00:00 -05:00", "2019-03-04T13:00:00 -05:00")
-    # print("Event Created - " + name)
+    tz = tzlocal()
+
+    name = cal.create_event(
+                        "Available",
+                        datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz),
+                        datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz))
+    print("Event Created - " + name)
+
+    name = cal.create_event(
+                        "Unavailable",
+                        datetime.datetime(2019, 3, 4, hour=12, minute=0, tzinfo=tz),
+                        datetime.datetime(2019, 3, 4, hour=13, minute=0, tzinfo=tz))
+    print("Event Created - " + name)
