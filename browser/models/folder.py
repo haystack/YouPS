@@ -383,7 +383,7 @@ class Folder(object):
             if envelope.bcc is not None:
                 message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
 
-            if last_seen_uid != 0 and self.is_initialized:
+            if last_seen_uid != 0 and self._is_initialized:
                 event_data_queue.put(NewMessageData(Message(message_schema, self._imap_client)))
 
 
