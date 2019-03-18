@@ -94,6 +94,6 @@ EOF
 python manage.py shell <<EOF
 from django.contrib.sites.models import Site
 mysite = Site.objects.get_current()
-mysite.domain = $domainName 
+mysite.domain = "'$domainName'"
 mysite.save()
 EOF
