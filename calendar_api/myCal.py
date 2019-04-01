@@ -8,7 +8,7 @@ import datetime
 class MyCalendar:
     """Calendar Module for Youps."""
 
-    def __init__(self, name, link):
+    def __init__(self, name, link, apple=False):
         """Create a new YoupsCalendar instance.
 
         Parameters:
@@ -18,6 +18,7 @@ class MyCalendar:
         """
         self.name = name
         self.link = link
+        self.apple = apple
 
     def get_conflicts(self, startTime, endTime=None,
                       defaultInterval=datetime.timedelta(hours=1)):
@@ -33,7 +34,7 @@ class MyCalendar:
         """
         if endTime is None:
             endTime = startTime + defaultInterval
-        conflicts = events(self.link, start=startTime, end=endTime)
+        conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
         return conflicts
 
     def create_event(self, name, startTime, endTime=None, description="",
@@ -81,8 +82,11 @@ class MyCalendar:
 
 
 if __name__ == "__main__":
-    link = "https://calendar.google.com/calendar/ical/3ffpub8evedp0rkgvnubs5s3qk%40group.calendar.google.com/private-4250a5c9223e2fdeb9b64397e3944922/basic.ics"
+    link = "https://calendar.google.com/calendar/ical/3ffpub8evedp0rkgvnubs5s3qk%40group.calendar.google.com/private-cce58df7c902a1189a89098ca497809a/basic.ics"
     cal = MyCalendar("My Classes", link)
+
+    apple_link = "https://p59-calendars.icloud.com/published/2/AAAAAAAAAAAAAAAAAAAAAF2CsV63Zeunl_3du57wOwnAPqNtXMsYPKgnmYkouLeZUb_27QFCL5haGn_kxElG7wXMaqYOZuQgeo9Fxh_Xsv4"
+    apple_cal = MyCalendar("Apple", apple_link, apple=True)
 
     noConflicts = cal.get_conflicts(
                             datetime.datetime(2019, 3, 18, hour=6, minute=30),
@@ -95,6 +99,19 @@ if __name__ == "__main__":
                             datetime.datetime(2019, 3, 18, hour=11, minute=30))
     assert len(conflicts) == 2
     print("conflicts ==", [conflict.summary for conflict in conflicts])
+
+    apple_noConflicts = apple_cal.get_conflicts(
+                            datetime.datetime(2019, 3, 18, hour=6, minute=30),
+                            datetime.datetime(2019, 3, 18, hour=7, minute=30))
+    assert len(apple_noConflicts) == 0
+    print("noConflicts ==", [conflict.summary for conflict in apple_noConflicts])
+
+    apple_conflicts = apple_cal.get_conflicts(
+                            datetime.datetime(2019, 4, 1, hour=20, minute=30),
+                            datetime.datetime(2019, 4, 1, hour=23, minute=30))
+    assert len(apple_conflicts) == 1
+    print("conflicts ==", [conflict.summary for conflict in apple_conflicts])
+
 
     # Test event
     tz = tzlocal()

@@ -6,10 +6,13 @@ from random import randint
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, rruleset, rrulestr
-from dateutil.tz import UTC, gettz
+from dateutil.tz import tzutc
+from dateutil.tz import gettz
 
 from icalendar import Calendar
 from icalendar.prop import vDDDLists
+
+UTC = tzutc()
 
 
 def now():
@@ -106,7 +109,7 @@ class Event:
         ne.summary = self.summary
         ne.description = self.description
         ne.start = new_start
-        
+
         if self.end:
             duration = self.end - self.start
             ne.end = (new_start + duration)
@@ -131,14 +134,14 @@ def create_event(component, tz=UTC):
     event = Event()
 
     event.start = normalize(component.get('dtstart').dt, tz=tz)
-    
+
     if component.get('dtend'):
         event.end = normalize(component.get('dtend').dt, tz=tz)
     elif component.get('duration'): # compute implicit end as start + duration
         event.end = event.start + component.get('duration').dt
     else: # compute implicit end as start + 0
         event.end = event.start
-    
+
     try:
         event.summary = str(component.get('summary'))
     except UnicodeEncodeError as e:
@@ -217,7 +220,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
         raise ValueError('Content is invalid!')
 
     calendar = Calendar.from_ical(content)
-    
+
     # Find the calendar's timezone info, or use UTC
     for c in calendar.walk():
         if c.name == 'VTIMEZONE':
@@ -249,7 +252,7 @@ def parse_rrule(component, tz=UTC):
     Extract a dateutil.rrule object from an icalendar component. Also includes
     the component's dtstart and exdate properties. The rdate and exrule
     properties are not yet supported.
-    
+
     :param component: icalendar component
     :param tz: timezone for DST handling
     :return: extracted rrule or rruleset
@@ -261,32 +264,32 @@ def parse_rrule(component, tz=UTC):
             rrules = [rrules]
         # Parse the rrules, might return a rruleset instance, instead of rrule
         rule = rrulestr('\n'.join(x.to_ical().decode() for x in rrules), dtstart=normalize(component['dtstart'].dt, tz=tz))
-        
+
         if component.get('exdate'):
             # Make sure, to work with a rruleset
             if isinstance(rule, rrule):
                 rules = rruleset()
                 rules.rrule(rule)
                 rule = rules
-            
+
             # Add exdates to the rruleset
             for exd in extract_exdates(component):
                 rule.exdate(exd)
-        
+
         #TODO: What about rdates and exrules?
-        
+
     # You really want an rrule for a component without rrule? Here you are.
     else:
         rule = rruleset()
         rule.rdate(normalize(component['dtstart'].dt, tz=tz))
-    
+
     return rule
 
 
 def extract_exdates(component):
     """
     Compile a list of all exception dates stored with a component.
-    
+
     :param component: icalendar iCal component
     :return: list of exception dates
     """
@@ -301,4 +304,3 @@ def extract_exdates(component):
             dates.extend(normalize(exd.dt) for exd in exd_prop.dts)
 
     return dates
-
