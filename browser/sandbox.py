@@ -1,7 +1,7 @@
 from __future__ import unicode_literals, division
 
 import logging
-import sys
+import sys,traceback, inspect
 import datetime
 import ast
 import typing as t  # noqa: F401 ignore unused we use it for typing
@@ -221,12 +221,20 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                     mailbox.new_message_handler.removeAllHandles()
 
-    except Exception:
+    except Exception as e:
         res['status'] = False
         userLogger.exception("failure running user %s code" %
                              mailbox._imap_account.email)
 
-        
+        # print out error messages for user 
+        err_msg = ""
+        if len(inspect.trace()) < 2: 
+            logger.exception("System error during running user code")
+        else:
+            line_no = inspect.trace()[1][2]
+
+            err_msg = str(e) + " at line " + str(line_no)
+            logger.exception(err_msg)
     finally:
         # set the stdout back to what it was
         sys.stdout = sys.__stdout__
@@ -249,7 +257,11 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                 logger.debug( msg_data.encode('utf8', 'replace') )
                 msg_data = ast.literal_eval( msg_data.encode('utf8', 'replace') )
 
-                msg_data['log'] = execution_log
+                msg_data['log'] = execution_log + "\n %s" % err_msg
+                if len(err_msg) > 0:
+                    msg_data['log'] = msg_data['log'] + "\n %s" % err_msg
+                    msg_data['error'] = True
+
                 new_log[msg_data['timestamp']] = msg_data
 
             logger.debug(new_log)

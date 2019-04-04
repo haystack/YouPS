@@ -37,17 +37,20 @@ $(document).ready(function() {
             $.each(sorted, function(index, timestamp) {                
                 Message = msg_log[timestamp];
                 _message_data = Message;
+                debugger;
 
-                var json_panel_id = Math.floor(Math.random() * 10000) + 1;
+                // TODO make it more unique
+                var json_panel_id = timestamp.replace(/[ /:,]/g,'');
                 t.row.add( [
                         timestamp.split(",")[0],
                         "",
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                        ""
+                        (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
                 ] ).draw( false );  
 
-                
+                delete Message["error"];
+                delete Message["log"];
 
                 $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                     data: {
@@ -228,7 +231,6 @@ $(document).ready(function() {
 
     function init_folder_selector($folder_container) {
         // nested tree checkboxs http://jsfiddle.net/rn290ywf/
-        // TODO just for test
         if (FOLDERS.length ==0)
             FOLDERS = ['INBOX', 'Family','Family/Sub folder1','Family/Sub folder2', 'Conference', 'Internship', 'Budget']
         
@@ -494,8 +496,8 @@ $(document).ready(function() {
         "columns": [
             { "width": "40px" },
             { "orderable": false },
-            { "orderable": false },
-            { "orderable": false },
+            { "width": "200px", "orderable": false },
+            { "width": "400px", "orderable": false },
             { "orderable": false }
         ],
         "order": [[1, 'asc']],
@@ -935,7 +937,7 @@ $(document).ready(function() {
                 var code = elem.CodeMirror.getValue();
                 var uid = $(elem).parents('.panel').attr('rule-id');
                 var type = $(elem).parents('.editable-container').attr('type');
-                // TODO extract if there is interval, then attach the timespan to the type value
+                // Extract if there is interval, then attach the timespan to the type value
                 if($(elem).parents('.editable-container').find('.trigger input:checked').attr('value') != "now") {
                     var time_span = $(elem).parents('.editable-container').find('.trigger input:checked').next().val();
                     time_span = parseInt(time_span) || 1;
