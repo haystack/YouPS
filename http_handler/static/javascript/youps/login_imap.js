@@ -288,7 +288,29 @@ $(document).ready(function() {
         var editor_elem = `<div class="panel-body" style="display:none;">
             <div class="folder-container"></div>
             <div class="editor-container">
-            <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
+                <div class='trigger'>
+                    <form class="form-inline">
+                        <div class="form-group">
+                            <span>Run following rules when there is </span>
+                            <span>message arrived </span>
+                        </div>
+                        <div class="form-group">
+                            <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
+                            <label class="form-check-label" for="inlineRadio1">now</label>
+                            <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
+                            <input style='width:50px;' type="text" class="form-control" placeholder="1">
+                            <select id="company" class="form-control">
+                                <option>min</option>
+                                <option>hr</option>
+                                <option>day</option>
+                            </select> 													
+                        </div>
+                        <div class="form-group">
+                            <span>ago</span>
+                        </div>
+                    </form>
+                </div>
+                <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
         </div>
         <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_new_message(new_message):":"def repeat_every():",
             "\tpass"), 
@@ -911,8 +933,19 @@ $(document).ready(function() {
             $(this).find('.CodeMirror').each( function(index, elem) {
                 if( $(elem).parents('.panel').hasClass('removed') ) return;
                 var code = elem.CodeMirror.getValue();
-                var type = $(elem).parents('.editable-container').attr('type');
                 var uid = $(elem).parents('.panel').attr('rule-id');
+                var type = $(elem).parents('.editable-container').attr('type');
+                // TODO extract if there is interval, then attach the timespan to the type value
+                if($(elem).parents('.editable-container').find('.trigger input:checked').attr('value') != "now") {
+                    var time_span = $(elem).parents('.editable-container').find('.trigger input:checked').next().val();
+                    time_span = parseInt(time_span) || 1;
+                    var time_unit = $(elem).parents('.editable-container').find('.trigger input:checked').next().next().val();
+                    if(time_unit == "min") time_span *= 60;
+                    else if(time_unit == "hr") time_span *= (60*60);
+                    else time_span *= (60*60*24);
+                    type += ("-" + time_span);
+                }
+                
 
                 var selected_folders = [];
                 $(elem).parents('.panel').find(".folder-container input:checked").each(function () {

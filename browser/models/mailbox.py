@@ -2,6 +2,7 @@ from __future__ import unicode_literals, print_function, division
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from event import Event
 import logging
+import datetime
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
@@ -71,6 +72,17 @@ class MailBox(object):
             folder._uid_validity = uid_validity
 
         return True
+
+    def _manage_task(self, email_rule, now):
+        # type: (EmailRule, datetime.datetime) -> None 
+        """Add task to event_data_list, if there is message arrived in time span [last checked time, span_end]
+        """ 
+        time_span = int(email_rule.type.split('new-message-')[1])
+        for folder_schema in email_rule.folders.all():
+            folder = Folder(folder_schema, self._imap_client)
+            time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
+            time_end = now - datetime.timedelta(seconds=time_span)
+            folder._search_scheduled_message(self.event_data_list, time_start, time_end)
 
     def _supports_cond_store(self):
         # type: () -> bool

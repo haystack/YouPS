@@ -18,5 +18,7 @@ class Command(BaseCommand):
             tasks.register_inbox()
         elif task_name == "sync":
             tasks.loop_sync_user_inbox()
+        elif task_name == "task":
+            tasks.loop_scheduled_task()
         else:
-            raise Exception('Valid tasks are register, sync')
+            raise Exception('Valid tasks are register, sync, task')

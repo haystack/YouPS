@@ -30,7 +30,7 @@ class Message(object):
         self._imap_client = imap_client  # type: IMAPClient
         
         self.is_simulate = is_simulate  # type: bool
-        logger.info( 'caller name:', inspect.stack()[1][3] )
+        logger.info( 'caller name: %s', inspect.stack()[1][3] )
 
     def __str__(self):
         # type: () -> t.AnyStr

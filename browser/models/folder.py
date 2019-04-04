@@ -179,6 +179,13 @@ class Folder(object):
         self._update_last_seen_uid()
         logger.debug("%s finished normal refresh" % (self))
 
+    def _search_scheduled_message(self, event_data_list, time_start, time_end):
+        message_schemas = MessageSchema.objects.filter(folder_schema=self._schema).filter(date__range=[time_start, time_end])
+        
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        for message_schema in message_schemas:
+            event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
+
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool
         """Determine if the folder should completely refresh it's cache.

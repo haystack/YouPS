@@ -1,10 +1,11 @@
 import logging
 
 from django.contrib.sites.models import Site
+from django.utils import timezone
 from browser.imap import authenticate
 from browser.models.mailbox import MailBox
 from http_handler.settings import BASE_URL, PROTOCOL
-from schema.youps import ImapAccount
+from schema.youps import ImapAccount, EmailRule, MessageSchema
 from smtp_handler.utils import send_email
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import fcntl
@@ -151,6 +152,22 @@ def loop_sync_user_inbox():
                     # TODO maybe we should email the user
                     continue
                 logger.debug("Mailbox sync done: %s" % (imapAccount_email))
+
+                try:
+                    # get scheduled tasks
+                    email_rules = EmailRule.objects.filter(mode=imapAccount.current_mode, type__startswith='new-message-')  # type: t.List[EmailRule]
+                    for email_rule in email_rules:
+                        now = timezone.now()
+                        mailbox._manage_task(email_rule, now)
+
+                        # mark timestamp to prevent running on certain message multiple times 
+                        email_rule.executed_at = now
+                        email_rule.save()
+                except Exception:
+                    logger.exception("Mailbox managing task failed")
+                    # TODO maybe we should email the user
+                    continue
+                logger.debug("Mailbox managing task done: %s" % (imapAccount_email))
 
                 try:
                     res = mailbox._run_user_code()

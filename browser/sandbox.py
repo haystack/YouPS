@@ -147,6 +147,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         else:
             # iterate through event queue
             for event_data in mailbox.event_data_list:
+
                 # event for new message arrival
                 if isinstance(event_data, NewMessageData):
                     from_field = {
@@ -197,10 +198,13 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                     code = rule.code
                     
+                    logger.debug(code)
 
                     # add the user's functions to the event handlers
                     if rule.type == "new-message":
-                        logger.info(code)
+                        
+                        code = code + "\non_message_arrival(on_new_message)"
+                    elif rule.type.startswith("old-message"):
                         code = code + "\non_message_arrival(on_new_message)"
                     # else:
                     #     continue
@@ -221,6 +225,8 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         res['status'] = False
         userLogger.exception("failure running user %s code" %
                              mailbox._imap_account.email)
+
+        
     finally:
         # set the stdout back to what it was
         sys.stdout = sys.__stdout__
@@ -237,7 +243,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             for log in user_std_out.getvalue().split("#!@YoUPS"):
                 if len(log.strip()) == 0:
                     continue
-                logger.debug(log)
+                logger.info(log)
                 logger.debug( log.split("#!@log") )
                 msg_data, execution_log = log.split("#!@log")
                 logger.debug( msg_data.encode('utf8', 'replace') )
