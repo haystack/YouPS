@@ -59,6 +59,12 @@
   padding: 10px;
 }
 
+#sidebar_container {
+  list-style-type: none; 
+  padding-inline-start: 0px; 
+  -webkit-padding-start: 0px;
+}
+
 .add-sidebar {
     padding-top: 50px;
     margin-top: -50px;
