@@ -59,6 +59,17 @@
   padding: 10px;
 }
 
+#sidebar_container {
+  list-style-type: none; 
+  padding-inline-start: 0px; 
+  -webkit-padding-start: 0px;
+}
+
+.add-sidebar {
+    padding-top: 50px;
+    margin-top: -50px;
+}
+
 [contenteditable] {
   border: solid 1px lightgreen;
   padding: 5px;
@@ -544,6 +555,3 @@ div[type='repeat'] {
 #example tr.unmatched{
   opacity: 0.5;
 }
-
-
-
