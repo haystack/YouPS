@@ -78,10 +78,13 @@ class MailBox(object):
         """Add task to event_data_list, if there is message arrived in time span [last checked time, span_end]
         """ 
         time_span = int(email_rule.type.split('new-message-')[1])
+        
         for folder_schema in email_rule.folders.all():
             folder = Folder(folder_schema, self._imap_client)
             time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
             time_end = now - datetime.timedelta(seconds=time_span)
+
+            logger.info("time range %s %s" % (time_start, time_end))
             folder._search_scheduled_message(self.event_data_list, time_start, time_end)
 
     def _supports_cond_store(self):

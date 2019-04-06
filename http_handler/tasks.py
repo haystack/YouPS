@@ -1,5 +1,5 @@
 import logging
-
+import datetime 
 from django.contrib.sites.models import Site
 from django.utils import timezone
 from browser.imap import authenticate
@@ -147,6 +147,7 @@ def loop_sync_user_inbox():
                     mailbox = MailBox(imapAccount, imap)
                     # sync the mailbox with imap
                     mailbox._sync()
+                    logger.info(mailbox.event_data_list)
                 except Exception:
                     logger.exception("Mailbox sync failed")
                     # TODO maybe we should email the user
@@ -157,12 +158,15 @@ def loop_sync_user_inbox():
                     # get scheduled tasks
                     email_rules = EmailRule.objects.filter(mode=imapAccount.current_mode, type__startswith='new-message-')  # type: t.List[EmailRule]
                     for email_rule in email_rules:
-                        now = timezone.now()
+                        # Truncate millisec since mysql doesn't suport msec. 
+                        now = timezone.now().replace(microsecond=0) + datetime.timedelta(seconds=1)
+
                         mailbox._manage_task(email_rule, now)
 
                         # mark timestamp to prevent running on certain message multiple times 
-                        email_rule.executed_at = now
+                        email_rule.executed_at = now + datetime.timedelta(seconds=1)
                         email_rule.save()
+                        logger.info(mailbox.event_data_list)
                 except Exception:
                     logger.exception("Mailbox managing task failed")
                     # TODO maybe we should email the user

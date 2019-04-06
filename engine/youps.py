@@ -227,6 +227,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
             for value in mode['editors']:
                 uid = value['uid']
+                name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
                 logger.info("saving editor %s run request" % uid)
@@ -234,7 +235,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                 print code
                 print folders
                 
-                er = EmailRule(uid=uid, mode=mailbotMode, type=value['type'], code=code)
+                er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
                 # # Save selected folder for the mode

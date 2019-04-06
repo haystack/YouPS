@@ -1,16 +1,17 @@
 from __future__ import unicode_literals, division
 
 import logging
-import sys,traceback, inspect
+import sys, traceback, inspect
 import datetime
 import ast
+import copy
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from StringIO import StringIO
 from email import message
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
 
-from browser.models.event_data import NewMessageData
+from browser.models.event_data import NewMessageData, NewMessageDataSceduled
 from browser.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from browser.models.message import Message
 from smtp_handler.utils import send_email
@@ -37,16 +38,6 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     # assert the mode is the mailboat mode
     # assert isinstance(mode, MailbotMode)
     assert mailbox.new_message_handler is not None
-
-    # get the logger for user output
-    userLogger = logging.getLogger('youps.user')  # type: logging.Logger
-    # get the stream handler associated with the user output
-    userLoggerStreamHandlers = filter(lambda h: isinstance(h, logging.StreamHandler), userLogger.handlers)
-    userLoggerStream = userLoggerStreamHandlers[0].stream if userLoggerStreamHandlers else None
-    assert userLoggerStream is not None
-
-    # create a string buffer to store stdout
-    user_std_out = StringIO()
 
     # define user methods
     def create_draft(subject="", to_addr="", cc_addr="", bcc_addr="", body="", draft_folder="Drafts"):
@@ -113,6 +104,16 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             send_email(subject, mailbox._imap_account.email, to, body)
         logger.debug("send(): sent a message to  %s" % str(to))
 
+    # get the logger for user output
+    userLogger = logging.getLogger('youps.user')  # type: logging.Logger
+    # get the stream handler associated with the user output
+    userLoggerStreamHandlers = filter(lambda h: isinstance(h, logging.StreamHandler), userLogger.handlers)
+    userLoggerStream = userLoggerStreamHandlers[0].stream if userLoggerStreamHandlers else None
+    assert userLoggerStream is not None
+
+    # create a string buffer to store stdout
+    user_std_out = StringIO()
+
     # execute user code
     try:
         # set the stdout to a string
@@ -130,6 +131,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             'on_message_arrival': on_message_arrival
             # 'set_interval': set_interval
         }
+        new_log = {}
 
         # simulate request. normally from UI
         if is_simulate:
@@ -147,15 +149,19 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         else:
             # iterate through event queue
             for event_data in mailbox.event_data_list:
+                new_msg = {}
 
                 # event for new message arrival
-                if isinstance(event_data, NewMessageData):
-                    from_field = {
-                        "name": event_data.message.from_.name,
-                        "email": event_data.message.from_.email,
-                        "organization": event_data.message.from_.organization,
-                        "geolocation": event_data.message.from_.geolocation
-                    }
+                # TODO maybe caputre this info after execute log?
+                if isinstance(event_data, NewMessageData) or isinstance(event_data, NewMessageDataSceduled):
+                    from_field = {}
+                    if event_data.message.from_._schema:
+                        from_field = {
+                            "name": event_data.message.from_.name,
+                            "email": event_data.message.from_.email,
+                            "organization": event_data.message.from_.organization,
+                            "geolocation": event_data.message.from_.geolocation
+                        }
 
                     to_field = [{
                         "name": t.name,
@@ -173,7 +179,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                     # This is to log for users
                     new_msg = {
-                        "timestamp": str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")), 
+                        "timestamp": str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
                         "type": "new_message", 
                         "folder": event_data.message.folder.name, 
                         "from_": from_field, 
@@ -185,13 +191,21 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         "deadline": event_data.message.deadline, 
                         "is_read": event_data.message.is_read, 
                         "is_deleted": event_data.message.is_deleted, 
-                        "is_recent": event_data.message.is_recent
+                        "is_recent": event_data.message.is_recent,
+                        "log": ""
                     }
-                    log_format = "%s%s%s" % ("#!@YoUPS", new_msg, "#!@log")
-                    print (log_format),
+
+                # if tho the engine is not turned on yet, still leave the log of message arrival 
+                if mode is None:
+                    new_log[new_msg["timestamp"]] = new_msg
+                    continue
 
                 # TODO maybe use this instead of mode.rules
                 for rule in EmailRule.objects.filter(mode=mode):
+                    is_fired = False 
+                    copy_msg = copy.deepcopy(new_msg)
+                    copy_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
+
                     assert isinstance(rule, EmailRule)
 
                     valid_folders = rule.folders.all()
@@ -201,23 +215,65 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     logger.debug(code)
 
                     # add the user's functions to the event handlers
-                    if rule.type == "new-message":
-                        
-                        code = code + "\non_message_arrival(on_new_message)"
-                    elif rule.type.startswith("old-message"):
+                    if rule.type.startswith("new-message"):
                         code = code + "\non_message_arrival(on_new_message)"
                     # else:
                     #     continue
                     #     # some_handler or something += repeat_every
 
-                    # execute the user's code
-                    # exec cant register new function (e.g., on_message_arrival) when there is a user_env
-                    exec(code, user_environ)
+                    
+                    try:
+                        # execute the user's code
+                        # exec cant register new function (e.g., on_message_arrival) when there is a user_env
+                        exec(code, user_environ)
 
-                    # Conduct rules only on requested folders
-                    if event_data.message._schema.folder_schema in valid_folders:
-                        # TODO maybe user log here that event has been fired
-                        event_data.fire_event(mailbox.new_message_handler)
+                        # Check if the type of rule and event_data match
+                        if (type(event_data).__name__ == "NewMessageData" and rule.type =="new-message") or \
+                                (type(event_data).__name__ == "NewMessageDataSceduled" and rule.type.startswith("new-message-")):
+
+                            # Conduct rules only on requested folders
+                            if event_data.message._schema.folder_schema in valid_folders:
+                                logger.info("fired %s %s" % (rule.name, event_data.message.subject))
+                                # TODO maybe user log here that event has been fired
+                                is_fired = True
+                                event_data.fire_event(mailbox.new_message_handler)
+
+                    except Exception as e:
+                        # Get error message for users if occurs
+                        # print out error messages for user 
+                        
+                        # if len(inspect.trace()) < 2: 
+                        #     logger.exception("System error during running user code")
+                        # else:
+                        
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        logger.info(e)
+                        logger.debug(exc_obj)
+                        # logger.info(traceback.print_exception())
+
+                        # TODO find keyword 'in on_new_message'
+                        logger.info(traceback.format_tb(exc_tb))
+                        logger.info(sys.exc_info())
+                        
+                        copy_msg["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
+                        copy_msg["error"] = True 
+                    finally:         
+                        if is_fired:
+                            logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
+                            copy_msg["trigger"] = rule.name
+                            
+                            copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
+
+                            new_log[copy_msg["timestamp"]] = copy_msg    
+
+                        # flush buffer
+                        user_std_out = StringIO()
+
+                        # set the stdout to a string
+                        sys.stdout = user_std_out
+
+                        # set the user logger to
+                        userLoggerStream = user_std_out
 
                     mailbox.new_message_handler.removeAllHandles()
 
@@ -225,16 +281,6 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         res['status'] = False
         userLogger.exception("failure running user %s code" %
                              mailbox._imap_account.email)
-
-        # print out error messages for user 
-        err_msg = ""
-        if len(inspect.trace()) < 2: 
-            logger.exception("System error during running user code")
-        else:
-            line_no = inspect.trace()[1][2]
-
-            err_msg = str(e) + " at line " + str(line_no)
-            logger.exception(err_msg)
     finally:
         # set the stdout back to what it was
         sys.stdout = sys.__stdout__
@@ -246,25 +292,27 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         
         # save logs to db
         else:
-            new_log = {}
+            # new_log = {}
             # Parse log output (string) to Json. Later, this will be appended to the user's execution log
-            for log in user_std_out.getvalue().split("#!@YoUPS"):
-                if len(log.strip()) == 0:
-                    continue
-                logger.info(log)
-                logger.debug( log.split("#!@log") )
-                msg_data, execution_log = log.split("#!@log")
-                logger.debug( msg_data.encode('utf8', 'replace') )
-                msg_data = ast.literal_eval( msg_data.encode('utf8', 'replace') )
+            # for log in user_std_out.getvalue().split("#!@YoUPS"):
+            #     if len(log.strip()) == 0:
+            #         continue
+            # if False:
+            #     logger.info(log)
+            #     logger.debug( log.split("#!@log") )
+            #     msg_data, execution_log = log.split("#!@log")
+            #     # execution_log.split("#!@trigger_name_end") if "#!@trigger_name_end" in execution_log else
+            #     logger.debug( msg_data.encode('utf8', 'replace') )
+            #     msg_data = ast.literal_eval( msg_data.encode('utf8', 'replace') )
 
-                msg_data['log'] = execution_log + "\n %s" % err_msg
-                if len(err_msg) > 0:
-                    msg_data['log'] = msg_data['log'] + "\n %s" % err_msg
-                    msg_data['error'] = True
+            #     msg_data['log'] = execution_log + "\n %s" % err_msg
+            #     if len(err_msg) > 0:
+            #         msg_data['log'] = msg_data['log'] + "\n %s" % err_msg
+            #         msg_data['error'] = True
 
-                new_log[msg_data['timestamp']] = msg_data
+            # new_log[msg_data['timestamp']] = msg_data
 
-            logger.debug(new_log)
+            logger.info(new_log)
             res['imap_log'] = new_log
 
         user_std_out.close()

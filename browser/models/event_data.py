@@ -31,3 +31,15 @@ class NewMessageData(AbstractEventData):
         self.message._imap_client.select_folder(
             self.message._schema.folder_schema.name)
         event.fire(self.message)
+
+class NewMessageDataSceduled(NewMessageData):
+    def __init__(self, message):
+        # type: (Message) -> NewMessageDataSceduled
+        super(NewMessageDataSceduled, self).__init__(message)
+        self.message = message  # type: Message
+
+    def fire_event(self, event):
+        # type : (Event) -> None
+        super(NewMessageDataSceduled, self).fire_event(event)
+    
+
