@@ -30,7 +30,7 @@ class Message(object):
         self._imap_client = imap_client  # type: IMAPClient
         
         self.is_simulate = is_simulate  # type: bool
-        logger.info( 'caller name:', inspect.stack()[1][3] )
+        logger.debug( 'caller name: %s', inspect.stack()[1][3] )
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -343,7 +343,7 @@ class Message(object):
             TypeError: flags is not an iterable or a string
             TypeError: any flag is not a string
         """
-        cp_self = copy.deepcopy(self)
+        # cp_self = copy.deepcopy(self)
 
         ok, flags = self._check_flags(flags)
         if not ok:
@@ -358,7 +358,7 @@ class Message(object):
             # update the local flags
             self.flags = list(set(self.flags + flags))
 
-        self.diff_attr(cp_self)
+        # self.diff_attr(cp_self)
 
     def remove_flags(self, flags):
         # type: (t.Iterable[t.AnyStr]) -> None
@@ -403,14 +403,14 @@ class Message(object):
         """Mark a message as read.
         """
         if not self.is_simulate:
-            self.add_flags('\\Seen')
+            self._imap_client.add_flags(self._uid, ['\\Seen'])
 
     def mark_unread(self):
         # type: () -> None
         """Mark a message as unread
         """
         if not self.is_simulate:
-            self.remove_flags('\\Seen')
+            self._imap_client.remove_flags(self._uid, ['\\Seen'])
 
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None

@@ -1546,7 +1546,6 @@ def run_mailbot(request):
 		modes = json.loads(request.POST['modes']) 
 		is_test = True if request.POST['test_run'] == "true" else False
 		run_request = True if request.POST['run_request'] == "true" else False
-		print "RECEIVE RUN MAILBOT REQUEST"
 		res = engine.main.run_mailbot(user, request.user.email, current_mode_id, modes, is_test, run_request)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:

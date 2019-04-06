@@ -503,8 +503,18 @@ td.warning {
   margin: 0;
 }
 
+
+/* overwrite bootstrap styling */
+label {
+  font-weight: 400;
+}
+
 .trigger {
   margin: 10px;
+}
+
+.trigger input {
+  margin-left: 10px;
 }
 
 /* breakpoint */

@@ -18,8 +18,6 @@ class Command(BaseCommand):
     help = 'Process email'
 
     def handle(self, *args, **options):
-        imapAccounts = ImapAccount.objects.filter(is_running=True)
-        
         if len(args) == 0:
             print "give recipients address as an argument!"
             return
@@ -27,13 +25,13 @@ class Command(BaseCommand):
         to_addr = args[0]
         test_cases = [
             {
-                'subject': 'test email',
+                'subject': 'test email %s ' % str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
                 'from_addr': 'test@youps.csail.mit.edu',
                 'body_plain': 'hello world',
                 'body_html': 'hi'
             },
             {
-                'subject': 'test email with emoji 🤷‍♀️',
+                'subject': 'test email with emoji 🤷‍♀️ %s ' % str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
                 'from_addr': 'test@youps.csail.mit.edu',
                 'body_plain': 'hello world',
                 'body_html': '😎'

@@ -4,11 +4,12 @@ from schema.youps import (ContactSchema, EmailRule, FolderSchema, ImapAccount,
                           MessageSchema)
 
 __all__ = ['ContactSchema',
-            'EmailRule',
+           'EmailRule',
            'FolderSchema',
            'ImapAccount',
            'MailbotMode',
            'MessageSchema',
            'Message_Thread',
            'UserProfile',
+           'TaskManager'
            ]

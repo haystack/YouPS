@@ -7,7 +7,7 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from browser.models.event_data import NewMessageData, AbstractEventData
+from browser.models.event_data import NewMessageData, NewMessageDataSceduled, AbstractEventData
 from smtp_handler.utils import is_gmail
 
 
@@ -178,6 +178,14 @@ class Folder(object):
 
         self._update_last_seen_uid()
         logger.debug("%s finished normal refresh" % (self))
+
+    def _search_scheduled_message(self, event_data_list, time_start, time_end):
+        message_schemas = MessageSchema.objects.filter(folder_schema=self._schema).filter(date__range=[time_start, time_end])
+        
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        for message_schema in message_schemas:
+            logger.info("add schedule %s %s %s" % (time_start, message_schema.date, time_end))
+            event_data_list.append(NewMessageDataSceduled(Message(message_schema, self._imap_client)))
 
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool

@@ -189,12 +189,16 @@ class MailbotMode(models.Model):
 class EmailRule(models.Model):
     uid = models.IntegerField(default=1)
 
+    # e.g. new-message, old-message-[time span]
     type = models.CharField('rule_type', default='new-message', max_length=100)
     # user-defined name
     name = models.CharField('rule_name', default='Handling new messages', max_length=100)
     code = models.TextField(null=True, blank=True)  # t.AnyStr
     mode = models.ForeignKey('MailbotMode', related_name="rules")
     folders = models.ManyToManyField(FolderSchema, related_name='rules')  # type: t.List[FolderSchema]
+
+    # timestamp when it is executed by taskmanager
+    executed_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         unique_together = ("uid", "mode")
@@ -223,3 +227,15 @@ class Message_Thread(models.Model):
     class Meta:
         db_table = "youps_threads"
         unique_together = ("id", "imap_account")
+
+class TaskManager(models.Model):
+    id = models.AutoField(primary_key=True)
+    email_rule = models.ForeignKey('EmailRule')
+
+    message = models.ForeignKey('MessageSchema')
+
+    # when it should be performed
+    date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "youps_taskmanager"

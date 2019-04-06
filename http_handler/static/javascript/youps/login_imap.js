@@ -37,18 +37,25 @@ $(document).ready(function() {
             $.each(sorted, function(index, timestamp) {                
                 Message = msg_log[timestamp];
                 _message_data = Message;
+                // alert(Message["trigger"]);
 
-                var json_panel_id = Math.floor(Math.random() * 10000) + 1;
+                var json_panel_id = timestamp.replace(/[ /:,]/g,'');
                 t.row.add( [
                         timestamp.split(",")[0],
-                        "",
+                        Message["trigger"] || "",
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                        ""
+                        (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
                 ] ).draw( false );  
 
-                
+                // Delete attributes that are not allowed for users 
+                delete Message["trigger"];
+                delete Message["error"];
+                delete Message["log"];
+                delete Message["timestamp"];
+                delete Message["type"];
 
+                Contact :  Message['from_']
                 $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                     data: {
                         Contact :  Message['from_']
@@ -228,7 +235,6 @@ $(document).ready(function() {
 
     function init_folder_selector($folder_container) {
         // nested tree checkboxs http://jsfiddle.net/rn290ywf/
-        // TODO just for test
         if (FOLDERS.length ==0)
             FOLDERS = ['INBOX', 'Family','Family/Sub folder1','Family/Sub folder2', 'Conference', 'Internship', 'Budget']
         
@@ -288,7 +294,29 @@ $(document).ready(function() {
         var editor_elem = `<div class="panel-body" style="display:none;">
             <div class="folder-container"></div>
             <div class="editor-container">
-            <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
+                <div class='trigger'>
+                    <form class="form-inline">
+                        <div class="form-group">
+                            <span>Run following rules when there is </span>
+                            <span>message arrived </span>
+                        </div>
+                        <div class="form-group">
+                            <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
+                            <label class="form-check-label" for="inlineRadio1">now</label>
+                            <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
+                            <input style='width:50px;' type="text" class="form-control" placeholder="1">
+                            <select id="company" class="form-control">
+                                <option>min</option>
+                                <option>hr</option>
+                                <option>day</option>
+                            </select> 													
+                        </div>
+                        <div class="form-group">
+                            <span>ago</span>
+                        </div>
+                    </form>
+                </div>
+                <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
         </div>
         <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_new_message(new_message):":"def repeat_every():",
             "\tpass"), 
@@ -472,8 +500,8 @@ $(document).ready(function() {
         "columns": [
             { "width": "40px" },
             { "orderable": false },
-            { "orderable": false },
-            { "orderable": false },
+            { "width": "200px", "orderable": false },
+            { "width": "400px", "orderable": false },
             { "orderable": false }
         ],
         "order": [[1, 'asc']],
@@ -764,7 +792,7 @@ $(document).ready(function() {
         e.preventDefault();
 
         // Fire only by panel click not child
-        if($(e.target).parents('.input-group').length != 0 || $(e.target).is('button')) return;
+        if($(e.target).is('input') || $(e.target).is('button')) return;
 
         var $this = $(this);
         if(!$this.hasClass('panel-collapsed')) { // close the panel
@@ -911,15 +939,29 @@ $(document).ready(function() {
             $(this).find('.CodeMirror').each( function(index, elem) {
                 if( $(elem).parents('.panel').hasClass('removed') ) return;
                 var code = elem.CodeMirror.getValue();
+                var $parent_container = $(elem).parents('.panel');
+                var uid = $parent_container.attr('rule-id');
+                var name = $parent_container.find('.panel-title input').val();
                 var type = $(elem).parents('.editable-container').attr('type');
-                var uid = $(elem).parents('.panel').attr('rule-id');
+
+                // Extract if there is interval, then attach the timespan to the type value
+                if($parent_container.find('.trigger input:checked').attr('value') != "now") {
+                    var time_span = $parent_container.find('.trigger input:checked').next().val();
+                    time_span = parseInt(time_span) || 1;
+                    var time_unit = $parent_container.find('.trigger input:checked').next().next().val();
+                    if(time_unit == "min") time_span *= 60;
+                    else if(time_unit == "hr") time_span *= (60*60);
+                    else time_span *= (60*60*24);
+                    type += ("-" + time_span);
+                }
+                
 
                 var selected_folders = [];
                 $(elem).parents('.panel').find(".folder-container input:checked").each(function () {
                     selected_folders.push($(this).attr('value'));
                 });
 
-                editors.push({"uid": uid, "code": $.trim( code ), "type": type, "folders": selected_folders}); 
+                editors.push({"uid": uid, "name": name, "code": $.trim( code ), "type": type, "folders": selected_folders}); 
             })
 
             modes[id] = {
@@ -980,8 +1022,8 @@ $(document).ready(function() {
                     // Update execution log
                     if( log_backup != res['imap_log']){
                         // $("#console-output").html("");
-                        old_log = JSON.parse(log_backup == '' ? '{}':log_backup.
-                            replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
+                        old_log = JSON.parse(log_backup == '' ? '{}':log_backup)
+                            //replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
                         // msg_log = JSON.parse(res['imap_log'].replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
                         msg_log = JSON.parse(res['imap_log'])
                         var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();

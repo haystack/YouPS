@@ -179,7 +179,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             current_mode_id (integer): ID of currently selected/running mode
             modes (list): a list of dicts that each element is information about each user's mode
             is_test (boolean): if is_test is True, then it just simulates the user's script and prints out log but not actually execute it.  
-            run_request (boolean): potentially deprecated as we move toward one-off running fashion. 
+            run_request (boolean): if False, set the current_mode to None so the event is not fired at interpret()
     """
     res = {'status' : False, 'imap_error': False, 'imap_log': ""}
     logger = logging.getLogger('youps')  # type: logging.Logger
@@ -227,6 +227,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
             for value in mode['editors']:
                 uid = value['uid']
+                name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
                 logger.info("saving editor %s run request" % uid)
@@ -234,7 +235,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                 print code
                 print folders
                 
-                er = EmailRule(uid=uid, mode=mailbotMode, type=value['type'], code=code)
+                er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
                 # # Save selected folder for the mode
@@ -245,11 +246,8 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 er.save()
 
-
-        imapAccount.current_mode = MailbotMode.objects.filter(uid=current_mode_id, imap_account=imapAccount)[0]
-        imapAccount.save()
-
         if run_request:
+            imapAccount.current_mode = MailbotMode.objects.filter(uid=current_mode_id, imap_account=imapAccount)[0]
             logger.info("user %s run request" % imapAccount.email)
 
             res = interpret(MailBox(imapAccount, imap), imapAccount.current_mode, is_test)
@@ -257,7 +255,12 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             # if the code execute well without any bug, then save the code to DB
             if not res['imap_error']:
                 pass
-                # res['imap_log'] = ("[TEST MODE] Your rule is successfully installed. It won't take actual action but simulate your rule. %s \n" + res['imap_log']) if is_test else ("Your rule is successfully installed. \n" + res['imap_log'])
+        else:
+            imapAccount.current_mode = None
+
+        imapAccount.save()
+
+        # res['imap_log'] = ("[TEST MODE] Your rule is successfully installed. It won't take actual action but simulate your rule. %s \n" + res['imap_log']) if is_test else ("Your rule is successfully installed. \n" + res['imap_log'])
         #         now = datetime.now()
         #         now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
         #         res['imap_log'] = now_format + res['imap_log']
@@ -267,6 +270,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         # else:
 
         #     res['imap_log'] = "Your mailbot stops running"
+        
 
         res['status'] = True
 
