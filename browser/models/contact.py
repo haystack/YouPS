@@ -17,7 +17,7 @@ class Contact(object):
         self._imap_client = imap_client  # type: IMAPClient
 
     def __str__(self):
-        return self.name or self.email
+        return self.name
 
     def __repr__(self):
         return repr("<Contact object %s>" % str(self.name or self.email))
@@ -40,7 +40,7 @@ class Contact(object):
         Returns:
             str: The name associated with this contact
         """
-        return self._schema.name
+        return self._schema.name or self.email
 
     @property
     def organization(self):

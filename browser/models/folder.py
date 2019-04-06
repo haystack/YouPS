@@ -431,7 +431,7 @@ class Folder(object):
         for address in addresses:
             contact_schema = None  # type: ContactSchema
             email = "%s@%s" % (address.mailbox, address.host)
-            name = address.name
+            name = address.name or ""
             try:
                 contact_schema = ContactSchema.objects.get(
                     imap_account=self._imap_account, email=email)

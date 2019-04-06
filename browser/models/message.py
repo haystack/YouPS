@@ -189,13 +189,13 @@ class Message(object):
 
     @property
     def from_(self):
-        # type: () -> t.List[Contact]
+        # type: () -> Contact
         """Get the Contacts the message is addressed from
 
         Returns:
             Contact: The contact in the from field of the message
         """
-        return Contact(self._schema.from_m, self._imap_client)
+        return Contact(self._schema.from_m, self._imap_client) if self._schema.from_m else None
 
     @property
     def sender(self):

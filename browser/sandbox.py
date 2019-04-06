@@ -196,6 +196,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     }
 
                 # if tho the engine is not turned on yet, still leave the log of message arrival 
+                # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it 
                 if mode is None:
                     new_log[new_msg["timestamp"]] = new_msg
                     continue
@@ -292,26 +293,6 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         
         # save logs to db
         else:
-            # new_log = {}
-            # Parse log output (string) to Json. Later, this will be appended to the user's execution log
-            # for log in user_std_out.getvalue().split("#!@YoUPS"):
-            #     if len(log.strip()) == 0:
-            #         continue
-            # if False:
-            #     logger.info(log)
-            #     logger.debug( log.split("#!@log") )
-            #     msg_data, execution_log = log.split("#!@log")
-            #     # execution_log.split("#!@trigger_name_end") if "#!@trigger_name_end" in execution_log else
-            #     logger.debug( msg_data.encode('utf8', 'replace') )
-            #     msg_data = ast.literal_eval( msg_data.encode('utf8', 'replace') )
-
-            #     msg_data['log'] = execution_log + "\n %s" % err_msg
-            #     if len(err_msg) > 0:
-            #         msg_data['log'] = msg_data['log'] + "\n %s" % err_msg
-            #         msg_data['error'] = True
-
-            # new_log[msg_data['timestamp']] = msg_data
-
             logger.info(new_log)
             res['imap_log'] = new_log
 
