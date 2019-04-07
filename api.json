@@ -1,32 +1,34 @@
 {
-	"folder": [
-		{
+	"folder": {
+		"attribute": [
+			{
 			"name": "create_folder",
 			"params": "folder_name",
 			"description": "Create a new folder folder_name",
 			"example": ""
-		},
-		{
-			"name": "delete_folder",
-			"params": "folder_name",
-			"description": "Delete a folder folder_name",
-			"example": ""
+			},
+			{
+				"name": "delete_folder",
+				"params": "folder_name",
+				"description": "Delete a folder folder_name",
+				"example": ""
 
-		},
-		{
-			"name": "list_folders",
-			"params": "",
-			"description": "Get a list of folders",
-			"example": ["print list_folders()", ">>>  [(('\\HasNoChildren',), '/', u'Boomerang'), (('\\HasChildren',), '/', u'Boomerang-Outbox'), (('\\HasNoChildren',), '/', u'Boomerang-Outbox/Cancelled'), (('\\HasNoChildren',), '/', u'Boomerang-Returned'), (('\\HasNoChildren',), '/', u'INBOX'), (('\\HasChildren', '\\Noselect'), '/', u'[Gmail]'), (('\\All', '\\HasNoChildren'), '/', u'[Gmail]/All Mail'), (('\\Drafts', '\\HasNoChildren'), '/', u'[Gmail]/Drafts'), (('\\HasNoChildren', '\\Important'), '/', u'[Gmail]/Important'), (('\\HasNoChildren', '\\Sent'), '/', u'[Gmail]/Sent Mail'), (('\\HasNoChildren', '\\Junk'), '/', u'[Gmail]/Spam'), (('\\Flagged', '\\HasNoChildren'), '/', u'[Gmail]/Starred'), (('\\HasNoChildren', '\\Trash')]"]
-		},
-		{
-			"name": "rename_folder",
-			"params": "old_name, new_name",
-			"description": "Change the name of a folder",
-			"example": ""
+			},
+			{
+				"name": "list_folders",
+				"params": "",
+				"description": "Get a list of folders",
+				"example": ["print list_folders()", ">>>  [(('\\HasNoChildren',), '/', u'Boomerang'), (('\\HasChildren',), '/', u'Boomerang-Outbox'), (('\\HasNoChildren',), '/', u'Boomerang-Outbox/Cancelled'), (('\\HasNoChildren',), '/', u'Boomerang-Returned'), (('\\HasNoChildren',), '/', u'INBOX'), (('\\HasChildren', '\\Noselect'), '/', u'[Gmail]'), (('\\All', '\\HasNoChildren'), '/', u'[Gmail]/All Mail'), (('\\Drafts', '\\HasNoChildren'), '/', u'[Gmail]/Drafts'), (('\\HasNoChildren', '\\Important'), '/', u'[Gmail]/Important'), (('\\HasNoChildren', '\\Sent'), '/', u'[Gmail]/Sent Mail'), (('\\HasNoChildren', '\\Junk'), '/', u'[Gmail]/Spam'), (('\\Flagged', '\\HasNoChildren'), '/', u'[Gmail]/Starred'), (('\\HasNoChildren', '\\Trash')]"]
+			},
+			{
+				"name": "rename_folder",
+				"params": "old_name, new_name",
+				"description": "Change the name of a folder",
+				"example": ""
 
-		}
-	],
+			}
+		]
+	},
 	"method": [
 		{
 			"name": "create_folder",
