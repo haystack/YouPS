@@ -1,5 +1,5 @@
 {
-	"globalmethod": {
+	"folder": {
 		"attribute": [
 			{
 			"name": "create_folder",
@@ -45,7 +45,7 @@
 				"return_href": "contact",
 				"description": "",
 				"example": [
-					"print (new_message.to) // [<Contact object- David Karger>, <Contact object- Soya Park>]",
+					"print (new_message.to) # [<Contact object- David Karger>, <Contact object- Soya Park>]",
 					">>> ['David Karger', 'Soya Park']"
 				]
 			},
