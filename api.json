@@ -2,14 +2,17 @@
 	"message": {
 		"attribute": [
 			{
-				"name": "sender",
-				"return_type": "Contact",
+				"name": "to",
+				"return_type": "Contact []",
 				"return_href": "contact",
 				"description": "",
-				"example": ""
+				"example": [
+					"print (new_message.to) // [<Contact object- David Karger>, <Contact object- Soya Park>]",
+					">>> ['David Karger', 'Soya Park']"
+				]
 			},
 			{
-				"name": "to",
+				"name": "bcc",
 				"return_type": "Contact []",
 				"return_href": "contact",
 				"description": "",
@@ -23,8 +26,8 @@
 				"example": ""
 			},
 			{
-				"name": "bcc",
-				"return_type": "Contact []",
+				"name": "from_",
+				"return_type": "Contact",
 				"return_href": "contact",
 				"description": "",
 				"example": ""
