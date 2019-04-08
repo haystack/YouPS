@@ -355,9 +355,9 @@
 																	<div class="folder-container"></div>
 																	<div class="editor-container">
 																		<textarea class="editor mode-editor" id="editor-99998">
-def on_new_message(new_message):
-	if "ads" in new_message.subject:
-		new_message.mark_read()
+def on_message(my_message):
+	if "ads" in my_message.subject:
+		my_message.mark_read()
 																		</textarea>
 																	</div>
 																	<br>
@@ -492,6 +492,9 @@ def repeat_every():
 							<tbody>
 							</tbody>
 						</table>
+						<div class="text-center"> 
+							<button id="btn-log-load-more" style="display:none" class="btn btn-primary">Load more</button> 
+						</div>
 						<div id="console-output">
 							<p class="info">Output of your sandbox will be sent to your inbox. {% if not is_running %}Turn on your sandbox to apply your rule.{% endif %}</p>
 

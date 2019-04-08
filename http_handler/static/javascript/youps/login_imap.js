@@ -318,7 +318,7 @@ $(document).ready(function() {
                 </div>
                 <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
         </div>
-        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_new_message(new_message):":"def repeat_every():",
+        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
             "\tpass"), 
         pull_down_arrow = `<span class="pull-right">
             <button class='btn-default btn-incoming-save'>Save</button>
@@ -1039,14 +1039,34 @@ $(document).ready(function() {
                 if (res.status) {
                     // Update execution log
                     if( log_backup != res['imap_log']){
-                        // $("#console-output").html("");
-                        old_log = JSON.parse(log_backup == '' ? '{}':log_backup)
+                        msg_log = JSON.parse(res['imap_log']);
+
+                        // if it's a first time loading the log, display only recent 10 messages then enalbe 'load more' btn.
+                        if(log_backup == '') {
+                            var recent_keys = Object.keys(msg_log).sort(function(a, b) {return a>b;}).slice(-10);
+                            append_log( recent_keys.reduce(function(o, k) { o[k] = msg_log[k]; return o; }, {}) );
+                            
+                            var initial_msg_log = msg_log;
+                            $("#btn-log-load-more").show().click(function() {
+                                var rest_key = $(Object.keys(initial_msg_log)).not(recent_keys).get();
+                                append_log(rest_key.reduce((a, c) => ({ ...a, [c]: initial_msg_log[c] }), {}), false);
+                                $(this).hide();
+                            });
+                        }
+
+                        else {
+                            old_log = JSON.parse(log_backup == '' ? '{}':log_backup)
+
+                            // append new logs from the server
+                            var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();
+                            
+                            append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);
+                        }
                             //replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
                         // msg_log = JSON.parse(res['imap_log'].replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
-                        msg_log = JSON.parse(res['imap_log'])
-                        var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();
                         
-                        append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);
+
+                        
                     }
                     
                     log_backup = res['imap_log'];
