@@ -659,21 +659,39 @@ $(document).ready(function() {
         $container.find(".panel-heading").last().click();
 
         init_folder_selector( $($container.find('.folder-container').last()[0]) );
+
+        // check inbox folder by default
+        $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
+            if(elem.value.toLowerCase() == "inbox") elem.checked = true;
+        })
     });
 
-    // remove an editor
+    // remove / revive an editor
     $("#editor-container").on("click", ".editable-container .flex_item_left", function() {
-        if(!$(this).siblings('.flex_item_right').hasClass("panel-collapsed") ) // if opened
-            $(this).siblings('.flex_item_right').click(); // then close 
+        if ($(this).parents('.panel').hasClass('removed')) {
+            $(this).parents('.panel').removeClass('removed');
+            run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
 
-        // remove editor from the server
-        var rule_id = $(this).parents('.panel').attr('rule-id');
-        remove_rule(rule_id);
+            // give different visual effects
+            $(this).find('svg').remove();
+            $(this).append('<i class="fas fa-trash fa-3x"></i>');
+            
+        }else {
+            if(!$(this).siblings('.flex_item_right').hasClass("panel-collapsed") ) // if opened
+                $(this).siblings('.flex_item_right').click(); // then close 
 
-        // give different visual effects
-        $(this).find('svg').remove();
-        $(this).append('<i class="fas fa-redo fa-3x"></i>');
-        $(this).parents('.panel').addClass('removed');
+            // remove editor from the server
+            var rule_id = $(this).parents('.panel').attr('rule-id');
+            remove_rule(rule_id);
+
+            $(this).parents('.panel').addClass('removed');
+
+            // give different visual effects
+            $(this).find('svg').remove();
+            $(this).append('<i class="fas fa-redo fa-3x"></i>');
+            
+        }
+        
     });
 
     // folder select listener
