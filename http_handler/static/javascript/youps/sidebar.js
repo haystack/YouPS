@@ -45,7 +45,8 @@ function sidebar_init() {
 
             let text = current.children[0].innerHTML;
             let end = text.indexOf("<a");
-            header_ref.innerHTML = text.substring(0, end);
+            header_ref.innerHTML = text.substring(0, end).split("(")[0]; // Don't add params to sidebar header
+            console.log(header_ref.innerHTML );
             sublist.appendChild(header_ref);
 
             let actions = document.createElement("ul");
