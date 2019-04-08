@@ -143,7 +143,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                 # execute the user's code
                 # exec cant register new function (e.g., on_message_arrival) when there is a user_env
                 user_environ['new_message'] = new_message
-                exec(code + "\non_new_message(new_message)", user_environ)    
+                exec(code + "\non_message(new_message)", user_environ)    
 
         # regular loading from event queue
         else:
@@ -217,7 +217,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                     # add the user's functions to the event handlers
                     if rule.type.startswith("new-message"):
-                        code = code + "\non_message_arrival(on_new_message)"
+                        code = code + "\non_message_arrival(on_message)"
                     # else:
                     #     continue
                     #     # some_handler or something += repeat_every
@@ -252,7 +252,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         logger.debug(exc_obj)
                         # logger.info(traceback.print_exception())
 
-                        # TODO find keyword 'in on_new_message'
+                        # TODO find keyword 'in on_message'
                         logger.info(traceback.format_tb(exc_tb))
                         logger.info(sys.exc_info())
                         

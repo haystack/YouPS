@@ -318,7 +318,7 @@ $(document).ready(function() {
                 </div>
                 <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
         </div>
-        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_new_message(new_message):":"def repeat_every():",
+        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
             "\tpass"), 
         pull_down_arrow = `<span class="pull-right">
             <button class='btn-default btn-incoming-save'>Save</button>
@@ -1039,11 +1039,17 @@ $(document).ready(function() {
                 if (res.status) {
                     // Update execution log
                     if( log_backup != res['imap_log']){
-                        // $("#console-output").html("");
+                        // if it's first time loading the log 
+                        if(log_backup == '') {
+
+                        }
+
                         old_log = JSON.parse(log_backup == '' ? '{}':log_backup)
                             //replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
                         // msg_log = JSON.parse(res['imap_log'].replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
-                        msg_log = JSON.parse(res['imap_log'])
+                        msg_log = JSON.parse(res['imap_log']);
+
+                        // append new logs from the server
                         var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();
                         
                         append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);

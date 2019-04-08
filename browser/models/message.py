@@ -19,7 +19,7 @@ class Message(object):
     # the descriptors we are cacheing for each message
     _descriptors = ['FLAGS', 'INTERNALDATE',
                     'RFC822.SIZE', 'ENVELOPE']  # type: t.List[t.Text]
-    _user_level_func = ['on_new_message']
+    _user_level_func = ['on_message']
 
     def __init__(self, message_schema, imap_client, is_simulate=False):
         # type: (MessageSchema, IMAPClient) -> Message
