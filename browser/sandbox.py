@@ -22,7 +22,6 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     # type: (MailBox, MailbotMode, bool) -> t.Dict[t.AnyStr, t.Any]
 
     from schema.youps import EmailRule, MailbotMode
-    from smtp_handler.utils import is_gmail
 
     # set up the default result
     res = {'status': True, 'imap_error': False, 'imap_log': ""}

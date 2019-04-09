@@ -36,10 +36,29 @@ class NewMessageDataScheduled(NewMessageData):
     def __init__(self, message):
         # type: (Message) -> NewMessageDataScheduled
         super(NewMessageDataScheduled, self).__init__(message)
-        self.message = message  # type: Message
 
     def fire_event(self, event):
         # type : (Event) -> None
         super(NewMessageDataScheduled, self).fire_event(event)
-    
 
+class NewFlagsData(AbstractEventData):
+    def __init__(self, message, flags):
+        # type: (Message, t.List[str]) -> NewFlagsData
+        super(NewFlagsData, self).__init__()
+        self.message = message  # type: Message
+        self.flags = flags
+
+    def fire_event(self, event):
+        # type : (Event) -> None
+        self.message._imap_client.select_folder(
+            self.message._schema.folder_schema.name)
+        event.fire(self.message, self.flags)
+
+class RemovedFlagsData(NewFlagsData):
+    def __init__(self, message, flags):
+        # type: (Message, t.List[str]) -> RemovedFlagsData
+        super(RemovedFlagsData, self).__init__(message, flags)
+
+    def fire_event(self, event):
+        # type : (Event) -> None
+        super(RemovedFlagsData, self).fire_event(event)
