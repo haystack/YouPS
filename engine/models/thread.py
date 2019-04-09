@@ -6,7 +6,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 
 from schema.youps import MessageSchema, ThreadSchema  # noqa: F401 ignore unused we use it for typing
 
-from browser.models.message import Message
+from engine.models.message import Message
 
 class Thread(object):
 

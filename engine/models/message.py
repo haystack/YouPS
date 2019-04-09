@@ -3,11 +3,10 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from datetime import datetime  # noqa: F401 ignore unused we use it for typing
-from browser.models.contact import Contact
+from engine.models.contact import Contact
 import logging
 from collections import Sequence
 import email
-import copy
 import inspect 
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
@@ -123,7 +122,7 @@ class Message(object):
     @property
     def thread(self):
         # type: () -> t.Optional[Thread]
-        from browser.models.thread import Thread
+        from engine.models.thread import Thread
         if self._schema._thread is not None:
             return Thread(self._schema._thread, self._imap_client)
         return None
@@ -245,7 +244,7 @@ class Message(object):
         Returns:
             Folder: the folder that the message is contained in
         """
-        from browser.models.folder import Folder
+        from engine.models.folder import Folder
         return Folder(self._schema.folder_schema, self._imap_client)
 
     @property

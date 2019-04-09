@@ -3,7 +3,7 @@ from schema.youps import ImapAccount
 from datetime import datetime
 from browser.imap import authenticate
 from browser.sandbox import interpret
-from browser.models.mailbox import MailBox
+from engine.models.mailbox import MailBox
 from imapclient import IMAPClient
 from engine.constants import msg_code
 from smtp_handler.Pile import Pile
@@ -30,7 +30,7 @@ class Command(BaseCommand):
             imapAccount.save()
 
             res = {'status' : False, 'imap_error': False}
-            logger.info("run intiail sync for email: %s" % imapAccount.email)
+            logger.info("run initial sync for email: %s" % imapAccount.email)
 
             # authenticate with the user's imap server
             auth_res = authenticate(imapAccount)
