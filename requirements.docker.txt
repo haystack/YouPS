@@ -21,8 +21,6 @@ html2text==2014.9.25
 html5lib==1.0b3
 IMAPClient==2.0.0
 ipaddr==2.1.11
-# ipython is used just for a nicer django shell. we don't need it
-ipython==5.8.0
 jsonfield==1.0.3
 lamson==1.3.4
 markdown2==2.3.0
@@ -38,3 +36,26 @@ requests==2.18.4
 South==1.0.1
 typing==3.6.4
 ujson==1.35
+
+
+# ipython is used just for a nicer django shell. we don't need it
+ipython==5.8.0
+# memory profile is used for profiling issues
+memory-profiler==0.55.0
+objgraph==3.4.0
+guppy==0.1.10
+# used for debugging
+ptvsd==4.2.4
+
+
+
+
+
+
+
+
+
+
+
+
+

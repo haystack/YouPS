@@ -10,6 +10,8 @@ from email.header import decode_header
 from browser.models.event_data import NewMessageData, NewMessageDataSceduled, AbstractEventData
 from smtp_handler.utils import is_gmail
 
+from memory_profiler import profile
+
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -256,7 +258,9 @@ class Folder(object):
             self._highest_mod_seq = highest_mod_seq
             logger.debug("%s updated highest mod seq to %d" % (self, highest_mod_seq))
 
+    fpsave=open('/home/ubuntu/production/mailx/logs/memory_profiler_save.log', 'w+')
 
+    @profile(stream=fpsave)
     def _save_new_messages(self, last_seen_uid, event_data_list = None):
         # type: (int, t.List[AbstractEventData]) -> None
         """Save any messages we haven't seen before

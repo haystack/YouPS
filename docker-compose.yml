@@ -7,6 +7,7 @@ services:
       - MYSQL_ROOT_PASSWORD=${MYSQL_PASS} 
     volumes:
       - youps-db:/var/lib/mysql
+      - ./mysql_cnf/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
     restart: always
   web:
     build: .
