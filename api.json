@@ -213,7 +213,7 @@
 				"name": "recent_messages",
 				"params": "N=3",
 				"return_type": "Message []",
-				"description": "Return a list of recent N Message from or to this contact.",
+				"description": "Return the messages where this contact is listed in the from/to/cc/bcc field",
 				"example": [
 				]
 			}
