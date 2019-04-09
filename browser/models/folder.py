@@ -7,7 +7,7 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from browser.models.event_data import NewMessageData, NewMessageDataSceduled, AbstractEventData
+from browser.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData
 from smtp_handler.utils import is_gmail
 
 from memory_profiler import profile
@@ -120,6 +120,10 @@ class Folder(object):
         # type: () -> ImapAccount
         return self._schema.imap_account
 
+
+    fpcache =open('/home/ubuntu/production/mailx/logs/memory_profiler_refresh_cache.log', 'a+')
+
+    @profile(stream=fpcache)
     def _completely_refresh_cache(self):
         # type: () -> None
         """Called when the uid_validity has changed or first time seeing the folder.
@@ -187,7 +191,7 @@ class Folder(object):
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:
             logger.info("add schedule %s %s %s" % (time_start, message_schema.date, time_end))
-            event_data_list.append(NewMessageDataSceduled(Message(message_schema, self._imap_client)))
+            event_data_list.append(NewMessageDataScheduled(Message(message_schema, self._imap_client)))
 
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool
@@ -258,7 +262,7 @@ class Folder(object):
             self._highest_mod_seq = highest_mod_seq
             logger.debug("%s updated highest mod seq to %d" % (self, highest_mod_seq))
 
-    fpsave=open('/home/ubuntu/production/mailx/logs/memory_profiler_save.log', 'w+')
+    fpsave=open('/home/ubuntu/production/mailx/logs/memory_profiler_save.log', 'a+')
 
     @profile(stream=fpsave)
     def _save_new_messages(self, last_seen_uid, event_data_list = None):
@@ -363,7 +367,7 @@ class Folder(object):
                 logger.critical("number of messages returned %d" % (len(fetch_data)))
                 raise
             if last_seen_uid != 0:
-                event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
+                event_data_list.append(NewMessageData(message_schema.id, self._imap_client))
 
             logger.debug("%s finished saving new messages..:" % self)
 
@@ -380,6 +384,10 @@ class Folder(object):
                 message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
 
             logger.debug("%s saved new message with uid %d" % (self, uid))
+
+            del message_schema
+
+
 
     def _find_or_create_thread(self, gm_thread_id):
         # type: (int) -> ThreadSchema
