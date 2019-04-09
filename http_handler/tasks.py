@@ -3,7 +3,7 @@ import datetime
 from django.contrib.sites.models import Site
 from django.utils import timezone
 from browser.imap import authenticate
-from browser.models.mailbox import MailBox
+from engine.models.mailbox import MailBox
 from http_handler.settings import BASE_URL, PROTOCOL
 from schema.youps import ImapAccount, EmailRule, MessageSchema
 from smtp_handler.utils import send_email

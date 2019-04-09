@@ -14,6 +14,11 @@ start:
 # stop the docker image
 .PHONY: stop
 stop:
+	docker-compose down
+
+# stop the docker image and remove database information
+.PHONY: clean 
+clean:
 	docker-compose down -v
 
 # reset the database

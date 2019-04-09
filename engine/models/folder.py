@@ -7,8 +7,7 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from browser.models.event_data import NewMessageData, NewMessageDataSceduled, AbstractEventData
-from smtp_handler.utils import is_gmail
+from engine.models.event_data import NewMessageData, NewMessageDataSceduled, AbstractEventData
 
 
 
