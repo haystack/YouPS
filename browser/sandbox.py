@@ -216,6 +216,8 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     # add the user's functions to the event handlers
                     if rule.type.startswith("new-message"):
                         code = code + "\non_message_arrival(on_message)"
+                    elif rule.type == "flag-change":
+                        code = code + "\non_message_arrival(on_flag_change)"
                     # else:
                     #     continue
                     #     # some_handler or something += repeat_every
