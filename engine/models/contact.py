@@ -71,7 +71,7 @@ class Contact(object):
         Returns:
             t.List[Message]: The messages where this contact is listed in the to field
         """
-        from browser.models.message import Message
+        from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.to_messages.all()]
 
     def recent_messages(self, N=3):

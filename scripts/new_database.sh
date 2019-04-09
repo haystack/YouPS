@@ -1,5 +1,14 @@
 #!/bin/bash
 
+
+# wait for mysql to start
+echo "checking that mysql has started"
+while ! mysqladmin ping -h"$DB_HOST" --silent; do
+    sleep 1
+    echo "..."
+done
+echo "mysql started..."
+
 # make sure the user has update the database name in private.py
 read -p "Have you updated the database name in private.py? (yes/no): "
 if [ "$REPLY" != "yes" ]; then

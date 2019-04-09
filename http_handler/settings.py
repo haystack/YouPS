@@ -341,11 +341,6 @@ LOGGING = {
         },
     }
 }
-
-
-if "celeryd" in sys.argv:
-    DEBUG = False
-
 # local Settings - overriden by local_settings.py
 try:
     from local_settings import *

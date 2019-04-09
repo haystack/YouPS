@@ -9,12 +9,12 @@ from Crypto.Cipher import AES
 from imapclient import IMAPClient
 
 from browser.imap import GoogleOauth2, authenticate
-from browser.models.mailbox import MailBox
+from engine.models.mailbox import MailBox
 from browser.sandbox import interpret
 from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
-from browser.models.message import Message  # noqa: F401 ignore unused we use it for typing
+from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 

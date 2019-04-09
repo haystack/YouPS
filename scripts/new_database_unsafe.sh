@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# wait for mysql to start
+echo "checking that mysql has started"
+while ! mysqladmin ping -h"$DATABASE_HOST" --silent; do
+    sleep 1
+    echo "..."
+done
+echo "mysql started..."
+
 # go to the root file
 cd /home/ubuntu/production/mailx && \
 # remove previous migrations

@@ -16,7 +16,7 @@ class MailBox(object):
         """Create a new instance of the client's mailbox using a connection
         to an IMAPClient.
         """
-        from browser.models.event_data import AbstractEventData
+        from engine.models.event_data import AbstractEventData
 
         self._imap_client = imap_client  # type: IMAPClient
 
