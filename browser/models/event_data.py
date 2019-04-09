@@ -32,14 +32,14 @@ class NewMessageData(AbstractEventData):
             self.message._schema.folder_schema.name)
         event.fire(self.message)
 
-class NewMessageDataSceduled(NewMessageData):
+class NewMessageDataScheduled(NewMessageData):
     def __init__(self, message):
-        # type: (Message) -> NewMessageDataSceduled
-        super(NewMessageDataSceduled, self).__init__(message)
+        # type: (Message) -> NewMessageDataScheduled
+        super(NewMessageDataScheduled, self).__init__(message)
         self.message = message  # type: Message
 
     def fire_event(self, event):
         # type : (Event) -> None
-        super(NewMessageDataSceduled, self).fire_event(event)
+        super(NewMessageDataScheduled, self).fire_event(event)
     
 

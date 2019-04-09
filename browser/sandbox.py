@@ -11,7 +11,7 @@ from email import message
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
 
-from browser.models.event_data import NewMessageData, NewMessageDataSceduled
+from browser.models.event_data import NewMessageData, NewMessageDataScheduled
 from browser.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from browser.models.message import Message
 from smtp_handler.utils import send_email
@@ -153,7 +153,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                 # event for new message arrival
                 # TODO maybe caputre this info after execute log?
-                if isinstance(event_data, NewMessageData) or isinstance(event_data, NewMessageDataSceduled):
+                if isinstance(event_data, NewMessageData) or isinstance(event_data, NewMessageDataScheduled):
                     from_field = {}
                     if event_data.message.from_._schema:
                         from_field = {
@@ -230,7 +230,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                         # Check if the type of rule and event_data match
                         if (type(event_data).__name__ == "NewMessageData" and rule.type =="new-message") or \
-                                (type(event_data).__name__ == "NewMessageDataSceduled" and rule.type.startswith("new-message-")):
+                                (type(event_data).__name__ == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
 
                             # Conduct rules only on requested folders
                             if event_data.message._schema.folder_schema in valid_folders:

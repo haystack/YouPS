@@ -7,7 +7,7 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from browser.models.event_data import NewMessageData, NewMessageDataSceduled, AbstractEventData
+from browser.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData
 from smtp_handler.utils import is_gmail
 
 
@@ -185,7 +185,7 @@ class Folder(object):
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:
             logger.info("add schedule %s %s %s" % (time_start, message_schema.date, time_end))
-            event_data_list.append(NewMessageDataSceduled(Message(message_schema, self._imap_client)))
+            event_data_list.append(NewMessageDataScheduled(Message(message_schema, self._imap_client)))
 
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool
@@ -350,6 +350,8 @@ class Folder(object):
 
             if envelope.sender is not None:
                 message_schema.sender = self._find_or_create_contacts(envelope.sender)[0]
+            if envelope.from_ is not None:
+                message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
 
             try:
                 message_schema.save()
@@ -364,8 +366,6 @@ class Folder(object):
             logger.debug("%s finished saving new messages..:" % self)
 
             # create and save the message contacts
-            if envelope.from_ is not None:
-                message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
             if envelope.reply_to is not None:
                 message_schema.reply_to.add(*self._find_or_create_contacts(envelope.reply_to))
             if envelope.to is not None:
