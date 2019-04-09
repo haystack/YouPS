@@ -211,9 +211,9 @@
 		"method": [
 			{
 				"name": "recent_messages",
-				"params": "",
+				"params": "N=3",
 				"return_type": "Message []",
-				"description": "Return a list of Message from or to this contact.",
+				"description": "Return a list of recent N Message from or to this contact.",
 				"example": [
 				]
 			}
