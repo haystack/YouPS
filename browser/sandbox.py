@@ -6,14 +6,12 @@ import datetime
 import copy
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from StringIO import StringIO
-from email import message
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
 
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
-from smtp_handler.utils import send_email
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -38,72 +36,6 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     assert mailbox.new_message_handler is not None
 
     # define user methods
-    def create_draft(subject="", to_addr="", cc_addr="", bcc_addr="", body="", draft_folder="Drafts"):
-        new_message = message.Message()
-        new_message["Subject"] = subject
-            
-        if type(to_addr) == 'list':
-            to_addr = ",".join(to_addr)
-        if type(cc_addr) == 'list':
-            cc_addr = ",".join(cc_addr)
-        if type(bcc_addr) == 'list':
-            bcc_addr = ",".join(bcc_addr)
-            
-        new_message["To"] = to_addr
-        new_message["Cc"] = cc_addr
-        new_message["Bcc"] = bcc_addr
-        new_message.set_payload(body) 
-            
-        if not is_simulate:
-            if mailbox._imap_account.is_gmail:
-                mailbox._imap_client.append('[Gmail]/Drafts', str(new_message))
-                
-            else:
-                try:
-                    # if this imap service provides list capability takes advantage of it
-                    if [l[0][0] for l in mailbox._imap_client.list_folders()].index('\\Drafts'):
-                        mailbox._imap_client.append(mailbox._imap_client.list_folders()[2][2], str(new_message))
-                except Exception as e:
-                    # otherwise try to guess a name of draft folder
-                    try:
-                        mailbox._imap_client.append('Drafts', str(new_message))
-                    except IMAPClient.Error, e:
-                        try:
-                            mailbox._imap_client.append('Draft', str(new_message))
-                        except IMAPClient.Error, e:
-                            if "append failed" in e:
-                                mailbox._imap_client.append(draft_folder, str(new_message))
-
-        logger.debug("create_draft(): Your draft %s has been created" % subject)
-
-    def create_folder(folder_name):
-        if not is_simulate: 
-            mailbox._imap_client.create_folder( folder_name )
-
-        logger.debug("create_folder(): A new folder %s has been created" % folder_name)
-
-    def rename_folder(old_name, new_name):
-        if not is_simulate: 
-            mailbox._imap_client.rename_folder( old_name, new_name )
-
-        logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
-
-    def on_message_arrival(func):
-        mailbox.new_message_handler += func
-
-    def on_flag_added(func):
-        mailbox.added_flag_handler += func
-
-    def set_interval(interval=None, func=None):
-        pass
-
-    def send(subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
-        if len(to) == 0:
-            raise Exception('send(): recipient email address is not provided')
-
-        if not is_simulate:
-            send_email(subject, mailbox._imap_account.email, to, body)
-        logger.debug("send(): sent a message to  %s" % str(to))
 
     # get the logger for user output
     userLogger = logging.getLogger('youps.user')  # type: logging.Logger
@@ -112,8 +44,12 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     userLoggerStream = userLoggerStreamHandlers[0].stream if userLoggerStreamHandlers else None
     assert userLoggerStream is not None
 
+    mailbox.is_simulate = is_simulate
+
     # create a string buffer to store stdout
     user_std_out = StringIO()
+
+    new_log = {}
 
     # execute user code
     try:
@@ -124,16 +60,16 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         userLoggerStream = user_std_out
 
         from schema.youps import FolderSchema
-        
+
         # define the variables accessible to the user
         user_environ = {
-            'create_draft': create_draft,
-            'create_folder': create_folder,
-            'on_message_arrival': on_message_arrival,
-            'on_flag_added': on_flag_added,
-            # 'set_interval': set_interval
+            'create_draft': mailbox.create_draft,
+            'create_folder': mailbox.create_folder,
+            'send': mailbox.send,
+            'on_message_arrival': lambda f: mailbox.new_message_handler.handle(f),
+            'on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
+            'on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
         }
-        new_log = {}
 
         # simulate request. normally from UI
         if is_simulate:
@@ -166,18 +102,18 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         }
 
                     to_field = [{
-                        "name": t.name,
-                        "email": t.email,
-                        "organization": t.organization,
-                        "geolocation": t.geolocation
-                    } for t in event_data.message.to]
+                        "name": contact.name,
+                        "email": contact.email,
+                        "organization": contact.organization,
+                        "geolocation": contact.geolocation
+                    } for contact in event_data.message.to]
 
                     cc_field = [{
-                        "name": t.name,
-                        "email": t.email,
-                        "organization": t.organization,
-                        "geolocation": t.geolocation
-                    } for t in event_data.message.cc]
+                        "name": contact.name,
+                        "email": contact.email,
+                        "organization": contact.organization,
+                        "geolocation": contact.geolocation
+                    } for contact in event_data.message.cc]
 
                     # This is to log for users
                     new_msg = {
