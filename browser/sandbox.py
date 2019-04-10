@@ -10,7 +10,7 @@ from email import message
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
 
-from engine.models.event_data import NewMessageData, NewMessageDataScheduled
+from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
 from smtp_handler.utils import send_email
@@ -91,6 +91,9 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     def on_message_arrival(func):
         mailbox.new_message_handler += func
 
+    def on_flag_added(func):
+        mailbox.added_flag_handler += func
+
     def set_interval(interval=None, func=None):
         pass
 
@@ -126,7 +129,8 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         user_environ = {
             'create_draft': create_draft,
             'create_folder': create_folder,
-            'on_message_arrival': on_message_arrival
+            'on_message_arrival': on_message_arrival,
+            'on_flag_added': on_flag_added,
             # 'set_interval': set_interval
         }
         new_log = {}
@@ -151,7 +155,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                 # event for new message arrival
                 # TODO maybe caputre this info after execute log?
-                if isinstance(event_data, NewMessageData) or isinstance(event_data, NewMessageDataScheduled):
+                if isinstance(event_data, NewMessageData) or isinstance(event_data, NewMessageDataScheduled) or isinstance(event_data, NewFlagsData):
                     from_field = {}
                     if event_data.message.from_._schema:
                         from_field = {
@@ -217,7 +221,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     if rule.type.startswith("new-message"):
                         code = code + "\non_message_arrival(on_message)"
                     elif rule.type == "flag-change":
-                        code = code + "\non_message_arrival(on_flag_change)"
+                        code = code + "\non_flag_added(on_flag_change)"
                     # else:
                     #     continue
                     #     # some_handler or something += repeat_every
@@ -238,6 +242,12 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                                 # TODO maybe user log here that event has been fired
                                 is_fired = True
                                 event_data.fire_event(mailbox.new_message_handler)
+                        if isinstance(event_data, NewFlagsData) and rule.type == "flag-change":
+                            if event_data.message._schema.folder_schema in valid_folders:
+                                logger.info("fired %s %s" % (rule.name, event_data.message.subject))
+                                # TODO maybe user log here that event has been fired
+                                is_fired = True
+                                event_data.fire_event(mailbox.added_flag_handler)
 
                     except Exception as e:
                         # Get error message for users if occurs
@@ -277,6 +287,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         userLoggerStream = user_std_out
 
                     mailbox.new_message_handler.removeAllHandles()
+                    mailbox.added_flag_handler.removeAllHandles()
 
     except Exception as e:
         res['status'] = False
