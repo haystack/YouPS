@@ -5,13 +5,13 @@ from django.utils import timezone
 from browser.imap import authenticate
 from engine.models.mailbox import MailBox
 from http_handler.settings import BASE_URL, PROTOCOL
-from schema.youps import ImapAccount, EmailRule, MessageSchema
+from schema.youps import ImapAccount, EmailRule
 from smtp_handler.utils import send_email
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import fcntl
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 import imaplib
-import json, ast
+import json
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger
