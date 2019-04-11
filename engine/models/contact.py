@@ -1,7 +1,8 @@
 from __future__ import unicode_literals, print_function, division
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-from schema.youps import ContactSchema  # noqa: F401 ignore unused we use it for typing
+from schema.youps import ContactSchema, MessageSchema  # noqa: F401 ignore unused we use it for typing
+from django.db.models import Q
 import logging
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -72,3 +73,19 @@ class Contact(object):
         """
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.to_messages.all()]
+
+    def recent_messages(self, N=3):
+        # type: (t.integer) -> t.List[Message]
+        """Get the N Messages which are exchanged with this contact
+
+        Returns:
+            t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field
+        """
+        from browser.models.message import Message
+
+        message_schemas = MessageSchema.objects.filter(Q(from_m=self._schema) | Q(to=self._schema) | Q(cc=self._schema) | Q(bcc=self._schema)).order_by("-date")[:N]
+        logger.debug(message_schemas.values('id'))
+        # TODO fetch from imap 
+        # self._imap_client.search('OR FROM "%s" (OR TO "%s" (OR CC "%s" BCC "%s"))' % (self.email, self.email, self.email, self.email))
+        return [Message(message_schema, self._imap_client) for message_schema in message_schemas]
+

@@ -205,6 +205,11 @@ $(document).ready(function() {
           
         // editor.getValue( "import re, spacy, datetime, arrow" );
         // editor.markText({line:0,ch:0},{line:2,ch:1},{readOnly:true});
+
+        editor.on('change',function(cm){
+            // get value right from instance
+            $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.btn-debug-update').addClass('glow');
+        });
     }
 
     var debug_matched_row = [];
@@ -326,8 +331,25 @@ $(document).ready(function() {
                     </form></div>`:"") +
                 `<textarea class="editor mode-editor">{0}\n{1}</textarea>
         </div>
-        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`
-            .format(import_str, func_name + "\n\tpass"), 
+        {3}`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
+            "\tpass", type == "new-message" ? `<div class='debugger-container'>
+            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+            
+            <h2>Test suites</h2>
+            <h4>Recent messages from your selected folders to test your rules</h4>
+            <table class="example-suites table" style="width:100%">
+                <thead>
+                    <tr>
+                    <th>Sender</th>
+                    <th>Message</th>
+                    <th>Expected Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>`: ""), 
+
         pull_down_arrow = `<span class="pull-right">
             <button class='btn-default btn-incoming-save'>Save</button>
             <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
@@ -402,17 +424,7 @@ $(document).ready(function() {
                         <h3 class="panel-title">
                             <i class="far fa-2x fa-clock" style="float:left"></i>  
                             <span style="float:left;margin: 10px;">Update every </span>
-                            <div class="input-group" style="width: 110px;float: left;">
-                                <input type="text" class="form-control" placeholder="1">
-                                <div class="input-group-btn">
-                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">hr <span class="caret"></span></button>
-                                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                    <li><a href="#">min</a></li>
-                                    <li><a href="#">hr</a></li>
-                                    <li><a href="#">day</a></li>
-                                    </ul>
-                                </div><!-- /btn-group -->
-                            </div><span class="preview-folder"></span>
+                            <span class="preview-folder"></span>
                         </h3>
                         {5}
                     </div>
@@ -471,17 +483,6 @@ $(document).ready(function() {
     // for demo; set date to now
     $(".current-date").text(format_date());
 
-    // toggle button init
-    $('.btn-toggle').click(function() {
-        $(this).find('.btn').toggleClass('active');  
-        
-        if ($(this).find('.btn-primary').size()>0) {
-            $(this).find('.btn').toggleClass('btn-primary');
-        }
-        $(this).find('.btn').toggleClass('btn-default');
-           
-    });
-
     if(IS_RUNNING) {
         btn_code_sumbit.addClass('active')
     }
@@ -496,7 +497,7 @@ $(document).ready(function() {
         '</table>';
     }
 
-    var table = $('#example').DataTable( {
+    var table = $('.example-suites').DataTable( {
         "bPaginate": false,
         "bLengthChange": false,
         "bFilter": true,
@@ -587,11 +588,14 @@ $(document).ready(function() {
         // Init editor & its autocomplete
         if(e.srcElement.id != "apis-container") return;
 
+        // remember which tab should be active 
+        var active_tab = $('.nav-tabs li.active');
+
         // Open individual tab and panel to load style properly
         $('.nav-tabs li').each(function() {
-            if ( !$(this).find('span') ) return;
+            if ( !$(this).find('span') || $(this).find('a').hasClass('add-tab') ) return;
             $(this).find('a').click();
-						
+					
 			// At each tab
             $( $(this).find('a').attr('href') ).find('.panel').each(function() {
 			    $(this).parents('.editable-container').find('.panel-heading').click();
@@ -602,6 +606,23 @@ $(document).ready(function() {
             })
             
         })
+
+        // set dropdown to current mode name if exist
+        if(current_mode) {
+            active_tab.find('a').click();
+            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
+            $(".dropdown .btn").attr('mode-id', current_mode_id);
+        }
+
+        else {
+            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
+            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
+            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+            
+            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+            $(".dropdown .btn").attr('mode-id', last_id);
+        }
 
         // Init folder container
         init_folder_selector( $(".folder-container") )
@@ -660,9 +681,17 @@ $(document).ready(function() {
     // Switch to different tabs
     $(".nav-tabs").on("click", "a", function (e) {
         e.preventDefault();
+
         if (!$(this).hasClass('add-tab')) {
             $(this).tab('show');
-            // TODO change to value of mode dropdown
+            // change to value of mode dropdown only if the engine is not currently running. 
+            if(!btn_code_sumbit.hasClass('active')) {
+                var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+                last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+
+                $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+                $(".dropdown .btn").attr('mode-id', last_id);
+            } 
         }
     })
     .on("click", "span.close", function () { // delete tab/mode
@@ -691,13 +720,32 @@ $(document).ready(function() {
         // open briefly to set styling
         $container.find(".panel-heading").last().click();
         init_editor( $container.find('textarea').last()[0] );
+        $($container.find('.example-suites').last()[0]).DataTable( {
+            "bPaginate": false,
+            "bLengthChange": false,
+            "bFilter": true,
+            "bInfo": false,
+            "bAutoWidth": false,
+            "searching": false,
+            "columns": [
+                { "width": "40px", "orderable": false },
+                null,
+                { "width": "300px" }
+            ],
+            "order": [[1, 'asc']]
+        } );
         $container.find(".panel-heading").last().click();
+
+        
 
         init_folder_selector( $($container.find('.folder-container').last()[0]) );
 
         // check inbox folder by default
         $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
-            if(elem.value.toLowerCase() == "inbox") elem.checked = true;
+            if(elem.value.toLowerCase() == "inbox") {
+                elem.checked = true;
+                run_simulate_on_messages(elem.value, 5, $($container.find('div[rule-id]').last()[0]));
+            }
         })
     });
 
@@ -739,9 +787,10 @@ $(document).ready(function() {
         else { // remove from the table
                 var dt_elem = $(this).parents('.panel-body').find('.debugger-container table')[0];
                 dt = $( dt_elem ).DataTable();
-
-                $.each($(dt_elem).find('tr[folder="{0}"]'.format($(this).val())), function(index, elem) {
-                    dt.row( elem ).remove().draw();
+                var folder_name = $(this).val();
+                $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
+                    if(folder_name == $(elem).attr('folder'))
+                        dt.row( elem ).remove().draw();
                 })
         }
 
@@ -808,6 +857,14 @@ $(document).ready(function() {
         $('body').find('.CodeMirror')[0].CodeMirror.addLineWidget(2, node2)
     }); 
 
+    // run simulation on the editor
+    $("#editor-container").on("click", ".btn-debug-update", function() {
+        var editor_rule_container = $(this).parents('div[rule-id]');
+        debugger;
+
+        run_simulate_on_messages($(editor_rule_container).find('.folder-container input:checked').val(), 5, editor_rule_container);
+    }); 
+
     // Tab name editor
     var editHandler = function() {
       var t = $(this);
@@ -831,13 +888,18 @@ $(document).ready(function() {
         });
     });
 
+
+    // change mode by dropdown click
     $("body").on("click", ".dropdown li a", function() {
         $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
         $(this).parents(".dropdown").find('.btn').attr('mode-id', $(this).attr('mode-id'));
         $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
 
         // update current_mode
-        run_code( $('#test-mode[type=checkbox]').is(":checked"), get_running());
+        is_success = run_code( $('#test-mode[type=checkbox]').is(":checked"), $(this).hasClass('active'));
+        if(!is_success) {
+            btn_code_sumbit.removeClass('active');
+        }
     })
 
     // Accordion listener
@@ -878,21 +940,6 @@ $(document).ready(function() {
         fetch_log(); 
 
         $(".btn").prop("disabled",false);
-
-        // set dropdown to current mode name if exist
-        if(current_mode) {
-            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
-            $(".dropdown .btn").attr('mode-id', current_mode_id);
-        }
-
-        else {
-            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
-            var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
-            random_mode_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ random_id + '"]').innerHTML );
-
-            $(".dropdown .btn").html(random_mode_name + ' <span class="caret"></span>');
-            $(".dropdown .btn").attr('mode-id', random_id);
-        }
     }
     
 	$('input[type=radio][name=auth-mode]').change(function() {
@@ -907,7 +954,25 @@ $(document).ready(function() {
     });
 
     btn_code_sumbit.click(function() {   
-        run_code( $('#test-mode[type=checkbox]').is(":checked"), !$(this).hasClass('active') );
+        is_success = run_code( $('#test-mode[type=checkbox]').is(":checked"), !$(this).hasClass('active') );
+
+        if(is_success) {
+            // $(this).toggleClass('active');  
+            
+            if ($(this).find('.btn-primary').size()>0) {
+                $(this).find('.btn').toggleClass('btn-primary');
+            }
+            $(this).find('.btn').toggleClass('btn-default');
+        } else {// turn off the button
+            // this is a hack, but after this click handler, the active class will be toggled. add active class so that it will be removed   
+            $(this).addClass('active');  
+
+            if ($(this).find('.btn-primary').size()>0) {
+                $(this).find('.btn').removeClass('btn-primary');
+            }
+            $(this).find('.btn').addClass('btn-default');
+        }
+        
     });
 
     $("body").on("click", ".btn-incoming-save", function() {
@@ -1211,9 +1276,15 @@ $(document).ready(function() {
         }
 
         function run_code(is_dry_run, is_running) {
-            show_loader(true);
+            var cur_mode;
+            try {
+                cur_mode = get_current_mode();
+            } catch (err){
+                notify({'code': 'There is no rule defined in this mode'}, false);
+                return false;
+            }
 
-            var cur_mode = get_current_mode();
+            show_loader(true);
 
             var modes = get_modes();
 
@@ -1261,6 +1332,8 @@ $(document).ready(function() {
                     }
                 }
             );
+
+            return true;
         }
 
         // function folder_recent_messages(folder_name, N, code="") {
@@ -1343,8 +1416,15 @@ $(document).ready(function() {
                     
                     // get simulation result
                     if (res.status) {
-                        var t = $( $(editor_rule_container).find('.debugger-container table')[0] ).DataTable();
-    
+                        $(editor_rule_container).find('.btn-debug-update').removeClass('glow');
+                        var dt_elem = $(editor_rule_container).find('.debugger-container table')[0];
+                        var t = $( dt_elem ).DataTable();
+                        // delete all before added new 
+                        $.each($(dt_elem).find('tr[folder]'.format(folder_name)), function(index, elem) {
+                            if(folder_name == $(elem).attr('folder'))
+                                t.row( elem ).remove().draw();  
+                        })
+
                         $.each( res['messages'], function( msg_id, value ) {
                             var Message = value;
     
@@ -1353,22 +1433,27 @@ $(document).ready(function() {
                             var added_row = t.row.add( [
                                 '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                                 '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                                '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, json_panel_id % 2 == 0? "flags: [] -> ['should read']": "No action")
+                                '{0}'.format(Message["log"].replace(/\n/g , "<br>"))
+                                // '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, Message["log"])
                             ] ).draw( false ).node();
+                            
 
                             $( added_row ).attr('folder', Message['folder'])
                                 .attr('msg-id', msg_id)
                                 .attr('line-number2', 1);
                                 
                                 // .attr('line-number{0}', 1); // TODO add activated line
+                            if(Message["error"])
+                                $( added_row ).find("td:eq(2)").addClass("error");
+                            // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
+                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
 
-                            $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":"");
-                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);
-                            //n==2 ? [1,2,3,6,9] : [3,6];
-                            // $("#example tr").removeClass("unmatched");
-                            // $.each(unmatched_row, function(index, val) {
-                            //     $("#example tr:eq({0})".format(val)).addClass("unmatched");
-                            // })         
+                            // Delete attributes that are not allowed for users 
+                            delete Message["trigger"];
+                            delete Message["error"];
+                            delete Message["log"];
+                            delete Message["timestamp"];
+                            delete Message["type"];
     
                             $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                                 data: {
@@ -1376,10 +1461,11 @@ $(document).ready(function() {
                                 }
                             });
             
-                            // set contact object preview 
-                            // $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
-                            //     '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
-            
+                            if (Message['from_'])
+                                // set contact object preview 
+                                $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
+                                    '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
+                
                             
                             $('#jsonpanel-' + json_panel_id).jsonpanel({
                                 data: {

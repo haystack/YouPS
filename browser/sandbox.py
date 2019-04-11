@@ -17,6 +17,14 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 
 def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
+    """This function executes users' code.  
+
+        Args:
+            mailbox (Mailbox): user's mailbox
+            mode (MailbotMode or None): if mode is null, it will bypass executing user's code and just print logs
+            is_simulate (boolean): if True, it looks into simulate_info to test run user's code
+            simulate_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
+    """
     # type: (MailBox, MailbotMode, bool) -> t.Dict[t.AnyStr, t.Any]
 
     from schema.youps import EmailRule, MailbotMode
@@ -75,14 +83,59 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         if is_simulate:
             code = simulate_info['code']
             message_schema = MessageSchema.objects.filter(id=simulate_info['msg-id'])
+            # temp get random message
+            res['appended_log'] = {}
+
             for m_schema in message_schema:
-                new_message = Message(m_schema, mailbox._imap_client, is_simulate=True)            
+                msg_log = {"log": ""}
+
 
                 # TODO this is broken for any other events
                 # execute the user's code
                 # exec cant register new function (e.g., on_message_arrival) when there is a user_env
+
+                # create a read-only message object to prevent changing the message
+                new_message = Message(m_schema, mailbox._imap_client, is_simulate=True)
+
                 user_environ['new_message'] = new_message
-                exec(code + "\non_message(new_message)", user_environ)    
+                try:
+                    mailbox._imap_client.select_folder(m_schema.folder_schema.name)
+
+                    # execute the user's code
+                    if "on_message" in code:
+                        exec(code + "\non_message(new_message)", user_environ)    
+
+                    elif "on_flag_change" in code:
+                        user_environ['new_flag'] = 'test-flag'
+                        exec(code + "\non_flag_change(new_message, new_flag)", user_environ)    
+                except Exception as e:
+                    # Get error message for users if occurs
+                    # print out error messages for user 
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    logger.info(e)
+                    logger.debug(exc_obj)
+                    # logger.info(traceback.print_exception())
+
+                    # TODO find keyword 'in on_message' or on_flag_change
+                    # logger.info(traceback.format_tb(exc_tb))
+                    # logger.info(sys.exc_info())
+                        
+                    msg_log["log"] = str(e)
+                    msg_log["error"] = True 
+                finally:         
+                    # copy_msg["trigger"] = rule.name
+                            
+                    msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
+                    res['appended_log'][m_schema.id] = msg_log
+
+                    # flush buffer
+                    user_std_out = StringIO()
+
+                    # set the stdout to a string
+                    sys.stdout = user_std_out
+
+                    # set the user logger to
+                    userLoggerStream = user_std_out
 
         # regular loading from event queue
         else:
@@ -206,7 +259,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         logger.debug(exc_obj)
                         # logger.info(traceback.print_exception())
 
-                        # TODO find keyword 'in on_message'
+                        # TODO find keyword 'in on_message' or on_flag_change
                         logger.info(traceback.format_tb(exc_tb))
                         logger.info(sys.exc_info())
                         
@@ -235,8 +288,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
     except Exception as e:
         res['status'] = False
-        userLogger.exception("failure running user %s code" %
-                             mailbox._imap_account.email)
+        logger.exception("failure running user %s code" % mailbox._imap_account.email)
     finally:
         # set the stdout back to what it was
         sys.stdout = sys.__stdout__
@@ -244,7 +296,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
         # if it is simulate don't save to db
         if is_simulate:
-            logger.info(user_std_out.getvalue())
+            logger.debug(res)
         
         # save logs to db
         else:
