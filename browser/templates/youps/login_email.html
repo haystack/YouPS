@@ -188,18 +188,12 @@
 																		</textarea>
 																	</div>
 																	<!-- Separte row for debugging -->
-																	<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
-																			<div style='display:none' id='mv-data-container' mv-expressions="none">
-																					{
-																						"task": "",
-																						"deadline": "2016-03-15"
-																					}
-																			</div>
+																	<div class='debugger-container'>
 																			<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
 																			
 																			<h2>Test suites</h2>
 																			<h4>Recent messages from your selected folders to test your rules</h4>
-																			<table id="example" class="table" style="width:100%">
+																			<table class="example-suites" class="table" style="width:100%">
 																				<thead>
 																					<tr>
 																					  <th>Sender</th>
@@ -208,29 +202,6 @@
 																					</tr>
 																				</thead>
 																				<tbody>
-																					<!-- <tr>
-																					  <td><i class="fas fa-search fa-2x"></i></td>
-																					  <td>Inbox</td>
-																					  <td>Dylan McKay</td>
-																					  <td>Wanna play Frisbee?</td>
-																					  <td><time mv-edit-placeholder='[$today]' property="date"></time></td>
-																					  <td><ul><li property='task' mv-multiple></li></ul></td>
-																					</tr> -->
-																					<!-- <tr>
-																					  <td class='details-control'></td>
-																						<td>Soya</td>
-																						<td>[soyapark/murmur] new data structure and msg arrival event (#81)
-																						  </td>
-																						<td><time datetime="2016-03-15" property="date">15 Mar 2016</time></td>
-																						<td><ul><li>Review PR</li></ul></td>
-																					</tr>
-																					<tr>
-																					  <td class='details-control'></td>
-																						<td>Elena Glassman</td>
-																						<td>[csail-related] Job Posting: XYZ Robotics is Hiring (Boston)</td>
-																						<td><time datetime="2016-03-15" property="date">15 Mar 2016</time></td>
-																						<td>-</td>
-																					</tr> -->
 																				</tbody>
 																			</table>
 																	</div>
