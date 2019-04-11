@@ -139,10 +139,6 @@ class MailBox(object):
             # If it is gmail, then skip All Mail folder
             if name == "[Gmail]/All Mail":
                 continue
-            folder = self._find_or_create_folder(name)  # type: Folder
-
-            # TODO maybe fire if the flags have changed
-            folder.flags = flags
 
             # assume there are children unless specifically told otherwise
             recurse_children = True
@@ -156,6 +152,11 @@ class MailBox(object):
                 for child_folder in self._list_selectable_folders(name + delimiter):
                     yield child_folder
 
+            folder = self._find_or_create_folder(name)  # type: Folder
+
+            # TODO maybe fire if the flags have changed
+            folder.flags = flags
+
             # do not yield folders which are not selectable
             if '\\Noselect' in flags:
                 folder._is_selectable = False
@@ -165,3 +166,5 @@ class MailBox(object):
                 folder._is_selectable = True
 
             yield folder
+
+            del folder

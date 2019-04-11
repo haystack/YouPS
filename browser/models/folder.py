@@ -8,10 +8,9 @@ from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
 from browser.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData
-from smtp_handler.utils import is_gmail
 
 from memory_profiler import profile
-
+from guppy import hpy
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -137,9 +136,20 @@ class Folder(object):
         # delete any messages already stored in the folder
         MessageSchema.objects.filter(folder_schema=self._schema).delete()
 
+        from django import db
+        import gc
+
+        # hp = hpy()
+        # hp.setrelheap()
+
         # save new messages starting from the last seen uid of 0
         self._save_new_messages(0)
         # TODO maybe trigger the user
+
+        db.reset_queries()
+        gc.collect()
+
+        # h = hp.heap()
 
         # finally update our last seen uid (this uses the cached messages to determine last seen uid)
         self._update_last_seen_uid()
@@ -290,6 +300,43 @@ class Folder(object):
                 already_saved[0].delete()
 
         logger.info("%s saving new messages" % (self))
+
+        msg_dict = self._create_msg_objects(fetch_data, last_seen_uid, event_data_list)
+
+        MessageSchema.objects.bulk_create(msg_dict.keys())
+
+        uid_dict = {k.uid: v for (k, v) in msg_dict.items()}
+
+        del msg_dict
+
+        from django import db
+
+        for message_schema in MessageSchema.objects.filter(folder_schema=self._schema, uid__in=uid_dict.keys()).iterator():
+            envelope = uid_dict[message_schema.uid]
+            # create and save the message contacts
+            if envelope.from_ is not None:
+                message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
+            if envelope.reply_to is not None:
+                message_schema.reply_to.add(*self._find_or_create_contacts(envelope.reply_to))
+            if envelope.to is not None:
+                message_schema.to.add(*self._find_or_create_contacts(envelope.to))
+            if envelope.cc is not None:
+                message_schema.cc.add(*self._find_or_create_contacts(envelope.cc))
+            if envelope.bcc is not None:
+                message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
+
+            logger.debug("%s saved new message with uid %d" % (self, message_schema.uid))
+
+            db.reset_queries()
+
+        
+
+
+
+    def _create_msg_objects(self, fetch_data, last_seen_uid, event_data_list):
+
+        msg_dict = {}
+
         for uid in fetch_data:
             message_data = fetch_data[uid]
             logger.debug("Message %d data: %s" % (uid, message_data))
@@ -358,34 +405,17 @@ class Folder(object):
 
             if envelope.sender is not None:
                 message_schema.sender = self._find_or_create_contacts(envelope.sender)[0]
+            if envelope.from_ is not None:
+                message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
 
-            try:
-                message_schema.save()
-            except Exception:
-                logger.critical("%s failed to save message %d" % (self, uid))
-                logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (self, self._last_seen_uid, last_seen_uid))
-                logger.critical("number of messages returned %d" % (len(fetch_data)))
-                raise
             if last_seen_uid != 0:
                 event_data_list.append(NewMessageData(message_schema.id, self._imap_client))
 
-            logger.debug("%s finished saving new messages..:" % self)
-
-            # create and save the message contacts
-            if envelope.from_ is not None:
-                message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
-            if envelope.reply_to is not None:
-                message_schema.reply_to.add(*self._find_or_create_contacts(envelope.reply_to))
-            if envelope.to is not None:
-                message_schema.to.add(*self._find_or_create_contacts(envelope.to))
-            if envelope.cc is not None:
-                message_schema.cc.add(*self._find_or_create_contacts(envelope.cc))
-            if envelope.bcc is not None:
-                message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
-
-            logger.debug("%s saved new message with uid %d" % (self, uid))
+            msg_dict[message_schema] = envelope
 
             del message_schema
+
+        return msg_dict
 
 
 

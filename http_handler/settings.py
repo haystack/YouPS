@@ -30,14 +30,18 @@ def _get_debug():
 
     if debug[-1] == '\n':
         debug = debug[:-1]
-    
+
     f.close()
     if debug == 'true':
         return True
     else:
         return False
-    
+
+
 DEBUG = _get_debug()
+
+if DEBUG is False:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 def _get_website():
     f = open(_WEBSITE_FILE_PATH)

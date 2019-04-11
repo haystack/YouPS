@@ -37,7 +37,7 @@ class NewMessageData(AbstractEventData):
 
 class NewMessageDataScheduled(NewMessageData):
     def __init__(self, message):
-        # type: (Message) -> NewMessageDataSceduled
+        # type: (Message) -> NewMessageDataScheduled
         super(NewMessageDataScheduled, self).__init__(message)
         self.message = message  # type: Message
 

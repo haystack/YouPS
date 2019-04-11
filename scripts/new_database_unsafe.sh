@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# wait for mysql to start
+echo "checking that mysql has started"
+while ! mysqladmin ping -h"$DATABASE_HOST" --silent; do
+    sleep 1
+    echo "..."
+done
+echo "mysql started..."
+
 # go to the root file
 cd /home/ubuntu/production/mailx && \
 # remove previous migrations
@@ -8,6 +16,10 @@ cd schema/migrations && \
 ls | grep -v __init__.py | xargs -r rm -- && \
 cd /home/ubuntu/production/mailx && \
 
+echo "creating a database" && \
+
+echo $MYSQL_PASS && \
+
 # create the new database
 { mysql -h $DATABASE_HOST -u root -p$MYSQL_PASS <<EOF
     drop database if exists $DATABASE_NAME;
@@ -15,6 +27,8 @@ cd /home/ubuntu/production/mailx && \
     grant all privileges ON $DATABASE_NAME.* TO root@localhost;
 EOF
 } && \
+
+echo "initializing tables" && \
 
 # create the initial tables
 python manage.py syncdb && \

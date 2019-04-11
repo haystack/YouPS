@@ -7,4 +7,9 @@ if __name__ == "__main__":
 
     from django.core.management import execute_from_command_line
 
+    if os.environ.get("PTVSD"):
+        import ptvsd
+        ptvsd.enable_attach(address = ('0.0.0.0', 3000))
+        ptvsd.wait_for_attach()
+
     execute_from_command_line(sys.argv)

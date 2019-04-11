@@ -45,7 +45,7 @@ memory-profiler==0.55.0
 objgraph==3.4.0
 guppy==0.1.10
 # used for debugging
-ptvsd==4.2.4
+ptvsd==4.2.5
 
 
 

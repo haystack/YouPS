@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
+
 class ImapAccount(models.Model):
 
     # the primary key
@@ -18,7 +19,8 @@ class ImapAccount(models.Model):
 
     is_oauth = models.BooleanField(default=False)
     access_token = models.CharField('access_token', max_length=200, blank=True)
-    refresh_token = models.CharField('refresh_token', max_length=200, blank=True)
+    refresh_token = models.CharField(
+        'refresh_token', max_length=200, blank=True)
     is_initialized = models.BooleanField(default=False)
 
     is_gmail = models.BooleanField(default=False)
@@ -36,12 +38,17 @@ class ImapAccount(models.Model):
     is_running = models.BooleanField(default=False)
     status_msg = models.TextField(default="")
 
-    arrive_action = models.CharField('access_token', max_length=1000, blank=True)
-    custom_action = models.CharField('custom_action', max_length=1000, blank=True)
-    timer_action = models.CharField('timer_action', max_length=1000, blank=True)
-    repeat_action = models.CharField('repeat_action', max_length=1000, blank=True)
+    arrive_action = models.CharField(
+        'access_token', max_length=1000, blank=True)
+    custom_action = models.CharField(
+        'custom_action', max_length=1000, blank=True)
+    timer_action = models.CharField(
+        'timer_action', max_length=1000, blank=True)
+    repeat_action = models.CharField(
+        'repeat_action', max_length=1000, blank=True)
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
+
 
 class FolderSchema(models.Model):
     # the primary key
@@ -60,7 +67,7 @@ class FolderSchema(models.Model):
     last_seen_uid = models.IntegerField(default=-1)
     # the highest mod seq useful for limiting getting the flags
     highest_mod_seq = models.IntegerField(default=-1)
-    # the flags associated with the folder 
+    # the flags associated with the folder
     _flags = models.TextField(db_column="flags")
 
     is_selectable = models.BooleanField(default=False)
@@ -103,12 +110,15 @@ class MessageSchema(models.Model):
     message_id = models.TextField()
     # the date when the message was received
     internal_date = models.DateTimeField()
-    # the contact the message is from 
-    from_m = models.ForeignKey('ContactSchema', null=True, related_name='from_messages')
+    # the contact the message is from
+    from_m = models.ForeignKey(
+        'ContactSchema', null=True, related_name='from_messages')
     # the contact the message was sent by, i.e. if a program sends a message for someone else
-    sender = models.ForeignKey('ContactSchema', null=True, related_name='sender_messages')
+    sender = models.ForeignKey(
+        'ContactSchema', null=True, related_name='sender_messages')
     # if a reply is sent it should be sent to these contacts
-    reply_to = models.ManyToManyField('ContactSchema', related_name='reply_to_messages')
+    reply_to = models.ManyToManyField(
+        'ContactSchema', related_name='reply_to_messages')
     # the contact the message is to
     to = models.ManyToManyField('ContactSchema', related_name='to_messages')
     # the contact the message is cced to
@@ -116,9 +126,8 @@ class MessageSchema(models.Model):
     # the contact the message is bcced to
     bcc = models.ManyToManyField('ContactSchema', related_name='bcc_messages')
     # the thread that the message is associated with
-    _thread = models.ForeignKey('ThreadSchema', related_name='messages', blank=True, null=True)
-
-
+    _thread = models.ForeignKey(
+        'ThreadSchema', related_name='messages', blank=True, null=True)
 
     @property
     def flags(self):
@@ -130,7 +139,6 @@ class MessageSchema(models.Model):
         # type: (t.List[t.AnyStr]) -> None
         self._flags = json.dumps(value)
 
-
     progress = models.CharField('progress', max_length=300, blank=True)
     deadline = models.DateTimeField('deadline', null=True, blank=True)
     category = models.CharField('category', max_length=300, blank=True)
@@ -141,7 +149,7 @@ class MessageSchema(models.Model):
     class Meta:
         db_table = "youps_message"
         # message uid is unique per folder, folder is already unique per account
-        unique_together = ("uid", "folder_schema")
+        index_together = unique_together = [["folder_schema", "uid"]]
 
 
 class ContactSchema(models.Model):
@@ -171,7 +179,7 @@ class ThreadSchema(models.Model):
     imap_account = models.ForeignKey('ImapAccount')
     # each folder is associated with a single folder
     folder = models.ForeignKey('FolderSchema')
-    gm_thread_id = models.TextField(blank=True) 
+    gm_thread_id = models.TextField(blank=True)
 
     class Meta:
         db_table = "youps_thread"
@@ -186,16 +194,19 @@ class MailbotMode(models.Model):
     class Meta:
         unique_together = ("uid", "imap_account")
 
+
 class EmailRule(models.Model):
     uid = models.IntegerField(default=1)
 
     # e.g. new-message, old-message-[time span]
     type = models.CharField('rule_type', default='new-message', max_length=100)
     # user-defined name
-    name = models.CharField('rule_name', default='Handling new messages', max_length=100)
+    name = models.CharField(
+        'rule_name', default='Handling new messages', max_length=100)
     code = models.TextField(null=True, blank=True)  # t.AnyStr
     mode = models.ForeignKey('MailbotMode', related_name="rules")
-    folders = models.ManyToManyField(FolderSchema, related_name='rules')  # type: t.List[FolderSchema]
+    folders = models.ManyToManyField(
+        FolderSchema, related_name='rules')  # type: t.List[FolderSchema]
 
     # timestamp when it is executed by taskmanager
     executed_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -227,6 +238,7 @@ class Message_Thread(models.Model):
     class Meta:
         db_table = "youps_threads"
         unique_together = ("id", "imap_account")
+
 
 class TaskManager(models.Model):
     id = models.AutoField(primary_key=True)
