@@ -306,54 +306,37 @@ $(document).ready(function() {
         }
 
         var editor_elem = `<div class="panel-body" style="display:none;">
-            <div class="folder-container"></div>
-            <div class="editor-container">` +
-                (type=="new-message"? `<div class='trigger'>
-                    <form class="form-inline">
-                        <div class="form-group">
-                            <span>Run following rules when there is </span>
-                            <span>message arrived </span>
-                        </div>
-                        <div class="form-group">
-                            <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
-                            <label class="form-check-label" for="inlineRadio1">now</label>
-                            <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
-                            <input style='width:50px;' type="text" class="form-control" placeholder="1">
-                            <select id="company" class="form-control">
-                                <option>min</option>
-                                <option>hr</option>
-                                <option>day</option>
-                            </select> 													
-                        </div>
-                        <div class="form-group">
-                            <span>ago</span>
-                        </div>
-                    </form></div>`:"") +
-                `<textarea class="editor mode-editor">{0}\n{1}</textarea>
-        </div>
-        {3}`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
-            "\tpass", type == "new-message" ? `<div class='debugger-container'>
-            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
-            
-            <h2>Test suites</h2>
-            <h4>Recent messages from your selected folders to test your rules</h4>
-            <table class="example-suites table" style="width:100%">
-                <thead>
-                    <tr>
-                    <th>Sender</th>
-                    <th>Message</th>
-                    <th>Expected Result</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>`: ""), 
-
-        pull_down_arrow = `<span class="pull-right">
-            <button class='btn-default btn-incoming-save'>Save</button>
-            <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
-        </span>`;
+        <div class="folder-container"></div>
+        <div class="editor-container">` +
+            (type=="new-message"? `<div class='trigger'>
+                <form class="form-inline">
+                    <div class="form-group">
+                        <span>Run following rules when there is </span>
+                        <span>message arrived </span>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
+                        <label class="form-check-label" for="inlineRadio1">now</label>
+                        <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
+                        <input style='width:50px;' type="text" class="form-control" placeholder="1">
+                        <select id="company" class="form-control">
+                            <option>min</option>
+                            <option>hr</option>
+                            <option>day</option>
+                        </select> 													
+                    </div>
+                    <div class="form-group">
+                        <span>ago</span>
+                    </div>
+                </form></div>`:"") +
+            `<textarea class="editor mode-editor">{0}\n{1}</textarea>
+    </div>
+    <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`
+        .format(import_str, func_name + "\n\tpass"), 
+    pull_down_arrow = `<span class="pull-right">
+        <button class='btn-default btn-incoming-save'>Save</button>
+        <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+    </span>`;
 
         if(type == "new-message") {
             return `<div class="{0}" {1}>
