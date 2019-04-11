@@ -66,9 +66,9 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             'create_draft': mailbox.create_draft,
             'create_folder': mailbox.create_folder,
             'send': mailbox.send,
-            'on_message_arrival': lambda f: mailbox.new_message_handler.handle(f),
-            'on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
-            'on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
+            'handle_on_message': lambda f: mailbox.new_message_handler.handle(f),
+            'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
+            'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
         }
 
         # simulate request. normally from UI
@@ -78,6 +78,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             for m_schema in message_schema:
                 new_message = Message(m_schema, mailbox._imap_client, is_simulate=True)            
 
+                # TODO this is broken for any other events
                 # execute the user's code
                 # exec cant register new function (e.g., on_message_arrival) when there is a user_env
                 user_environ['new_message'] = new_message
@@ -133,7 +134,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         "log": ""
                     }
 
-                # if tho the engine is not turned on yet, still leave the log of message arrival 
+                # if the the engine is not turned on yet, still leave the log of message arrival 
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it 
                 if mode is None:
                     new_log[new_msg["timestamp"]] = new_msg
@@ -147,6 +148,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                     assert isinstance(rule, EmailRule)
 
+                    # TODO why the reassignment of valid folders
                     valid_folders = rule.folders.all()
                     valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                     code = rule.code
@@ -154,10 +156,15 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     logger.debug(code)
 
                     # add the user's functions to the event handlers
+                    # basically at the end of the user's code we need to attach the user's code to
+                    # the event
+                    # user code strings can be found at http_handler/static/javascript/youps/login_imap.js ~ line 300
+                    # our handlers are in mailbox and the user environment
                     if rule.type.startswith("new-message"):
-                        code = code + "\non_message_arrival(on_message)"
+                        code = code + "\nhandle_on_message(on_message)"
                     elif rule.type == "flag-change":
-                        code = code + "\non_flag_added(on_flag_change)"
+                        code = code + "\nhandle_on_flag_added(on_flag_added)"
+                        code = code + "\nhandle_on_flag_removed(on_flag_removed)"
                     # else:
                     #     continue
                     #     # some_handler or something += repeat_every
@@ -168,22 +175,23 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         # exec cant register new function (e.g., on_message_arrival) when there is a user_env
                         exec(code, user_environ)
 
-                        # Check if the type of rule and event_data match
-                        if (type(event_data).__name__ == "NewMessageData" and rule.type =="new-message") or \
-                                (type(event_data).__name__ == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
 
-                            # Conduct rules only on requested folders
-                            if event_data.message._schema.folder_schema in valid_folders:
-                                logger.info("fired %s %s" % (rule.name, event_data.message.subject))
-                                # TODO maybe user log here that event has been fired
-                                is_fired = True
+                        # TODO this should be cleaned up. accessing class name is ugly and this is very wet (Not DRY)
+                        if event_data.message._schema.folder_schema in valid_folders:
+                            event_class_name = type(event_data).__name__ 
+                            if (event_class_name == "NewMessageData" and rule.type =="new-message") or \
+                                    (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
+                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
                                 event_data.fire_event(mailbox.new_message_handler)
-                        if isinstance(event_data, NewFlagsData) and rule.type == "flag-change":
-                            if event_data.message._schema.folder_schema in valid_folders:
-                                logger.info("fired %s %s" % (rule.name, event_data.message.subject))
-                                # TODO maybe user log here that event has been fired
                                 is_fired = True
+                            if (event_class_name == "NewFlagsData" and rule.type == "flag-change"):
+                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
                                 event_data.fire_event(mailbox.added_flag_handler)
+                                is_fired = True
+                            if (event_class_name == "RemovedFlagsData" and rule.type == "flag-change"):
+                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
+                                event_data.fire_event(mailbox.removed_flag_handler)
+                                is_fired = True
 
                     except Exception as e:
                         # Get error message for users if occurs
