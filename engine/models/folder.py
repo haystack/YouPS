@@ -7,8 +7,8 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from engine.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData
-
+from engine.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData, NewFlagsData, RemovedFlagsData
+from datetime import datetime
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -173,7 +173,7 @@ class Folder(object):
 
         # if the last seen uid is zero we haven't seen any messages
         if self._last_seen_uid != 0:
-            self._update_cached_message_flags(highest_mod_seq)
+            self._update_cached_message_flags(highest_mod_seq, event_data_list)
 
         self._update_last_seen_uid()
         logger.debug("%s finished normal refresh" % (self))
@@ -205,8 +205,8 @@ class Folder(object):
             return True
         return False
 
-    def _update_cached_message_flags(self, highest_mod_seq):
-        # type: (int) -> None
+    def _update_cached_message_flags(self, highest_mod_seq, event_data_list):
+        # type: (int, t.List[AbstractEventData]) -> None
         """Update the flags on any cached messages.
         """
 
@@ -225,6 +225,7 @@ class Folder(object):
         # update flags in the cache
         for message_schema in MessageSchema.objects.filter(folder_schema=self._schema):
 
+            assert isinstance(message_schema, MessageSchema)
             # ignore cached messages that we just fetched
             if message_schema.uid > self._last_seen_uid:
                 continue
@@ -244,7 +245,18 @@ class Folder(object):
                 logger.critical('Missing FLAGS in message data')
                 logger.critical('Message data %s' % message_data)
                 continue
-            message_schema.flags = message_data['FLAGS']
+
+            old_flags = set(message_schema.flags)
+            new_flags = set(message_data['FLAGS'])
+
+            if old_flags - new_flags:
+                # flag removed old flag exists which does not exist in new flags
+                event_data_list.append(RemovedFlagsData(Message(message_schema, self._imap_client), list(old_flags - new_flags)))
+            elif new_flags - old_flags:
+                # flag added, new flags exists which does not exist in old flags
+                event_data_list.append(NewFlagsData(Message(message_schema, self._imap_client), list(new_flags - old_flags)))
+
+            message_schema.flags = list(new_flags) 
             message_schema.msn = message_data['SEQ']
             message_schema.save()
             # TODO maybe trigger the user

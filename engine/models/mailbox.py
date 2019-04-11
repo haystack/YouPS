@@ -6,6 +6,8 @@ import datetime
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
+from smtp_handler.utils import send_email
+from email import message
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -24,8 +26,11 @@ class MailBox(object):
 
         # Events
         self.new_message_handler = Event()  # type: Event
+        self.added_flag_handler = Event()  # type: Event
+        self.removed_flag_handler = Event()  # type: Event
 
         self.event_data_list = []  # type: t.List[AbstractEventData]
+        self.is_simulate = False
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -165,3 +170,59 @@ class MailBox(object):
                 folder._is_selectable = True
 
             yield folder
+
+
+    def create_draft(self, subject="", to_addr="", cc_addr="", bcc_addr="", body="", draft_folder=None):
+        new_message = message.Message()
+        new_message["Subject"] = subject
+            
+        if type(to_addr) == 'list':
+            to_addr = ",".join(to_addr)
+        if type(cc_addr) == 'list':
+            cc_addr = ",".join(cc_addr)
+        if type(bcc_addr) == 'list':
+            bcc_addr = ",".join(bcc_addr)
+            
+        new_message["To"] = to_addr
+        new_message["Cc"] = cc_addr
+        new_message["Bcc"] = bcc_addr
+        new_message.set_payload(body)
+
+        new_message = str(new_message) 
+            
+        if not self.is_simulate:
+            try:
+                if draft_folder is not None:
+                    self._imap_client.append(draft_folder, new_message)
+                elif self._imap_account.is_gmail:
+                    self._imap_client.append('[Gmail]/Drafts', new_message)
+                else:
+                    import imapclient
+                    drafts = self._imap_client.find_special_folder(imapclient.DRAFTS)
+                    if drafts is not None:
+                        self._imap_client.append(drafts, new_message)
+            except IMAPClient.Error, e:
+                logger.critical('create draft failed')
+                return 
+
+            logger.debug("create_draft(): Your draft %s has been created" % subject)
+
+    def create_folder(self, folder_name):
+        if not self.is_simulate: 
+            self._imap_client.create_folder( folder_name )
+
+        logger.debug("create_folder(): A new folder %s has been created" % folder_name)
+
+    # def rename_folder(old_name, new_name):
+    #     if not is_simulate: 
+    #         mailbox._imap_client.rename_folder( old_name, new_name )
+
+    #     logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
+
+    def send(self, subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
+        if len(to) == 0:
+            raise Exception('send(): recipient email address is not provided')
+
+        if not self.is_simulate:
+            send_email(subject, self._imap_account.email, to, body)
+        logger.debug("send(): sent a message to  %s" % str(to))

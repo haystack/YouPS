@@ -19,7 +19,7 @@ dnspython==1.15.0
 google-api-python-client==1.6.1
 html2text==2014.9.25
 html5lib==1.0b3
-IMAPClient==2.0.0
+IMAPClient==2.1.0
 ipaddr==2.1.11
 # ipython is used just for a nicer django shell. we don't need it
 ipython==5.8.0
@@ -37,4 +37,4 @@ pytz==2016.7
 requests==2.18.4
 South==1.0.1
 typing==3.6.4
-ujson==1.35
+spacy==2.1.3
