@@ -7,7 +7,7 @@ $(document).ready(function() {
         btn_shortcut_save = $("#btn-shortcut-save");
 
     var log_backup = "", user_status_backup = "";
-    var import_str = "import re, spacy, datetime, arrow"
+    var import_str = "import spacy"
 
     // Format string
     if (!String.prototype.format) {
@@ -117,7 +117,7 @@ $(document).ready(function() {
         $('.tab-content').find('.tab-pane').last().append(
             `<!-- add a new message editor button -->
             {0}
-            <!-- add a new repeat editor button -->
+            <!-- add a new flag-change editor button -->
             {1}`.format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false)));
 
         unsaved_tabs.push( id );
@@ -387,7 +387,7 @@ $(document).ready(function() {
                 editable ? "trash" : "plus-circle",
                 editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
                     <span class="preview-folder"></span>` : `<i class="far fa-2x fa-flag"></i>
-                    Create a flag added event handler <span class=""></span>`, 
+                    Create a flag change event handler <span class=""></span>`, 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {

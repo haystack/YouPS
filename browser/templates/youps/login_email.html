@@ -103,7 +103,8 @@
 							{% if mode_exist %}
 								<ul class="nav nav-tabs" role="tablist">
 									{% for mode in modes %}
-										{% if current_mode == mode %}
+										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
+										{% if current_mode == None and forloop.first or current_mode == mode %}
 											<li class="active">	
 										{% else %}
 											<li>
@@ -120,7 +121,8 @@
 								</ul>
 								<div class="tab-content">
 									{% for mode in modes %}
-										{% if current_mode == mode %}
+										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
+										{% if current_mode == None and forloop.first or current_mode == mode %}
 											<div class="tab-pane active" id="tab_{{mode.uid}}">
 										{% else %}
 											<div class="tab-pane" id="tab_{{mode.uid}}">
@@ -333,7 +335,7 @@
 																
 																<div class="panel-heading flex_item_right panel-collapsed">
 																	<h3 class="panel-title">
-																		<i class="far fa-2x fa-flag"></i> Create a flag added event handler <span class=""></span>
+																		<i class="far fa-2x fa-flag"></i> Create a flag change event handler <span class=""></span>
 																	</h3>
 																	
 																</div>
