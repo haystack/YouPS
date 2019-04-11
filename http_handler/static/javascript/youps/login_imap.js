@@ -575,7 +575,7 @@ $(document).ready(function() {
 
         // Open individual tab and panel to load style properly
         $('.nav-tabs li').each(function() {
-            if ( !$(this).find('span') ) return;
+            if ( !$(this).find('span') || $(this).hasClass('add-tab') ) return;
             $(this).find('a').click();
 					
 			// At each tab
