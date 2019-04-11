@@ -388,17 +388,7 @@ $(document).ready(function() {
                         <h3 class="panel-title">
                             <i class="far fa-2x fa-clock" style="float:left"></i>  
                             <span style="float:left;margin: 10px;">Update every </span>
-                            <div class="input-group" style="width: 110px;float: left;">
-                                <input type="text" class="form-control" placeholder="1">
-                                <div class="input-group-btn">
-                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">hr <span class="caret"></span></button>
-                                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                    <li><a href="#">min</a></li>
-                                    <li><a href="#">hr</a></li>
-                                    <li><a href="#">day</a></li>
-                                    </ul>
-                                </div><!-- /btn-group -->
-                            </div><span class="preview-folder"></span>
+                            <span class="preview-folder"></span>
                         </h3>
                         {5}
                     </div>
@@ -456,17 +446,6 @@ $(document).ready(function() {
 
     // for demo; set date to now
     $(".current-date").text(format_date());
-
-    // toggle button init
-    $('.btn-toggle').click(function() {
-        $(this).find('.btn').toggleClass('active');  
-        
-        if ($(this).find('.btn-primary').size()>0) {
-            $(this).find('.btn').toggleClass('btn-primary');
-        }
-        $(this).find('.btn').toggleClass('btn-default');
-           
-    });
 
     if(IS_RUNNING) {
         btn_code_sumbit.addClass('active')
@@ -573,9 +552,12 @@ $(document).ready(function() {
         // Init editor & its autocomplete
         if(e.srcElement.id != "apis-container") return;
 
+        // remember which tab should be active 
+        var active_tab = $('.nav-tabs li.active');
+
         // Open individual tab and panel to load style properly
         $('.nav-tabs li').each(function() {
-            if ( !$(this).find('span') || $(this).hasClass('add-tab') ) return;
+            if ( !$(this).find('span') || $(this).find('a').hasClass('add-tab') ) return;
             $(this).find('a').click();
 					
 			// At each tab
@@ -588,6 +570,23 @@ $(document).ready(function() {
             })
             
         })
+
+        // set dropdown to current mode name if exist
+        if(current_mode) {
+            active_tab.find('a').click();
+            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
+            $(".dropdown .btn").attr('mode-id', current_mode_id);
+        }
+
+        else {
+            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
+            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
+            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+            
+            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+            $(".dropdown .btn").attr('mode-id', last_id);
+        }
 
         // Init folder container
         init_folder_selector( $(".folder-container") )
@@ -646,9 +645,17 @@ $(document).ready(function() {
     // Switch to different tabs
     $(".nav-tabs").on("click", "a", function (e) {
         e.preventDefault();
+
         if (!$(this).hasClass('add-tab')) {
             $(this).tab('show');
-            // TODO change to value of mode dropdown
+            // change to value of mode dropdown only if the engine is not currently running. 
+            if(!btn_code_sumbit.hasClass('active')) {
+                var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+                last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+
+                $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+                $(".dropdown .btn").attr('mode-id', last_id);
+            } 
         }
     })
     .on("click", "span.close", function () { // delete tab/mode
@@ -845,13 +852,18 @@ $(document).ready(function() {
         });
     });
 
+
+    // change mode by dropdown click
     $("body").on("click", ".dropdown li a", function() {
         $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
         $(this).parents(".dropdown").find('.btn').attr('mode-id', $(this).attr('mode-id'));
         $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
 
         // update current_mode
-        run_code( $('#test-mode[type=checkbox]').is(":checked"), get_running());
+        is_success = run_code( $('#test-mode[type=checkbox]').is(":checked"), $(this).hasClass('active'));
+        if(!is_success) {
+            btn_code_sumbit.removeClass('active');
+        }
     })
 
     // Accordion listener
@@ -892,21 +904,6 @@ $(document).ready(function() {
         fetch_log(); 
 
         $(".btn").prop("disabled",false);
-
-        // set dropdown to current mode name if exist
-        if(current_mode) {
-            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
-            $(".dropdown .btn").attr('mode-id', current_mode_id);
-        }
-
-        else {
-            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
-            var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
-            random_mode_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ random_id + '"]').innerHTML );
-
-            $(".dropdown .btn").html(random_mode_name + ' <span class="caret"></span>');
-            $(".dropdown .btn").attr('mode-id', random_id);
-        }
     }
     
 	$('input[type=radio][name=auth-mode]').change(function() {
@@ -921,7 +918,25 @@ $(document).ready(function() {
     });
 
     btn_code_sumbit.click(function() {   
-        run_code( $('#test-mode[type=checkbox]').is(":checked"), !$(this).hasClass('active') );
+        is_success = run_code( $('#test-mode[type=checkbox]').is(":checked"), !$(this).hasClass('active') );
+
+        if(is_success) {
+            // $(this).toggleClass('active');  
+            
+            if ($(this).find('.btn-primary').size()>0) {
+                $(this).find('.btn').toggleClass('btn-primary');
+            }
+            $(this).find('.btn').toggleClass('btn-default');
+        } else {// turn off the button
+            // this is a hack, but after this click handler, the active class will be toggled. add active class so that it will be removed   
+            $(this).addClass('active');  
+
+            if ($(this).find('.btn-primary').size()>0) {
+                $(this).find('.btn').removeClass('btn-primary');
+            }
+            $(this).find('.btn').addClass('btn-default');
+        }
+        
     });
 
     $("body").on("click", ".btn-incoming-save", function() {
@@ -1225,9 +1240,15 @@ $(document).ready(function() {
         }
 
         function run_code(is_dry_run, is_running) {
-            show_loader(true);
+            var cur_mode;
+            try {
+                cur_mode = get_current_mode();
+            } catch (err){
+                notify({'code': 'There is no rule defined in this mode'}, false);
+                return false;
+            }
 
-            var cur_mode = get_current_mode();
+            show_loader(true);
 
             var modes = get_modes();
 
@@ -1275,6 +1296,8 @@ $(document).ready(function() {
                     }
                 }
             );
+
+            return true;
         }
 
         // function folder_recent_messages(folder_name, N, code="") {
