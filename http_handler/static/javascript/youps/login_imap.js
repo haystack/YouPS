@@ -106,6 +106,7 @@ $(document).ready(function() {
         var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
             <div class='editable-container' type='new-message'></div>
             <div class='editable-container' type='repeat'></div>
+            <div class='editable-container' type='flag-change'></div>
         </div>`.format(id);
         $('.tab-content').append( tab_pane_content );
 
@@ -117,7 +118,7 @@ $(document).ready(function() {
             `<!-- add a new message editor button -->
             {0}
             <!-- add a new repeat editor button -->
-            {1}`.format(get_panel_elem("new-message", false), get_panel_elem("repeat", false)));
+            {1}`.format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false)));
 
         unsaved_tabs.push( id );
     }
