@@ -28,7 +28,11 @@ class Message(object):
         # the connection to the server
         self._imap_client = imap_client  # type: IMAPClient
         
+        # if True, then only local execute and don't transmit to the server. 
         self.is_simulate = is_simulate  # type: bool
+
+        # local copy of flags for simulating
+        self._flags = self._schema.flags
         logger.debug( 'caller name: %s', inspect.stack()[1][3] )
 
     def __str__(self):
@@ -71,7 +75,7 @@ class Message(object):
         Returns:
             List(str): List of flags on the message
         """
-        return self._schema.flags
+        return self._flags if self.is_simulate else self._schema.flags
 
     def diff_attr(self, obj_instance):
         for attr, value in self.__dict__.iteritems():
@@ -91,6 +95,8 @@ class Message(object):
         if not self.is_simulate:
             self._schema.flags = value
             self._schema.save()
+
+        self._flags = value
 
     @property
     def deadline(self):
@@ -354,8 +360,8 @@ class Message(object):
                 self._imap_client.add_gmail_labels(self._uid, flags)
             else:
                 self._imap_client.add_flags(self._uid, flags)
-            # update the local flags
-            self.flags = list(set(self.flags + flags))
+        # update the local flags
+        self.flags = list(set(self.flags + flags))
 
         # self.diff_attr(cp_self)
 
@@ -377,8 +383,9 @@ class Message(object):
                 self._imap_client.remove_gmail_labels(self._uid, flags)
             else:
                 self._imap_client.remove_flags(self._uid, flags)
-            # update the local flags
-            self.flags = set(self.flags) - set(flags)
+                
+        # update the local flags
+        self.flags = set(self.flags) - set(flags)
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None

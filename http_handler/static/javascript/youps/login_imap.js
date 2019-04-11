@@ -1318,22 +1318,27 @@ $(document).ready(function() {
                             var added_row = t.row.add( [
                                 '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                                 '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                                '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, json_panel_id % 2 == 0? "flags: [] -> ['should read']": "No action")
+                                '{0}'.format(Message["log"].replace(/\n/g , "<br>"))
+                                // '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, Message["log"])
                             ] ).draw( false ).node();
+                            
 
                             $( added_row ).attr('folder', Message['folder'])
                                 .attr('msg-id', msg_id)
                                 .attr('line-number2', 1);
                                 
                                 // .attr('line-number{0}', 1); // TODO add activated line
+                            if(Message["error"])
+                                $( added_row ).find("td:eq(2)").addClass("error");
+                            // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
+                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
 
-                            $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":"");
-                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);
-                            //n==2 ? [1,2,3,6,9] : [3,6];
-                            // $("#example tr").removeClass("unmatched");
-                            // $.each(unmatched_row, function(index, val) {
-                            //     $("#example tr:eq({0})".format(val)).addClass("unmatched");
-                            // })         
+                            // Delete attributes that are not allowed for users 
+                            delete Message["trigger"];
+                            delete Message["error"];
+                            delete Message["log"];
+                            delete Message["timestamp"];
+                            delete Message["type"];
     
                             $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                                 data: {
@@ -1341,10 +1346,11 @@ $(document).ready(function() {
                                 }
                             });
             
-                            // set contact object preview 
-                            // $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
-                            //     '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
-            
+                            if (Message['from_'])
+                                // set contact object preview 
+                                $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
+                                    '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
+                
                             
                             $('#jsonpanel-' + json_panel_id).jsonpanel({
                                 data: {

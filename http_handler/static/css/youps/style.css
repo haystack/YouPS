@@ -19,14 +19,6 @@
   background: white;
 }
 
-.error {
-    color: red;
-}
-
-.info {
-    color: white;
-}
-
 .switch-wrapper {
     display: inline-block;
     position: relative;
@@ -475,6 +467,10 @@ i::before {
   opacity: 1;
 }
 
+td.error {
+  background: lightcoral;
+}
+
 td.warning {
   background: lightyellow;
 }
@@ -547,7 +543,7 @@ label {
 
 
 /* TODO removed after stablized.  */
-.debugger-container,
+/* .debugger-container, */
 div[type='repeat'] {
   display: none;
 }
