@@ -103,7 +103,8 @@
 							{% if mode_exist %}
 								<ul class="nav nav-tabs" role="tablist">
 									{% for mode in modes %}
-										{% if current_mode == mode %}
+										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
+										{% if current_mode == None and forloop.first or current_mode == mode %}
 											<li class="active">	
 										{% else %}
 											<li>
@@ -120,7 +121,8 @@
 								</ul>
 								<div class="tab-content">
 									{% for mode in modes %}
-										{% if current_mode == mode %}
+										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
+										{% if current_mode == None and forloop.first or current_mode == mode %}
 											<div class="tab-pane active" id="tab_{{mode.uid}}">
 										{% else %}
 											<div class="tab-pane" id="tab_{{mode.uid}}">
@@ -186,16 +188,12 @@
 																		</textarea>
 																	</div>
 																	<!-- Separte row for debugging -->
-																	<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
-																			<div style='display:none' id='mv-data-container' mv-expressions="none">
-																					{
-																						"task": "",
-																						"deadline": "2016-03-15"
-																					}
-																			</div>
-																			<h2>Debug console</h2>
+																	<div class='debugger-container'>
+																			<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+																			
+																			<h2>Test suites</h2>
 																			<h4>Recent messages from your selected folders to test your rules</h4>
-																			<table id="example" class="table" style="width:100%">
+																			<table class="example-suites" class="table" style="width:100%">
 																				<thead>
 																					<tr>
 																					  <th>Sender</th>
@@ -204,29 +202,6 @@
 																					</tr>
 																				</thead>
 																				<tbody>
-																					<!-- <tr>
-																					  <td><i class="fas fa-search fa-2x"></i></td>
-																					  <td>Inbox</td>
-																					  <td>Dylan McKay</td>
-																					  <td>Wanna play Frisbee?</td>
-																					  <td><time mv-edit-placeholder='[$today]' property="date"></time></td>
-																					  <td><ul><li property='task' mv-multiple></li></ul></td>
-																					</tr> -->
-																					<!-- <tr>
-																					  <td class='details-control'></td>
-																						<td>Soya</td>
-																						<td>[soyapark/murmur] new data structure and msg arrival event (#81)
-																						  </td>
-																						<td><time datetime="2016-03-15" property="date">15 Mar 2016</time></td>
-																						<td><ul><li>Review PR</li></ul></td>
-																					</tr>
-																					<tr>
-																					  <td class='details-control'></td>
-																						<td>Elena Glassman</td>
-																						<td>[csail-related] Job Posting: XYZ Robotics is Hiring (Boston)</td>
-																						<td><time datetime="2016-03-15" property="date">15 Mar 2016</time></td>
-																						<td>-</td>
-																					</tr> -->
 																				</tbody>
 																			</table>
 																	</div>
@@ -319,7 +294,8 @@
 									  		</div>
 									{% endfor %}
 								</div>
-								
+
+							<!-- when there is no mode exist e.g., when it is first time after a user registers -->
 							{% else %}
 								<ul class="nav nav-tabs" role="tablist">
 									<li class="active" >
@@ -334,97 +310,9 @@
 								<div class="tab-content">
 									<div class="tab-pane active" id="tab_0">
 										<div class='editable-container' type='new-message'>
-											<div rule-id=99998 class="panel panel-success">
-																<div class="flex_container">
-																	<div class="flex_item_left"> 
-																		<i class="fas fa-3x fa-trash"></i> 
-																	</div>
-
-																	<div class="flex_item_right panel-heading panel-collapsed">
-																		<h3 class="panel-title">
-																			<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" />
-																			<span class="preview-folder"></span>
-																		</h3>
-																		<span class="pull-right">
-																			<button class='btn-default btn-incoming-save'>Save</button>
-																			<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
-																		</span>
-																	</div>
-																</div>
-																<div class="panel-body" style="display:none;">
-																	<div class="folder-container"></div>
-																	<div class="editor-container">
-																		<textarea class="editor mode-editor" id="editor-99998">
-def on_message(my_message):
-	if "ads" in my_message.subject:
-		my_message.mark_read()
-																		</textarea>
-																	</div>
-																	<br>
-																	<!-- Separte row for debugging -->
-																	<div class='debugger-container' mv-app='editor' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
-																			<div style='display:none' id='mv-data-container' mv-expressions="none">
-																					{
-																						"task": "",
-																						"deadline": ""
-																					}
-																			</div>
-																			<table id="example" class="table" style="width:100%">
-																				<thead>
-																					<tr>
-																					  <th>Simulate</th>
-																					  <th>Message</th>
-																					  <th>Deadline</th>
-																					  <th>Task</th>
-																					</tr>
-																				</thead>
-																				<tbody>
-																				</tbody>
-																			</table>
-																		</div>
-																</div>
-															</div>
 										</div>
 
 										<div class='editable-container' type='repeat'>
-														<div rule-id=99999 class="panel panel-warning">
-															<div class="flex_container">
-																<div class="flex_item_left"> 
-																	<i class="fas fa-3x fa-trash"></i> 
-																</div>
-
-																<div class="flex_item_right panel-heading panel-collapsed">
-																	<h3 class="panel-title">
-																		<i class="far fa-2x fa-clock" style="float:left"></i>  
-																		<span style="float:left;margin: 10px;">Update every </span>
-																		<div class="input-group" style="width: 110px;float: left;">
-																			  <input type="text" class="form-control" placeholder="1">
-																			  <div class="input-group-btn">
-																				<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">hr <span class="caret"></span></button>
-																				<ul class="dropdown-menu dropdown-menu-right" role="menu">
-																				  <li><a href="#">min</a></li>
-																				  <li><a href="#">hr</a></li>
-																				  <li><a href="#">day</a></li>
-																				</ul>
-																			  </div><!-- /btn-group -->
-																		</div>		
-																		<span class="preview-folder"></span>				
-																	</h3>
-																	<span class="pull-right">
-																		<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
-																	</span>
-																</div>
-															</div>
-															<div class="panel-body" style="display:none;">
-																<div class="folder-container"></div>
-																<div class="editor-container">
-																	<textarea class="editor mode-editor" id="editor-99999">
-def repeat_every():
-    pass
-																	</textarea>
-																</div>
-															</div>
-														</div>
 										</div>
 
 										<!-- editor add buttons -->

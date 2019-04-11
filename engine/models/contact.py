@@ -84,6 +84,8 @@ class Contact(object):
         from browser.models.message import Message
 
         message_schemas = MessageSchema.objects.filter(Q(from_m=self._schema) | Q(to=self._schema) | Q(cc=self._schema) | Q(bcc=self._schema)).order_by("-date")[:N]
-        
+        logger.debug(message_schemas.values('id'))
+        # TODO fetch from imap 
+        # self._imap_client.search('OR FROM "%s" (OR TO "%s" (OR CC "%s" BCC "%s"))' % (self.email, self.email, self.email, self.email))
         return [Message(message_schema, self._imap_client) for message_schema in message_schemas]
 

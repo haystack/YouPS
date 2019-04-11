@@ -7,7 +7,7 @@ $(document).ready(function() {
         btn_shortcut_save = $("#btn-shortcut-save");
 
     var log_backup = "", user_status_backup = "";
-    var import_str = "import re, spacy, datetime, arrow"
+    var import_str = "import spacy"
 
     // Format string
     if (!String.prototype.format) {
@@ -204,6 +204,11 @@ $(document).ready(function() {
           
         // editor.getValue( "import re, spacy, datetime, arrow" );
         // editor.markText({line:0,ch:0},{line:2,ch:1},{readOnly:true});
+
+        editor.on('change',function(cm){
+            // get value right from instance
+            $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.btn-debug-update').addClass('glow');
+        });
     }
 
     var debug_matched_row = [];
@@ -318,8 +323,24 @@ $(document).ready(function() {
                 </div>
                 <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
         </div>
-        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
-            "\tpass"), 
+        {3}`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
+            "\tpass", type == "new-message" ? `<div class='debugger-container'>
+            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+            
+            <h2>Test suites</h2>
+            <h4>Recent messages from your selected folders to test your rules</h4>
+            <table class="example-suites table" style="width:100%">
+                <thead>
+                    <tr>
+                    <th>Sender</th>
+                    <th>Message</th>
+                    <th>Expected Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>`: ""), 
         pull_down_arrow = `<span class="pull-right">
             <button class='btn-default btn-incoming-save'>Save</button>
             <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
@@ -461,7 +482,7 @@ $(document).ready(function() {
         '</table>';
     }
 
-    var table = $('#example').DataTable( {
+    var table = $('.example-suites').DataTable( {
         "bPaginate": false,
         "bLengthChange": false,
         "bFilter": true,
@@ -556,7 +577,7 @@ $(document).ready(function() {
         $('.nav-tabs li').each(function() {
             if ( !$(this).find('span') ) return;
             $(this).find('a').click();
-						
+					
 			// At each tab
             $( $(this).find('a').attr('href') ).find('.panel').each(function() {
 			    $(this).parents('.editable-container').find('.panel-heading').click();
@@ -656,13 +677,32 @@ $(document).ready(function() {
         // open briefly to set styling
         $container.find(".panel-heading").last().click();
         init_editor( $container.find('textarea').last()[0] );
+        $($container.find('.example-suites').last()[0]).DataTable( {
+            "bPaginate": false,
+            "bLengthChange": false,
+            "bFilter": true,
+            "bInfo": false,
+            "bAutoWidth": false,
+            "searching": false,
+            "columns": [
+                { "width": "40px", "orderable": false },
+                null,
+                { "width": "300px" }
+            ],
+            "order": [[1, 'asc']]
+        } );
         $container.find(".panel-heading").last().click();
+
+        
 
         init_folder_selector( $($container.find('.folder-container').last()[0]) );
 
         // check inbox folder by default
         $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
-            if(elem.value.toLowerCase() == "inbox") elem.checked = true;
+            if(elem.value.toLowerCase() == "inbox") {
+                elem.checked = true;
+                run_simulate_on_messages(elem.value, 5, $($container.find('div[rule-id]').last()[0]));
+            }
         })
     });
 
@@ -704,9 +744,10 @@ $(document).ready(function() {
         else { // remove from the table
                 var dt_elem = $(this).parents('.panel-body').find('.debugger-container table')[0];
                 dt = $( dt_elem ).DataTable();
-
-                $.each($(dt_elem).find('tr[folder="{0}"]'.format($(this).val())), function(index, elem) {
-                    dt.row( elem ).remove().draw();
+                var folder_name = $(this).val();
+                $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
+                    if(folder_name == $(elem).attr('folder'))
+                        dt.row( elem ).remove().draw();
                 })
         }
 
@@ -771,6 +812,14 @@ $(document).ready(function() {
         display.style.padding = '5px'
         
         $('body').find('.CodeMirror')[0].CodeMirror.addLineWidget(2, node2)
+    }); 
+
+    // run simulation on the editor
+    $("#editor-container").on("click", ".btn-debug-update", function() {
+        var editor_rule_container = $(this).parents('div[rule-id]');
+        debugger;
+
+        run_simulate_on_messages($(editor_rule_container).find('.folder-container input:checked').val(), 5, editor_rule_container);
     }); 
 
     // Tab name editor
@@ -1308,8 +1357,15 @@ $(document).ready(function() {
                     
                     // get simulation result
                     if (res.status) {
-                        var t = $( $(editor_rule_container).find('.debugger-container table')[0] ).DataTable();
-    
+                        $(editor_rule_container).find('.btn-debug-update').removeClass('glow');
+                        var dt_elem = $(editor_rule_container).find('.debugger-container table')[0];
+                        var t = $( dt_elem ).DataTable();
+                        // delete all before added new 
+                        $.each($(dt_elem).find('tr[folder]'.format(folder_name)), function(index, elem) {
+                            if(folder_name == $(elem).attr('folder'))
+                                t.row( elem ).remove().draw();  
+                        })
+
                         $.each( res['messages'], function( msg_id, value ) {
                             var Message = value;
     
@@ -1318,22 +1374,27 @@ $(document).ready(function() {
                             var added_row = t.row.add( [
                                 '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                                 '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                                '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, json_panel_id % 2 == 0? "flags: [] -> ['should read']": "No action")
+                                '{0}'.format(Message["log"].replace(/\n/g , "<br>"))
+                                // '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, Message["log"])
                             ] ).draw( false ).node();
+                            
 
                             $( added_row ).attr('folder', Message['folder'])
                                 .attr('msg-id', msg_id)
                                 .attr('line-number2', 1);
                                 
                                 // .attr('line-number{0}', 1); // TODO add activated line
+                            if(Message["error"])
+                                $( added_row ).find("td:eq(2)").addClass("error");
+                            // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
+                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
 
-                            $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":"");
-                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);
-                            //n==2 ? [1,2,3,6,9] : [3,6];
-                            // $("#example tr").removeClass("unmatched");
-                            // $.each(unmatched_row, function(index, val) {
-                            //     $("#example tr:eq({0})".format(val)).addClass("unmatched");
-                            // })         
+                            // Delete attributes that are not allowed for users 
+                            delete Message["trigger"];
+                            delete Message["error"];
+                            delete Message["log"];
+                            delete Message["timestamp"];
+                            delete Message["type"];
     
                             $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                                 data: {
@@ -1341,10 +1402,11 @@ $(document).ready(function() {
                                 }
                             });
             
-                            // set contact object preview 
-                            // $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
-                            //     '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
-            
+                            if (Message['from_'])
+                                // set contact object preview 
+                                $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
+                                    '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
+                
                             
                             $('#jsonpanel-' + json_panel_id).jsonpanel({
                                 data: {

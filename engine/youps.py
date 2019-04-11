@@ -238,6 +238,11 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                 er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
+                logger.info("user %s test run " % imapAccount.email)
+
+                # res = interpret(MailBox(imapAccount, imap), None, True, {'code' : code})
+                # logger.critical(res["appended_log"])
+
                 # # Save selected folder for the mode
                 for f in folders:
                     folder = FolderSchema.objects.get(imap_account=imapAccount, name=f)
@@ -246,11 +251,10 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 er.save()
 
+        
+
         if run_request:
             imapAccount.current_mode = MailbotMode.objects.filter(uid=current_mode_id, imap_account=imapAccount)[0]
-            logger.info("user %s run request" % imapAccount.email)
-
-            res = interpret(MailBox(imapAccount, imap), imapAccount.current_mode, is_test)
 
             # if the code execute well without any bug, then save the code to DB
             if not res['imap_error']:
@@ -330,14 +334,14 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
     try:
         res['messages'] = {}
 
-        imapAccount = ImapAccount.objects.get(email=email)
-
+        
         messages = MessageSchema.objects.filter(imap_account=imapAccount, folder_schema__name=folder_name).order_by("-date")[:N]
         imap.select_folder( folder_name )
 
         for message_schema in messages:
+            
             imap_res = interpret(MailBox(imapAccount, imap), None, is_simulate=True, simulate_info={'code': code, 'msg-id': message_schema.id})
-            logging.info(res)
+            logger.info(imap_res)
 
             message = Message(message_schema, imap)
 
@@ -379,8 +383,11 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
                 "deadline": message.deadline, 
                 "is_read": message.is_read, 
                 "is_deleted": message.is_deleted, 
-                "is_recent": message.is_recent
+                "is_recent": message.is_recent,
+                "log": imap_res['appended_log'][message_schema.id]['log'],
+                "error": imap_res['appended_log'][message_schema.id] if 'error' in imap_res['appended_log'][message_schema.id] else False
             }
+            
 
             res['messages'][message_schema.id] = new_msg
         
