@@ -204,6 +204,11 @@ $(document).ready(function() {
           
         // editor.getValue( "import re, spacy, datetime, arrow" );
         // editor.markText({line:0,ch:0},{line:2,ch:1},{readOnly:true});
+
+        editor.on('change',function(cm){
+            // get value right from instance
+            $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.btn-debug-update').addClass('glow');
+        });
     }
 
     var debug_matched_row = [];
@@ -556,7 +561,7 @@ $(document).ready(function() {
         $('.nav-tabs li').each(function() {
             if ( !$(this).find('span') ) return;
             $(this).find('a').click();
-						
+					
 			// At each tab
             $( $(this).find('a').attr('href') ).find('.panel').each(function() {
 			    $(this).parents('.editable-container').find('.panel-heading').click();
@@ -704,9 +709,10 @@ $(document).ready(function() {
         else { // remove from the table
                 var dt_elem = $(this).parents('.panel-body').find('.debugger-container table')[0];
                 dt = $( dt_elem ).DataTable();
-
-                $.each($(dt_elem).find('tr[folder="{0}"]'.format($(this).val())), function(index, elem) {
-                    dt.row( elem ).remove().draw();
+                var folder_name = $(this).val();
+                $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
+                    if(folder_name == $(elem).attr('folder'))
+                        dt.row( elem ).remove().draw();
                 })
         }
 
@@ -771,6 +777,14 @@ $(document).ready(function() {
         display.style.padding = '5px'
         
         $('body').find('.CodeMirror')[0].CodeMirror.addLineWidget(2, node2)
+    }); 
+
+    // run simulation on the editor
+    $("#editor-container").on("click", ".btn-debug-update", function() {
+        var editor_rule_container = $(this).parents('div[rule-id]');
+        debugger;
+
+        run_simulate_on_messages($(editor_rule_container).find('.folder-container input:checked').val(), 5, editor_rule_container);
     }); 
 
     // Tab name editor
@@ -1308,8 +1322,15 @@ $(document).ready(function() {
                     
                     // get simulation result
                     if (res.status) {
-                        var t = $( $(editor_rule_container).find('.debugger-container table')[0] ).DataTable();
-    
+                        $(editor_rule_container).find('.btn-debug-update').removeClass('glow');
+                        var dt_elem = $(editor_rule_container).find('.debugger-container table')[0];
+                        var t = $( dt_elem ).DataTable();
+                        // delete all before added new 
+                        $.each($(dt_elem).find('tr[folder]'.format(folder_name)), function(index, elem) {
+                            if(folder_name == $(elem).attr('folder'))
+                                t.row( elem ).remove().draw();  
+                        })
+
                         $.each( res['messages'], function( msg_id, value ) {
                             var Message = value;
     

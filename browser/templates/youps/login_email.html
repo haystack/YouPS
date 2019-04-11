@@ -103,7 +103,8 @@
 							{% if mode_exist %}
 								<ul class="nav nav-tabs" role="tablist">
 									{% for mode in modes %}
-										{% if current_mode == mode %}
+										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
+										{% if current_mode == None and forloop.first or current_mode == mode %}
 											<li class="active">	
 										{% else %}
 											<li>
@@ -120,7 +121,8 @@
 								</ul>
 								<div class="tab-content">
 									{% for mode in modes %}
-										{% if current_mode == mode %}
+										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
+										{% if current_mode == None and forloop.first or current_mode == mode %}
 											<div class="tab-pane active" id="tab_{{mode.uid}}">
 										{% else %}
 											<div class="tab-pane" id="tab_{{mode.uid}}">
@@ -193,6 +195,8 @@
 																						"deadline": "2016-03-15"
 																					}
 																			</div>
+																			<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+																			
 																			<h2>Test suites</h2>
 																			<h4>Recent messages from your selected folders to test your rules</h4>
 																			<table id="example" class="table" style="width:100%">
