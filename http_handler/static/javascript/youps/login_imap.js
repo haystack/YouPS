@@ -296,7 +296,7 @@ $(document).ready(function() {
             case "new-message": 
                 func_name="def on_message(my_message):";break;
             case "flag-change": 
-                func_name="def on_flag_change(my_message, flag_name):";break;
+                func_name="def on_flag_added(my_message, added_flags):\n\tpass\n\ndef on_flag_removed(my_message, removed_flags):";break;
         }
 
         var editor_elem = `<div class="panel-body" style="display:none;">
