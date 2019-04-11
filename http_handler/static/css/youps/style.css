@@ -337,6 +337,7 @@ i::before {
   line-height: inherit;
 }
 
+/* Styling for on/off switch */
 .btn-toggle {
   margin: 0 4rem;
   padding: 0;
