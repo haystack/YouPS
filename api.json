@@ -143,13 +143,13 @@
 			{
 				"name": "delete",
 				"params": "",
-				"description": "Delete this email from the currently selected folder.",
+				"description": "Delete this email to your trash folder.",
 				"example": ""
 			},
 			{
 				"name": "forward",
-				"params": "",
-				"description": "Delete this email from the currently selected folder.",
+				"params": "to=[], cc=[], bcc=[]",
+				"description": "(Work in progress..) Forward this email to the given recipients.",
 				"example": ""
 			},
 			{
@@ -175,14 +175,14 @@
 			{
 				"name": "reply",
 				"params": "content, to=[], cc=[], bcc=[]",
-				"description": "reply to the sender and additional recipients.",
+				"description": "(Work in progress..) reply to the sender and additional recipients.",
 				"example": [
 				]
 			},
 			{
 				"name": "reply_all",
 				"params": "address, to=[], cc=[], bcc=[]",
-				"description": "reply all to the sender & recipients and additional recipients",
+				"description": "(Work in progress..) reply all to the sender & recipients and additional recipients",
 				"example": [
 				]
 			}
