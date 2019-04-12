@@ -6,8 +6,11 @@ import datetime
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
+from engine.models.contact import Contact
 from smtp_handler.utils import send_email
 from email import message
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -172,37 +175,89 @@ class MailBox(object):
             yield folder
 
 
-    def create_draft(self, subject="", to_addr="", cc_addr="", bcc_addr="", body="", draft_folder=None):
-        new_message = message.Message()
-        new_message["Subject"] = subject
-            
-        if type(to_addr) == 'list':
-            to_addr = ",".join(to_addr)
-        if type(cc_addr) == 'list':
-            cc_addr = ",".join(cc_addr)
-        if type(bcc_addr) == 'list':
-            bcc_addr = ",".join(bcc_addr)
-            
-        new_message["To"] = to_addr
-        new_message["Cc"] = cc_addr
-        new_message["Bcc"] = bcc_addr
-        new_message.set_payload(body)
+    def create_draft(self, subject="", to="", cc="", bcc="", content="", draft_folder=None):
+        """Create a draft message and save it to user's draft folder
 
-        new_message = str(new_message) 
+            Args:
+                subject (string): the subject line of the draft message
+                to (a single instance|list of string|Contact): addresses that go in to field
+                cc (a single instance|list of string|Contact): addresses that go in cc field
+                bcc (a single instance|list of string|Contact): addresses that go in bcc field
+                content (string): content of the draft message 
+                draft_folder (string): a name of draft folder 
+        """
+        
+        new_message = MIMEMultipart('alternative')
+        new_message["Subject"] = subject
+
+        if isinstance(to, list):
+            to_string = []
+            for t in to:
+                if isinstance(t, Contact):
+                    to_string.append(t.email)
+                else:
+                    to_string.append(t)
+
+            to = ",".join(to_string)
+        else:
+            if isinstance(to, Contact):
+                to = to.email 
+
+        if type(cc) == 'list':
+            cc_string = []
+            for t in cc:
+                if isinstance(t, Contact):
+                    cc_string.append(t.email)
+                else:
+                    cc_string.append(t)
+
+            cc = ",".join(cc_string)
+        else:
+            if isinstance(cc, Contact):
+                cc = cc.email 
+
+        if type(bcc) == 'list':
+            bcc_string = []
+            for t in bcc:
+                if isinstance(t, Contact):
+                    bcc_string.append(t.email)
+                else:
+                    bcc_string.append(t)
+
+            bcc = ",".join(bcc_string)
+        else:
+            if isinstance(bcc, Contact):
+                bcc = bcc.email
+         
+        new_message["To"] = to
+        new_message["Cc"] = cc
+        new_message["Bcc"] = bcc
+        logger.info(to)
+        logger.info(cc)
+        logger.info(bcc)
+        # new_message.set_payload(content.encode('utf-8')) 
+        if "text" in content and "html" in content:
+            part1 = MIMEText(content["text"].encode('utf-8'), 'plain')
+            part2 = MIMEText(content["html"].encode('utf-8'), 'html')
+            new_message.attach(part1)
+            new_message.attach(part2)
+        else: 
+            part1 = MIMEText(content.encode('utf-8'), 'plain')
+            new_message.attach(part1)
             
         if not self.is_simulate:
             try:
                 if draft_folder is not None:
-                    self._imap_client.append(draft_folder, new_message)
+                    self._imap_client.append(draft_folder, str(new_message))
                 elif self._imap_account.is_gmail:
-                    self._imap_client.append('[Gmail]/Drafts', new_message)
+                    self._imap_client.append('[Gmail]/Drafts', str(new_message))
                 else:
                     import imapclient
                     drafts = self._imap_client.find_special_folder(imapclient.DRAFTS)
                     if drafts is not None:
-                        self._imap_client.append(drafts, new_message)
+                        self._imap_client.append(drafts, str(new_message))
             except IMAPClient.Error, e:
-                logger.critical('create draft failed')
+                logger.critical('create_draft() failed')
                 return 
 
             logger.debug("create_draft(): Your draft %s has been created" % subject)

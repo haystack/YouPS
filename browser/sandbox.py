@@ -6,12 +6,17 @@ import datetime
 import copy
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from StringIO import StringIO
+
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
 
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
+
+
+from smtp_handler.utils import send_email
+
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -44,6 +49,32 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     assert mailbox.new_message_handler is not None
 
     # define user methods
+    def create_folder(folder_name):
+        if not is_simulate: 
+            mailbox._imap_client.create_folder( folder_name )
+
+        logger.debug("create_folder(): A new folder %s has been created" % folder_name)
+
+    def rename_folder(old_name, new_name):
+        if not is_simulate: 
+            mailbox._imap_client.rename_folder( old_name, new_name )
+
+        logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
+
+    def on_message_arrival(func):
+        mailbox.new_message_handler += func
+
+    def set_interval(interval=None, func=None):
+        pass
+
+    def send(subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
+        if len(to) == 0:
+            raise Exception('send(): recipient email address is not provided')
+
+        if not is_simulate:
+            send_email(subject, mailbox._imap_account.email, to, body)
+        logger.debug("send(): sent a message to  %s" % str(to))
+
 
     # get the logger for user output
     userLogger = logging.getLogger('youps.user')  # type: logging.Logger
@@ -113,7 +144,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     # print out error messages for user 
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     logger.info(e)
-                    logger.debug(exc_obj)
+                    logger.info(exc_obj)
                     # logger.info(traceback.print_exception())
 
                     # TODO find keyword 'in on_message' or on_flag_change

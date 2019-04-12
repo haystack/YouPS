@@ -324,7 +324,9 @@ class Message(object):
                             "Unsupported sub type %s" % sub_type)
 
             # return text if we have it otherwise html
-            return text if text else html
+            # return text if text else html
+
+            return {"text": text, "html": html}
 
         finally:
             # mark the message unread if it is unread
