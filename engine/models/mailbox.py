@@ -92,7 +92,7 @@ class MailBox(object):
             time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
             time_end = now - datetime.timedelta(seconds=time_span)
 
-            logger.info("time range %s %s" % (time_start, time_end))
+            logger.debug("time range %s %s" % (time_start, time_end))
             folder._search_scheduled_message(self.event_data_list, time_start, time_end)
 
     def _supports_cond_store(self):
@@ -189,7 +189,7 @@ class MailBox(object):
         
         new_message = MIMEMultipart('alternative')
         new_message["Subject"] = subject
-
+        
         if isinstance(to, list):
             to_string = []
             for t in to:
@@ -203,20 +203,22 @@ class MailBox(object):
             if isinstance(to, Contact):
                 to = to.email 
 
-        if type(cc) == 'list':
+        if isinstance(cc, list):
             cc_string = []
-            for t in cc:
-                if isinstance(t, Contact):
-                    cc_string.append(t.email)
+            
+            for c in cc:
+                if isinstance(c, Contact):
+                    logger.info(c.email)
+                    cc_string.append(c.email)
                 else:
-                    cc_string.append(t)
+                    cc_string.append(c)
 
             cc = ",".join(cc_string)
         else:
             if isinstance(cc, Contact):
                 cc = cc.email 
 
-        if type(bcc) == 'list':
+        if isinstance(bcc, list):
             bcc_string = []
             for t in bcc:
                 if isinstance(t, Contact):
