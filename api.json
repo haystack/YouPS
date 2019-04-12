@@ -5,7 +5,7 @@
 			"name": "create_draft",
 			"return_type": "",
 			"return_href": "",
-			"params": "subject='', to='', cc='', bcc='', body='', draft_folder='Drafts'",
+			"params": "subject='', to='', cc='', bcc='', content='', draft_folder=None",
 			"description": "Create a draft message and save it to your draft folder",
 			"example": ["def on_deadline(my_message):", "\tif 'weekly meeting' in my_message.subject:","\t\tcreate_draft('Schedule meeting next Monday', my_messsage.to, my_message.cc, 'coworker@mit.edu')"]
 			},
