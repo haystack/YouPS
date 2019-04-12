@@ -106,6 +106,7 @@ $(document).ready(function() {
         var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
             <div class='editable-container' type='new-message'></div>
             <div class='editable-container' type='repeat'></div>
+            <div class='editable-container' type='flag-change'></div>
         </div>`.format(id);
         $('.tab-content').append( tab_pane_content );
 
@@ -116,8 +117,8 @@ $(document).ready(function() {
         $('.tab-content').find('.tab-pane').last().append(
             `<!-- add a new message editor button -->
             {0}
-            <!-- add a new repeat editor button -->
-            {1}`.format(get_panel_elem("new-message", false), get_panel_elem("repeat", false)));
+            <!-- add a new flag-change editor button -->
+            {1}`.format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false)));
 
         unsaved_tabs.push( id );
     }
@@ -296,55 +297,46 @@ $(document).ready(function() {
     }
 
     function get_panel_elem(type, editable) {
+        var func_name = ""
+        switch(type) {
+            case "new-message": 
+                func_name="def on_message(my_message):";break;
+            case "flag-change": 
+                func_name="def on_flag_added(my_message, added_flags):\n\tpass\n\ndef on_flag_removed(my_message, removed_flags):";break;
+        }
+
         var editor_elem = `<div class="panel-body" style="display:none;">
-            <div class="folder-container"></div>
-            <div class="editor-container">
-                <div class='trigger'>
-                    <form class="form-inline">
-                        <div class="form-group">
-                            <span>Run following rules when there is </span>
-                            <span>message arrived </span>
-                        </div>
-                        <div class="form-group">
-                            <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
-                            <label class="form-check-label" for="inlineRadio1">now</label>
-                            <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
-                            <input style='width:50px;' type="text" class="form-control" placeholder="1">
-                            <select id="company" class="form-control">
-                                <option>min</option>
-                                <option>hr</option>
-                                <option>day</option>
-                            </select> 													
-                        </div>
-                        <div class="form-group">
-                            <span>ago</span>
-                        </div>
-                    </form>
-                </div>
-                <textarea class="editor mode-editor">{0}\n{1}\n{2}</textarea>
-        </div>
-        {3}`.format(import_str, type == "new-message" ? "def on_message(my_message):":"def repeat_every():",
-            "\tpass", type == "new-message" ? `<div class='debugger-container'>
-            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
-            
-            <h2>Test suites</h2>
-            <h4>Recent messages from your selected folders to test your rules</h4>
-            <table class="example-suites table" style="width:100%">
-                <thead>
-                    <tr>
-                    <th>Sender</th>
-                    <th>Message</th>
-                    <th>Expected Result</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>`: ""), 
-        pull_down_arrow = `<span class="pull-right">
-            <button class='btn-default btn-incoming-save'>Save</button>
-            <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
-        </span>`;
+        <div class="folder-container"></div>
+        <div class="editor-container">` +
+            (type=="new-message"? `<div class='trigger'>
+                <form class="form-inline">
+                    <div class="form-group">
+                        <span>Run following rules when there is </span>
+                        <span>message arrived </span>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
+                        <label class="form-check-label" for="inlineRadio1">now</label>
+                        <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
+                        <input style='width:50px;' type="text" class="form-control" placeholder="1">
+                        <select id="company" class="form-control">
+                            <option>min</option>
+                            <option>hr</option>
+                            <option>day</option>
+                        </select> 													
+                    </div>
+                    <div class="form-group">
+                        <span>ago</span>
+                    </div>
+                </form></div>`:"") +
+            `<textarea class="editor mode-editor">{0}\n{1}</textarea>
+    </div>
+    <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`
+        .format(import_str, func_name + "\n\tpass"), 
+    pull_down_arrow = `<span class="pull-right">
+        <button class='btn-default btn-incoming-save'>Save</button>
+        <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+    </span>`;
 
         if(type == "new-message") {
             return `<div class="{0}" {1}>
@@ -374,6 +366,33 @@ $(document).ready(function() {
                         <span class="fa-layers-counter" style="background:Tomato">NEW</span>
                     </span>
                     Create message arrival handler <span class=""></span>`, 
+                editable ? pull_down_arrow : "",
+                editable ? editor_elem : "");
+        } else if (type == "flag-change"){
+            return `<div class="{0}" {1}>
+            <div {2} class="panel panel-warning">
+                <div class="flex_container">
+                    <div class="flex_item_left"> 
+                        <i class="fas fa-3x fa-{3}"></i>
+                    </div>
+                    
+                    <div class="panel-heading flex_item_right panel-collapsed">
+                        <h3 class="panel-title">
+                            {4}
+                        </h3>
+                        {5}
+                    </div>
+                </div>
+                <!-- Panel body -->
+                {6}
+            </div>
+        </div>`.format(editable ? "": "btn-new-editor", 
+                editable ? "" : 'type="flag-change"',
+                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
+                editable ? "trash" : "plus-circle",
+                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-flag"></i>
+                    Create a flag change event handler <span class=""></span>`, 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {
@@ -1027,7 +1046,7 @@ $(document).ready(function() {
                 var type = $(elem).parents('.editable-container').attr('type');
 
                 // Extract if there is interval, then attach the timespan to the type value
-                if($parent_container.find('.trigger input:checked').attr('value') != "now") {
+                if(type=="new-message" && $parent_container.find('.trigger input:checked').attr('value') != "now") {
                     var time_span = $parent_container.find('.trigger input:checked').next().val();
                     time_span = parseInt(time_span) || 1;
                     var time_unit = $parent_container.find('.trigger input:checked').next().next().val();
