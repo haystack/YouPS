@@ -100,7 +100,7 @@ $(document).ready(function() {
     function create_new_tab(nav_bar) {
         var id = $("#editor-container .tab-pane").length; // avoid same ID
         // Add tab
-        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>On meeting</span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
+        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting</span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
 
         // Insert tab pane first
         var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
