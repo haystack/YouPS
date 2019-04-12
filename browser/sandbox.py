@@ -6,9 +6,6 @@ import datetime
 import copy
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from StringIO import StringIO
-from email import message
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
@@ -17,7 +14,7 @@ from engine.models.event_data import NewMessageData, NewMessageDataScheduled, Ne
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
 
-from engine.models.contact import Contact
+
 from smtp_handler.utils import send_email
 
 
@@ -52,99 +49,6 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     assert mailbox.new_message_handler is not None
 
     # define user methods
-    def create_draft(subject="", to="", cc="", bcc="", content="", draft_folder="Drafts"):
-        """Create a draft message and save it to user's draft folder
-
-            Args:
-                subject (string): the subject line of the draft message
-                to (a single instance|list of string|Contact): addresses that go in to field
-                cc (a single instance|list of string|Contact): addresses that go in cc field
-                bcc (a single instance|list of string|Contact): addresses that go in bcc field
-                content (string): content of the draft message 
-                draft_folder (string): a name of draft folder 
-        """
-        
-        new_message = MIMEMultipart('alternative')
-        new_message["Subject"] = subject
-
-        if isinstance(to, list):
-            to_string = []
-            for t in to:
-                logger.info(isinstance(t, Contact))
-                if isinstance(t, Contact):
-                    to_string.append(t.email)
-                else:
-                    to_string.append(t)
-
-            to = ",".join(to_string)
-        else:
-            if isinstance(to, Contact):
-                to = to.email 
-
-        if type(cc) == 'list':
-            cc_string = []
-            for t in cc:
-                if isinstance(t, Contact):
-                    cc_string.append(t.email)
-                else:
-                    cc_string.append(t)
-
-            cc = ",".join(cc_string)
-        else:
-            if isinstance(cc, Contact):
-                cc = cc.email 
-
-        if type(bcc) == 'list':
-            bcc_string = []
-            for t in bcc:
-                if isinstance(t, Contact):
-                    bcc_string.append(t.email)
-                else:
-                    bcc_string.append(t)
-
-            bcc = ",".join(bcc_string)
-        else:
-            if isinstance(bcc, Contact):
-                bcc = bcc.email
-         
-        new_message["To"] = to
-        new_message["Cc"] = cc
-        new_message["Bcc"] = bcc
-        logger.info(to)
-        logger.info(cc)
-        logger.info(bcc)
-        # new_message.set_payload(content.encode('utf-8')) 
-        if "text" in content and "html" in content:
-            part1 = MIMEText(content["text"].encode('utf-8'), 'plain')
-            part2 = MIMEText(content["html"].encode('utf-8'), 'html')
-            new_message.attach(part1)
-            new_message.attach(part2)
-        else: 
-            part1 = MIMEText(content, 'plain')
-            new_message.attach(part1)
-
-        if not is_simulate:
-            if mailbox._imap_account.is_gmail:
-                mailbox._imap_client.append('[Gmail]/Drafts', str(new_message))
-                
-            else:
-                try:
-                    # if this imap service provides list capability takes advantage of it
-                    if [l[0][0] for l in mailbox._imap_client.list_folders()].index('\\Drafts'):
-                        mailbox._imap_client.append(mailbox._imap_client.list_folders()[2][2], str(new_message))
-                except Exception as e:
-                    # otherwise try to guess a name of draft folder
-                    try:
-                        mailbox._imap_client.append('Drafts', str(new_message))
-                    except IMAPClient.Error, e:
-                        try:
-                            mailbox._imap_client.append('Draft', str(new_message))
-                        except IMAPClient.Error, e:
-                            if "append failed" in e:
-                                mailbox._imap_client.append(draft_folder, str(new_message))
-        
-        logger.debug("create_draft(): Your draft %s has been created" % subject)
-
     def create_folder(folder_name):
         if not is_simulate: 
             mailbox._imap_client.create_folder( folder_name )
