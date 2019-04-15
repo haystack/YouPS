@@ -100,7 +100,7 @@ $(document).ready(function() {
     function create_new_tab(nav_bar) {
         var id = $("#editor-container .tab-pane").length; // avoid same ID
         // Add tab
-        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>On meeting</span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
+        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting</span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
 
         // Insert tab pane first
         var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
@@ -302,7 +302,7 @@ $(document).ready(function() {
             case "new-message": 
                 func_name="def on_message(my_message):";break;
             case "flag-change": 
-                func_name="def on_flag_added(my_message, added_flags):\n\tpass\n\ndef on_flag_removed(my_message, removed_flags):";break;
+                func_name="def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):";break;
         }
 
         var editor_elem = `<div class="panel-body" style="display:none;">
@@ -330,17 +330,25 @@ $(document).ready(function() {
                     </div>
                 </form></div>`:"") +
             `<textarea class="editor mode-editor">{0}\n{1}</textarea>
-    </div>
-    <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>Recent messages from your selected folder(s): </div>`
-        .format(import_str, func_name + "\n\tpass"), 
+        </div>
+        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+            
+            <h2>Test suites</h2>
+            <h4>Recent messages from your selected folders to test your rules</h4>
+            <table class="example-suites" class="table" style="width:100%">
+            </table>
+        </div>`
+            .format(import_str, func_name + "\n    pass"), 
     pull_down_arrow = `<span class="pull-right">
         <button class='btn-default btn-incoming-save'>Save</button>
         <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
     </span>`;
 
+        
+        var elem_content;
         if(type == "new-message") {
-            return `<div class="{0}" {1}>
-            <div {2} class="panel panel-success">
+            elem_content =  `{0}{1}<div {2} class="panel panel-success">
                 <div class="flex_container">
                     <div class="flex_item_left"> 
                         <i class="fas fa-3x fa-{3}"></i>
@@ -355,9 +363,7 @@ $(document).ready(function() {
                 </div>
                 <!-- Panel body -->
                 {6}
-            </div>
-        </div>`.format(editable ? "": "btn-new-editor", 
-                editable ? "" : 'type="new-message"',
+            </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
                 editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
@@ -369,8 +375,7 @@ $(document).ready(function() {
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "flag-change"){
-            return `<div class="{0}" {1}>
-            <div {2} class="panel panel-warning">
+            elem_content = `{0}{1}<div {2} class="panel panel-warning">
                 <div class="flex_container">
                     <div class="flex_item_left"> 
                         <i class="fas fa-3x fa-{3}"></i>
@@ -386,8 +391,7 @@ $(document).ready(function() {
                 <!-- Panel body -->
                 {6}
             </div>
-        </div>`.format(editable ? "": "btn-new-editor", 
-                editable ? "" : 'type="flag-change"',
+        </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
                 editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
@@ -396,8 +400,7 @@ $(document).ready(function() {
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {
-            return `<div class="{0}" {1}>
-            <div {2} class="panel panel-warning">
+            elem_content = `{0}{1}<div {2} class="panel panel-warning">
                 <div class="flex_container">
                     <div class="flex_item_left"> 
                         <i class="fas fa-3x fa-{3}"></i> 
@@ -415,13 +418,16 @@ $(document).ready(function() {
                 <!-- Panel body -->
                 {4}
             </div>
-        </div>`.format(editable ? "": "btn-new-editor",
-                editable ? "" : 'type="repeat"',
+        </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
                 editable ? editor_elem : "",
                 editable? pull_down_arrow : "");
         }
+
+        if (!editable) 
+            return '<div class="btn-new-editor" type="{0}">'.format(type) + elem_content + '</div>';
+        return elem_content;
     }
 
     function guess_host( email_addr ) {
@@ -703,6 +709,7 @@ $(document).ready(function() {
         // open briefly to set styling
         $container.find(".panel-heading").last().click();
         init_editor( $container.find('textarea').last()[0] );
+        debugger;
         $($container.find('.example-suites').last()[0]).DataTable( {
             "bPaginate": false,
             "bLengthChange": false,

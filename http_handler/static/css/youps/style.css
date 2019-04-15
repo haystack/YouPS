@@ -295,6 +295,17 @@
   margin-top: -15px;
 }
 
+.panel-title {
+  font-size: 15px;
+}
+
+.panel-title input {
+  float:left;
+  border: none;
+  background: none;
+  border-bottom: 2px solid;
+}
+
 .preview-folder {
   font-size: 12px;
   opacity: 0.8;
@@ -302,14 +313,7 @@
   float: left;
 }
 
-.panel-warning .preview-folder {
-  line-height: 300%;
-  margin: 10px;
-}
 
-.panel-title {
-  font-size: 15px;
-}
 
 .flex_container {
   display: flex;
