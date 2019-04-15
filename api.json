@@ -101,7 +101,11 @@
 				"return_type": "string []",
 				"description": "",
 				"example": "",
-				"related": ["has_flags()", "add_flags()", "remove_flags()"]
+				"related": [
+					{"name": "add_flags"},
+					{"name": "has_flags"},
+					{"name": "remove_flags"}
+				]
 			},
 			{
 				"name": "progress",
