@@ -62,9 +62,10 @@
                 <div property="message">
                     <div class='add-sidebar sub-header' id="message-attr"> <h3> Attribute <a href="#message-attr">¶</a></h3>   </div>
                     <div id="[name]" class='value' property="attribute" mv-multiple>
-                    <h4>[name] <a href="#[name]"> ¶ </a> </h4>
-                        <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
+                        <h4>[name] <a href="#[name]"> ¶ </a> </h4>
+                            <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
                         <p style="margin:0;"><a href="#[return_href]">[return_type]</a> [description]</p>
+                        related: <label style='margin-left: 5px;' property='related' mv-multiple><a href="#[name]" style="display:[if(len(name)=0, none, block)]">[name](),</a></label>
                         <pre class="language-python" style="background-color: transparent;border: 0;margin:0;display:[if(len(example)==0, none, block)]">
                             <code class="language-python" property="example" mv-multiple>
                                 <!-- <h6 property="line"></g6> -->
@@ -76,7 +77,8 @@
                     <div id="[name]" class='value' property="method" mv-multiple>
                             <h4>[name] ([params])  <a href="#[name]"> ¶ </a> </h4>
                                 <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
-                                <p style="margin:0;">[description]</p>
+                                <p style="margin:0;"><a href="#[return_href]">[if(return_type="return_type", "", return_type)]</a> [description]</p>
+                                related: <label style='margin-left: 5px;' property='related' mv-multiple><a href="#[name]" style="display:[if(len(name)=0, none, block)]">[name](),</a></label>
                                 <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
                                     <code class="language-python" property="example" mv-multiple>
                                         <!-- <h6 property="line"></g6> -->
@@ -119,7 +121,7 @@
                     <p style="margin:0;">[description]</p>
                     <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
                             <code class="language-python" property="example" mv-multiple>
-                                <h6 property="line"></g6> -->
+                                <h6 property="line"></g6> 
                               </code>
                         </pre>
                 </div> -->
@@ -166,6 +168,16 @@
         document.addEventListener("mv-load", function(){
             sidebar_init();
             init_syntax();
+
+            $('a[href]').click(function(e){
+                e.preventDefault()
+                console.log($(this).offset().top);
+                // $("body").scrollTop($(this).offset().top-50);
+                var section = $(this).attr("href");
+                $("html, body").animate({
+                    scrollTop: $(section).offset().top -50
+                });
+            });
         });
     </script>
 {% endblock %}
