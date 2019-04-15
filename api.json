@@ -171,6 +171,26 @@
 				"example": ""
 			},
 			{
+				"name": "is_read",
+				"params": "",
+				"return_type": "bool",
+				"description": "Get if the message has been read",
+				"example": "",
+				"related": [
+					{"name": "mark_read"},
+					{"name": "mark_unread"},
+					{"name": "remove_flags"}
+				]
+			},
+			{
+				"name": "is_recent",
+				"params": "",
+				"return_type": "bool",
+				"description": "Get if the message is recent",
+				"example": "",
+				"related": []
+			},
+			{
 				"name": "remove_flags",
 				"params": "flags",
 				"return_type": "",
@@ -181,13 +201,21 @@
 				"name": "mark_read",
 				"params": "",
 				"description": "",
-				"example": ""
+				"example": "",
+				"related": [
+					{"name": "is_read"},
+					{"name": "mark_unread"}
+				]
 			},
 			{
 				"name": "mark_unread",
 				"params": "",
 				"description": "",
-				"example": ""
+				"example": "",
+				"related": [
+					{"name": "is_read"},
+					{"name": "mark_read"}
+				]
 			},
 			{
 				"name": "move",
