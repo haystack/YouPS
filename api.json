@@ -97,10 +97,11 @@
 				"example": ""
 			},
 			{
-				"name": "labels",
+				"name": "flags",
 				"return_type": "string []",
 				"description": "",
-				"example": ""
+				"example": "",
+				"related": ["has_flags()", "add_flags()", "remove_flags()"]
 			},
 			{
 				"name": "progress",
@@ -135,6 +136,12 @@
 		],
 		"method": [
 			{
+				"name": "add_flags",
+				"params": "flags",
+				"description": "Add each of the flags in a list of flags to the message",
+				"example": ""
+			},
+			{
 				"name": "copy",
 				"params": "dst_folder",
 				"description": "Copy this email from the current folder to dst_folder. If folder dst_folder does not exist, our engine creates a new folder with the name dst_folder",
@@ -150,6 +157,20 @@
 				"name": "forward",
 				"params": "to=[], cc=[], bcc=[]",
 				"description": "(Work in progress..) Forward this email to the given recipients.",
+				"example": ""
+			},
+			{
+				"name": "has_flags",
+				"params": "flag",
+				"return_type": "bool",
+				"description": "Check if the message has a given flag",
+				"example": ""
+			},
+			{
+				"name": "remove_flags",
+				"params": "flags",
+				"return_type": "",
+				"description": "Remove each of the flags in a list of flags from the message",
 				"example": ""
 			},
 			{
