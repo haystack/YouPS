@@ -12,12 +12,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase 
 from email import encoders  
-from smtp_handler.utils import add_attachments, get_attachments, setup_post 
+from smtp_handler.utils import get_attachments, format_email_address
 import smtplib
 
 from engine.google_auth import GoogleOauth2
 from browser.imap import decrypt_plain_password
-
 from http_handler.settings import CLIENT_ID
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
@@ -456,101 +455,152 @@ class Message(object):
             if not self.is_simulate:
                 self._imap_client.move(self._uid, dst_folder)
 
+    def forward(self, to=[], cc=[], bcc=[], content=""):
+        if not self.is_simulate:
+            to = format_email_address(to)
+            cc = format_email_address(cc)
+            bcc = format_email_address(bcc)
+
+            new_message_wrapper = self._create_message_instance("Fwd: " + self.subject, to, cc, bcc, content)
+
+            if new_message_wrapper:
+                self._send_message(new_message_wrapper)
+
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message
         """
         if not self.is_simulate:
-            new_message_wrapper = MIMEMultipart('mixed')
-            new_message_wrapper["Subject"] = "Re: " + self.subject
-            new_message_wrapper["To"] = to
-            new_message_wrapper["Cc"] = cc
-            new_message_wrapper["Bcc"] = bcc
+            to_addr = ""
+            if isinstance(to, list):
+                to_addr = to.append(self._schema.from_)
+                to = format_email_address(to_addr)
+            else:
+                to = format_email_address([self._schema.from_, to])
 
-            new_message_wrapper['In-Reply-To'] = self._message_id
-            new_message_wrapper['References'] = self._message_id
+            cc = format_email_address(cc)
+            bcc = format_email_address(bcc)
 
-            # check if the message is initially read
-            initially_unread = self.is_read
-            try:
+            new_message_wrapper = self._create_message_instance("Re: " + self.subject, to, cc, bcc, content)
 
-                # fetch the data its a dictionary from uid to data so extract the data 
-                response = self._imap_client.fetch(
-                    self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
-                if self._uid not in response:
-                    raise RuntimeError('Invalid response missing UID')
-                response = response[self._uid]
+            if new_message_wrapper:
+                self._send_message(new_message_wrapper)
 
-                if 'RFC822' not in response:
-                    logger.critical('%s:%s response: %s' % (self.folder, self, pprint.pformat(response)))
-                    logger.critical("%s did not return RFC822" % self)
-                    raise RuntimeError("Could not find RFC822")
+    def reply_all(self, more_to=[], more_cc=[], more_bcc=[], content=""):
+        if isinstance(more_cc, list):
+            if len(self.cc) > 0:
+                more_cc = more_cc + self.cc
 
-                # text content
-                new_message = MIMEMultipart('alternative')   
+        else:
+            if more_cc:
+                l = self.cc
+                l.append(more_cc)
+                more_cc = l
 
-                content = self.content
-                separator = "On %s, (%s) wrote:" % (datetime.now().ctime(), self._schema.imap_account.email)
-                part1 = MIMEText(separator + "\n\n" + content["text"].encode('utf-8'), 'plain')
-                part2 = MIMEText(separator + "<br><br>" + content["html"].encode('utf-8'), 'html')
-                new_message.attach(part1)
-                new_message.attach(part2)
+        if isinstance(more_bcc, list):
+            if len(self.bcc) > 0:
+                more_bcc = more_bcc + self.bcc
 
-                # get attachments
-                rfc_contents = email.message_from_string(
-                    response.get('RFC822'))  # type: email.message.Message
+        else:
+            if more_bcc:
+                l = self.bcc
+                l.append(more_bcc)
+                more_bcc = l
 
-                res = get_attachments(rfc_contents)
-                    
-                attachments = res['attachments']
-
-                for attachment in attachments:
-                    # mail = setup_post("sbhappylee@gmail.com", "test")
-                    p = MIMEBase('application', 'octet-stream') 
-    
-                    # To change the payload into encoded form 
-                    p.set_payload(attachment['content']) 
-                    
-                    # encode into base64 
-                    encoders.encode_base64(p) 
-                    
-                    p.add_header('Content-Disposition', "attachment; filename= %s" % attachment['filename']) 
-                    new_message_wrapper.attach(p) 
-                # add_attachments(mail, attachments)
-
-                new_message_wrapper.attach(new_message)
-            except Exception as e:
-                print (e)
-                return
-            finally:
-                # mark the message unread if it is unread
-                if initially_unread:
-                    self.mark_read() 
-
-            try: 
-                # SMTP authenticate 
-                if self._schema.imap_account.is_gmail:
-                    oauth = GoogleOauth2()
-                    response = oauth.RefreshToken(self._schema.imap_account.refresh_token)
-                
-                    auth_string = oauth.generate_oauth2_string(self._schema.imap_account.email, response['access_token'], as_base64=True)
-                    s = smtplib.SMTP('smtp.gmail.com', 587)
-                    s.ehlo(CLIENT_ID)
-                    s.starttls()
-                    s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
-                    
-                else:
-                    s = smtplib.SMTP(self._schema.imap_account.host.replace("imap", "smtp"), 587)
-                    s.login(self._schema.imap_account.email, decrypt_plain_password(self._schema.imap_account.password))
-                    s.ehlo()
-
-                    s.sendmail(self._schema.imap_account.email, new_message_wrapper["To"], new_message_wrapper.as_string())
-            except Exception as e:
-                print (e)
-
+        self.reply(more_to, more_cc, more_bcc, content)
             
+    def _create_message_instance(self, subject='', to='', cc='', bcc='', additional_content=''):
+        new_message_wrapper = MIMEMultipart('mixed')
 
+        new_message_wrapper["Subject"] = subject
+
+        new_message_wrapper["To"] = to
+        new_message_wrapper["Cc"] = cc
+        new_message_wrapper["Bcc"] = bcc
+
+        new_message_wrapper['In-Reply-To'] = self._message_id
+        new_message_wrapper['References'] = self._message_id
+
+        # check if the message is initially read
+        initially_unread = self.is_read
+        try:
+            # fetch the data its a dictionary from uid to data so extract the data 
+            response = self._imap_client.fetch(
+                self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
+            if self._uid not in response:
+                raise RuntimeError('Invalid response missing UID')
+            response = response[self._uid]
+
+            if 'RFC822' not in response:
+                logger.critical('%s:%s response: %s' % (self.folder, self, pprint.pformat(response)))
+                logger.critical("%s did not return RFC822" % self)
+                raise RuntimeError("Could not find RFC822")
+
+            # text content
+            new_message = MIMEMultipart('alternative')   
+
+            content = self.content
+            separator = "On %s, (%s) wrote:" % (datetime.now().ctime(), self._schema.imap_account.email)
+            part1 = MIMEText(additional_content + "\n\n" + separator + "\n\n" + content["text"].encode('utf-8'), 'plain')
+            part2 = MIMEText(additional_content + "<br><br>" + separator + "<br><br>" + content["html"].encode('utf-8'), 'html')
+            new_message.attach(part1)
+            new_message.attach(part2)
+
+            # get attachments
+            rfc_contents = email.message_from_string(
+                response.get('RFC822'))  # type: email.message.Message
+
+            res = get_attachments(rfc_contents)
+                
+            attachments = res['attachments']
+
+            for attachment in attachments:
+                # mail = setup_post("sbhappylee@gmail.com", "test")
+                p = MIMEBase('application', 'octet-stream') 
     
+                # To change the payload into encoded form 
+                p.set_payload(attachment['content']) 
+                
+                # encode into base64 
+                encoders.encode_base64(p) 
+                
+                p.add_header('Content-Disposition', "attachment; filename= %s" % attachment['filename']) 
+                new_message_wrapper.attach(p) 
+            # add_attachments(mail, attachments)
+
+            new_message_wrapper.attach(new_message)
+        except Exception as e:
+            print (e)
+            return
+        finally:
+            # mark the message unread if it is unread
+            if initially_unread:
+                self.mark_read() 
+
+        return new_message_wrapper
+
+    def _send_message(self, new_message_wrapper):
+        try: 
+            # SMTP authenticate 
+            if self._schema.imap_account.is_gmail:
+                oauth = GoogleOauth2()
+                response = oauth.RefreshToken(self._schema.imap_account.refresh_token)
+            
+                auth_string = oauth.generate_oauth2_string(self._schema.imap_account.email, response['access_token'], as_base64=True)
+                s = smtplib.SMTP('smtp.gmail.com', 587)
+                s.ehlo(CLIENT_ID)
+                s.starttls()
+                s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
+                
+            else:
+                s = smtplib.SMTP(self._schema.imap_account.host.replace("imap", "smtp"), 587)
+                s.login(self._schema.imap_account.email, decrypt_plain_password(self._schema.imap_account.password))
+                s.ehlo()
+
+            # TODO check if it sent to cc-ers
+            s.sendmail(self._schema.imap_account.email, new_message_wrapper["To"], new_message_wrapper.as_string())
+        except Exception as e:
+            print (e)
 
     def _append_original_text(self, text, html, orig, google=False):
         """

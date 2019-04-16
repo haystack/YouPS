@@ -10,6 +10,7 @@ from email import message_from_string
 from hashlib import sha1
 from html2text import html2text
 from markdown2 import markdown
+from engine.models.contact import Contact
 import new, pickle, chardet
 
 '''
@@ -801,3 +802,25 @@ def utf8_str_to_utf8_unicode(encoded_str):
     """
 
     return unicode(encoded_str, 'utf8', 'replace')
+
+def format_email_address(email_addrs):
+    """Format a single instance or list to an approriate form to message instance e.g., user1@email.com, user2@email.com
+
+        Args:
+            email_addrs (a single instance|list of string|Contact)
+    """    
+
+    if isinstance(email_addrs, list):
+        to_string = []
+        for t in email_addrs:
+            if isinstance(t, Contact):
+                to_string.append(t.email)
+            else:
+                to_string.append(t)
+
+        email_addrs = ",".join(to_string)
+    else:
+        if isinstance(email_addrs, Contact):
+            email_addrs = email_addrs.email 
+
+    return email_addrs or ""
