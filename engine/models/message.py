@@ -270,7 +270,7 @@ class Message(object):
         return Folder(self._schema.folder_schema, self._imap_client)
 
     @property
-    def content(self):
+    def content(self, return_only_text=True):
         # type: () -> t.AnyStr
         """Get the content of the message
 
@@ -301,6 +301,7 @@ class Message(object):
 
             text = ""
             html = ""
+            extra = {}
 
             # walk the message
             for part in rfc_contents.walk():
@@ -332,6 +333,11 @@ class Message(object):
                     # extract html
                     elif sub_type == "html":
                         html += text_contents
+                    # extract calendar
+                    elif sub_type == "calendar":
+                        if sub_type not in extra:
+                            extra[sub_type] = ""
+                        extra[sub_type] += text_contents
                     # fail otherwise
                     else:
                         logger.critical(
@@ -341,8 +347,13 @@ class Message(object):
 
             # return text if we have it otherwise html
             # return text if text else html
+            if return_only_text:
+                return {"text": text, "html": html}
+            else:
+                extra['text'] = text
+                extra['html'] = html
 
-            return {"text": text, "html": html}
+                return extra
 
         finally:
             # mark the message unread if it is unread
@@ -507,32 +518,37 @@ class Message(object):
                     new_message_wrapper.attach(p) 
                 # add_attachments(mail, attachments)
 
+                new_message_wrapper.attach(new_message)
+            except Exception as e:
+                print (e)
+                return
             finally:
                 # mark the message unread if it is unread
                 if initially_unread:
                     self.mark_read() 
 
-            new_message_wrapper.attach(new_message)
-
-            # SMTP authenticate 
-            if self._schema.imap_account.is_gmail:
-                oauth = GoogleOauth2()
-                response = oauth.RefreshToken(self._schema.imap_account.refresh_token)
-            
-                auth_string = oauth.generate_oauth2_string(self._schema.imap_account.email, response['access_token'], as_base64=True)
-                s = smtplib.SMTP('smtp.gmail.com', 587)
-                s.ehlo(CLIENT_ID)
-                s.starttls()
-                s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
+            try: 
+                # SMTP authenticate 
+                if self._schema.imap_account.is_gmail:
+                    oauth = GoogleOauth2()
+                    response = oauth.RefreshToken(self._schema.imap_account.refresh_token)
                 
-            else:
-                s = smtplib.SMTP(self._schema.imap_account.host.replace("imap", "smtp"), 587)
-                s.login(self._schema.imap_account.email, decrypt_plain_password(self._schema.imap_account.password))
-                s.ehlo()
+                    auth_string = oauth.generate_oauth2_string(self._schema.imap_account.email, response['access_token'], as_base64=True)
+                    s = smtplib.SMTP('smtp.gmail.com', 587)
+                    s.ehlo(CLIENT_ID)
+                    s.starttls()
+                    s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
+                    
+                else:
+                    s = smtplib.SMTP(self._schema.imap_account.host.replace("imap", "smtp"), 587)
+                    s.login(self._schema.imap_account.email, decrypt_plain_password(self._schema.imap_account.password))
+                    s.ehlo()
 
-            s.sendmail(self._schema.imap_account.email, new_message_wrapper["To"], new_message_wrapper.as_string())
+                    s.sendmail(self._schema.imap_account.email, new_message_wrapper["To"], new_message_wrapper.as_string())
+            except Exception as e:
+                print (e)
 
-            # TODO send mail 
+            
 
     
 

@@ -332,7 +332,7 @@ $(document).ready(function() {
             `<textarea class="editor mode-editor">{0}\n{1}</textarea>
         </div>
         <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
-            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Reload results</button>
             
             <h2>Test suites</h2>
             <h4>Recent messages from your selected folders to test your rules</h4>
