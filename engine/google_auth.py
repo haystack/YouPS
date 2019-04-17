@@ -39,8 +39,7 @@ class GoogleOauth2():
   TOKEN_EXPIRED_TIME = None
 
   def __init__(self):
-    print "OAUTH", CLIENT_ID, CLIENT_SECRET
-    #pass
+    pass
 
   def isExpired(self): 
     if not self.TOKEN_EXPIRED_TIME:
@@ -62,6 +61,12 @@ class GoogleOauth2():
     logger.debug('Refresh Access Token Expiration Seconds: %s' % response['expires_in'])
 
     return response
+
+  def generate_oauth2_string(self, username, access_token, as_base64=False):
+    auth_string = 'user=%s\1auth=Bearer %s\1\1' % (username, access_token)
+    if as_base64:
+        auth_string = base64.b64encode(auth_string.encode('ascii')).decode('ascii')
+    return auth_string  
     
   def generate_oauth2_token(self, authorization_code):
     response = self.AuthorizeTokens(CLIENT_ID, CLIENT_SECRET,

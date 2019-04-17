@@ -7,7 +7,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from engine.models.contact import Contact
-from smtp_handler.utils import send_email
+from smtp_handler.utils import format_email_address, send_email
 from email import message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -190,53 +190,14 @@ class MailBox(object):
         new_message = MIMEMultipart('alternative')
         new_message["Subject"] = subject
         
-        if isinstance(to, list):
-            to_string = []
-            for t in to:
-                if isinstance(t, Contact):
-                    to_string.append(t.email)
-                else:
-                    to_string.append(t)
-
-            to = ",".join(to_string)
-        else:
-            if isinstance(to, Contact):
-                to = to.email 
-
-        if isinstance(cc, list):
-            cc_string = []
-            
-            for c in cc:
-                if isinstance(c, Contact):
-                    logger.info(c.email)
-                    cc_string.append(c.email)
-                else:
-                    cc_string.append(c)
-
-            cc = ",".join(cc_string)
-        else:
-            if isinstance(cc, Contact):
-                cc = cc.email 
-
-        if isinstance(bcc, list):
-            bcc_string = []
-            for t in bcc:
-                if isinstance(t, Contact):
-                    bcc_string.append(t.email)
-                else:
-                    bcc_string.append(t)
-
-            bcc = ",".join(bcc_string)
-        else:
-            if isinstance(bcc, Contact):
-                bcc = bcc.email
+        to = format_email_address(to)
+        cc = format_email_address(cc)
+        bcc = format_email_address(bcc)
          
         new_message["To"] = to
         new_message["Cc"] = cc
         new_message["Bcc"] = bcc
-        logger.info(to)
-        logger.info(cc)
-        logger.info(bcc)
+        
         # new_message.set_payload(content.encode('utf-8')) 
         if "text" in content and "html" in content:
             part1 = MIMEText(content["text"].encode('utf-8'), 'plain')

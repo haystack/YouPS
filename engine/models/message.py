@@ -7,7 +7,17 @@ from engine.models.contact import Contact
 import logging
 from collections import Sequence
 import email
-import inspect 
+import inspect
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase 
+from email import encoders  
+from smtp_handler.utils import get_attachments, format_email_address
+import smtplib
+
+from engine.google_auth import GoogleOauth2
+from browser.imap import decrypt_plain_password
+from http_handler.settings import CLIENT_ID
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -66,6 +76,11 @@ class Message(object):
         # type: (int) -> None
         self._schema.msn = value
         self._schema.save()
+
+    @property
+    def _message_id(self):
+        # type: () -> int
+        return self._schema.message_id
 
     @property
     def flags(self):
@@ -254,7 +269,7 @@ class Message(object):
         return Folder(self._schema.folder_schema, self._imap_client)
 
     @property
-    def content(self):
+    def content(self, return_only_text=True):
         # type: () -> t.AnyStr
         """Get the content of the message
 
@@ -285,6 +300,7 @@ class Message(object):
 
             text = ""
             html = ""
+            extra = {}
 
             # walk the message
             for part in rfc_contents.walk():
@@ -316,6 +332,11 @@ class Message(object):
                     # extract html
                     elif sub_type == "html":
                         html += text_contents
+                    # extract calendar
+                    elif sub_type == "calendar":
+                        if sub_type not in extra:
+                            extra[sub_type] = ""
+                        extra[sub_type] += text_contents
                     # fail otherwise
                     else:
                         logger.critical(
@@ -325,8 +346,13 @@ class Message(object):
 
             # return text if we have it otherwise html
             # return text if text else html
+            if return_only_text:
+                return {"text": text, "html": html}
+            else:
+                extra['text'] = text
+                extra['html'] = html
 
-            return {"text": text, "html": html}
+                return extra
 
         finally:
             # mark the message unread if it is unread
@@ -428,6 +454,193 @@ class Message(object):
         if not self._is_message_already_in_dst_folder(dst_folder):
             if not self.is_simulate:
                 self._imap_client.move(self._uid, dst_folder)
+
+    def forward(self, to=[], cc=[], bcc=[], content=""):
+        if not self.is_simulate:
+            to = format_email_address(to)
+            cc = format_email_address(cc)
+            bcc = format_email_address(bcc)
+
+            new_message_wrapper = self._create_message_instance("Fwd: " + self.subject, to, cc, bcc, content)
+
+            if new_message_wrapper:
+                self._send_message(new_message_wrapper)
+
+    def reply(self, to=[], cc=[], bcc=[], content=""):
+        # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
+        """Reply to the sender of this message
+        """
+        if not self.is_simulate:
+            to_addr = ""
+            if isinstance(to, list):
+                to_addr = to.append(self._schema.from_)
+                to = format_email_address(to_addr)
+            else:
+                to = format_email_address([self._schema.from_, to])
+
+            cc = format_email_address(cc)
+            bcc = format_email_address(bcc)
+
+            new_message_wrapper = self._create_message_instance("Re: " + self.subject, to, cc, bcc, content)
+
+            if new_message_wrapper:
+                self._send_message(new_message_wrapper)
+
+    def reply_all(self, more_to=[], more_cc=[], more_bcc=[], content=""):
+        if isinstance(more_cc, list):
+            if len(self.cc) > 0:
+                more_cc = more_cc + self.cc
+
+        else:
+            if more_cc:
+                l = self.cc
+                l.append(more_cc)
+                more_cc = l
+
+        if isinstance(more_bcc, list):
+            if len(self.bcc) > 0:
+                more_bcc = more_bcc + self.bcc
+
+        else:
+            if more_bcc:
+                l = self.bcc
+                l.append(more_bcc)
+                more_bcc = l
+
+        self.reply(more_to, more_cc, more_bcc, content)
+            
+    def _create_message_instance(self, subject='', to='', cc='', bcc='', additional_content=''):
+        new_message_wrapper = MIMEMultipart('mixed')
+
+        new_message_wrapper["Subject"] = subject
+
+        new_message_wrapper["To"] = to
+        new_message_wrapper["Cc"] = cc
+        new_message_wrapper["Bcc"] = bcc
+
+        new_message_wrapper['In-Reply-To'] = self._message_id
+        new_message_wrapper['References'] = self._message_id
+
+        # check if the message is initially read
+        initially_unread = self.is_read
+        try:
+            # fetch the data its a dictionary from uid to data so extract the data 
+            response = self._imap_client.fetch(
+                self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
+            if self._uid not in response:
+                raise RuntimeError('Invalid response missing UID')
+            response = response[self._uid]
+
+            if 'RFC822' not in response:
+                logger.critical('%s:%s response: %s' % (self.folder, self, pprint.pformat(response)))
+                logger.critical("%s did not return RFC822" % self)
+                raise RuntimeError("Could not find RFC822")
+
+            # text content
+            new_message = MIMEMultipart('alternative')   
+
+            content = self.content
+            separator = "On %s, (%s) wrote:" % (datetime.now().ctime(), self._schema.imap_account.email)
+            text_content = additional_content + "\n\n" + separator + "\n\n" + content["text"]
+            html_content = additional_content + "<br><br>" + separator + "<br><br>" + content["html"]
+
+            part1 = MIMEText(text_content.encode('utf-8'), 'plain')
+            part2 = MIMEText(html_content.encode('utf-8'), 'html')
+            new_message.attach(part1)
+            new_message.attach(part2)
+
+            # get attachments
+            rfc_contents = email.message_from_string(
+                response.get('RFC822'))  # type: email.message.Message
+
+            res = get_attachments(rfc_contents)
+                
+            attachments = res['attachments']
+
+            for attachment in attachments:
+                p = MIMEBase('application', 'octet-stream') 
+    
+                # To change the payload into encoded form 
+                p.set_payload(attachment['content']) 
+                
+                # encode into base64 
+                encoders.encode_base64(p) 
+                
+                p.add_header('Content-Disposition', "attachment; filename= %s" % attachment['filename']) 
+                new_message_wrapper.attach(p)
+
+            new_message_wrapper.attach(new_message)
+        except Exception as e:
+            print (e)
+            return
+        finally:
+            # mark the message unread if it is unread
+            if initially_unread:
+                self.mark_read() 
+
+        return new_message_wrapper
+
+    def _send_message(self, new_message_wrapper):
+        try: 
+            # SMTP authenticate 
+            if self._schema.imap_account.is_gmail:
+                oauth = GoogleOauth2()
+                response = oauth.RefreshToken(self._schema.imap_account.refresh_token)
+            
+                auth_string = oauth.generate_oauth2_string(self._schema.imap_account.email, response['access_token'], as_base64=True)
+                s = smtplib.SMTP('smtp.gmail.com', 587)
+                s.ehlo(CLIENT_ID)
+                s.starttls()
+                s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
+                
+            else:
+                s = smtplib.SMTP(self._schema.imap_account.host.replace("imap", "smtp"), 587)
+                s.login(self._schema.imap_account.email, decrypt_plain_password(self._schema.imap_account.password))
+                s.ehlo()
+
+            # TODO check if it sent to cc-ers
+            s.sendmail(self._schema.imap_account.email, new_message_wrapper["To"], new_message_wrapper.as_string())
+        except Exception as e:
+            print (e)
+
+    def _append_original_text(self, text, html, orig, google=False):
+        """
+        Append each part of the orig message into 2 new variables
+        (html and text) and return them. Also, remove any 
+        attachments. If google=True then the reply will be prefixed
+        with ">". The last is not tested with html messages...
+        """
+        newhtml = ""
+        newtext = ""
+
+        for part in orig.walk():
+            if (part.get('Content-Disposition')
+                and part.get('Content-Disposition').startswith("attachment")):
+
+                part.set_type("text/plain")
+                part.set_payload("Attachment removed: %s (%s, %d bytes)"
+                            %(part.get_filename(), 
+                            part.get_content_type(), 
+                            len(part.get_payload(decode=True))))
+                del part["Content-Disposition"]
+                del part["Content-Transfer-Encoding"]
+
+            if part.get_content_type().startswith("text/plain"):
+                newtext += "\n"
+                newtext += part.get_payload(decode=False)
+                if google:
+                    newtext = newtext.replace("\n","\n> ")
+
+            elif part.get_content_type().startswith("text/html"):
+                newhtml += "\n"
+                newhtml += part.get_payload(decode=True).decode("utf-8")
+                if google:
+                    newhtml = newhtml.replace("\n", "\n> ")
+
+        if newhtml == "":
+            newhtml = newtext.replace('\n', '<br/>')
+
+        return (text+'\n\n'+newtext, html+'<br/>'+newhtml)
 
     def _is_message_already_in_dst_folder(self, dst_folder):
         if dst_folder == self._schema.folder_schema.name:

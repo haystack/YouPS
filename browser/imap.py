@@ -34,16 +34,7 @@ def authenticate(imap_account):
             # TODO if access_token is expired, then get a new token
             imap_client.oauth2_login(imap_account.email, imap_account.access_token)
         else:
-            aes = AES.new(IMAP_SECRET, AES.MODE_CBC, 'This is an IV456')
-            password = aes.decrypt( base64.b64decode(imap_account.password) )
-            index = 0
-            last_string = password[-1]
-            for c in reversed(password):
-                if last_string != c:
-                    password = password[:(-1)*index]
-                    break
-                index = index + 1
-
+            password = decrypt_plain_password(imap_account.password)
             imap_client.login(imap_account.email, password)
 
         res['imap'] = imap_client
@@ -93,3 +84,16 @@ def authenticate(imap_account):
         imap_account.save()
 
     return res
+
+def decrypt_plain_password(encrypted_password):
+    aes = AES.new(IMAP_SECRET, AES.MODE_CBC, 'This is an IV456')
+    password = aes.decrypt( base64.b64decode(encrypted_password) )
+    index = 0
+    last_string = password[-1]
+    for c in reversed(password):
+        if last_string != c:
+            password = password[:(-1)*index]
+            break
+        index = index + 1
+
+    return password
