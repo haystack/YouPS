@@ -541,8 +541,11 @@ class Message(object):
 
             content = self.content
             separator = "On %s, (%s) wrote:" % (datetime.now().ctime(), self._schema.imap_account.email)
-            part1 = MIMEText(additional_content + "\n\n" + separator + "\n\n" + content["text"].encode('utf-8'), 'plain')
-            part2 = MIMEText(additional_content + "<br><br>" + separator + "<br><br>" + content["html"].encode('utf-8'), 'html')
+            text_content = additional_content + "\n\n" + separator + "\n\n" + content["text"]
+            html_content = additional_content + "<br><br>" + separator + "<br><br>" + content["html"]
+
+            part1 = MIMEText(text_content.encode('utf-8'), 'plain')
+            part2 = MIMEText(html_content.encode('utf-8'), 'html')
             new_message.attach(part1)
             new_message.attach(part2)
 
@@ -555,7 +558,6 @@ class Message(object):
             attachments = res['attachments']
 
             for attachment in attachments:
-                # mail = setup_post("sbhappylee@gmail.com", "test")
                 p = MIMEBase('application', 'octet-stream') 
     
                 # To change the payload into encoded form 
@@ -565,8 +567,7 @@ class Message(object):
                 encoders.encode_base64(p) 
                 
                 p.add_header('Content-Disposition', "attachment; filename= %s" % attachment['filename']) 
-                new_message_wrapper.attach(p) 
-            # add_attachments(mail, attachments)
+                new_message_wrapper.attach(p)
 
             new_message_wrapper.attach(new_message)
         except Exception as e:
