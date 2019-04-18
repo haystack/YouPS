@@ -504,7 +504,7 @@
 		}
 	],
 	
-	"Calendar" : {
+	"calendar" : {
 		"attribute": [
             {
 				"name": "name",
