@@ -27,7 +27,8 @@ class Message(object):
 
     # the descriptors we are cacheing for each message
     _descriptors = ['FLAGS', 'INTERNALDATE',
-                    'RFC822.SIZE', 'ENVELOPE']  # type: t.List[t.Text]
+                    'RFC822.SIZE']  # type: t.List[t.Text]
+    _header_descriptors= ['BODY[HEADER.FIELDS (SUBJECT FROM TO CC BCC DATE IN-REPLY-TO MESSAGE-ID)]']
     _user_level_func = ['on_message']
 
     def __init__(self, message_schema, imap_client, is_simulate=False):
@@ -522,7 +523,7 @@ class Message(object):
         new_message_wrapper['References'] = self._message_id
 
         # check if the message is initially read
-        initially_unread = self.is_read
+        initially_read = self.is_read
         try:
             # fetch the data its a dictionary from uid to data so extract the data 
             response = self._imap_client.fetch(
@@ -575,8 +576,8 @@ class Message(object):
             return
         finally:
             # mark the message unread if it is unread
-            if initially_unread:
-                self.mark_read() 
+            if not initially_read:
+                self.mark_unread() 
 
         return new_message_wrapper
 

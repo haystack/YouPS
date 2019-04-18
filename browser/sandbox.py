@@ -13,7 +13,7 @@ from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
-
+from engine.models.calendar import Calendar
 
 from smtp_handler.utils import send_email
 
