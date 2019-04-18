@@ -505,18 +505,5 @@
 	],
 	
 	"Calendar" : {
-        "attribute": [
-            {
-				"name": "name",
-				"return_type": "string",
-				"description": "name of the calendar"
-			},
-            {
-				"name": "link",
-				"return_type": "string",
-				"description": "link to .ics file for calendar"
-			},
-
-        ]
     }
 }
