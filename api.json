@@ -542,7 +542,7 @@
                     "print([conflict for conflict in noConflicts])",
                     ">>> [<icalevents.icalparser.Event instance at 0x1061067a0>, <icalevents.icalparser.Event instance at 0x106088b00>]",
                     "print([conflict.summary for conflict in noConflicts])",
-                    "['6.031 Lecture', '6.UAT Lecture']"
+                    ">>> ['6.031 Lecture', '6.UAT Lecture']"
 				]
 			},
             {
