@@ -113,15 +113,41 @@
                     </div>
                 </div>
 
+                <div id="calendar" class='add-sidebar header'> <h2> Calendar <a href="#calendar">¶</a></h2>   </div>
+                <div property="calendar">
+                    <div id="calendar-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#calendar-attr">¶</a></h3>   </div>
+                    <div id="[name]" class='value' property="attribute" mv-multiple>
+                        <h4>[name] <a href="#[name]"> ¶ </a> </h4>
+                            <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
+                            <p style="margin:0;"><a href="#[return_href]">[return_type]</a> [description]</p>
+                            <pre class="language-python" style="background-color: transparent;border: 0;margin:0;display:[if(example='', none, block)]">
+                                <code class="language-python" property="example" mv-multiple>
+                                    <!-- <h6 property="line"></g6> -->
+                                </code>
+                            </pre>
+                    </div>
+                    <div id="calendar-method" class='add-sidebar sub-header'> <h3> Method <a href="#calendar-method">¶</a></h3>   </div>
+                    <div id="[name]" class='value' property="method" mv-multiple>
+                            <h4>[name] ([params])  <a href="#[name]"> ¶ </a> </h4>
+                                <!-- <h4>[name] ([params]) / [thread] ([thread_params])</h4> -->
+                                <p style="margin:0;"><a href="#[return_href]">[return_type]</a> [description]</p>
+                                <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
+                                    <code class="language-python" property="example" mv-multiple>
+                                        <!-- <h6 property="line"></g6> -->
+                                    </code>
+                                </pre>
+                    </div>
+                </div>
 
-                
+
+
                 <!-- <div id="mode-header"  class='add-sidebar header' style="padding-top: 50px; margin-top: -50px; margin-bottom: 50px"> <h3> Manage your email mode <a href="#mode-header">¶</a> </h3> </div>
                 <div id="[name]" property="mode" mv-multiple style="padding-top: 50px; margin-top: -50px;">
                     <h4>[name] ([params])  <a href="#[name]"> ¶ </a> </h4>
                     <p style="margin:0;">[description]</p>
                     <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
                             <code class="language-python" property="example" mv-multiple>
-                                <h6 property="line"></g6> 
+                                <h6 property="line"></g6>
                               </code>
                         </pre>
                 </div> -->
