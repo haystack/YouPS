@@ -528,7 +528,7 @@
 				"example": [
                     "name = 'myClasses'",
                     "link = 'https://calendar.google.com/calendar/ical/<CALENDAR ID>/myclasses.ics'",
-                    "classes = MyCalendar(name, link)"
+                    "classes = Calendar(name, link)"
 				]
 			},
             {
@@ -547,7 +547,7 @@
 			},
             {
 				"name": "create_event",
-				"params": "self, name, startTime, endTime=None, description='', location='', path=''",
+				"params": "name, startTime, endTime=None, description='', location='', path=''",
 				"return_type": "String",
 				"description": "Create a new .ics file with the specified event. Returns the string of the ics file",
 				"example": [
