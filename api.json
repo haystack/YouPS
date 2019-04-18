@@ -524,7 +524,7 @@
 				"params": "name, link, apple=False",
 				"return_type": "Calendar",
                 "return_href": "Calendar",
-				"description": "Create a new calendar object that references the provided link",
+				"description": "Create a new calendar object that references the provided link. If the calendar is Apple calendar, apple should be True.",
 				"example": [
                     "name = 'myClasses'",
                     "link = 'https://calendar.google.com/calendar/ical/<CALENDAR ID>/myclasses.ics'",
