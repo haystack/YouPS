@@ -537,8 +537,11 @@
 				"description": "Get list of conflicting events on calendar between startTime and endTime",
 				"example": [
                     "classes = MyCalendar(name, link)",
-                    "classes.get_conflicts(datetime.datetime(2019, 3, 18, hour=10, minute=30), datetime.datetime(2019, 3, 18, hour=11, minute=30))",
-                    ">>> []"
+                    "conflicts = classes.get_conflicts(datetime.datetime(2019, 3, 18, hour=10, minute=30), datetime.datetime(2019, 3, 18, hour=11, minute=30))",
+                    "print([conflict for conflict in noConflicts])",
+                    ">>> [<icalevents.icalparser.Event instance at 0x1061067a0>, <icalevents.icalparser.Event instance at 0x106088b00>]",
+                    "print([conflict.summary for conflict in noConflicts])",
+                    "['6.031 Lecture', '6.UAT Lecture']"
 				]
 			},
             {
@@ -549,8 +552,7 @@
 				"example": [
                     "name = cal.create_event('Available', datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz), datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz))",
                     "print(name)",
-                    ">>> "
-        
+                    ">>> Available-2019-04-18 15:41:33.570990.ics"
 				]
 			}
         ]
