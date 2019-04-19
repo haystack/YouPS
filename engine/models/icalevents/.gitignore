@@ -1,0 +1,10 @@
+calendars.txt
+.cache
+*/*.pyc
+*__pycache__*
+.idea/
+.coverage
+dist/*
+MANIFEST
+icalevents.egg-info/*
+/build

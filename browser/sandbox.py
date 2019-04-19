@@ -108,6 +108,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             'handle_on_message': lambda f: mailbox.new_message_handler.handle(f),
             'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
             'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
+            'MyCalendar': MyCalendar
         }
 
         # simulate request. normally from UI
