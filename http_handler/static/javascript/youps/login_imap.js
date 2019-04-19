@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    
+
     var user_name = $.trim($('#user_email').text()),
         btn_login = $("#btn-login"),
         btn_test_run = $("#btn-test-run"),
@@ -118,7 +118,10 @@ $(document).ready(function() {
             `<!-- add a new message editor button -->
             {0}
             <!-- add a new flag-change editor button -->
-            {1}`.format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false)));
+            {1}
+            <!-- add a deadline editor button -->
+            {2}`
+            .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false)));
 
         unsaved_tabs.push( id );
     }
@@ -301,6 +304,8 @@ $(document).ready(function() {
         switch(type) {
             case "new-message": 
                 func_name="def on_message(my_message):";break;
+            case "deadline": 
+                func_name="def on_deadline(my_message):";break;
             case "flag-change": 
                 func_name="def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):";break;
         }
@@ -397,6 +402,31 @@ $(document).ready(function() {
                 editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
                     <span class="preview-folder"></span>` : `<i class="far fa-2x fa-flag"></i>
                     Create a flag change event handler <span class=""></span>`, 
+                editable ? pull_down_arrow : "",
+                editable ? editor_elem : "");
+        } else if (type == "deadline"){
+            elem_content = `{0}{1}<div {2} class="panel panel-default">
+                <div class="flex_container">
+                    <div class="flex_item_left"> 
+                        <i class="fas fa-3x fa-{3}"></i>
+                    </div>
+                    
+                    <div class="panel-heading flex_item_right panel-collapsed">
+                        <h3 class="panel-title">
+                            {4}
+                        </h3>
+                        {5}
+                    </div>
+                </div>
+                <!-- Panel body -->
+                {6}
+            </div>
+        </div>`.format("", "",
+                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
+                editable ? "trash" : "plus-circle",
+                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-clock"></i>
+                    Create a deadline event handler <span class=""></span>`, 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {

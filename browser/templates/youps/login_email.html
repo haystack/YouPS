@@ -245,7 +245,43 @@
 																</div>
 															{% endif %}	
 														{% endfor %}
-													</div>
+												</div>
+
+												<div class='editable-container' type='deadline'>
+													{% for rule in rules %}
+															{% if rule.mode == mode and rule.type == "deadline" %}
+																<div rule-id={{rule.uid}} class="panel panel-default">
+																	<div class="flex_container">
+																		<div class="flex_item_left"> 
+																			<i class="fas fa-3x fa-trash"></i> 
+																		</div>
+	
+																		<div class="flex_item_right panel-heading panel-collapsed">
+																			<h3 class="panel-title">
+																				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
+																				<span class="preview-folder"></span>
+																			</h3>
+																			<span class="pull-right">
+																				<button class='btn-default btn-incoming-save'>Save</button>
+																				<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+																			</span>
+																		</div>
+																	</div>
+																	<div class="panel-body" style="display:none;">
+																		<div class="folder-container"></div>
+																		<div class="editor-container">
+																			<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
+{{ rule.code }}
+																			</textarea>
+																		</div>
+																		<!-- Separte row for debugging -->
+																		<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+																		</div>
+																	</div>
+																</div>
+															{% endif %}	
+														{% endfor %}
+												</div>
 
 												<div class='editable-container' type='repeat'>
 													{% for rule in rules %}
@@ -315,6 +351,22 @@
 															</div>	
 													</div>
 												</div>
+												<div class="btn-new-editor" type="deadline">
+													<div class="panel panel-default">
+														<div class="flex_container">
+															<div class="flex_item_left"> 
+																<i class="fas fa-3x fa-plus-circle"></i> 
+															</div>
+															
+															<div class="panel-heading flex_item_right panel-collapsed">
+																<h3 class="panel-title">
+																	<i class="far fa-2x fa-clock"></i> Create a deadline event handler <span class=""></span>
+																</h3>
+																
+															</div>
+														</div>	
+													</div>
+												</div>
 									  		</div>
 									{% endfor %}
 								</div>
@@ -337,6 +389,12 @@
 										</div>
 
 										<div class='editable-container' type='repeat'>
+										</div>
+
+										<div class='editable-container' type='flag-change'>
+										</div>
+
+										<div class='editable-container' type='deadline'>
 										</div>
 
 										<!-- editor add buttons -->
@@ -391,6 +449,22 @@
 															</div>
 														</div>	
 												</div>
+											</div>
+
+											<div class="btn-new-editor" type="deadline">
+												<div class="panel panel-default">
+													<div class="flex_container">
+														<div class="flex_item_left"> 
+															<i class="fas fa-3x fa-plus-circle"></i> 
+														</div>
+														
+														<div class="panel-heading flex_item_right panel-collapsed">
+															<h3 class="panel-title">
+																<i class="far fa-2x fa-clock"></i> Create a deadline event handler <span class=""></span>
+															</h3>
+															
+														</div>
+													</div>	
 											</div>
 									</div>
 								</div>

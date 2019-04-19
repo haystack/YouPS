@@ -25,6 +25,8 @@ Murmur Mail Interface Handler
 @date: Oct 20, 2012
 '''
 
+logger = logging.getLogger('youps')  # type: logging.Logger
+
 GROUP_OR_SQUAD = {'murmur' : 'group', 'squadbox' : 'squad'}
 
 @route("(address)@(host)", address="all", host=HOST)
@@ -57,7 +59,7 @@ def mailbot(message, address=None, host=None):
         return
 
     else:
-        logging.debug("Email to mailbot@%s" % HOST)
+        logger.info("Email to mailbot@%s" % HOST)
 
         name, addr = parseaddr(message['from'].lower())
 

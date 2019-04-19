@@ -31,7 +31,8 @@ class MailBox(object):
         self.new_message_handler = Event()  # type: Event
         self.added_flag_handler = Event()  # type: Event
         self.removed_flag_handler = Event()  # type: Event
-
+        self.deadline_handler = Event()
+        
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.is_simulate = False
 
@@ -93,6 +94,20 @@ class MailBox(object):
             time_end = now - datetime.timedelta(seconds=time_span)
 
             logger.debug("time range %s %s" % (time_start, time_end))
+            folder._search_scheduled_message(self.event_data_list, time_start, time_end)
+
+    def _get_due_messages(self, email_rule, now):
+        # type: (EmailRule, datetime.datetime) -> None 
+        """Add task to event_data_list, if there is message arrived in time span [last checked time, span_end]
+        """ 
+        time_span = int(email_rule.type.split('deadline-')[1])
+        
+        for folder_schema in email_rule.folders.all():
+            folder = Folder(folder_schema, self._imap_client)
+            time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
+            time_end = now - datetime.timedelta(seconds=time_span)
+
+            logger.info("time range %s %s" % (time_start, time_end))
             folder._search_scheduled_message(self.event_data_list, time_start, time_end)
 
     def _supports_cond_store(self):

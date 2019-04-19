@@ -41,6 +41,15 @@ class NewMessageDataScheduled(NewMessageData):
         # type : (Event) -> None
         super(NewMessageDataScheduled, self).fire_event(event)
 
+class NewMessageDataDue(NewMessageData):
+    def __init__(self, message):
+        # type: (Message) -> NewMessageDataDue
+        super(NewMessageDataDue, self).__init__(message)
+
+    def fire_event(self, event):
+        # type : (Event) -> None
+        super(NewMessageDataDue, self).fire_event(event)
+
 class NewFlagsData(AbstractEventData):
     def __init__(self, message, flags):
         # type: (Message, t.List[str]) -> NewFlagsData
@@ -61,3 +70,4 @@ class RemovedFlagsData(NewFlagsData):
     def fire_event(self, event):
         # type : (Event) -> None
         super(RemovedFlagsData, self).fire_event(event)
+        

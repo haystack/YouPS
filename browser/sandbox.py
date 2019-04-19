@@ -107,6 +107,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             'handle_on_message': lambda f: mailbox.new_message_handler.handle(f),
             'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
             'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
+            'handle_on_deadline': lambda f: mailbox.deadline_handler.handle(f),
         }
 
         # simulate request. normally from UI
@@ -249,6 +250,8 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     elif rule.type == "flag-change":
                         code = code + "\nhandle_on_flag_added(on_flag_added)"
                         code = code + "\nhandle_on_flag_removed(on_flag_removed)"
+                    elif rule.type.startswith("deadline"):
+                        code = code + "\nhandle_on_deadline(on_deadline)"
                     # else:
                     #     continue
                     #     # some_handler or something += repeat_every
@@ -265,17 +268,20 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                             event_class_name = type(event_data).__name__ 
                             if (event_class_name == "NewMessageData" and rule.type =="new-message") or \
                                     (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
-                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
                                 event_data.fire_event(mailbox.new_message_handler)
                                 is_fired = True
                             if (event_class_name == "NewFlagsData" and rule.type == "flag-change"):
-                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
                                 event_data.fire_event(mailbox.added_flag_handler)
                                 is_fired = True
                             if (event_class_name == "RemovedFlagsData" and rule.type == "flag-change"):
-                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
                                 event_data.fire_event(mailbox.removed_flag_handler)
                                 is_fired = True
+                            if (event_class_name == "NewMessageDataDue" and rule.type.startswith("deadline-")):
+                                event_data.fire_event(mailbox.deadline_handler)
+                                is_fired = True
+
+                            if is_fired:
+                                logger.info("firing %s %s" % (rule.name, event_data.message.subject))
 
                     except Exception as e:
                         # Get error message for users if occurs

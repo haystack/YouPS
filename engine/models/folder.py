@@ -7,7 +7,7 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from engine.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData, NewFlagsData, RemovedFlagsData
+from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewMessageDataDue, AbstractEventData, NewFlagsData, RemovedFlagsData
 from datetime import datetime
 from email.utils import parseaddr
 from dateutil import parser
@@ -198,6 +198,14 @@ class Folder(object):
         for message_schema in message_schemas:
             logger.info("add schedule %s %s %s" % (time_start, message_schema.date, time_end))
             event_data_list.append(NewMessageDataScheduled(Message(message_schema, self._imap_client)))
+
+    def _search_due_message(self, event_data_list, time_start, time_end):
+        message_schemas = MessageSchema.objects.filter(folder_schema=self._schema).filter(deadline__range=[time_start, time_end])
+        
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        for message_schema in message_schemas:
+            logger.info("add deadline queue %s %s %s" % (time_start, message_schema.deadline, time_end))
+            event_data_list.append(NewMessageDataDue(Message(message_schema, self._imap_client)))
 
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool
