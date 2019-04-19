@@ -44,7 +44,7 @@
 			<h3>YoUPS Rule Sandbox</h3>
 			<!-- <a href="/docs" style="float: right;margin-top: -30px;">View API docs</a> -->
 			<hr>
-			
+
 			<form id="login-email-form">
 				<!-- <label for="input-email">Email address: </label>
 				<input id="input-email" type="email" style="box-sizing: border-box;"></input>
@@ -87,7 +87,7 @@
 										<li><a href="#" data-value="action">Action</a></li>
 									</ul>
 								</div>
-								{% if imap_authenticated %}		
+								{% if imap_authenticated %}
 									<!-- https://codepen.io/aanjulena/pen/ZLZjzV  -->
 									<button id='btn-code-submit' type="button" class="btn btn-lg btn-toggle" data-toggle="button" aria-pressed="false" autocomplete="off">
 										<div class="handle"></div>
@@ -105,7 +105,7 @@
 									{% for mode in modes %}
 										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
 										{% if current_mode == None and forloop.first or current_mode == mode %}
-											<li class="active">	
+											<li class="active">
 										{% else %}
 											<li>
 										{% endif %}
@@ -126,14 +126,14 @@
 											<div class="tab-pane active" id="tab_{{mode.uid}}">
 										{% else %}
 											<div class="tab-pane" id="tab_{{mode.uid}}">
-										{% endif %}	
+										{% endif %}
 												<div class='editable-container' type='new-message'>
 													{% for rule in rules %}
 														{% if rule.mode == mode and rule.type|slice:":11" == "new-message" %}
 															<div rule-id={{rule.uid}} class="panel panel-success">
 																<div class="flex_container">
-																	<div class="flex_item_left"> 
-																		<i class="fas fa-3x fa-trash"></i> 
+																	<div class="flex_item_left">
+																		<i class="fas fa-3x fa-trash"></i>
 																	</div>
 
 																	<div class="flex_item_right panel-heading panel-collapsed">
@@ -154,7 +154,7 @@
 																			<form class="form-inline">
 																				<div class="form-group">
 																					<span>Run following rules when there is </span>
-																					<!-- <span class="fa-layers fa-fw fa-2x"> 
+																					<!-- <span class="fa-layers fa-fw fa-2x">
 																						<i class="far fa-envelope"></i>
 																						<span class="fa-layers-counter" style="background:Tomato">NEW</span>
 																					</span> -->
@@ -176,7 +176,7 @@
 																						<option>min</option>
 																						<option>hr</option>
 																						<option>day</option>
-																					</select> 													
+																					</select>
 																				</div>
 																				<div class="form-group">
 																					<span>ago</span>
@@ -190,7 +190,7 @@
 																	<!-- Separte row for debugging -->
 																	<div class='debugger-container'>
 																			<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
-																			
+
 																			<h2>Test suites</h2>
 																			<h4>Recent messages from your selected folders to test your rules</h4>
 																			<table class="example-suites" class="table" style="width:100%">
@@ -207,7 +207,7 @@
 																	</div>
 																</div>
 															</div>
-														{% endif %}	
+														{% endif %}
 													{% endfor %}
 												</div>
 
@@ -216,10 +216,10 @@
 															{% if rule.mode == mode and rule.type == "flag-change" %}
 																<div rule-id={{rule.uid}} class="panel panel-warning">
 																	<div class="flex_container">
-																		<div class="flex_item_left"> 
-																			<i class="fas fa-3x fa-trash"></i> 
+																		<div class="flex_item_left">
+																			<i class="fas fa-3x fa-trash"></i>
 																		</div>
-	
+
 																		<div class="flex_item_right panel-heading panel-collapsed">
 																			<h3 class="panel-title">
 																				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
@@ -243,7 +243,7 @@
 																		</div>
 																	</div>
 																</div>
-															{% endif %}	
+															{% endif %}
 														{% endfor %}
 													</div>
 
@@ -252,13 +252,13 @@
 														{% if rule.mode == mode and rule.type == "repeat" %}
 														<div rule-id={{rule.uid}} class="panel panel-warning">
 															<div class="flex_container">
-																<div class="flex_item_left"> 
-																	<i class="fas fa-3x fa-trash"></i> 
+																<div class="flex_item_left">
+																	<i class="fas fa-3x fa-trash"></i>
 																</div>
 
 																<div class="flex_item_right panel-heading panel-collapsed">
 																	<h3 class="panel-title">
-																		<i class="far fa-2x fa-clock" style="float:left"></i>  
+																		<i class="far fa-2x fa-clock" style="float:left"></i>
 																		<span class="preview-folder"></span>
 																	</h3>
 																	<span class="pull-right">
@@ -275,7 +275,7 @@
 																</div>
 															</div>
 														</div>
-														{% endif %}	
+														{% endif %}
 													{% endfor %}
 												</div>
 
@@ -283,18 +283,18 @@
 												<div class="btn-new-editor" type="new-message">
 													<div class="panel panel-success">
 														<div class="flex_container">
-															<div class="flex_item_left"> 
-																<i class="fas fa-3x fa-plus-circle"></i> 
+															<div class="flex_item_left">
+																<i class="fas fa-3x fa-plus-circle"></i>
 															</div>
-																	
+
 															<div class="panel-heading flex_item_right panel-collapsed">
 																<h3 class="panel-title">
-																		<span class="fa-layers fa-fw fa-2x"> 
+																		<span class="fa-layers fa-fw fa-2x">
 																			<i class="far fa-envelope"></i>
 																			<span class="fa-layers-counter" style="background:Tomato">NEW</span>
 																		</span>
 																		Create a message arrival handler <span class=""></span>
-																</h3>		
+																</h3>
 															</div>
 														</div>
 													</div>
@@ -302,17 +302,17 @@
 												<div class="btn-new-editor" type="flag-change">
 														<div class="panel panel-warning">
 															<div class="flex_container">
-																<div class="flex_item_left"> 
-																	<i class="fas fa-3x fa-plus-circle"></i> 
+																<div class="flex_item_left">
+																	<i class="fas fa-3x fa-plus-circle"></i>
 																</div>
-																
+
 																<div class="panel-heading flex_item_right panel-collapsed">
 																	<h3 class="panel-title">
 																		<i class="far fa-2x fa-flag"></i> Create a flag change event handler <span class=""></span>
 																	</h3>
-																	
+
 																</div>
-															</div>	
+															</div>
 													</div>
 												</div>
 									  		</div>
@@ -343,18 +343,18 @@
 										<div class="btn-new-editor" type="new-message">
 												<div class="panel panel-success">
 													<div class="flex_container">
-														<div class="flex_item_left"> 
-															<i class="fas fa-3x fa-plus-circle"></i> 
+														<div class="flex_item_left">
+															<i class="fas fa-3x fa-plus-circle"></i>
 														</div>
-																
+
 														<div class="panel-heading flex_item_right panel-collapsed">
 															<h3 class="panel-title">
-																	<span class="fa-layers fa-fw fa-2x"> 
+																	<span class="fa-layers fa-fw fa-2x">
 																		<i class="far fa-envelope"></i>
 																		<span class="fa-layers-counter" style="background:Tomato">NEW</span>
 																	</span>
 																	Create message arrival handler <span class=""></span>
-															</h3>		
+															</h3>
 														</div>
 													</div>
 												</div>
@@ -362,34 +362,34 @@
 											<div class="btn-new-editor" type="repeat">
 													<div class="panel panel-warning">
 														<div class="flex_container">
-															<div class="flex_item_left"> 
-																<i class="fas fa-3x fa-plus-circle"></i> 
+															<div class="flex_item_left">
+																<i class="fas fa-3x fa-plus-circle"></i>
 															</div>
-															
+
 															<div class="panel-heading flex_item_right panel-collapsed">
 																<h3 class="panel-title">
 																	<i class="far fa-2x fa-clock"></i> Update every <span class=""></span>
 																</h3>
-																
+
 															</div>
 														</div>
-														<!-- Panel body -->		
+														<!-- Panel body -->
 												</div>
 											</div>
 											<div class="btn-new-editor" type="flag-change">
 													<div class="panel panel-warning">
 														<div class="flex_container">
-															<div class="flex_item_left"> 
-																<i class="fas fa-3x fa-plus-circle"></i> 
+															<div class="flex_item_left">
+																<i class="fas fa-3x fa-plus-circle"></i>
 															</div>
-															
+
 															<div class="panel-heading flex_item_right panel-collapsed">
 																<h3 class="panel-title">
 																	<i class="far fa-2x fa-flag"></i> Create a flag change event handler <span class=""></span>
 																</h3>
-																
+
 															</div>
-														</div>	
+														</div>
 												</div>
 											</div>
 									</div>
@@ -397,14 +397,14 @@
 							{% endif %}
 						</div>
 					  </div>
-		
+
 					  <div id="console" class="info">
 						<!-- <span id="engine-status-spinning-bar" class="fa-layers fa-fw fa-2x">
 							<i class="fas fa-sync"></i>
 							<span class="fa-layers-counter idle-mark" style="background:Tomato">IDLE</span>
 						</span>
 						<span id='engine-status-msg'></span> -->
-						
+
 						<span id='user-status-msg'></span>
 						<h2>Output console</h2>
 						<table id="console-table" class="table" style="width:100%">
@@ -420,8 +420,8 @@
 							<tbody>
 							</tbody>
 						</table>
-						<div class="text-center"> 
-							<button id="btn-log-load-more" style="display:none" class="btn btn-primary">Load more</button> 
+						<div class="text-center">
+							<button id="btn-log-load-more" style="display:none" class="btn btn-primary">Load more</button>
 						</div>
 						<div id="console-output">
 							<p class="info">Output of your sandbox will be sent to your inbox. {% if not is_running %}Turn on your sandbox to apply your rule.{% endif %}</p>
@@ -429,7 +429,7 @@
 						</div>
 						{% if user.is_authenticated %}
 						{% else %}
-				
+
 							<p class="info"><span class='current-date'>01/09/2019 21:25:12</span> <i class="fas fa-lg fa-envelope-square"></i> [csail-related] Looking for roommates, available next month | marked as read</p>
 						{% endif %}
 					  </div>
@@ -437,7 +437,7 @@
 
 					<!-- <div class="card">
 						<div class="card-header">
-							<h4>Shared functions</h4> 
+							<h4>Shared functions</h4>
 							You can write shared functions or code here and call them from any modes.
 							<br>
 							<button class="btn btn-primary" id="btn-shared-save" style="float: right;">Save</button>
@@ -448,15 +448,15 @@
 									{% if shortcuts_exist %}
 {{ shortcuts }}
 									{% else %}
-# add example of shared code here. 
-									{% endif %}    
+# add example of shared code here.
+									{% endif %}
 </textarea>
 						</div>
 					  </div>
 
 					<div class="card">
 							<div class="card-header">
-								<h4>Rules for email shortcuts</h4> 
+								<h4>Rules for email shortcuts</h4>
 								You can use your YoUPS rule from your email interface. Define your shortcut below, then when you forward an email with the shortcut to {{website}}@{{website}}.csail.mit.edu, YoUPS will run the action for you!
 								<br>
 								<button class="btn btn-primary" id="btn-shortcut-save" style="float: right;">Save</button>
@@ -472,12 +472,12 @@ import re
 # LABEL x, y, z => add labels [x,y,z] to the email
 m = re.search('(?<=LABEL)(.*)', get_content())
 add_labels( m.groups()[0].split(",") ) # if you are using gmail, then add_gmail_labels
-										    
+
 if "TODO" in get_content() and "soya@mit.edu" in get_sender():
-    move("todo")	
-										    
-print get_sender()	
-										{% endif %}    
+    move("todo")
+
+print get_sender()
+										{% endif %}
 	</textarea>
 							</div>
 						  </div> -->
@@ -503,7 +503,7 @@ print get_sender()
                     <h4>[name] ([params])</h4>
                 </div>
 			  </div>
-			  <!-- END editor col -->	
+			  <!-- END editor col -->
 		</div>
 	</div>
 	<script type="text/javascript">
@@ -517,8 +517,8 @@ print get_sender()
 			current_mode = "{{ current_mode.name }}",
 			current_mode_id = "{{ current_mode.uid }}";
 	</script>
-	
-	  
+
+
 	<!-- <a href="/groups/{{group_info.name}}">Back to group info page</a> -->
 {% endblock %}
 
@@ -530,14 +530,14 @@ print get_sender()
 	<script type="text/javascript" src="/static/javascript/youps/addon/edit/matchbrackets.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/python.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/addon/hint/show-hint.js"></script>
-	
+
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
-	
+
 	<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
 	<script type="text/javascript" src="/static/javascript/youps/console/underscore.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/backbone.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/backbone-localStorage.min.js"></script>
-	
+
 	<!-- Some extras for the demo: -->
 	<script type="text/javascript" src="/static/javascript/youps/console/lettering.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/console/prettify.js"></script>
@@ -559,4 +559,12 @@ print get_sender()
 	<script src="/static/javascript/youps/tests.js"></script>
 
 	<script type="text/javascript" src="/static/javascript/youps/login_imap.js"></script>
+
+
+    <script>
+        window.onbeforeunload = function(event)
+        {
+            return confirm("Confirm refresh");
+        };
+    </script>
 {% endblock %}
