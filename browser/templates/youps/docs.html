@@ -169,9 +169,8 @@
             sidebar_init();
             init_syntax();
 
-            $('a[href]').click(function(e){
+            $('.group-container a[href]').click(function(e){
                 e.preventDefault()
-                console.log($(this).offset().top);
                 // $("body").scrollTop($(this).offset().top-50);
                 var section = $(this).attr("href");
                 $("html, body").animate({

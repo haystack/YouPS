@@ -353,7 +353,7 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
                     "organization": message.from_.organization,
                     "geolocation": message.from_.geolocation
                 }
-
+                
             to_field = [{
                 "name": t.name,
                 "email": t.email,
@@ -388,6 +388,8 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
                 "error": imap_res['appended_log'][message_schema.id] if 'error' in imap_res['appended_log'][message_schema.id] else False
             }
             
+            logger.critical(message.from_.name)
+            logger.critical(message.subject)
 
             res['messages'][message_schema.id] = new_msg
         
