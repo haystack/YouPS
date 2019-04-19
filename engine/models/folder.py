@@ -379,7 +379,7 @@ class Folder(object):
     
             try: 
                 f_tmp = ""
-                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'Bcc:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
+                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'CC:', 'Bcc:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
                 
                 for v in re.split('('+ "|".join(header_field) +')', header):
                     if not v:
@@ -426,7 +426,10 @@ class Folder(object):
                     # logger.critical("convert navie %s " % internal_date)
             except Exception:
                 logger.critical("Internal date parsing error %s" % internal_date)
-                
+                continue
+
+            if "message-id" not in meta_data:
+                logger.critical("message-id not exist, skil this message %s" % meta_data)
                 continue
 
             # create and save the message schema
