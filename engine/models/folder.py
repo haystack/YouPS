@@ -371,7 +371,11 @@ class Folder(object):
 
             # figure out text encoding issue here 
             # logger.info(header[uid][list(Message._header_descriptors)[0]])
-            header = self._parse_email_header(header)
+            try:
+                header = self._parse_email_header(header)
+            except Exception as e:
+                logger.critical("header parsing problem %s  %s, skip this message" % (header, e))
+                continue
     
             try: 
                 f_tmp = ""
@@ -410,7 +414,10 @@ class Folder(object):
                 if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
                     date = timezone('US/Eastern').localize(date)
             except Exception:
-                logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
+                if "date" in meta_data:
+                    logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
+                else:
+                    logger.critical("Date not exist, skip this message")
                 continue
 
             try:
@@ -419,6 +426,7 @@ class Folder(object):
                     # logger.critical("convert navie %s " % internal_date)
             except Exception:
                 logger.critical("Internal date parsing error %s" % internal_date)
+                
                 continue
 
             # create and save the message schema
@@ -508,14 +516,19 @@ class Folder(object):
         return text
 
     def _parse_email_header(self, header):
-        lines = decode_header(header)
+        try:
+            lines = decode_header(header)
+        except Exception:
+            header = header.replace('_', '/')
+            lines = decode_header(header)
+
         header_text = ""
         for line in lines:
             text, encoding = line[0], line[1]
             if encoding:
                 if encoding != 'utf-8' and encoding != 'utf8':
-                    logger.debug('parse_subject non utf8 encoding: %s' % encoding)
-                text = text.decode(encoding)
+                    logger.info('parse_subject non utf8 encoding: %s' % encoding)
+                text = text.decode(encoding, errors='ignore')
             else:
                 text = unicode(text, encoding='utf8')
             header_text = header_text + text
