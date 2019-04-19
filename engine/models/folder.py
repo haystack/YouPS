@@ -9,7 +9,13 @@ from imapclient.response_types import Address  # noqa: F401 ignore unused we use
 from email.header import decode_header
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData, NewFlagsData, RemovedFlagsData
 from datetime import datetime
-
+from email.utils import parseaddr
+from dateutil import parser
+from pytz import timezone
+from smtp_handler.utils import encoded_str_to_utf8_str, utf8_str_to_utf8_unicode
+import chardet
+import re
+import heapq
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -131,7 +137,14 @@ class Folder(object):
         MessageSchema.objects.filter(folder_schema=self._schema).delete()
 
         # save new messages starting from the last seen uid of 0
-        self._save_new_messages(0)
+        mail_ids = self._imap_client.search('SINCE 1-Jan-2019')
+        if mail_ids:
+            self._save_new_messages(min(mail_ids))
+        else: # if there is no email in this year, save at least 5 latest messages. 
+            mail_ids = self._imap_client.search()
+            logger.info(mail_ids)
+            if mail_ids:
+                self._save_new_messages(min(heapq.nlargest(6, mail_ids)))
         # TODO maybe trigger the user
 
         # finally update our last seen uid (this uses the cached messages to determine last seen uid)
@@ -282,6 +295,8 @@ class Folder(object):
         fetch_data = self._imap_client.fetch(
             '%d:*' % (last_seen_uid + 1), descriptors)
 
+        # TODO get flag first to see if it is read 
+
         # if there is only one item in the return field
         # and we already have it in our database
         # delete it to be safe and save it again
@@ -295,6 +310,7 @@ class Folder(object):
         logger.info("%s saving new messages" % (self))
         for uid in fetch_data:
             message_data = fetch_data[uid]
+
             logger.debug("Message %d data: %s" % (uid, message_data))
             if 'SEQ' not in message_data:
                 logger.critical('Missing SEQ in message data')
@@ -312,10 +328,10 @@ class Folder(object):
                 logger.critical('Missing RFC822.SIZE in message data')
                 logger.critical('Message data %s' % message_data)
                 continue
-            if 'ENVELOPE' not in message_data:
-                logger.critical('Missing ENVELOPE in message data')
-                logger.critical('Message data %s' % message_data)
-                continue
+            # if 'ENVELOPE' not in message_data:
+            #     logger.critical('Missing ENVELOPE in message data')
+            #     logger.critical('Message data %s' % message_data)
+            #     continue
             if self._imap_account.is_gmail and 'X-GM-THRID' not in message_data:
                 logger.critical('Missing X-GM-THRID in message data')
                 logger.critical('Message data %s' % message_data)
@@ -332,9 +348,42 @@ class Folder(object):
 
             # this is the date the message was received by the server
             internal_date = message_data['INTERNALDATE']  # type: datetime
-            envelope = message_data['ENVELOPE']
             msn = message_data['SEQ']
             flags = message_data['FLAGS']
+
+            header = self._imap_client.fetch(
+                '%d' % (uid), list(Message._header_descriptors))
+
+
+            # header = [h.replace('\r\n\t', ' ') for h in header]
+            header = header[uid][list(Message._header_descriptors)[0]]
+            header = header.replace('\r\n\t', ' ')
+            header = header.replace('\r\n', ' ')
+            meta_data = {}
+
+            # figure out text encoding issue here 
+            # logger.info(header[uid][list(Message._header_descriptors)[0]])
+            header = self._parse_email_header(header)
+    
+            try: 
+                f_tmp = ""
+                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'Bcc:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
+                
+                for v in re.split('('+ "|".join(header_field) +')', header):
+                    if not v:
+                        continue
+
+                    if v.strip() in header_field:
+                        f_tmp = v[:-1].lower().strip()
+
+                    else:
+                        meta_data[f_tmp] = v.strip()
+            except Exception as e:
+                logger.critical("header parsing problem %s, skip this message" % e)
+                continue
+
+            if "\\Seen" not in flags:
+                self._imap_client.remove_flags(uid, ['\\Seen'])
 
             # if we have a gm_thread_id set thread_schema to the proper thread
             gm_thread_id = message_data.get('X-GM-THRID') 
@@ -344,7 +393,25 @@ class Folder(object):
                 logger.debug("thread messages %s, current message %d" % (result, uid))
                 thread_schema = self._find_or_create_thread(gm_thread_id)
 
-            logger.debug("message %d envelope %s" % (uid, envelope))
+            logger.debug("message %d envelope %s" % (uid, meta_data))
+
+            try:
+                date = parser.parse(meta_data["date"])
+
+                # if date is naive then reinforce timezone
+                if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
+                    date = timezone('US/Eastern').localize(date)
+            except Exception:
+                logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
+                continue
+
+            try:
+                if internal_date.tzinfo is None or internal_date.tzinfo.utcoffset(internal_date) is None:
+                    internal_date = timezone('US/Eastern').localize(internal_date)
+                    # logger.critical("convert navie %s " % internal_date)
+            except Exception:
+                logger.critical("Internal date parsing error %s" % internal_date)
+                continue
 
             # create and save the message schema
             message_schema = MessageSchema(imap_account=self._schema.imap_account,
@@ -352,17 +419,17 @@ class Folder(object):
                                            uid=uid,
                                            msn=msn,
                                            flags=flags,
-                                           date=envelope.date,
-                                           subject=self._parse_email_subject(envelope.subject),
-                                           message_id=envelope.message_id,
+                                           date=date,
+                                           subject="" if "subject" not in meta_data else meta_data['subject'],
+                                           message_id=meta_data["message-id"],
                                            internal_date=internal_date,
                                            _thread=thread_schema
                                            )
 
-            if envelope.sender is not None:
-                message_schema.sender = self._find_or_create_contacts(envelope.sender)[0]
-            if envelope.from_ is not None:
-                message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
+            if "from" in meta_data:
+                message_schema.from_m = self._find_or_create_contacts(meta_data['from'])[0]
+            # if envelope.from_ is not None:
+            #     message_schema.from_m = self._find_or_create_contacts(envelope.from_)[0]
 
             try:
                 message_schema.save()
@@ -370,21 +437,23 @@ class Folder(object):
                 logger.critical("%s failed to save message %d" % (self, uid))
                 logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (self, self._last_seen_uid, last_seen_uid))
                 logger.critical("number of messages returned %d" % (len(fetch_data)))
-                raise
-            if last_seen_uid != 0:
+                
+                # to prevent dup saved email
+                continue
+            if last_seen_uid != 0 and event_data_list:
                 event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
 
             logger.debug("%s finished saving new messages..:" % self)
 
             # create and save the message contacts
-            if envelope.reply_to is not None:
-                message_schema.reply_to.add(*self._find_or_create_contacts(envelope.reply_to))
-            if envelope.to is not None:
-                message_schema.to.add(*self._find_or_create_contacts(envelope.to))
-            if envelope.cc is not None:
-                message_schema.cc.add(*self._find_or_create_contacts(envelope.cc))
-            if envelope.bcc is not None:
-                message_schema.bcc.add(*self._find_or_create_contacts(envelope.bcc))
+            if "reply-to" in meta_data:
+                message_schema.reply_to.add(*self._find_or_create_contacts(meta_data["reply-to"]))
+            if "to" in meta_data:
+                message_schema.to.add(*self._find_or_create_contacts(meta_data["to"]))
+            if "cc" in meta_data:
+                message_schema.cc.add(*self._find_or_create_contacts(meta_data["cc"]))
+            if "bcc" in meta_data:
+                message_schema.bcc.add(*self._find_or_create_contacts(meta_data["bcc"]))
 
             logger.debug("%s saved new message with uid %d" % (self, uid))
 
@@ -425,9 +494,25 @@ class Folder(object):
         text, encoding = decode_header(subject)[0]
         if encoding:
             if encoding != 'utf-8' and encoding != 'utf8':
-                logger.critical('parse_subject non utf8 encoding: %s' % encoding)
+                logger.debug('parse_subject non utf8 encoding: %s' % encoding)
             text = text.decode(encoding)
         return text
+
+    def _parse_email_header(self, header):
+        lines = decode_header(header)
+        logger.info(lines)
+        header_text = ""
+        for line in lines:
+            text, encoding = line[0], line[1]
+            if encoding:
+                if encoding != 'utf-8' and encoding != 'utf8':
+                    logger.debug('parse_subject non utf8 encoding: %s' % encoding)
+                text = text.decode(encoding)
+            else:
+                text = unicode(text, encoding='utf8')
+            header_text = header_text + text
+        return header_text
+            
 
     def _find_or_create_contacts(self, addresses):
         # type: (t.List[Address]) -> t.List[ContactSchema]
@@ -439,16 +524,18 @@ class Folder(object):
         assert addresses is not None
 
         contact_schemas = []
-        for address in addresses:
+        for address in addresses.split(","):
             contact_schema = None  # type: ContactSchema
-            email = "%s@%s" % (address.mailbox, address.host)
-            name = address.name or ""
+
+            # email = "%s@%s" % (address.mailbox, address.host)
+            name, email = parseaddr(address)
+            logger.info(name, email)
             try:
                 contact_schema = ContactSchema.objects.get(
                     imap_account=self._imap_account, email=email)
                 
-                # if previously name is not saved and if we get a name this time, then save the name to the contact
-                if name and not contact_schema.name:
+                # if we get a new name, then save the name to the contact
+                if name:
                     contact_schema.name = name
                     contact_schema.save()
                     
