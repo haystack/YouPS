@@ -221,6 +221,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it 
                 if mode is None:
                     new_log[new_msg["timestamp"]] = new_msg
+       
                     continue
 
                 # TODO maybe use this instead of mode.rules

@@ -436,8 +436,7 @@ def login_imap_view(request):
 				if is_initialized:
 					# send their folder list
 					folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
-					names = [f['name'].encode('utf8')  for f in folders]
-					logger.critical(names)
+				
 					folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
 					# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
