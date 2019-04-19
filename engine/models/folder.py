@@ -440,7 +440,8 @@ class Folder(object):
                 
                 # to prevent dup saved email
                 continue
-            if last_seen_uid != 0 and event_data_list:
+
+            if last_seen_uid != 0 and event_data_list is not None:
                 event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
 
             logger.debug("%s finished saving new messages..:" % self)
@@ -500,7 +501,6 @@ class Folder(object):
 
     def _parse_email_header(self, header):
         lines = decode_header(header)
-        logger.info(lines)
         header_text = ""
         for line in lines:
             text, encoding = line[0], line[1]
