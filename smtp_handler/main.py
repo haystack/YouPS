@@ -79,6 +79,8 @@ def mailbot(arrived_message, address=None, host=None):
             entire_body = get_body(entire_message)
 
             code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
+            if "---------- Forwarded message ---------" in code_body:
+                code_body = code_body.split('---------- Forwarded message ---------')[0]
             logging.debug(code_body)
 
             shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
@@ -129,7 +131,7 @@ def mailbot(arrived_message, address=None, host=None):
                 # new_message.set_payload(content.encode('utf-8')) 
                 if "text" in body and "html" in body:
                     body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
-                    body["html"] = "Your command:%s%sResult:%s" % (code_body, "<br><br>", body["text"])
+                    body["html"] = "Your command:%s%sResult:%s" % (code_body, "<br><br>", body["html"])
                     part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                     part2 = MIMEText(body["html"].encode('utf-8'), 'html')
                     new_message.attach(part1)
