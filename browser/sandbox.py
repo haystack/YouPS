@@ -117,7 +117,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                     elif "on_command" in code:
                         user_environ['content'] = extra_info['shortcut']
-                        exec(code + "\on_command(new_message, content)", user_environ)    
+                        exec(code + "\non_command(new_message, content)", user_environ)    
 
                 except Exception as e:
                     # Get error message for users if occurs

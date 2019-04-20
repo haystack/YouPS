@@ -68,6 +68,7 @@ def mailbot(arrived_message, address=None, host=None):
             if original_message_schema.exists():
                 original_message_schema = original_message_schema[0]
             else:
+                # TODO if it's not exist yet, fetch from imap
                 raise ValueError('Email not exist')
 
             # latest_email_uid = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
@@ -152,7 +153,7 @@ def mailbot(arrived_message, address=None, host=None):
             
         except Exception, e:
             logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
-            subject = "Re: " + original_message_schema.subject
+            subject = "[YoUPS] shortcuts Errors"
             mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
         finally:

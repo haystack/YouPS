@@ -1128,7 +1128,7 @@ $(document).ready(function() {
                     selected_folders.push($(this).attr('value'));
                 });
 
-                editors.push({"uid": uid, "name": name, "code": $.trim( code ), "type": type, "folders": selected_folders}); 
+                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders}); 
             })
 
             modes[id] = {
