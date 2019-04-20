@@ -303,7 +303,9 @@ class Folder(object):
         fetch_data = self._imap_client.fetch(
             '%d:*' % (last_seen_uid + 1), descriptors)
 
-        # TODO get flag first to see if it is read 
+        # seperate fetch in order to detect if the message is already read or not
+        header_data = self._imap_client.fetch(
+            '%d:*' % (last_seen_uid + 1), list(Message._header_descriptors))
 
         # if there is only one item in the return field
         # and we already have it in our database
@@ -318,6 +320,7 @@ class Folder(object):
         logger.info("%s saving new messages" % (self))
         for uid in fetch_data:
             message_data = fetch_data[uid]
+            header = header_data[uid]
 
             logger.debug("Message %d data: %s" % (uid, message_data))
             if 'SEQ' not in message_data:
@@ -359,12 +362,11 @@ class Folder(object):
             msn = message_data['SEQ']
             flags = message_data['FLAGS']
 
-            header = self._imap_client.fetch(
-                '%d' % (uid), list(Message._header_descriptors))
-
+            if "\\Seen" not in flags:
+                self._imap_client.remove_flags(uid, ['\\Seen'])
 
             # header = [h.replace('\r\n\t', ' ') for h in header]
-            header = header[uid][list(Message._header_descriptors)[0]]
+            header = header[list(Message._header_descriptors)[0]]
             header = header.replace('\r\n\t', ' ')
             header = header.replace('\r\n', ' ')
             meta_data = {}
@@ -386,6 +388,7 @@ class Folder(object):
                         continue
 
                     if v.strip() in header_field:
+                        # Remove a colon and add to a dict
                         f_tmp = v[:-1].lower().strip()
 
                     else:
@@ -394,8 +397,7 @@ class Folder(object):
                 logger.critical("header parsing problem %s, skip this message" % e)
                 continue
 
-            if "\\Seen" not in flags:
-                self._imap_client.remove_flags(uid, ['\\Seen'])
+            
 
             # if we have a gm_thread_id set thread_schema to the proper thread
             gm_thread_id = message_data.get('X-GM-THRID') 
@@ -417,6 +419,7 @@ class Folder(object):
                 if "date" in meta_data:
                     logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
                 else:
+                    # TODO draft messages does not have dates
                     logger.critical("Date not exist, skip this message")
                 continue
 
@@ -428,6 +431,7 @@ class Folder(object):
                 logger.critical("Internal date parsing error %s" % internal_date)
                 continue
 
+            # TODO seems like bulk email often not have a message-id
             if "message-id" not in meta_data:
                 logger.critical("message-id not exist, skil this message %s" % meta_data)
                 continue

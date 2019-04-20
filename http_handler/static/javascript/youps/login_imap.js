@@ -121,7 +121,7 @@ $(document).ready(function() {
             {1}
             <!-- add a deadline editor button -->
             {2}`
-            .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false)));
+            .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
 
         unsaved_tabs.push( id );
     }
@@ -308,11 +308,15 @@ $(document).ready(function() {
                 func_name="def on_deadline(my_message):";break;
             case "flag-change": 
                 func_name="def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):";break;
+            case "shortcut": 
+                func_name="def on_command(my_message, content):";break;    
         }
 
-        var editor_elem = `<div class="panel-body" style="display:none;">
-        <div class="folder-container"></div>
-        <div class="editor-container">` +
+        var instruction_for_shortcut = `<div class='instruction-container'><span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span></div>`;
+
+        var editor_elem = `<div class="panel-body" style="display:none;">` +
+        (type=="shortcut"? instruction_for_shortcut: '<div class="folder-container"></div>') + 
+        `<div class="editor-container">` +
             (type=="new-message"? `<div class='trigger'>
                 <form class="form-inline">
                     <div class="form-group">
@@ -427,6 +431,31 @@ $(document).ready(function() {
                 editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
                     <span class="preview-folder"></span>` : `<i class="far fa-2x fa-clock"></i>
                     Create a deadline event handler <span class=""></span>`, 
+                editable ? pull_down_arrow : "",
+                editable ? editor_elem : "");
+        } else if (type == "shortcut"){
+            elem_content = `{0}{1}<div {2} class="panel panel-primary">
+                <div class="flex_container">
+                    <div class="flex_item_left"> 
+                        <i class="fas fa-3x fa-{3}"></i>
+                    </div>
+                    
+                    <div class="panel-heading flex_item_right panel-collapsed">
+                        <h3 class="panel-title">
+                            {4}
+                        </h3>
+                        {5}
+                    </div>
+                </div>
+                <!-- Panel body -->
+                {6}
+            </div>
+        </div>`.format("", "",
+                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
+                editable ? "trash" : "plus-circle",
+                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-clock"></i>
+                    Create a shortcut handler <span class=""></span>`, 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {

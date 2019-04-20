@@ -20,14 +20,14 @@ from smtp_handler.utils import send_email
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 
-def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
+def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={}):
     """This function executes users' code.  
 
         Args:
             mailbox (Mailbox): user's mailbox
-            mode (MailbotMode or None): if mode is null, it will bypass executing user's code and just print logs
-            is_simulate (boolean): if True, it looks into simulate_info to test run user's code
-            simulate_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
+            mode (MailbotMode or None): current mode. if mode is null, it will bypass executing user's code and just print logs
+            is_simulate (boolean): if True, it looks into extra_info to test run user's code
+            extra_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
     """
     # type: (MailBox, MailbotMode, bool) -> t.Dict[t.AnyStr, t.Any]
 
@@ -47,32 +47,8 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
     # assert isinstance(mode, MailbotMode)
     assert mailbox.new_message_handler is not None
 
-    # define user methods
-    def create_folder(folder_name):
-        if not is_simulate: 
-            mailbox._imap_client.create_folder( folder_name )
-
-        logger.debug("create_folder(): A new folder %s has been created" % folder_name)
-
-    def rename_folder(old_name, new_name):
-        if not is_simulate: 
-            mailbox._imap_client.rename_folder( old_name, new_name )
-
-        logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
-
     def on_message_arrival(func):
         mailbox.new_message_handler += func
-
-    def set_interval(interval=None, func=None):
-        pass
-
-    def send(subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
-        if len(to) == 0:
-            raise Exception('send(): recipient email address is not provided')
-
-        if not is_simulate:
-            send_email(subject, mailbox._imap_account.email, to, body)
-        logger.debug("send(): sent a message to  %s" % str(to))
 
 
     # get the logger for user output
@@ -111,22 +87,21 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         }
 
         # simulate request. normally from UI
-        if is_simulate:
-            code = simulate_info['code']
-            message_schema = MessageSchema.objects.filter(id=simulate_info['msg-id'])
-            # temp get random message
+        if bypass_queue:
+            code = extra_info['code']
+            message_schema = MessageSchema.objects.filter(id=extra_info['msg-id'])
+   
             res['appended_log'] = {}
 
             for m_schema in message_schema:
                 msg_log = {"log": ""}
-
 
                 # TODO this is broken for any other events
                 # execute the user's code
                 # exec cant register new function (e.g., on_message_arrival) when there is a user_env
 
                 # create a read-only message object to prevent changing the message
-                new_message = Message(m_schema, mailbox._imap_client, is_simulate=True)
+                new_message = Message(m_schema, mailbox._imap_client, is_simulate=is_simulate)
 
                 user_environ['new_message'] = new_message
                 try:
@@ -139,6 +114,11 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     elif "on_flag_change" in code:
                         user_environ['new_flag'] = 'test-flag'
                         exec(code + "\non_flag_change(new_message, new_flag)", user_environ)    
+
+                    elif "on_command" in code:
+                        user_environ['content'] = extra_info['shortcut']
+                        exec(code + "\non_flag_change(new_message, content)", user_environ)    
+                        
                 except Exception as e:
                     # Get error message for users if occurs
                     # print out error messages for user 

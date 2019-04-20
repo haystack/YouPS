@@ -340,7 +340,7 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
 
         for message_schema in messages:
             
-            imap_res = interpret(MailBox(imapAccount, imap), None, is_simulate=True, simulate_info={'code': code, 'msg-id': message_schema.id})
+            imap_res = interpret(MailBox(imapAccount, imap), None, bypass_queue=True, is_simulate=True, simulate_info={'code': code, 'msg-id': message_schema.id})
             logger.info(imap_res)
 
             message = Message(message_schema, imap)

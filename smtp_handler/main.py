@@ -2,6 +2,8 @@ import logging, time, base64
 from lamson.routing import route, stateless
 from config.settings import relay
 from http_handler.settings import WEBSITE
+from django.contrib.sites.models import Site
+from http_handler.settings import PROTOCOL
 from schema.models import *
 from schema.models import ImapAccount
 from lamson.mail import MailResponse
@@ -17,6 +19,10 @@ import django.db
 from browser.imap import *
 from browser.sandbox import interpret
 from imapclient import IMAPClient
+from schema.youps import MessageSchema, EmailRule  # noqa: F401 ignore unused we use it for typing
+from engine.models.mailbox import MailBoxs
+from engine.models.message import Message
+
 
 '''
 Murmur Mail Interface Handler
@@ -29,28 +35,7 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 GROUP_OR_SQUAD = {'murmur' : 'group', 'squadbox' : 'squad'}
 
-@route("(address)@(host)", address="all", host=HOST)
-@stateless
-def all(message, address=None, host=None):
-    # no public groups to list on squadbox. 
-    if WEBSITE == 'squadbox':
-        logging.debug("Ignored message to all@%s, no public groups to list" % HOST)
-        return
-
-    elif WEBSITE == 'murmur':
-        res = list_groups()
-        subject = "Listing Groups -- Success"
-        body = "Listing all the groups \n\n"
-        if(res['status']):
-            for g in res['groups']:
-                body= body + "Name: " + g['name'] + "\t\tActive:" + str(g['active']) + "\n"  
-        else:
-            subject = "Listing Groups -- Error"
-            body = "Error Message: %s" %(res['code'])
-        mail = MailResponse(From = NO_REPLY, To = message['From'], Subject = subject, Body = body)
-        relay.deliver(mail)
-
-@route("(address)@(host)", address=WEBSITE, host=".+")
+@route("(address)@(host)", address=".+", host=".+")
 @stateless
 def mailbot(message, address=None, host=None):
     # no public groups to list on squadbox. 
@@ -75,70 +60,63 @@ def mailbot(message, address=None, host=None):
                 raise ValueError('Something went wrong during authentication. Log in again at %s/editor' % host)
 
             imap = auth_res['imap']
-            imap.select_folder('INBOX')
+
+            # Get the original message
+            original_message_schema = MessageSchema.objects.get(message_id=message["In-Reply-To"])
+
+            # latest_email_uid = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
+            
+            imap.select_folder(original_message_schema.folder_schema.name)           
+            original_message = Message(original_message_schema, imap)
 
             entire_message = message_from_string(str(message))
             entire_body = get_body(entire_message)
 
-            # Get a forwarded message
-            latest_email_uid = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
+            code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
+            logging.debug(code_body)
 
-            response = imap.fetch(latest_email_uid, ['RFC822'])
+            shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
+            if not imapAccount.current_mode or not shortcuts.exists():
+                body = "Your YoUPS hasn't turned on or don't have email shortcuts yet! Define your shortcuts here %s://%s" % (PROTOCOL, site.domain)
 
-            for msgid, edata in response.items():
-                raw_email_string = edata[b'RFC822'].decode('utf-8').encode("ascii", "ignore")
-                email_message = message_from_string(raw_email_string)
-
-                # Header Details
-                email_from = str(header.make_header(header.decode_header(email_message['From'])))
-                email_to = str(header.make_header(header.decode_header(email_message['To'])))
-                subject = str(header.make_header(header.decode_header(email_message['Subject'])))
-                forwarded_body = get_body(email_message)
-
-                logging.debug("Forward email %s %s" % (subject, email_from) )
-
-                # Get code part 
-                # TODO remove header of previous email 
-                code_body = entire_body['plain'][:(-1)*len(forwarded_body['plain'])]
-                subject = "Re: " + message['Subject']
-                body = ''
-
-                if not imapAccount.shortcuts:
-                    body = "You don't have email shortcuts yet! Define your shortcuts here %s/editor" % "murmur-1604@csail.mit.edu"
-
-                else:
-                    res = interpret(imapAccount, imap, imapAccount.shortcuts, "UID %s" % latest_email_uid[0], False, code_body)
-
-                    now = datetime.now()
-                    now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
-                    if not res['imap_error']:
-                        body = 'Your mail shortcut is successfully applied! \n'
-                    else:
-                        body = 'Something went wrong! \n'
-                
-                    body = body + now_format + res['imap_log']
-                mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = body)
+                mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
                 relay.deliver(mail)
 
-            # Log out after after conduct required action
-            imap.logout()
+            else:
+                mailbox = MailBox(imapAccount, imap)
+                for shortcut in shortcuts:
+                    res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, {"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
+                    logger.debug(res)
+
+                now = datetime.now()
+                now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
+                if not res['imap_error']:
+                    body = 'Your mail shortcut is successfully applied! \n'
+                else:
+                    body = 'Something went wrong! \n'
+                
+                body = body + now_format + res['imap_log']
+                
+                logger.debug(body)
+
+                # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
 
         except ImapAccount.DoesNotExist:
-            subject = "Re: " + message['Subject']
-            error_msg = 'Your email engine is not registered or stopped due to an error. Write down your own email rule at %s/editor' % "murmur-1604@csail.mit.edu"
+            subject = "Re: " + original_message.subject
+            error_msg = 'Your email engine is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (PROTOCOL, site.domain)
             mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = error_msg)
             relay.deliver(mail)
             
         except Exception, e:
             logging.debug(e)
-            subject = "Re: " + message['Subject']
+            subject = "Re: " + original_message.subject
             mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
-
+        finally:
+            if auth_res['status']:
+                # Log out after after conduct required action
+                imap.logout()
         
-
-
-
 @route("(group_name)\\+create@(host)", group_name=".+", host=HOST)
 @stateless
 def create(message, group_name=None, host=None):

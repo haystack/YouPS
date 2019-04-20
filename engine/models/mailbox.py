@@ -32,7 +32,7 @@ class MailBox(object):
         self.added_flag_handler = Event()  # type: Event
         self.removed_flag_handler = Event()  # type: Event
         self.deadline_handler = Event()
-        
+
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.is_simulate = False
 
@@ -246,11 +246,11 @@ class MailBox(object):
 
         logger.debug("create_folder(): A new folder %s has been created" % folder_name)
 
-    # def rename_folder(old_name, new_name):
-    #     if not is_simulate: 
-    #         mailbox._imap_client.rename_folder( old_name, new_name )
+    def rename_folder(self, old_name, new_name):
+        if not self.is_simulate: 
+            self._imap_client.rename_folder( old_name, new_name )
 
-    #     logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
+        logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
 
     def send(self, subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
         if len(to) == 0:

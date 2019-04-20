@@ -275,7 +275,7 @@ class Message(object):
         """Get the content of the message
 
         Returns:
-            t.AnyStr: The content of the message
+            dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """
 
         import pprint

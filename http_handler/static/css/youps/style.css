@@ -213,7 +213,7 @@
   margin-bottom: 90px;
 }
 
-.folder-container {
+.folder-container, .instruction-container {
   width: 200px;
   float: left;
   overflow-y: scroll;
@@ -561,6 +561,7 @@ label {
 div[type='repeat'], div[type='flag-change'] {
   display: none;
 }
+
 
 #example tr.unmatched{
   opacity: 0.5;
