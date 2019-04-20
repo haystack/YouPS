@@ -8,7 +8,7 @@ from schema.models import *
 from schema.models import ImapAccount
 from lamson.mail import MailResponse
 from email.utils import *
-from email import message_from_string, header
+from email import message_from_string, header, message
 from engine.main import *
 from engine.s3_storage import upload_message
 from utils import *
@@ -22,6 +22,8 @@ from imapclient import IMAPClient
 from schema.youps import MessageSchema, EmailRule  # noqa: F401 ignore unused we use it for typing
 from engine.models.mailbox import MailBox
 from engine.models.message import Message
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 '''
@@ -37,7 +39,7 @@ GROUP_OR_SQUAD = {'murmur' : 'group', 'squadbox' : 'squad'}
 
 @route("(address)@(host)", address=".+", host=".+")
 @stateless
-def mailbot(message, address=None, host=None):
+def mailbot(arrived_message, address=None, host=None):
     # no public groups to list on squadbox. 
     if WEBSITE == 'squadbox' or WEBSITE == 'murmur':
         logging.debug("Ignored message to all@%s, no public groups to list" % HOST)
@@ -46,7 +48,7 @@ def mailbot(message, address=None, host=None):
     else:
         logger.info("Email to mailbot@%s" % HOST)
 
-        name, addr = parseaddr(message['from'].lower())
+        name, addr = parseaddr(arrived_message['from'].lower())
 
         # restart the db connection
         django.db.close_connection()
@@ -62,7 +64,7 @@ def mailbot(message, address=None, host=None):
             imap = auth_res['imap']
 
             # Get the original message
-            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=message["In-Reply-To"])
+            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
             if original_message_schema.exists():
                 original_message_schema = original_message_schema[0]
             else:
@@ -73,7 +75,7 @@ def mailbot(message, address=None, host=None):
             imap.select_folder(original_message_schema.folder_schema.name)           
             original_message = Message(original_message_schema, imap)
 
-            entire_message = message_from_string(str(message))
+            entire_message = message_from_string(str(arrived_message))
             entire_body = get_body(entire_message)
 
             code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
@@ -88,37 +90,55 @@ def mailbot(message, address=None, host=None):
 
             else:
                 mailbox = MailBox(imapAccount, imap)
-                body = ''
+                body = {"text": "", "html": ""}
                 for shortcut in shortcuts:
                     res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
                     logging.debug(res)
 
                     now = datetime.now()
                     now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
-                    for key, value in res.iteritems():
+                    for key, value in res['appended_log'].iteritems():
                         if not value['error']:
-                            body = 'Your mail shortcut is successfully applied! \n'
+                            body["text"] = 'Your mail shortcut is successfully applied! \n'
+                            body["html"] = 'Your mail shortcut is successfully applied! <br>'
                         else:
-                            body = 'Something went wrong! \n'
+                            body["text"] = 'Something went wrong! \n'
+                            body["html"] = 'Something went wrong! <br>'
                         
-                        body = body + now_format + value['log']
+                        body["text"] = body["text"] + now_format + value['log']
+                        body["html"] = body["html"] + now_format + value['log']
                 
-                        logger.debug(body)
+                    logger.debug(body)
 
+                new_message = MIMEMultipart('alternative')
+                new_message["Subject"] = "Re: " + arrived_message["subject"]
+                new_message["In-Reply-To"] = original_message_schema.message_id
+
+                # new_message.set_payload(content.encode('utf-8')) 
+                if "text" in body and "html" in body:
+                    part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
+                    part2 = MIMEText(body["html"].encode('utf-8'), 'html')
+                    new_message.attach(part1)
+                    new_message.attach(part2)
+                else: 
+                    part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
+                    new_message.attach(part1)
+
+                imap.append(original_message_schema.folder_schema.name, str(new_message))
                 # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
 
         except ImapAccount.DoesNotExist:
             subject = "YoUPS shortcuts Error"
             error_msg = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
-            mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = error_msg)
+            mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = error_msg)
             relay.deliver(mail)
         except MessageSchema.DoesNotExist:
             logging.critical("message is not existed yet, but it forwared to us??")
             
         except Exception, e:
-            logging.debug("exception :" + e)
+            logging.debug("exception :" + str(e))
             subject = "Re: " + original_message_schema.subject
-            mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = str(e))
+            mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
         finally:
             if auth_res['status']:
