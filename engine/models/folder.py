@@ -420,7 +420,7 @@ class Folder(object):
                     logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
                 else:
                     # TODO draft messages does not have dates
-                    logger.critical("Date not exist, skip this message")
+                    logger.critical("Date not exist, skip this message %s " % meta_data)
                 continue
 
             try:

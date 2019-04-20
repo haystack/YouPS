@@ -14,7 +14,8 @@ from email.mime.base import MIMEBase
 from email import encoders  
 from smtp_handler.utils import get_attachments, format_email_address
 import smtplib
-from pytz import timezone
+from pytz import timezone as tz
+from django.utils import timezone
 
 from engine.google_auth import GoogleOauth2
 from browser.imap import decrypt_plain_password
@@ -129,7 +130,8 @@ class Message(object):
     def deadline(self, value):
         # type: (datetime.datetime -> None
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-            value = timezone('US/Eastern').localize(value)
+            value = tz('US/Eastern').localize(value)
+            value = timezone.localtime(value)
             logger.info(value)
 
         if not self.is_simulate:
