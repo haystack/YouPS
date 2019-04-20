@@ -67,7 +67,7 @@ def mailbot(message, address=None, host=None):
                 original_message_schema = original_message_schema[0]
             else:
                 raise ValueError('Email not exist')
-                
+
             # latest_email_uid = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
             
             imap.select_folder(original_message_schema.folder_schema.name)           
@@ -88,20 +88,22 @@ def mailbot(message, address=None, host=None):
 
             else:
                 mailbox = MailBox(imapAccount, imap)
+                body = ''
                 for shortcut in shortcuts:
                     res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
                     logging.debug(res)
 
-                now = datetime.now()
-                now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
-                if not res['imap_error']:
-                    body = 'Your mail shortcut is successfully applied! \n'
-                else:
-                    body = 'Something went wrong! \n'
+                    now = datetime.now()
+                    now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
+                    for key, value in res.iteritems():
+                        if not value['error']:
+                            body = 'Your mail shortcut is successfully applied! \n'
+                        else:
+                            body = 'Something went wrong! \n'
+                        
+                        body = body + now_format + value['log']
                 
-                body = body + now_format + res['imap_log']
-                
-                logger.debug(body)
+                        logger.debug(body)
 
                 # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
 
@@ -114,7 +116,7 @@ def mailbot(message, address=None, host=None):
             logging.critical("message is not existed yet, but it forwared to us??")
             
         except Exception, e:
-            logging.debug(e)
+            logging.debug("exception :" + e)
             subject = "Re: " + original_message_schema.subject
             mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
