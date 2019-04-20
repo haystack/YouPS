@@ -14,6 +14,7 @@ from email.mime.base import MIMEBase
 from email import encoders  
 from smtp_handler.utils import get_attachments, format_email_address
 import smtplib
+from pytz import timezone
 
 from engine.google_auth import GoogleOauth2
 from browser.imap import decrypt_plain_password
@@ -126,7 +127,10 @@ class Message(object):
 
     @deadline.setter
     def deadline(self, value):
-        # type: (t.AnyStr) -> None
+        # type: (datetime.datetime -> None
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            value = timezone('US/Eastern').localize(value)
+
         if not self.is_simulate:
             self._schema.deadline = value
             self._schema.save()
