@@ -110,17 +110,32 @@ def mailbot(arrived_message, address=None, host=None):
                 
                     logger.debug(body)
 
+                # Go to sent folder and delete the sent function from user  
+                if imapAccount.is_gmail:
+                    imap.select_folder('[Gmail]/Sent Mail')
+                else:
+                    import imapclient
+                    sent = imap.find_special_folder(imapclient.SENT)
+                    if sent is not None:
+                        imap.select_folder(sent)
+                this_message = imap.search(["HEADER", "In-Reply-To", original_message_schema.message_id])
+                imap.delete_messages(this_message)
+
                 new_message = MIMEMultipart('alternative')
                 new_message["Subject"] = "Re: " + arrived_message["subject"]
+                new_message["From"] = WEBSITE+"@" + host
                 new_message["In-Reply-To"] = original_message_schema.message_id
 
                 # new_message.set_payload(content.encode('utf-8')) 
                 if "text" in body and "html" in body:
+                    body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
+                    body["html"] = "Your command:%s%sResult:%s" % (code_body, "<br><br>", body["text"])
                     part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                     part2 = MIMEText(body["html"].encode('utf-8'), 'html')
                     new_message.attach(part1)
                     new_message.attach(part2)
                 else: 
+                    body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
                     part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                     new_message.attach(part1)
 
