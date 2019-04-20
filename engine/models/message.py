@@ -130,6 +130,7 @@ class Message(object):
         # type: (datetime.datetime -> None
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
             value = timezone('US/Eastern').localize(value)
+            logger.info(value)
 
         if not self.is_simulate:
             self._schema.deadline = value

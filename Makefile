@@ -34,7 +34,10 @@ shell:
 # get a manage.py shell for running django things
 .PHONY: django-shell
 django-shell:
-	docker exec -it youps_web python manage.py shell
+	docker exec -it youps_web { python manage.py shell <<EOF
+	from schema.youps import *
+	EOF
+	}
 
 # show logs for the running docker containers
 .PHONY: logs
