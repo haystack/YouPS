@@ -1,4 +1,4 @@
-import logging, time, base64
+import logging, time, base64, traceback
 from lamson.routing import route, stateless
 from config.settings import relay
 from http_handler.settings import WEBSITE
@@ -80,7 +80,7 @@ def mailbot(arrived_message, address=None, host=None):
 
             code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
             if "---------- Forwarded message ---------" in code_body:
-                code_body = code_body.split('---------- Forwarded message ---------')[0]
+                code_body = code_body.split('---------- Forwarded message ---------')[0].strip()
             logging.debug(code_body)
 
             shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
@@ -97,8 +97,6 @@ def mailbot(arrived_message, address=None, host=None):
                     res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
                     logging.debug(res)
 
-                    now = datetime.now()
-                    now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
                     for key, value in res['appended_log'].iteritems():
                         if not value['error']:
                             body["text"] = 'Your mail shortcut is successfully applied! \n'
@@ -107,8 +105,8 @@ def mailbot(arrived_message, address=None, host=None):
                             body["text"] = 'Something went wrong! \n'
                             body["html"] = 'Something went wrong! <br>'
                         
-                        body["text"] = body["text"] + now_format + value['log']
-                        body["html"] = body["html"] + now_format + value['log']
+                        body["text"] = body["text"] + value['log']
+                        body["html"] = body["html"] + value['log']
                 
                     logger.debug(body)
 
@@ -130,8 +128,8 @@ def mailbot(arrived_message, address=None, host=None):
 
                 # new_message.set_payload(content.encode('utf-8')) 
                 if "text" in body and "html" in body:
-                    body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
-                    body["html"] = "Your command:%s%sResult:%s" % (code_body, "<br><br>", body["html"])
+                    body["text"] = "Your command: %s%sResult: %s" % (code_body, "\n\n", body["text"])
+                    body["html"] = "Your command: %s%sResult: %s" % (code_body, "<br><br>", body["html"])
                     part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                     part2 = MIMEText(body["html"].encode('utf-8'), 'html')
                     new_message.attach(part1)
@@ -153,7 +151,7 @@ def mailbot(arrived_message, address=None, host=None):
             logging.critical("message is not existed yet, but it forwared to us??")
             
         except Exception, e:
-            logging.debug("exception :" + str(e))
+            logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
             subject = "Re: " + original_message_schema.subject
             mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
