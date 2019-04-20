@@ -20,7 +20,7 @@ from browser.imap import *
 from browser.sandbox import interpret
 from imapclient import IMAPClient
 from schema.youps import MessageSchema, EmailRule  # noqa: F401 ignore unused we use it for typing
-from engine.models.mailbox import MailBoxs
+from engine.models.mailbox import MailBox
 from engine.models.message import Message
 
 
@@ -62,8 +62,12 @@ def mailbot(message, address=None, host=None):
             imap = auth_res['imap']
 
             # Get the original message
-            original_message_schema = MessageSchema.objects.get(message_id=message["In-Reply-To"])
-
+            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=message["In-Reply-To"])
+            if original_message_schema.exists():
+                original_message_schema = original_message_schema[0]
+            else:
+                raise ValueError('Email not exist')
+                
             # latest_email_uid = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
             
             imap.select_folder(original_message_schema.folder_schema.name)           
@@ -85,8 +89,8 @@ def mailbot(message, address=None, host=None):
             else:
                 mailbox = MailBox(imapAccount, imap)
                 for shortcut in shortcuts:
-                    res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, {"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
-                    logger.debug(res)
+                    res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
+                    logging.debug(res)
 
                 now = datetime.now()
                 now_format = now.strftime("%m/%d/%Y %H:%M:%S") + " "
@@ -102,14 +106,16 @@ def mailbot(message, address=None, host=None):
                 # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
 
         except ImapAccount.DoesNotExist:
-            subject = "Re: " + original_message.subject
-            error_msg = 'Your email engine is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (PROTOCOL, site.domain)
+            subject = "YoUPS shortcuts Error"
+            error_msg = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
             mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = error_msg)
             relay.deliver(mail)
+        except MessageSchema.DoesNotExist:
+            logging.critical("message is not existed yet, but it forwared to us??")
             
         except Exception, e:
             logging.debug(e)
-            subject = "Re: " + original_message.subject
+            subject = "Re: " + original_message_schema.subject
             mail = MailResponse(From = WEBSITE+"@" + host, To = message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
         finally:
