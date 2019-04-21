@@ -375,12 +375,11 @@ $(document).ready(function() {
             </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
-                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `<span class="fa-layers fa-fw fa-2x"> 
-                        <i class="far fa-envelope"></i>
-                        <span class="fa-layers-counter" style="background:Tomato">NEW</span>
-                    </span>
-                    Create message arrival handler <span class=""></span>`, 
+                `<span style='float:left;' class="fa-layers fa-fw fa-2x"> 
+                    <i class="far fa-envelope"></i>
+                    <span class="fa-layers-counter" style="background:Tomato">NEW</span>
+                </span>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create message arrival handler <span class=""></span>`), 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "flag-change"){
@@ -403,9 +402,8 @@ $(document).ready(function() {
         </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
-                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-flag"></i>
-                    Create a flag change event handler <span class=""></span>`, 
+                '<i style="float:left;" class="far fa-2x fa-flag"></i>' + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create a flag change event handler <span class=""></span>`), 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "deadline"){
@@ -428,9 +426,8 @@ $(document).ready(function() {
         </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
-                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-clock"></i>
-                    Create a deadline event handler <span class=""></span>`, 
+                `<i style="float:left;" class="far fa-2x fa-clock"></i>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create a deadline event handler <span class=""></span>`), 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "shortcut"){
@@ -453,9 +450,8 @@ $(document).ready(function() {
         </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
-                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-clock"></i>
-                    Create a shortcut handler <span class=""></span>`, 
+                `<i style="float:left;" class="fas fa-2x fa-terminal"></i>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create a shortcut handler <span class=""></span>`), 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {
@@ -757,6 +753,9 @@ $(document).ready(function() {
         e.preventDefault();
 
         create_new_tab(this);
+
+        // Then save to DB.
+        run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
     });
 
     // add a new editor
