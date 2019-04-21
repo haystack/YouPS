@@ -80,8 +80,9 @@ def mailbot(arrived_message, address=None, host=None):
             entire_body = get_body(entire_message)
 
             code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
-            if "---------- Forwarded message ---------" in code_body:
-                code_body = code_body.split('---------- Forwarded message ---------')[0].strip()
+            gmail_header = "---------- Forwarded message ---------"
+            if gmail_header in code_body:
+                code_body = code_body.split(gmail_header)[0].strip()
             logging.debug(code_body)
 
             shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")

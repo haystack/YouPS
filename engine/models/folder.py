@@ -410,6 +410,14 @@ class Folder(object):
             logger.debug("message %d envelope %s" % (uid, meta_data))
 
             try:
+                if internal_date.tzinfo is None or internal_date.tzinfo.utcoffset(internal_date) is None:
+                    internal_date = timezone('US/Eastern').localize(internal_date)
+                    # logger.critical("convert navie %s " % internal_date)
+            except Exception:
+                logger.critical("Internal date parsing error %s" % internal_date)
+                continue
+
+            try:
                 date = parser.parse(meta_data["date"])
 
                 # if date is naive then reinforce timezone
@@ -418,18 +426,11 @@ class Folder(object):
             except Exception:
                 if "date" in meta_data:
                     logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
+                    continue
                 else:
-                    # TODO draft messages does not have dates
-                    logger.critical("Date not exist, skip this message %s " % meta_data)
-                continue
+                    date = internal_date
+                    logger.info("Date not exist, put internal date instead")
 
-            try:
-                if internal_date.tzinfo is None or internal_date.tzinfo.utcoffset(internal_date) is None:
-                    internal_date = timezone('US/Eastern').localize(internal_date)
-                    # logger.critical("convert navie %s " % internal_date)
-            except Exception:
-                logger.critical("Internal date parsing error %s" % internal_date)
-                continue
 
             # TODO seems like bulk email often not have a message-id
             if "message-id" not in meta_data:

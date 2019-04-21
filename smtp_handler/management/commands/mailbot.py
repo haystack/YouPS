@@ -60,5 +60,8 @@ class Command(BaseCommand):
             imapAccount.is_initialized = True
             imapAccount.is_running = False
             imapAccount.save()
-            send_email("Your YoUPS account is ready!", "no-reply@" + BASE_URL, imapAccount.email, "Start writing your automation rule here! %s://%s" % (PROTOCOL, BASE_URL))
+            
+            
+            
+            "Your YoUPS account is ready!", "no-reply@" + BASE_URL, imapAccount.email, "Start writing your automation rule here! %s://%s" % (PROTOCOL, BASE_URL))
             res['status'] = True
