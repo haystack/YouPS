@@ -175,12 +175,12 @@ def loop_sync_user_inbox():
 
                 try:
                     # get deadline tasks
-                    email_rules = EmailRule.objects.filter(mode=imapAccount.current_mode, type__startswith='deadline-')  # type: t.List[EmailRule]
+                    email_rules = EmailRule.objects.filter(mode=imapAccount.current_mode, type='deadline')  # type: t.List[EmailRule]
                     for email_rule in email_rules:
                         # Truncate millisec since mysql doesn't suport msec. 
                         now = timezone.now().replace(microsecond=0) + datetime.timedelta(seconds=1)
 
-                        # mailbox._manage_task(email_rule, now)
+                        mailbox._get_due_messages(email_rule, now)
 
                         # mark timestamp to prevent running on certain message multiple times 
                         email_rule.executed_at = now + datetime.timedelta(seconds=1)

@@ -201,7 +201,7 @@ class Folder(object):
 
     def _search_due_message(self, event_data_list, time_start, time_end):
         message_schemas = MessageSchema.objects.filter(folder_schema=self._schema).filter(deadline__range=[time_start, time_end])
-        
+
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:
             logger.info("add deadline queue %s %s %s" % (time_start, message_schema.deadline, time_end))

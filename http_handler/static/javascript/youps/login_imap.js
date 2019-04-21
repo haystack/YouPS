@@ -42,7 +42,7 @@ $(document).ready(function() {
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
                 t.row.add( [
                         timestamp.split(",")[0],
-                        Message["trigger"] || "",
+                        '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
                         (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']

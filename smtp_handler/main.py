@@ -63,18 +63,34 @@ def mailbot(arrived_message, address=None, host=None):
 
             imap = auth_res['imap']
 
+            mailbox = MailBox(imapAccount, imap)
+
             # Get the original message
             original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
             if original_message_schema.exists():
                 original_message_schema = original_message_schema[0]
-            else:
-                # TODO if it's not exist yet, fetch from imap
-                raise ValueError('Email not exist')
 
-            # latest_email_uid = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
-            
-            imap.select_folder(original_message_schema.folder_schema.name)           
-            original_message = Message(original_message_schema, imap)
+                imap.select_folder(original_message_schema.folder_schema.name)           
+                original_message = Message(original_message_schema, imap)
+            else:
+                # in case YoUPS didn't register to DB yet, fetch from imap
+                mail_found = False
+                for folder in mailbox._list_selectable_folders():
+                    imap.select_folder(folder.name)
+                    original_message_id = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
+
+                    original_message
+
+                    if original_message_id:
+                        mail_found = True
+                        break
+                
+                if not mail_found:
+                    raise ValueError("Email does not exist. The message is deleted or YoUPS can't detect the message.")
+                else: 
+                    # TODO put 'forward this email' in the task queue. so it can be ran when it is registered to the database   
+                    raise ValueError("Email does not exist. The message is deleted or YoUPS can't detect the message.")
+
 
             entire_message = message_from_string(str(arrived_message))
             entire_body = get_body(entire_message)
@@ -93,7 +109,7 @@ def mailbot(arrived_message, address=None, host=None):
                 relay.deliver(mail)
 
             else:
-                mailbox = MailBox(imapAccount, imap)
+                
                 body = {"text": "", "html": ""}
                 for shortcut in shortcuts:
                     res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})

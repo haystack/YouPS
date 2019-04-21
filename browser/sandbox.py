@@ -117,7 +117,10 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                     elif "on_command" in code:
                         user_environ['content'] = extra_info['shortcut']
-                        exec(code + "\non_command(new_message, content)", user_environ)    
+                        exec(code + "\non_command(new_message, content)", user_environ)
+
+                    elif "on_deadline" in code:
+                        exec(code + "\non_deadline(new_message)", user_environ)    
 
                 except Exception as e:
                     # Get error message for users if occurs
@@ -156,7 +159,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                 # event for new message arrival
                 # TODO maybe caputre this info after execute log?
-                if isinstance(event_data, NewMessageData) or isinstance(event_data, NewMessageDataScheduled) or isinstance(event_data, NewFlagsData):
+                if True:
                     from_field = {}
                     if event_data.message.from_._schema:
                         from_field = {
@@ -191,7 +194,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                         "cc": cc_field,
                         "flags": [f.encode('utf8', 'replace') for f in event_data.message.flags],
                         "date": str(event_data.message.date),
-                        "deadline": event_data.message.deadline, 
+                        "deadline": str(event_data.message.deadline), 
                         "is_read": event_data.message.is_read, 
                         "is_deleted": event_data.message.is_deleted, 
                         "is_recent": event_data.message.is_recent,
@@ -256,7 +259,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                             if (event_class_name == "RemovedFlagsData" and rule.type == "flag-change"):
                                 event_data.fire_event(mailbox.removed_flag_handler)
                                 is_fired = True
-                            if (event_class_name == "NewMessageDataDue" and rule.type.startswith("deadline-")):
+                            if (event_class_name == "NewMessageDataDue" and rule.type.startswith("deadline")):
                                 event_data.fire_event(mailbox.deadline_handler)
                                 is_fired = True
 
@@ -285,7 +288,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     finally:         
                         if is_fired:
                             logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
-                            copy_msg["trigger"] = rule.name
+                            copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
                             
                             copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
 
