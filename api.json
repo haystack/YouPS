@@ -28,6 +28,7 @@
 			},
 			{
 				"name": "get_email_mode",
+				"return_type": "",
 				"params": "",
 				"description": "Return the index of the current email mode.",
 				"example": "",
@@ -37,6 +38,7 @@
 			},
 			{
 				"name": "set_email_mode",
+				"return_type": "",
 				"params": "mode_index",
 				"description": "Set the current email mode",
 				"example": "",
