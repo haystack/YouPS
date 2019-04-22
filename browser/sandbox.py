@@ -13,6 +13,7 @@ from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
+from engine.models.calendar import MyCalendar
 
 from smtp_handler.utils import send_email
 
@@ -21,13 +22,13 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 
 def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
-    """This function executes users' code.  
+    """This function executes users' code.
 
         Args:
             mailbox (Mailbox): user's mailbox
             mode (MailbotMode or None): if mode is null, it will bypass executing user's code and just print logs
             is_simulate (boolean): if True, it looks into simulate_info to test run user's code
-            simulate_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
+            simulate_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema
     """
     # type: (MailBox, MailbotMode, bool) -> t.Dict[t.AnyStr, t.Any]
 
@@ -49,13 +50,13 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
     # define user methods
     def create_folder(folder_name):
-        if not is_simulate: 
+        if not is_simulate:
             mailbox._imap_client.create_folder( folder_name )
 
         logger.debug("create_folder(): A new folder %s has been created" % folder_name)
 
     def rename_folder(old_name, new_name):
-        if not is_simulate: 
+        if not is_simulate:
             mailbox._imap_client.rename_folder( old_name, new_name )
 
         logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
@@ -107,6 +108,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
             'handle_on_message': lambda f: mailbox.new_message_handler.handle(f),
             'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
             'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
+            'Calendar': MyCalendar,
         }
 
         # simulate request. normally from UI
@@ -133,14 +135,14 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                     # execute the user's code
                     if "on_message" in code:
-                        exec(code + "\non_message(new_message)", user_environ)    
+                        exec(code + "\non_message(new_message)", user_environ)
 
                     elif "on_flag_change" in code:
                         user_environ['new_flag'] = 'test-flag'
-                        exec(code + "\non_flag_change(new_message, new_flag)", user_environ)    
+                        exec(code + "\non_flag_change(new_message, new_flag)", user_environ)
                 except Exception as e:
                     # Get error message for users if occurs
-                    # print out error messages for user 
+                    # print out error messages for user
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     logger.info(e)
                     logger.info(exc_obj)
@@ -149,12 +151,12 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     # TODO find keyword 'in on_message' or on_flag_change
                     # logger.info(traceback.format_tb(exc_tb))
                     # logger.info(sys.exc_info())
-                        
+
                     msg_log["log"] = str(e)
-                    msg_log["error"] = True 
-                finally:         
+                    msg_log["error"] = True
+                finally:
                     # copy_msg["trigger"] = rule.name
-                            
+
                     msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                     res['appended_log'][m_schema.id] = msg_log
 
@@ -202,31 +204,31 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     # This is to log for users
                     new_msg = {
                         "timestamp": str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
-                        "type": "new_message", 
-                        "folder": event_data.message.folder.name, 
-                        "from_": from_field, 
-                        "subject": event_data.message.subject, 
+                        "type": "new_message",
+                        "folder": event_data.message.folder.name,
+                        "from_": from_field,
+                        "subject": event_data.message.subject,
                         "to": to_field,
                         "cc": cc_field,
                         "flags": [f.encode('utf8', 'replace') for f in event_data.message.flags],
                         "date": str(event_data.message.date),
-                        "deadline": event_data.message.deadline, 
-                        "is_read": event_data.message.is_read, 
-                        "is_deleted": event_data.message.is_deleted, 
+                        "deadline": event_data.message.deadline,
+                        "is_read": event_data.message.is_read,
+                        "is_deleted": event_data.message.is_deleted,
                         "is_recent": event_data.message.is_recent,
                         "log": ""
                     }
 
-                # if the the engine is not turned on yet, still leave the log of message arrival 
-                # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it 
+                # if the the engine is not turned on yet, still leave the log of message arrival
+                # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
                 if mode is None:
                     new_log[new_msg["timestamp"]] = new_msg
-       
+
                     continue
 
                 # TODO maybe use this instead of mode.rules
                 for rule in EmailRule.objects.filter(mode=mode):
-                    is_fired = False 
+                    is_fired = False
                     copy_msg = copy.deepcopy(new_msg)
                     copy_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
 
@@ -236,7 +238,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     valid_folders = rule.folders.all()
                     valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                     code = rule.code
-                    
+
                     logger.debug(code)
 
                     # add the user's functions to the event handlers
@@ -253,7 +255,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                     #     continue
                     #     # some_handler or something += repeat_every
 
-                    
+
                     try:
                         # execute the user's code
                         # exec cant register new function (e.g., on_message_arrival) when there is a user_env
@@ -262,7 +264,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                         # TODO this should be cleaned up. accessing class name is ugly and this is very wet (Not DRY)
                         if event_data.message._schema.folder_schema in valid_folders:
-                            event_class_name = type(event_data).__name__ 
+                            event_class_name = type(event_data).__name__
                             if (event_class_name == "NewMessageData" and rule.type =="new-message") or \
                                     (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
                                 logger.info("firing %s %s" % (rule.name, event_data.message.subject))
@@ -279,12 +281,12 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
 
                     except Exception as e:
                         # Get error message for users if occurs
-                        # print out error messages for user 
-                        
-                        # if len(inspect.trace()) < 2: 
+                        # print out error messages for user
+
+                        # if len(inspect.trace()) < 2:
                         #     logger.exception("System error during running user code")
                         # else:
-                        
+
                         exc_type, exc_obj, exc_tb = sys.exc_info()
                         logger.info(e)
                         logger.debug(exc_obj)
@@ -293,17 +295,17 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
                         # TODO find keyword 'in on_message' or on_flag_change
                         logger.info(traceback.format_tb(exc_tb))
                         logger.info(sys.exc_info())
-                        
+
                         copy_msg["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
-                        copy_msg["error"] = True 
-                    finally:         
+                        copy_msg["error"] = True
+                    finally:
                         if is_fired:
                             logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
                             copy_msg["trigger"] = rule.name
-                            
+
                             copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
 
-                            new_log[copy_msg["timestamp"]] = copy_msg    
+                            new_log[copy_msg["timestamp"]] = copy_msg
 
                         # flush buffer
                         user_std_out = StringIO()
@@ -328,7 +330,7 @@ def interpret(mailbox, mode, is_simulate=False, simulate_info={}):
         # if it is simulate don't save to db
         if is_simulate:
             logger.debug(res)
-        
+
         # save logs to db
         else:
             logger.info(new_log)
