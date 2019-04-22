@@ -27,6 +27,24 @@
 
 			},
 			{
+				"name": "get_email_mode",
+				"params": "",
+				"description": "Return the index of the current email mode.",
+				"example": "",
+				"related": [
+					{"name": "set_email_mode"}
+				]
+			},
+			{
+				"name": "set_email_mode",
+				"params": "mode_index",
+				"description": "Set the current email mode",
+				"example": "",
+				"related": [
+					{"name": "get_email_mode"}
+				]
+			},
+			{
 				"name": "list_folders",
 				"return_type": "",
 				"return_href": "",
