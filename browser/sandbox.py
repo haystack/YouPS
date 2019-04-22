@@ -95,6 +95,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
    
             res['appended_log'] = {}
 
+            # Applying diff msgs to a same source code
             for m_schema in message_schema:
                 msg_log = {"log": "", "error": False}
 
@@ -111,6 +112,10 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                     # execute the user's code
                     if "on_message" in code:
+                        #TODO cahcing calendar
+                        # _CACHE_ON_MESSAGE_ = None
+                        # code = "%s%s%s" %('_CACHE_ON_MESSAGE_= on_message', '\n', code)
+                        # user_environ['on_message'] = _CACHE_ON_MESSAGE_
                         exec(code + "\non_message(new_message)", user_environ)    
 
                     elif "on_flag_change" in code:

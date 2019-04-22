@@ -19,9 +19,10 @@ import django.db
 from browser.imap import *
 from browser.sandbox import interpret
 from imapclient import IMAPClient
-from schema.youps import MessageSchema, EmailRule  # noqa: F401 ignore unused we use it for typing
+from schema.youps import MessageSchema, EmailRule, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from engine.models.mailbox import MailBox
 from engine.models.message import Message
+from engine.models.folder import Folder
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -73,23 +74,38 @@ def mailbot(arrived_message, address=None, host=None):
                 imap.select_folder(original_message_schema.folder_schema.name)           
                 original_message = Message(original_message_schema, imap)
             else:
-                # in case YoUPS didn't register to DB yet, TODO save the message to DB immediately 
-                mail_found = False
+                # in case YoUPS didn't register to DB yet, save the message to DB immediately 
+                mail_found_at = ""
+                original_message_id = -1
                 for folder in mailbox._list_selectable_folders():
                     imap.select_folder(folder.name)
-                    original_message_id = imap.search(["HEADER", "Message-ID", message["In-Reply-To"]])
+                    original_message_id = imap.search(["HEADER", "Message-ID", arrived_message["In-Reply-To"]])
 
-                    original_message
+                    # original_message
 
                     if original_message_id:
-                        mail_found = True
+                        mail_found_at = folder
                         break
                 
-                if not mail_found:
+                if not mail_found_at:
                     raise ValueError("Email does not exist. The message is deleted or YoUPS can't detect the message.")
                 else: 
-                    # TODO put 'forward this email' in the task queue. so it can be ran when it is registered to the database   
-                    raise ValueError("Email does not exist. The message is deleted or YoUPS can't detect the message.")
+                    # Save this message immediately. so it can be ran when it is registered to the database  
+                    try: 
+                        folder_schema = FolderSchema.objects.get(imap_account=imapAccount, name=mail_found_at)
+                        folder = Folder(folder_schema, imap)
+
+                        if original_message_id:
+                            folder._save_new_messages(original_message_id[0], urgent=True)
+
+                            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
+                            if not message_schema.exists():
+                                raise
+                            imap.select_folder(original_message_schema.folder_schema.name)           
+                            original_message = Message(original_message_schema, imap)
+
+                    except FolderSchema.DoesNotExist, MessageSchema.DoesNotExist:
+                        raise ValueError("Email does not exist. The message is deleted or YoUPS can't detect the message.")
 
 
             entire_message = message_from_string(str(arrived_message))
@@ -165,9 +181,6 @@ def mailbot(arrived_message, address=None, host=None):
             error_msg = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
             mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = error_msg)
             relay.deliver(mail)
-        except MessageSchema.DoesNotExist:
-            logging.critical("message is not existed yet, but it forwared to us??")
-            
         except Exception, e:
             logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
             subject = "[YoUPS] shortcuts Errors"

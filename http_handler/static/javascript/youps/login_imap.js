@@ -351,7 +351,7 @@ $(document).ready(function() {
             
             <h2>Test suites</h2>
             <h4>Recent messages from your selected folders to test your rules</h4>
-            <table class="example-suites" class="table" style="width:100%">
+            <table class="example-suites" class="row-border" style="width:100%">
             </table>
         </div>`
             .format(import_str, func_name + "\n    pass"), 

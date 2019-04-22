@@ -290,23 +290,31 @@ class Folder(object):
             logger.debug("%s updated highest mod seq to %d" % (self, highest_mod_seq))
 
 
-    def _save_new_messages(self, last_seen_uid, event_data_list = None):
+    def _save_new_messages(self, last_seen_uid, event_data_list = None, urgent=False):
         # type: (int, t.List[AbstractEventData]) -> None
         """Save any messages we haven't seen before
 
         Args:
             last_seen_uid (int): the max uid we have stored, should be 0 if there are no messages stored.
+            urgent (bool): if True, save only one email 
         """
 
         # add thread id to the descriptors if there is a thread id
         descriptors = list(Message._descriptors) + ['X-GM-THRID'] if self._imap_account.is_gmail \
             else list(Message._descriptors)
+
+        uid_criteria = ""
+        if urgent:
+            uid_criteria = '%d' % (last_seen_uid + 1)
+        else: 
+            uid_criteria = '%d:*' % (last_seen_uid + 1)
+            
         fetch_data = self._imap_client.fetch(
-            '%d:*' % (last_seen_uid + 1), descriptors)
+            uid_criteria, descriptors)
 
         # seperate fetch in order to detect if the message is already read or not
         header_data = self._imap_client.fetch(
-            '%d:*' % (last_seen_uid + 1), list(Message._header_descriptors))
+            uid_criteria, list(Message._header_descriptors))
 
         # if there is only one item in the return field
         # and we already have it in our database
