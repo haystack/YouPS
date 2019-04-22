@@ -73,7 +73,7 @@ def mailbot(arrived_message, address=None, host=None):
                 imap.select_folder(original_message_schema.folder_schema.name)           
                 original_message = Message(original_message_schema, imap)
             else:
-                # in case YoUPS didn't register to DB yet, fetch from imap
+                # in case YoUPS didn't register to DB yet, TODO save the message to DB immediately 
                 mail_found = False
                 for folder in mailbox._list_selectable_folders():
                     imap.select_folder(folder.name)

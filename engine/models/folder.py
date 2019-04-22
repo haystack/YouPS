@@ -458,7 +458,7 @@ class Folder(object):
 
             try:
                 message_schema.save()
-            except Exception:
+            except Exception as e:
                 logger.critical("%s failed to save message %d" % (self, uid))
                 logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (self, self._last_seen_uid, last_seen_uid))
                 logger.critical("number of messages returned %d" % (len(fetch_data)))

@@ -540,7 +540,7 @@ class Message(object):
 
             import random
 
-            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later', code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nimap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
+            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later', code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nif msg:\n    imap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
             er.save()
 
             t = TaskManager(email_rule=er, date=later_at, imap_account=self._schema.imap_account)
