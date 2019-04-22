@@ -28,7 +28,7 @@
 			},
 			{
 				"name": "get_email_mode",
-				"return_type": "",
+				"return_type": "integer",
 				"params": "",
 				"description": "Return the index of the current email mode.",
 				"example": "",
