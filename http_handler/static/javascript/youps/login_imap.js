@@ -98,9 +98,15 @@ $(document).ready(function() {
     }   
 
     function create_new_tab(nav_bar) {
-        var id = $("#editor-container .tab-pane").length; // avoid same ID
+        // Get ID of last tab and increment to avoid same ID
+        var id_list = [];
+        $("#editor-container .tab-pane").each(function(index,elem) {
+            id_list.push(parseInt(elem.id.split("_")[1]))
+        })
+        var id = Math.max.apply(null, id_list) + 1;
+
         // Add tab
-        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting</span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
+        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting <span>({0})</span></span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
 
         // Insert tab pane first
         var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
@@ -1099,7 +1105,7 @@ $(document).ready(function() {
 
             // get mode ID
             var id = $(this).attr('id').split("_")[1];
-            var name = $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).text();
+            var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
 
             // iterate by editor 
             $(this).find('.CodeMirror').each( function(index, elem) {
@@ -1491,7 +1497,7 @@ $(document).ready(function() {
                                 .attr('line-number2', 1);
                                 
                                 // .attr('line-number{0}', 1); // TODO add activated line
-                            if(Message["error"])
+                            if(Message["error"] == "True")
                                 $( added_row ).find("td:eq(2)").addClass("error");
                             // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
                             if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     

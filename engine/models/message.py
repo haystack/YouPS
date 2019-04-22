@@ -1,8 +1,8 @@
 from __future__ import unicode_literals, print_function, division
 import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import MessageSchema  # noqa: F401 ignore unused we use it for typing
+from schema.youps import MessageSchema, EmailRule, TaskManager  # noqa: F401 ignore unused we use it for typing
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-from datetime import datetime  # noqa: F401 ignore unused we use it for typing
+from datetime import datetime, timedelta  # noqa: F401 ignore unused we use it for typing
 from engine.models.contact import Contact
 import logging
 from collections import Sequence
@@ -461,7 +461,9 @@ class Message(object):
         self._check_folder(dst_folder)
         if not self._is_message_already_in_dst_folder(dst_folder):
             if not self.is_simulate:
-                self._imap_client.move(self._uid, dst_folder)
+                self._imap_client.move([self._uid], dst_folder)
+
+            
 
     def forward(self, to=[], cc=[], bcc=[], content=""):
         if not self.is_simulate:
@@ -517,6 +519,37 @@ class Message(object):
 
         self.reply(more_to, more_cc, more_bcc, content)
             
+    def see_later(self, later_at=60, hide_in='YoUPS see_later'):
+        if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
+            raise TypeError("see_later(): later_at " + later_at + " is not number or datetime")
+        
+        if isinstance(later_at, datetime) and (later_at.tzinfo is None or later_at.tzinfo.utcoffset(later_at) is None):
+            later_at = tz('US/Eastern').localize(later_at)
+            later_at = timezone.localtime(later_at)
+            logger.info(later_at)
+
+        elif isinstance(later_at, (int, long, float)):
+            later_at = timezone.now().replace(microsecond=0) + timedelta(seconds=later_at*60)
+            
+        current_folder = self._schema.folder_schema.name
+        if self._schema.imap_account.is_gmail and current_folder == "INBOX":
+            current_folder = 'inbox'
+            
+        if not self.is_simulate:
+            self.move(hide_in)
+
+            import random
+
+            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later', code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nimap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
+            er.save()
+
+            t = TaskManager(email_rule=er, date=later_at, imap_account=self._schema.imap_account)
+            t.save()
+            logger.critical("here %s" % hide_in)
+
+        print("see_later(): Hide the message until %s at %s" % (later_at, hide_in))
+        
+    
     def _create_message_instance(self, subject='', to='', cc='', bcc='', additional_content=''):
         new_message_wrapper = MIMEMultipart('mixed')
 
@@ -654,8 +687,8 @@ class Message(object):
         if dst_folder == self._schema.folder_schema.name:
             userLogger.info(
                 "message already in destination folder: %s" % dst_folder)
-            return False
-        return True
+            return True
+        return False
 
     def _check_folder(self, dst_folder):
         if not isinstance(dst_folder, basestring):
@@ -699,3 +732,53 @@ class Message(object):
             ok = False
             userLogger.info("No valid flags passed")
         return ok, flags
+
+
+    def _get_from_friendly(self):
+        if self.from_._schema:
+            return {
+                "name": self.from_.name,
+                "email": self.from_.email,
+                "organization": self.from_.organization,
+                "geolocation": self.from_.geolocation
+            }
+
+        return {}
+
+    def _get_to_friendly(self):
+        to = []
+        for contact in self.to:
+            to.append({
+                "name": contact.name,
+                "email": contact.email,
+                "organization": contact.organization,
+                "geolocation": contact.geolocation
+            })
+
+        return to
+
+    def _get_cc_friendly(self):
+        to = []
+        for contact in self.cc:
+            to.append({
+                "name": contact.name,
+                "email": contact.email,
+                "organization": contact.organization,
+                "geolocation": contact.geolocation
+            })
+
+        return to
+
+    def _get_meta_data_friendly(self):
+        return {
+            "folder": self.folder.name, 
+            "subject": self.subject, 
+            "flags": [f.encode('utf8', 'replace') for f in self.flags],
+            "date": str(self.date),
+            "deadline": str(self.deadline), 
+            "is_read": self.is_read, 
+            "is_deleted": self.is_deleted, 
+            "is_recent": self.is_recent,
+            "log": "",
+            "error": False 
+        }

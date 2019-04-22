@@ -8,10 +8,11 @@ from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewMessageDataDue, AbstractEventData, NewFlagsData, RemovedFlagsData
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.utils import parseaddr
 from dateutil import parser
 from pytz import timezone
+from django.utils import timezone as tz
 from smtp_handler.utils import encoded_str_to_utf8_str, utf8_str_to_utf8_unicode
 import chardet
 import re
@@ -466,7 +467,9 @@ class Folder(object):
                 continue
 
             if last_seen_uid != 0 and event_data_list is not None:
-                event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
+                logger.critical(internal_date)
+                if tz.now() - internal_date < timedelta(seconds=5*60):
+                    event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
 
             logger.debug("%s finished saving new messages..:" % self)
 

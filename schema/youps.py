@@ -194,7 +194,7 @@ class EmailRule(models.Model):
     # user-defined name
     name = models.CharField('rule_name', default='Handling new messages', max_length=100)
     code = models.TextField(null=True, blank=True)  # t.AnyStr
-    mode = models.ForeignKey('MailbotMode', related_name="rules")
+    mode = models.ForeignKey('MailbotMode', related_name="rules", blank=True, null=True)
     folders = models.ManyToManyField(FolderSchema, related_name='rules')  # type: t.List[FolderSchema]
 
     # timestamp when it is executed by taskmanager
@@ -232,8 +232,8 @@ class TaskManager(models.Model):
     id = models.AutoField(primary_key=True)
     email_rule = models.ForeignKey('EmailRule')
 
-    message = models.ForeignKey('MessageSchema')
-
+    message = models.ForeignKey('MessageSchema', blank=True, null=True)
+    imap_account = models.ForeignKey(ImapAccount)
     # when it should be performed
     date = models.DateTimeField(null=True, blank=True)
 

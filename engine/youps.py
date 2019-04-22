@@ -385,7 +385,7 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
                 "is_deleted": message.is_deleted, 
                 "is_recent": message.is_recent,
                 "log": imap_res['appended_log'][message_schema.id]['log'],
-                "error": imap_res['appended_log'][message_schema.id] if 'error' in imap_res['appended_log'][message_schema.id] else False
+                "error": imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
             }
             
 

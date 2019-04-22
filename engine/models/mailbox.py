@@ -246,6 +246,16 @@ class MailBox(object):
 
         logger.debug("create_folder(): A new folder %s has been created" % folder_name)
 
+    def get_email_mode(self):
+        return self._imap_account.current_mode.uid
+
+    def set_email_mode(self, uid):
+        if not self.is_simulate: 
+            self._imap_account.current_mode = MailbotMode.objects.get(imap_account=self._imap_account, uid=uid)
+            self._imap_account.save()
+
+        print ("Change a current email mode to %s (%d)" % (self._imap_account.current_mode.name, self._imap_account.current_mode.uid))
+
     def rename_folder(self, old_name, new_name):
         if not self.is_simulate: 
             self._imap_client.rename_folder( old_name, new_name )
