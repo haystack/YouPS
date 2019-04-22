@@ -10,31 +10,51 @@ class MyCalendar(object):
 
     def __init__(self, name, link, apple=False):
         """Create a new YoupsCalendar instance.
+
         Parameters:
         name (String) -- the name of the character
         link (String) -- public ics link to the calendar
+
         """
         self.name = name
         self.link = link
         self.apple = apple
 
-    def get_conflicts(self, startTime, endTime=None,
+    def get_conflicts(self, startTime=None, endTime=None,
                       defaultInterval=datetime.timedelta(hours=1)):
         """Check the calendar to see if the specified time is available.
+
         Parameters:
         startTime (datetime) -- start of the time interval
         endTime (datetime) -- end of the time interval
         Returns:
         list: events conflicting with the interval
+
         """
+        if startTime is None:
+            startTime = datetime.datetime.now()
+
         if endTime is None:
             endTime = startTime + defaultInterval
+
         conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
-        return conflicts
+
+        conflictDictionaries = [
+            {
+                "name": e.summary,
+                "start": e.start,
+                "end": e.end,
+                "description": e.description,
+                "location": e.location
+            } for e in conflicts
+        ]
+
+        return conflictDictionaries
 
     def create_event(self, name, startTime, endTime=None, description="",
                      location="", path=""):
         """Create an ics file containing a new event.
+
         Parameters:
         name (String) -- name of the event
         startTime (String) -- starting time of the event
@@ -43,6 +63,7 @@ class MyCalendar(object):
         location (String) -- location for the event (default '')
         Returns:
         String: path and name of the file the event is stored in
+
         """
         # NOTE(dzhang98): create a new calendar because using the current
         # calendar would have all the current events
