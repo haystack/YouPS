@@ -34,7 +34,14 @@ class MyCalendar(object):
 
         if endTime is None:
             endTime = startTime + defaultInterval
-        conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
+
+        conflicts = []
+
+        try:
+            conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
+        except:
+            raise Exception('Provided link was invalid: {}'.format(self.link))
+
         conflictDictionaries = [
             {
                 "name": e.summary,
