@@ -228,14 +228,21 @@
 			{
 				"name": "reply",
 				"params": "content, to=[], cc=[], bcc=[]",
-				"description": "(Work in progress..) reply to the sender and additional recipients.",
+				"description": "reply to the sender and additional recipients.",
 				"example": [
 				]
 			},
 			{
 				"name": "reply_all",
 				"params": "address, to=[], cc=[], bcc=[]",
-				"description": "(Work in progress..) reply all to the sender & recipients and additional recipients",
+				"description": "reply all to the sender & recipients and additional recipients",
+				"example": [
+				]
+			},
+			{
+				"name": "see_later",
+				"params": "later_at=60, hide_in='YoUPS see_later'",
+				"description": "(Beta) Hide temporarily this message into a designated folder (hide_in) then move back to the orginal folder. later_at could be a definite time (datetime instance) or a relative time (number in minute)",
 				"example": [
 				]
 			}
