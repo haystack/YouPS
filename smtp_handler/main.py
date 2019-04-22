@@ -92,6 +92,7 @@ def mailbot(arrived_message, address=None, host=None):
                 else: 
                     # Save this message immediately. so it can be ran when it is registered to the database  
                     try: 
+                        logger.critical("%s %s" %(imapAccount.email, mail_found_at))
                         folder_schema = FolderSchema.objects.get(imap_account=imapAccount, name=mail_found_at)
                         folder = Folder(folder_schema, imap)
 
@@ -187,7 +188,7 @@ def mailbot(arrived_message, address=None, host=None):
             mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = str(e))
             relay.deliver(mail)
         finally:
-            if auth_res['status']:
+            if auth_res and auth_res['status']:
                 # Log out after after conduct required action
                 imap.logout()
         

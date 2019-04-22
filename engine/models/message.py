@@ -331,8 +331,12 @@ class Message(object):
                         text_contents = unicode(part.get_payload(
                             decode=True), charset, "ignore")
                     else:
-                        logger.critical("%s no charset found on" % self)
-                        raise RuntimeError("Message had no charset")
+                        try: 
+                            text_contents = unicode(part.get_payload(
+                                decode=True))
+                        except Exception:
+                            logger.critical("%s no charset found on" % self)
+                            raise RuntimeError("Message had no charset")
 
                     # extract plain text
                     if sub_type == "plain":

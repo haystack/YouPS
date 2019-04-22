@@ -336,10 +336,10 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     logger.info(sys.exc_info())
                     
                     copy_msg["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
+                    task.delete()
                 finally:
                     if is_fired:
                         copy_msg["trigger"] = task.email_rule.name
-                        logger.critical("TASK DELETED")
                         task.delete()
                             
                         # copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
