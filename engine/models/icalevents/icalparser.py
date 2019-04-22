@@ -251,7 +251,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
                 found.append(e)
 
     if errors:
-        print("Some recurring event failed to parse")
+        print("Warning: Some recurring event failed to parse")
 
     return found
 
