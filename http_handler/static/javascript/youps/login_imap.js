@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    
+
     var user_name = $.trim($('#user_email').text()),
         btn_login = $("#btn-login"),
         btn_test_run = $("#btn-test-run"),
@@ -42,7 +42,7 @@ $(document).ready(function() {
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
                 t.row.add( [
                         timestamp.split(",")[0],
-                        Message["trigger"] || "",
+                        '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
                         (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
@@ -98,9 +98,15 @@ $(document).ready(function() {
     }   
 
     function create_new_tab(nav_bar) {
-        var id = $("#editor-container .tab-pane").length; // avoid same ID
+        // Get ID of last tab and increment to avoid same ID
+        var id_list = [];
+        $("#editor-container .tab-pane").each(function(index,elem) {
+            id_list.push(parseInt(elem.id.split("_")[1]))
+        })
+        var id = Math.max.apply(null, id_list) + 1;
+
         // Add tab
-        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting</span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
+        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting <span>({0})</span></span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
 
         // Insert tab pane first
         var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
@@ -118,7 +124,10 @@ $(document).ready(function() {
             `<!-- add a new message editor button -->
             {0}
             <!-- add a new flag-change editor button -->
-            {1}`.format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false)));
+            {1}
+            <!-- add a deadline editor button -->
+            {2}`
+            .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
 
         unsaved_tabs.push( id );
     }
@@ -301,13 +310,19 @@ $(document).ready(function() {
         switch(type) {
             case "new-message": 
                 func_name="def on_message(my_message):";break;
+            case "deadline": 
+                func_name="def on_deadline(my_message):";break;
             case "flag-change": 
                 func_name="def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):";break;
+            case "shortcut": 
+                func_name="def on_command(my_message, content):";break;    
         }
 
-        var editor_elem = `<div class="panel-body" style="display:none;">
-        <div class="folder-container"></div>
-        <div class="editor-container">` +
+        var instruction_for_shortcut = `<div class='instruction-container'><span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span></div>`;
+
+        var editor_elem = `<div class="panel-body" style="display:none;">` +
+        (type=="shortcut"? instruction_for_shortcut: '<div class="folder-container"></div>') + 
+        `<div class="editor-container">` +
             (type=="new-message"? `<div class='trigger'>
                 <form class="form-inline">
                     <div class="form-group">
@@ -336,7 +351,7 @@ $(document).ready(function() {
             
             <h2>Test suites</h2>
             <h4>Recent messages from your selected folders to test your rules</h4>
-            <table class="example-suites" class="table" style="width:100%">
+            <table class="example-suites" class="row-border" style="width:100%">
             </table>
         </div>`
             .format(import_str, func_name + "\n    pass"), 
@@ -366,12 +381,11 @@ $(document).ready(function() {
             </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
-                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `<span class="fa-layers fa-fw fa-2x"> 
-                        <i class="far fa-envelope"></i>
-                        <span class="fa-layers-counter" style="background:Tomato">NEW</span>
-                    </span>
-                    Create message arrival handler <span class=""></span>`, 
+                `<span style='float:left;' class="fa-layers fa-fw fa-2x"> 
+                    <i class="far fa-envelope"></i>
+                    <span class="fa-layers-counter" style="background:Tomato">NEW</span>
+                </span>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create message arrival handler <span class=""></span>`), 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "flag-change"){
@@ -394,9 +408,56 @@ $(document).ready(function() {
         </div>`.format("", "",
                 editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
                 editable ? "trash" : "plus-circle",
-                editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `<i class="far fa-2x fa-flag"></i>
-                    Create a flag change event handler <span class=""></span>`, 
+                '<i style="float:left;" class="far fa-2x fa-flag"></i>' + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create a flag change event handler <span class=""></span>`), 
+                editable ? pull_down_arrow : "",
+                editable ? editor_elem : "");
+        } else if (type == "deadline"){
+            elem_content = `{0}{1}<div {2} class="panel panel-default">
+                <div class="flex_container">
+                    <div class="flex_item_left"> 
+                        <i class="fas fa-3x fa-{3}"></i>
+                    </div>
+                    
+                    <div class="panel-heading flex_item_right panel-collapsed">
+                        <h3 class="panel-title">
+                            {4}
+                        </h3>
+                        {5}
+                    </div>
+                </div>
+                <!-- Panel body -->
+                {6}
+            </div>
+        </div>`.format("", "",
+                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
+                editable ? "trash" : "plus-circle",
+                `<i style="float:left;" class="far fa-2x fa-clock"></i>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create a deadline event handler <span class=""></span>`), 
+                editable ? pull_down_arrow : "",
+                editable ? editor_elem : "");
+        } else if (type == "shortcut"){
+            elem_content = `{0}{1}<div {2} class="panel panel-primary">
+                <div class="flex_container">
+                    <div class="flex_item_left"> 
+                        <i class="fas fa-3x fa-{3}"></i>
+                    </div>
+                    
+                    <div class="panel-heading flex_item_right panel-collapsed">
+                        <h3 class="panel-title">
+                            {4}
+                        </h3>
+                        {5}
+                    </div>
+                </div>
+                <!-- Panel body -->
+                {6}
+            </div>
+        </div>`.format("", "",
+                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
+                editable ? "trash" : "plus-circle",
+                `<i style="float:left;" class="fas fa-2x fa-terminal"></i>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
+                    <span class="preview-folder"></span>` : `Create a shortcut handler <span class=""></span>`), 
                 editable ? pull_down_arrow : "",
                 editable ? editor_elem : "");
         } else if (type == "repeat") {
@@ -698,6 +759,9 @@ $(document).ready(function() {
         e.preventDefault();
 
         create_new_tab(this);
+
+        // Then save to DB.
+        run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
     });
 
     // add a new editor
@@ -1041,7 +1105,7 @@ $(document).ready(function() {
 
             // get mode ID
             var id = $(this).attr('id').split("_")[1];
-            var name = $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).text();
+            var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
 
             // iterate by editor 
             $(this).find('.CodeMirror').each( function(index, elem) {
@@ -1069,7 +1133,7 @@ $(document).ready(function() {
                     selected_folders.push($(this).attr('value'));
                 });
 
-                editors.push({"uid": uid, "name": name, "code": $.trim( code ), "type": type, "folders": selected_folders}); 
+                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders}); 
             })
 
             modes[id] = {
@@ -1433,7 +1497,7 @@ $(document).ready(function() {
                                 .attr('line-number2', 1);
                                 
                                 // .attr('line-number{0}', 1); // TODO add activated line
-                            if(Message["error"])
+                            if(Message["error"] == "True")
                                 $( added_row ).find("td:eq(2)").addClass("error");
                             // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
                             if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     

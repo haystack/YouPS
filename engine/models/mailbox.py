@@ -31,6 +31,7 @@ class MailBox(object):
         self.new_message_handler = Event()  # type: Event
         self.added_flag_handler = Event()  # type: Event
         self.removed_flag_handler = Event()  # type: Event
+        self.deadline_handler = Event()
 
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.is_simulate = False
@@ -94,6 +95,20 @@ class MailBox(object):
 
             logger.debug("time range %s %s" % (time_start, time_end))
             folder._search_scheduled_message(self.event_data_list, time_start, time_end)
+
+    def _get_due_messages(self, email_rule, now):
+        # type: (EmailRule, datetime.datetime) -> None 
+        """Add task to event_data_list, if there is message arrived in time span [last checked time, span_end]
+        """ 
+        time_span = 0
+        
+        for folder_schema in email_rule.folders.all():
+            folder = Folder(folder_schema, self._imap_client)
+            time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
+            time_end = now - datetime.timedelta(seconds=time_span)
+
+            logger.info("deadline range %s %s" % (time_start, time_end))
+            folder._search_due_message(self.event_data_list, time_start, time_end)
 
     def _supports_cond_store(self):
         # type: () -> bool
@@ -231,11 +246,21 @@ class MailBox(object):
 
         logger.debug("create_folder(): A new folder %s has been created" % folder_name)
 
-    # def rename_folder(old_name, new_name):
-    #     if not is_simulate: 
-    #         mailbox._imap_client.rename_folder( old_name, new_name )
+    def get_email_mode(self):
+        return self._imap_account.current_mode.uid
 
-    #     logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
+    def set_email_mode(self, uid):
+        if not self.is_simulate: 
+            self._imap_account.current_mode = MailbotMode.objects.get(imap_account=self._imap_account, uid=uid)
+            self._imap_account.save()
+
+        print ("Change a current email mode to %s (%d)" % (self._imap_account.current_mode.name, self._imap_account.current_mode.uid))
+
+    def rename_folder(self, old_name, new_name):
+        if not self.is_simulate: 
+            self._imap_client.rename_folder( old_name, new_name )
+
+        logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
 
     def send(self, subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
         if len(to) == 0:

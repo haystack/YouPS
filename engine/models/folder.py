@@ -7,11 +7,12 @@ from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchem
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
-from engine.models.event_data import NewMessageData, NewMessageDataScheduled, AbstractEventData, NewFlagsData, RemovedFlagsData
-from datetime import datetime
+from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewMessageDataDue, AbstractEventData, NewFlagsData, RemovedFlagsData
+from datetime import datetime, timedelta
 from email.utils import parseaddr
 from dateutil import parser
 from pytz import timezone
+from django.utils import timezone as tz
 from smtp_handler.utils import encoded_str_to_utf8_str, utf8_str_to_utf8_unicode
 import chardet
 import re
@@ -199,6 +200,14 @@ class Folder(object):
             logger.info("add schedule %s %s %s" % (time_start, message_schema.date, time_end))
             event_data_list.append(NewMessageDataScheduled(Message(message_schema, self._imap_client)))
 
+    def _search_due_message(self, event_data_list, time_start, time_end):
+        message_schemas = MessageSchema.objects.filter(folder_schema=self._schema).filter(deadline__range=[time_start, time_end])
+
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        for message_schema in message_schemas:
+            logger.info("add deadline queue %s %s %s" % (time_start, message_schema.deadline, time_end))
+            event_data_list.append(NewMessageDataDue(Message(message_schema, self._imap_client)))
+
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool
         """Determine if the folder should completely refresh it's cache.
@@ -281,21 +290,31 @@ class Folder(object):
             logger.debug("%s updated highest mod seq to %d" % (self, highest_mod_seq))
 
 
-    def _save_new_messages(self, last_seen_uid, event_data_list = None):
+    def _save_new_messages(self, last_seen_uid, event_data_list = None, urgent=False):
         # type: (int, t.List[AbstractEventData]) -> None
         """Save any messages we haven't seen before
 
         Args:
             last_seen_uid (int): the max uid we have stored, should be 0 if there are no messages stored.
+            urgent (bool): if True, save only one email 
         """
 
         # add thread id to the descriptors if there is a thread id
         descriptors = list(Message._descriptors) + ['X-GM-THRID'] if self._imap_account.is_gmail \
             else list(Message._descriptors)
-        fetch_data = self._imap_client.fetch(
-            '%d:*' % (last_seen_uid + 1), descriptors)
 
-        # TODO get flag first to see if it is read 
+        uid_criteria = ""
+        if urgent:
+            uid_criteria = '%d' % (last_seen_uid + 1)
+        else: 
+            uid_criteria = '%d:*' % (last_seen_uid + 1)
+            
+        fetch_data = self._imap_client.fetch(
+            uid_criteria, descriptors)
+
+        # seperate fetch in order to detect if the message is already read or not
+        header_data = self._imap_client.fetch(
+            uid_criteria, list(Message._header_descriptors))
 
         # if there is only one item in the return field
         # and we already have it in our database
@@ -310,6 +329,7 @@ class Folder(object):
         logger.info("%s saving new messages" % (self))
         for uid in fetch_data:
             message_data = fetch_data[uid]
+            header = header_data[uid]
 
             logger.debug("Message %d data: %s" % (uid, message_data))
             if 'SEQ' not in message_data:
@@ -351,29 +371,33 @@ class Folder(object):
             msn = message_data['SEQ']
             flags = message_data['FLAGS']
 
-            header = self._imap_client.fetch(
-                '%d' % (uid), list(Message._header_descriptors))
-
+            if "\\Seen" not in flags:
+                self._imap_client.remove_flags(uid, ['\\Seen'])
 
             # header = [h.replace('\r\n\t', ' ') for h in header]
-            header = header[uid][list(Message._header_descriptors)[0]]
+            header = header[list(Message._header_descriptors)[0]]
             header = header.replace('\r\n\t', ' ')
             header = header.replace('\r\n', ' ')
             meta_data = {}
 
             # figure out text encoding issue here 
             # logger.info(header[uid][list(Message._header_descriptors)[0]])
-            header = self._parse_email_header(header)
+            try:
+                header = self._parse_email_header(header)
+            except Exception as e:
+                logger.critical("header parsing problem %s  %s, skip this message" % (header, e))
+                continue
     
             try: 
                 f_tmp = ""
-                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'Bcc:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
+                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'CC:', 'Bcc:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
                 
                 for v in re.split('('+ "|".join(header_field) +')', header):
                     if not v:
                         continue
 
                     if v.strip() in header_field:
+                        # Remove a colon and add to a dict
                         f_tmp = v[:-1].lower().strip()
 
                     else:
@@ -382,8 +406,7 @@ class Folder(object):
                 logger.critical("header parsing problem %s, skip this message" % e)
                 continue
 
-            if "\\Seen" not in flags:
-                self._imap_client.remove_flags(uid, ['\\Seen'])
+            
 
             # if we have a gm_thread_id set thread_schema to the proper thread
             gm_thread_id = message_data.get('X-GM-THRID') 
@@ -396,21 +419,31 @@ class Folder(object):
             logger.debug("message %d envelope %s" % (uid, meta_data))
 
             try:
+                if internal_date.tzinfo is None or internal_date.tzinfo.utcoffset(internal_date) is None:
+                    internal_date = timezone('US/Eastern').localize(internal_date)
+                    # logger.critical("convert navie %s " % internal_date)
+            except Exception:
+                logger.critical("Internal date parsing error %s" % internal_date)
+                continue
+
+            try:
                 date = parser.parse(meta_data["date"])
 
                 # if date is naive then reinforce timezone
                 if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
                     date = timezone('US/Eastern').localize(date)
             except Exception:
-                logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
-                continue
+                if "date" in meta_data:
+                    logger.critical("Can't parse date %s, skip this message" % meta_data["date"])
+                    continue
+                else:
+                    date = internal_date
+                    logger.info("Date not exist, put internal date instead")
 
-            try:
-                if internal_date.tzinfo is None or internal_date.tzinfo.utcoffset(internal_date) is None:
-                    internal_date = timezone('US/Eastern').localize(internal_date)
-                    # logger.critical("convert navie %s " % internal_date)
-            except Exception:
-                logger.critical("Internal date parsing error %s" % internal_date)
+
+            # TODO seems like bulk email often not have a message-id
+            if "message-id" not in meta_data:
+                logger.critical("message-id not exist, skil this message %s" % meta_data)
                 continue
 
             # create and save the message schema
@@ -433,7 +466,7 @@ class Folder(object):
 
             try:
                 message_schema.save()
-            except Exception:
+            except Exception as e:
                 logger.critical("%s failed to save message %d" % (self, uid))
                 logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (self, self._last_seen_uid, last_seen_uid))
                 logger.critical("number of messages returned %d" % (len(fetch_data)))
@@ -442,7 +475,9 @@ class Folder(object):
                 continue
 
             if last_seen_uid != 0 and event_data_list is not None:
-                event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
+                logger.critical(internal_date)
+                if tz.now() - internal_date < timedelta(seconds=5*60):
+                    event_data_list.append(NewMessageData(Message(message_schema, self._imap_client)))
 
             logger.debug("%s finished saving new messages..:" % self)
 
@@ -500,14 +535,19 @@ class Folder(object):
         return text
 
     def _parse_email_header(self, header):
-        lines = decode_header(header)
+        try:
+            lines = decode_header(header)
+        except Exception:
+            header = header.replace('_', '/')
+            lines = decode_header(header)
+
         header_text = ""
         for line in lines:
             text, encoding = line[0], line[1]
             if encoding:
                 if encoding != 'utf-8' and encoding != 'utf8':
-                    logger.debug('parse_subject non utf8 encoding: %s' % encoding)
-                text = text.decode(encoding)
+                    logger.info('parse_subject non utf8 encoding: %s' % encoding)
+                text = text.decode(encoding, errors='ignore')
             else:
                 text = unicode(text, encoding='utf8')
             header_text = header_text + text

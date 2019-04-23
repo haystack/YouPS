@@ -174,6 +174,23 @@ def loop_sync_user_inbox():
                 logger.debug("Mailbox managing task done: %s" % (imapAccount_email))
 
                 try:
+                    # get deadline tasks
+                    email_rules = EmailRule.objects.filter(mode=imapAccount.current_mode, type='deadline')  # type: t.List[EmailRule]
+                    for email_rule in email_rules:
+                        # Truncate millisec since mysql doesn't suport msec. 
+                        now = timezone.now().replace(microsecond=0) + datetime.timedelta(seconds=1)
+
+                        mailbox._get_due_messages(email_rule, now)
+
+                        # mark timestamp to prevent running on certain message multiple times 
+                        email_rule.executed_at = now + datetime.timedelta(seconds=1)
+                        email_rule.save()
+                        logger.info(mailbox.event_data_list)
+                except Exception:
+                    logger.exception("Mailbox managing task failed")
+                    # TODO maybe we should email the user
+                    continue
+                try:
                     res = mailbox._run_user_code()
                 except Exception():
                     logger.exception("Mailbox run user code failed")

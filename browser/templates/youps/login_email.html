@@ -111,7 +111,7 @@
 										{% endif %}
 											<a href="#tab_{{mode.uid}}" data-toggle="tab">
 													<span class="tab-title" mode-id={{ mode.uid }}>
-													{{ mode.name }} ({{ mode.uid }})
+													{{ mode.name }} <span>({{ mode.uid }})</span>
 													</span>
 													<i class="fas fa-pencil-alt"></i>
 												</a><span class="close">x</span>
@@ -138,6 +138,10 @@
 
 																	<div class="flex_item_right panel-heading panel-collapsed">
 																		<h3 class="panel-title">
+																			<span style='float:left;' class="fa-layers fa-fw fa-2x"> 
+																						<i class="far fa-envelope"></i>
+																						<span class="fa-layers-counter" style="background:Tomato">NEW</span>
+																			</span>
 																			<input type="text" placeholder="My email rule" value="{{ rule.name }}" />
 																			<span class="preview-folder"></span>
 																		</h3>
@@ -222,6 +226,7 @@
 
 																		<div class="flex_item_right panel-heading panel-collapsed">
 																			<h3 class="panel-title">
+																				<i style="float:left;" class="far fa-2x fa-flag"></i>
 																				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
 																				<span class="preview-folder"></span>
 																			</h3>
@@ -245,7 +250,83 @@
 																</div>
 															{% endif %}
 														{% endfor %}
-													</div>
+												</div>
+
+												<div class='editable-container' type='deadline'>
+													{% for rule in rules %}
+															{% if rule.mode == mode and rule.type == "deadline" %}
+																<div rule-id={{rule.uid}} class="panel panel-default">
+																	<div class="flex_container">
+																		<div class="flex_item_left"> 
+																			<i class="fas fa-3x fa-trash"></i> 
+																		</div>
+	
+																		<div class="flex_item_right panel-heading panel-collapsed">
+																			<h3 class="panel-title">
+																				<i style="float:left;" class="far fa-2x fa-clock"></i>
+																				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
+																				<span class="preview-folder"></span>
+																			</h3>
+																			<span class="pull-right">
+																				<button class='btn-default btn-incoming-save'>Save</button>
+																				<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+																			</span>
+																		</div>
+																	</div>
+																	<div class="panel-body" style="display:none;">
+																		<div class="folder-container"></div>
+																		<div class="editor-container">
+																			<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
+{{ rule.code }}
+																			</textarea>
+																		</div>
+																		<!-- Separte row for debugging -->
+																		<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+																		</div>
+																	</div>
+																</div>
+															{% endif %}	
+														{% endfor %}
+												</div>
+
+												<div class='editable-container' type='shortcut'>
+													{% for rule in rules %}
+															{% if rule.mode == mode and rule.type == "shortcut" %}
+																<div rule-id={{rule.uid}} class="panel panel-primary">
+																	<div class="flex_container">
+																		<div class="flex_item_left"> 
+																			<i class="fas fa-3x fa-trash"></i> 
+																		</div>
+	
+																		<div class="flex_item_right panel-heading panel-collapsed">
+																			<h3 class="panel-title">
+																				<i style="float:left;" class="fas fa-2x fa-terminal"></i>
+																				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
+																				<span class="preview-folder"></span>
+																			</h3>
+																			<span class="pull-right">
+																				<button class='btn-default btn-incoming-save'>Save</button>
+																				<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+																			</span>
+																		</div>
+																	</div>
+																	<div class="panel-body" style="display:none;">
+																		<div class="instruction-container">
+																			<span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span>
+																		</div>
+																		<div class="editor-container">
+																			<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
+{{ rule.code }}
+																			</textarea>
+																		</div>
+																		<!-- Separte row for debugging -->
+																		<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+																		</div>
+																	</div>
+																</div>
+															{% endif %}	
+														{% endfor %}
+												</div>
 
 												<div class='editable-container' type='repeat'>
 													{% for rule in rules %}
@@ -315,6 +396,38 @@
 															</div>
 													</div>
 												</div>
+												<div class="btn-new-editor" type="deadline">
+													<div class="panel panel-default">
+														<div class="flex_container">
+															<div class="flex_item_left"> 
+																<i class="fas fa-3x fa-plus-circle"></i> 
+															</div>
+															
+															<div class="panel-heading flex_item_right panel-collapsed">
+																<h3 class="panel-title">
+																	<i class="far fa-2x fa-clock"></i> Create a deadline event handler <span class=""></span>
+																</h3>
+																
+															</div>
+														</div>	
+													</div>
+												</div>
+												<div class="btn-new-editor" type="shortcut">
+													<div class="panel panel-primary">
+														<div class="flex_container">
+															<div class="flex_item_left"> 
+																<i class="fas fa-3x fa-plus-circle"></i> 
+															</div>
+															
+															<div class="panel-heading flex_item_right panel-collapsed">
+																<h3 class="panel-title">
+																	<i class="fas fa-2x fa-terminal"></i> Create a shortcut handler <span class=""></span>
+																</h3>
+																
+															</div>
+														</div>	
+													</div>
+												</div>
 									  		</div>
 									{% endfor %}
 								</div>
@@ -337,6 +450,15 @@
 										</div>
 
 										<div class='editable-container' type='repeat'>
+										</div>
+
+										<div class='editable-container' type='flag-change'>
+										</div>
+
+										<div class='editable-container' type='deadline'>
+										</div>
+
+										<div class='editable-container' type='shortcut'>
 										</div>
 
 										<!-- editor add buttons -->
@@ -390,6 +512,40 @@
 
 															</div>
 														</div>
+												</div>
+											</div>
+
+											<div class="btn-new-editor" type="deadline">
+												<div class="panel panel-default">
+													<div class="flex_container">
+														<div class="flex_item_left"> 
+															<i class="fas fa-3x fa-plus-circle"></i> 
+														</div>
+														
+														<div class="panel-heading flex_item_right panel-collapsed">
+															<h3 class="panel-title">
+																<i class="fas fa-2x fa-clock"></i> Create a deadline event handler <span class=""></span>
+															</h3>
+															
+														</div>
+													</div>	
+												</div>
+											</div>
+
+											<div class="btn-new-editor" type="shortcut">
+												<div class="panel panel-primary">
+													<div class="flex_container">
+														<div class="flex_item_left"> 
+															<i class="fas fa-3x fa-plus-circle"></i> 
+														</div>
+														
+														<div class="panel-heading flex_item_right panel-collapsed">
+															<h3 class="panel-title">
+																<i class="fas fa-2x fa-terminal"></i> Create a shortcut handler <span class=""></span>
+															</h3>
+															
+														</div>
+													</div>	
 												</div>
 											</div>
 									</div>
