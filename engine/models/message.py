@@ -8,6 +8,7 @@ import logging
 from collections import Sequence
 import email
 import inspect
+import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase 
@@ -51,6 +52,9 @@ class Message(object):
     def __str__(self):
         # type: () -> t.AnyStr
         return "Message %d" % self._uid
+
+    def __repr__(self):
+        return repr('Message object "%s"' % str(self.subject))
 
     def _before(self):
         pass
@@ -553,6 +557,76 @@ class Message(object):
 
         print("see_later(): Hide the message until %s at %s" % (later_at, hide_in))
         
+
+    def recent_messages(self, N=3):
+        # type: (t.integer) -> t.List[Message]
+        """Get the N Messages of this thread
+
+        Returns:
+            t.List[Message]: The messages in this thread before this message
+        """
+
+        if self._schema.imap_account.is_gmail:
+            messages = []
+            cnt_n = 0
+            for m in self._schema._thread.messages.all():
+                if m != self._schema:
+                    messages.append(Message(m, self._imap_client))
+                    cnt_n = cnt_n + 1
+
+                    if cnt_n == N:
+                        break
+
+            return messages
+        
+        else:
+            cnt_n = 0
+            checked_msg_uid = []
+            uid_to_fecth = self._uid
+            prev_msg_id = None
+            prev_messages = []
+            logger.critical("recentmessages ")
+            while cnt_n < N:
+                if uid_to_fecth is None and prev_msg_id:
+                    prev_msg_schema = MessageSchema.objects.filter(folder_schema__name=self.folder.name, message_id=prev_msg_id)
+                    if prev_msg_schema.exists():
+                        uid_to_fecth = prev_msg_schema[0].uid
+                    else:
+                        break
+                    #uid_to_fecth = self._imap_client.search(["HEADER", "Message-ID", prev_msg_id])
+
+                if uid_to_fecth:
+                    in_reply_to_field = 'BODY[HEADER.FIELDS (IN-REPLY-TO)]'
+                    prev_msg = self._imap_client.fetch([uid_to_fecth], ['FLAGS', in_reply_to_field])
+                else:
+                    break
+
+                # TODO check if it is read
+                for key, value in prev_msg.iteritems():
+                    v = value[in_reply_to_field]
+                    v.replace('\r\n\t', ' ')
+                    v = v.replace('\r\n', ' ')
+
+                    if not v:
+                        continue
+
+                    prev_msg_id = re.split('(IN-REPLY-TO:|In-Reply-To:)', v.strip())[-1].strip()
+                    logger.critical(prev_msg_id) 
+                    uid_to_fecth = None
+
+                    m_schema = MessageSchema.objects.filter(message_id=prev_msg_id)
+                    logger.critical(m_schema) 
+                    if m_schema.exists():
+                        prev_messages.append(Message(m_schema[0], self._imap_client))
+                    # else: 
+                    #     break
+                    # TODO message repr()
+                    # TODO move run_simulate spinning bar under the table, not global
+                    
+                cnt_n = cnt_n + 1
+            # TODO mark as unread 
+
+            return prev_messages
     
     def _create_message_instance(self, subject='', to='', cc='', bcc='', additional_content=''):
         new_message_wrapper = MIMEMultipart('mixed')

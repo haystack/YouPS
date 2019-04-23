@@ -21,7 +21,7 @@ class Contact(object):
         return self.name
 
     def __repr__(self):
-        return repr("<Contact object %s>" % str(self.name or self.email))
+        return repr("Contact object %s" % str(self.name or self.email))
 
     @property
     def email(self):
