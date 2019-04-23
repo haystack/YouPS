@@ -247,7 +247,10 @@ class MailBox(object):
         logger.debug("create_folder(): A new folder %s has been created" % folder_name)
 
     def get_email_mode(self):
-        return self._imap_account.current_mode.uid
+        if self._imap_account.current_mode:
+            return self._imap_account.current_mode.uid
+        else:
+            return None
 
     def set_email_mode(self, uid):
         if not self.is_simulate: 
