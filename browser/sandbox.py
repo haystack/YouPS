@@ -13,7 +13,9 @@ from schema.youps import MessageSchema, TaskManager  # noqa: F401 ignore unused 
 from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
+
 from django.utils import timezone
+
 from smtp_handler.utils import send_email
 
 
@@ -28,6 +30,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
             mode (MailbotMode or None): current mode. if mode is null, it will bypass executing user's code and just print logs
             is_simulate (boolean): if True, it looks into extra_info to test run user's code
             extra_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
+
     """
     # type: (MailBox, MailbotMode, bool) -> t.Dict[t.AnyStr, t.Any]
 
@@ -131,7 +134,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                 except Exception as e:
                     # Get error message for users if occurs
-                    # print out error messages for user 
+                    # print out error messages for user
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     logger.info(e)
                     logger.info(exc_obj)
@@ -140,12 +143,12 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     # TODO find keyword 'in on_message' or on_flag_change
                     # logger.info(traceback.format_tb(exc_tb))
                     # logger.info(sys.exc_info())
-                        
+
                     msg_log["log"] = str(e)
-                    msg_log["error"] = True 
-                finally:         
+                    msg_log["error"] = True
+                finally:
                     # copy_msg["trigger"] = rule.name
-                            
+
                     msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                     res['appended_log'][m_schema.id] = msg_log
 
@@ -182,18 +185,17 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     new_msg["to"] = to_field
                     new_msg["cc"] = cc_field
 
-
-                # if the the engine is not turned on yet, still leave the log of message arrival 
-                # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it 
+                # if the the engine is not turned on yet, still leave the log of message arrival
+                # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
                 if mode is None:
                     new_log[new_msg["timestamp"]] = new_msg
-       
+
                     continue
 
                 # Iterate through email rule at the current mode
                 # TODO maybe use this instead of mode.rules
                 for rule in EmailRule.objects.filter(mode=mode):
-                    is_fired = False 
+                    is_fired = False
                     copy_msg = copy.deepcopy(new_msg)
                     copy_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
 
@@ -203,7 +205,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     valid_folders = rule.folders.all()
                     valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                     code = rule.code
-                    
+
                     logger.debug(code)
 
                     # add the user's functions to the event handlers
@@ -222,7 +224,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     #     continue
                     #     # some_handler or something += repeat_every
 
-                    
+
                     try:
                         # execute the user's code
                         # exec cant register new function (e.g., on_message_arrival) when there is a user_env
@@ -231,7 +233,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                         # TODO this should be cleaned up. accessing class name is ugly and this is very wet (Not DRY)
                         if event_data.message._schema.folder_schema in valid_folders:
-                            event_class_name = type(event_data).__name__ 
+                            event_class_name = type(event_data).__name__
                             if (event_class_name == "NewMessageData" and rule.type =="new-message") or \
                                     (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
                                 event_data.fire_event(mailbox.new_message_handler)
@@ -251,12 +253,12 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                     except Exception as e:
                         # Get error message for users if occurs
-                        # print out error messages for user 
-                        
-                        # if len(inspect.trace()) < 2: 
+                        # print out error messages for user
+
+                        # if len(inspect.trace()) < 2:
                         #     logger.exception("System error during running user code")
                         # else:
-                        
+
                         exc_type, exc_obj, exc_tb = sys.exc_info()
                         logger.info(e)
                         logger.debug(exc_obj)
@@ -265,17 +267,17 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                         # TODO find keyword 'in on_message' or on_flag_change
                         logger.info(traceback.format_tb(exc_tb))
                         logger.info(sys.exc_info())
-                        
+
                         copy_msg["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
-                        copy_msg["error"] = True 
-                    finally:         
+                        copy_msg["error"] = True
+                    finally:
                         if is_fired:
                             logger.info("handling fired %s %s" % (rule.name, event_data.message.subject))
                             copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
-                            
+
                             copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
 
-                            new_log[copy_msg["timestamp"]] = copy_msg    
+                            new_log[copy_msg["timestamp"]] = copy_msg
 
                         # flush buffer
                         user_std_out = StringIO()
@@ -366,7 +368,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
         # if it is simulate don't save to db
         if is_simulate:
             logger.debug(res)
-        
+
         # save logs to db
         else:
             logger.info(new_log)

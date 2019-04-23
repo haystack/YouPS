@@ -40,3 +40,5 @@ typing==3.6.4
 spacy==2.1.3
 python-dateutil >= 2.7.0
 httplib2
+icalendar
+ics

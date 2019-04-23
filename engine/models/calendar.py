@@ -18,19 +18,41 @@ class MyCalendar(object):
         self.link = link
         self.apple = apple
 
-    def get_conflicts(self, startTime, endTime=None,
+    def get_conflicts(self, startTime=None, endTime=None,
                       defaultInterval=datetime.timedelta(hours=1)):
         """Check the calendar to see if the specified time is available.
+
         Parameters:
         startTime (datetime) -- start of the time interval
         endTime (datetime) -- end of the time interval
         Returns:
         list: events conflicting with the interval
+
         """
+        if startTime is None:
+            startTime = datetime.datetime.now()
+
         if endTime is None:
             endTime = startTime + defaultInterval
-        conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
-        return conflicts
+
+        conflicts = []
+
+        try:
+            conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
+        except:
+            raise Exception('Provided link was invalid: {}'.format(self.link))
+
+        conflictDictionaries = [
+            {
+                "name": e.summary,
+                "start": e.start,
+                "end": e.end,
+                "description": e.description,
+                "location": e.location
+            } for e in conflicts
+        ]
+
+        return conflictDictionaries
 
     def create_event(self, name, startTime, endTime=None, description="",
                      location="", path=""):
