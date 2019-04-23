@@ -93,14 +93,13 @@ def mailbot(arrived_message, address=None, host=None):
                     # Save this message immediately. so it can be ran when it is registered to the database  
                     try: 
                         logger.critical("%s %s" %(imapAccount.email, mail_found_at))
-                        folder_schema = FolderSchema.objects.get(imap_account=imapAccount, name=mail_found_at)
-                        folder = Folder(folder_schema, imap)
+                        folder = mail_found_at
 
                         if original_message_id:
                             folder._save_new_messages(original_message_id[0], urgent=True)
 
                             original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
-                            if not message_schema.exists():
+                            if not original_message_schema.exists():
                                 raise
                             imap.select_folder(original_message_schema.folder_schema.name)           
                             original_message = Message(original_message_schema, imap)
