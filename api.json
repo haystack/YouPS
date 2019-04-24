@@ -577,7 +577,23 @@
                     "start = datetime.datetime(2019, 3, 18, hour=10, minute=30)",
                     "end = datetime.datetime(2019, 3, 18, hour=11, minute=30)",
                     "conflicts = classes.get_conflicts(startTime=start, endTime=end)",
-                    "print(conflicts)"
+                    "print(conflicts)",
+                    ">>> [",
+                    ">>>     {",
+                    ">>>         'start': datetime.datetime(2019, 3, 18, 11, 0, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'location': '34-101', ",
+                    ">>>         'end': datetime.datetime(2019, 3, 18, 12, 30, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'name': '6.031 Lecture', ",
+                    ">>>         'description': 'Introduces fundamental principles and techniques of software development.'",
+                    ">>>     }, ",
+                    ">>>     {",
+                    ">>>         'start': datetime.datetime(2019, 3, 18, 10, 0, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'location': '34-101', ",
+                    ">>>         'end': datetime.datetime(2019, 3, 18, 11, 0, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'name': '6.UAT Lecture', ",
+                    ">>>         'description': 'Provides instruction in aspects of effective technical oral presentations and exposure to communication skills useful in a workplace setting.'",
+                    ">>>     }",
+                    ">>> ]"
                 ]
             },
             {
@@ -587,7 +603,7 @@
                 "description": "Create a new .ics file with the specified event. Returns the string of the ics file",
                 "example": [
                     "startTime = datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz)",
-                    "endTime = datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz)"
+                    "endTime = datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz)",
                     "name = cal.create_event('Available', startTime, endTime)",
                     "print(name)",
                     ">>> Available-2019-04-18 15:41:33.570990.ics"
