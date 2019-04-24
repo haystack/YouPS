@@ -540,7 +540,7 @@
 	],
 	
 	"calendar" : {
-	"constructor": [
+	"init": [
 		
 		
             {
