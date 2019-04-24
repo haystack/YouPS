@@ -587,7 +587,9 @@
                 "return_type": "String",
                 "description": "Create a new .ics file with the specified event. Returns the string of the ics file",
                 "example": [
-                    "name = cal.create_event('Available', datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz), datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz))",
+                    "startTime = datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz)",
+                    "endTime = datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz)"
+                    "name = cal.create_event('Available', startTime, endTime)",
                     "print(name)",
                     ">>> Available-2019-04-18 15:41:33.570990.ics"
                 ]
