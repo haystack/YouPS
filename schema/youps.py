@@ -130,7 +130,7 @@ class MessageSchema(models.Model):
         # type: (t.List[t.AnyStr]) -> None
         self._flags = json.dumps(value)
 
-
+    # YoUPS richer attribute
     progress = models.CharField('progress', max_length=300, blank=True)
     deadline = models.DateTimeField('deadline', null=True, blank=True)
     category = models.CharField('category', max_length=300, blank=True)

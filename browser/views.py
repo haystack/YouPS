@@ -455,7 +455,11 @@ def login_imap_view(request):
 
 @render_to(WEBSITE+"/docs.html")
 def docs_view(request):
-	return {'user': request.user, 'website': WEBSITE}
+	return {'website': WEBSITE}
+
+@render_to(WEBSITE+"/about.html")
+def about_view(request):
+	return {'website': WEBSITE}
 
 
 @render_to(WEBSITE+"/add_members.html")

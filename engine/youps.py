@@ -71,6 +71,7 @@ def login_imap(email, password, host, is_oauth):
             # = imapAccount
         else:
             imapAccount = imapAccount[0]
+            imapAccount.password = base64.b64encode(password)
             res['imap_code'] = ""  # TODO PLEASE REMOVE THIS WOW
             res['imap_log'] = imapAccount.execution_log
 

@@ -116,6 +116,7 @@ shared_patterns = [
     # mailbot
     url(r'^editor', 'browser.views.login_imap_view'),
     url(r'^docs', 'browser.views.docs_view'),
+    url(r'^about', 'browser.views.about_view'),
     url(r'^login_imap', 'browser.views.login_imap'),
     url(r'^remove_rule', 'browser.views.remove_rule'),
     url(r'^run_mailbot', 'browser.views.run_mailbot'),

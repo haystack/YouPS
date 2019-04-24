@@ -68,7 +68,7 @@ def authenticate(imap_account):
 
     if res['status'] is False:
         # email to the user that there is error at authenticating email
-        if len(imap_account.email) > 0:
+        if imap_account.is_oauth and len(imap_account.email) > 0:
             subject = "[" + WEBSITE + "] Authentication error occurs"
             body = "Authentication error occurs! \n" + str(res['imap_error'])
             body += "\nPlease log in again at " + BASE_URL + "/editor"
