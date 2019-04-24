@@ -302,7 +302,7 @@
 				"description": "",
 				"example": ""
 			}
-			
+
 		],
 		"method": [
 			{
@@ -330,9 +330,9 @@
 			"description": "Return arrival date of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
 			"example": [
 				"print get_date()",
-				">>> ['Wed, 29 Aug 2018 01:59:59 -0400']", 
+				">>> ['Wed, 29 Aug 2018 01:59:59 -0400']",
 				" ",
-				"print get_dates()", 
+				"print get_dates()",
 				">>> ['Wed, 29 Aug 2018 00:23:12 -0400', 'Wed, 29 Aug 2018 01:01:03 -0400', 'Wed, 29 Aug 2018 01:59:59 -0400']"
 			],
 			"thread": "get_dates",
@@ -360,7 +360,7 @@
 			"description": "Return a sender of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
 			"example": [
 				"print get_sender()",
-				">>> ['Soya Park <soya@mit.edu>']", 
+				">>> ['Soya Park <soya@mit.edu>']",
 				" ",
 				"def only_important():",
 				"   if 'important' in get_note():",
@@ -386,8 +386,8 @@
 			"description": "Return a list of recipients of this email. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
 			"example": [
 				"print get_recipient()",
-				">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']", 
-				"print get_recipients()", 
+				">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']",
+				"print get_recipients()",
 				">>> [['Soya Park <soya@mit.edu>'], ['David Karger <david@mit.edu>', 'Amy Zhang <zhang@mit.edu>'], ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']]"],
 			"thread": "get_recipients",
 			"thread_params": "cond = True"
@@ -538,11 +538,11 @@
 
 		}
 	],
-	
+
 	"calendar" : {
 	"init": [
-		
-		
+
+
             {
 				"name": "Calendar",
 				"params": "name, link, apple=False",
@@ -578,7 +578,7 @@
                     "classes = MyCalendar(name, link)",
                     "conflicts = classes.get_conflicts(datetime.datetime(2019, 3, 18, hour=10, minute=30), datetime.datetime(2019, 3, 18, hour=11, minute=30))",
                     "print([conflict for conflict in conflicts])",
-                    ">>> []",
+                    ">>> []"
 				]
 			},
             {

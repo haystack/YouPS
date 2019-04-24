@@ -120,7 +120,14 @@
                     <div id="calendar" class='add-sidebar header' property="init" mv-multiple>
                         <h2 style="display:none;"> Calendar <a href="#Calendar">¶</a>
                         <h2>[name] ([params])  <a href="#[name]"> ¶ </a> </h2>
-                            <p style="margin:0;"><a href="#[return_href]">[return_type]</a> [description]</p>
+                            <p style="margin:0;"><a href="#[return_href]">[return_type]</a>
+                                Create a new calendar object that references the provided link.
+                                Currently, we only offer support for Google Calendar and Apple Calendar. <br>
+
+                                To find your Google Calendar link, follow this <a href='https://support.google.com/calendar/answer/37648?hl=en'> guide </a>. <br>
+                                To find you Apple Calendar link, follow this <a href='https://support.apple.com/guide/calendar/publish-or-unpublish-calendars-on-mac-icl1017/11.0/mac/10.14'> guide </a>.
+                                If you happen to use an Apple Calendar, you will need to set the name parameter <code>apple</code> to <code>True</code>.</p>
+
                             <pre class="language-python" style="background-color: transparent;border: 0;margin:0;">
                                 <code class="language-python" property="example" mv-multiple>
                                 </code>
