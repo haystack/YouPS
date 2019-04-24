@@ -31,7 +31,7 @@ class MailBox(object):
         self.new_message_handler = Event()  # type: Event
         self.added_flag_handler = Event()  # type: Event
         self.removed_flag_handler = Event()  # type: Event
-        self.deadline_handler = Event()
+        self.deadline_handler = Event()  # type: Event
 
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.is_simulate = False

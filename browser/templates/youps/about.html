@@ -1,7 +1,6 @@
-{% extends website|add:"/base.html" %}
-{% block customcss %}
+{% extends website|add:"/base.html" %} {% block customcss %}
 
-<link rel="stylesheet" href="/static/css/youps/libs/codemirror.css">
+<link rel="stylesheet" href="/static/css/youps/libs/codemirror.css" />
 <!-- <link rel="stylesheet" href="/static/css/youps/libs/fontawesome-all.min.css"> -->
 <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> -->
 <!-- Interactive console styles -->
@@ -9,53 +8,250 @@
 
 <link rel="stylesheet" href="/static/css/youps/libs/jquery.switchButton.css" />
 <link rel="stylesheet" href="https://get.mavo.io/mavo.css" />
-<link rel="stylesheet" href="/static/css/youps/libs/prism.css">
-<link rel="stylesheet" href="/static/css/youps/style.css">
-{% endblock %}
+<link rel="stylesheet" href="/static/css/youps/libs/prism.css" />
+<link rel="stylesheet" href="/static/css/youps/style.css" />
 
-{% block content %}
+<!-- Markdown converter -->
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/8.4.2/markdown-it.js"
+  integrity="sha256-L6nwQfrUv4YrDu/OyAjehTyMjZ7d0n0tjm8aBxHEn18="
+  crossorigin="anonymous"
+></script>
+<!-- highlighting scripts -->
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js"
+  integrity="sha256-aYTdUrn6Ow1DDgh5JTc3aDGnnju48y/1c8s1dgkYPQ8="
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/python.min.js"
+  integrity="sha256-68czD4LOxm3vDFkFAirVhzdq3N3aXwf8BT4q9kb3kHM="
+  crossorigin="anonymous"
+></script>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css"
+  integrity="sha256-iAmWN8uaUdN6Y9FCf8srQdrx3eVVwouJ5QtEiyuTQ6A="
+  crossorigin="anonymous"
+/>
+<script type="bogus" id="markdown-contents">
+  # Overview of the API
 
-    <div class="container" >
-        <div class="group-container" style="overflow-y: scroll;">
-            <p hidden id="website-name">{{website}}</p>
+  The object you will be interacting with most commonly is the `Message` object. Rules generally are run on one `Message` at a time, for example when a `Message` arrives in your inbox, or when a `Message` has a flag change.
 
-            <h1>API docs</h1>
-            <a href="/editor">Back to editor</a>
-			<hr>
-        </div>
-    </div>
+  A key thing to keep in mind about email messages is that they are mostly immutable. The only part of an email message that is mutable for most email systems is the flags and the folder that it is stored in.
 
-{% endblock %}
+  The `Message` object contains useful names for properties you would expect to find on an email, such as `to`, `from`, `bcc`, `cc`, `date` etc.... You can find documentation about these properties in the [api documentation](TODO insert link).
 
-{% block customjs %}
-	<script type="text/javascript" src="/static/javascript/notify.js"></script>
+  Because most of these properties are immutable they return data. So to get the list of people a `Message` is sent to you can use `people = message.to`.  To add flags or remove flags you can use `message.add_flags(['your', 'flags']` and `message.remove_flags(['your', 'flags'])`. Using these methods will keep you completely compatible with most existing email software.
 
-	<script type="text/javascript" src="/static/javascript/youps/bootstrap.bundle.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/fontawesome-all.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/codemirror.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/addon/edit/matchbrackets.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/python.js"></script>
+  <!-- TODO we need to make it possible to set custom methods such as deadline using our API. -->
 
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
+  <!-- TODO might be useful to express flags as a custom list so people can use append pop etc... -->
 
-	<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
-	<script type="text/javascript" src="/static/javascript/youps/console/underscore.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/backbone.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/backbone-localStorage.min.js"></script>
+  <!-- TODO: what happened to the on flag changed -->
 
-	<!-- Some extras for the demo: -->
-	<script type="text/javascript" src="/static/javascript/youps/console/lettering.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/prettify.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/DAT.GUI.min.js"></script>
+  ## Examples
 
-    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+  #### Highlight Emails from Friends or Family
 
-    <script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
+  This example is useful for marking emails from a group of people, i.e. your coworkers, people working on a project, etc...
 
-	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
-	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
+  Tags: []
 
-    <script src="https://get.mavo.io/mavo.js"></script>
+  ```python
+  # fired when a message arrives
+  def on_message(msg):
+  	friends = ["soya@example.com", "karger@example.com", "Amy Zhang"]
+  	if msg.sender in friends:
+  		msg.add_flags('MIT Friends')
+  	family = ["brother@example.com", "father@example.com", "mother@example.com"]
+  	if msg.sender in family:
+  		msg.add_flags(['Family', 'Important'])
+  ```
+
+  ----------
+
+  <!-- TODO: why does return_only_text in message.content also return the HTML?? -->
+
+  #### Add a flag to an email based on it's message contents
+
+  Useful for processing emails, shows how to access message contents and can be extended to do things like natural language processing.
+
+  Tags: []
+
+
+  ```python
+  # fired when a message arrives
+  def on_message(msg):
+  	keywords = [ "NIH", "NSF", "OSP", "ISCB", "Proposal", "Review requests", "AAAS", "IEEE"]
+  	content = msg.content["text"]
+  	if any(keyword in content for keyword in keywords):
+  		msg.add_flags(["urgent", "work"])
+  ```
+
+  ----------
+
+  #### Mark an email as low priority if you have not read the last five emails from that sender and it is addressed to more than 10 people
+
+  This is useful for filtering out emails that come from mass mailing lists without missing out on the mailing lists you are actually interested in
+
+  Tags: []
+
+
+  ```python
+  # fired when a message arrives
+  def on_message(msg):
+  	sender = message.from_
+  	prev_msgs = sender.recent_messages(5)
+  	recipients = message.to + msg.cc + msg.bcc
+  	if len(recipients) > 10 and all(not prev_msg.is_read):
+  		msg.add_flags('low priority')
+  ```
+
+  ----------
+
+  #### Archive unread messages marked as low priority after three days
+
+  This example is useful for maintaining a clean inbox. On gmail using the delete flag will simply archive the email. This rule requires that you set the delay for the on_message rule to three days
+
+  Tags: []
+
+
+  ```python
+  # fired when a message arrives
+  def on_message(msg):
+  	if msg.has_flag('low priority') and not msg.is_read:
+  		msg.delete()
+  ```
+
+  ----------
+
+  #### If you've exchanged more than 10 emails with someone in one day mark any emails you get from them as urgent
+
+  This is helpful when you have a long email thread and want to make sure you are getting updates
+
+  Tags: []
+
+
+  ```python
+  # fired when a message arrives
+  def on_message(msg):
+  	sender = message.from_
+  	last_ten_messages = sender.recent_messages(10)
+  	if all(m.date().date() == datetime.today().date() for m in last_ten_messages):
+  		m.priority("urgent")
+  ```
+
+  ----------
+</script>
+
+<script>
+  window.onload = function() {
+    md = markdownit({
+      html: true,
+      linkify: true,
+      typographer: true,
+      highlight: function(str, lang) {
+        console.log(lang);
+        console.log(hljs.getLanguage(lang));
+        if (lang && hljs.getLanguage(lang)) {
+          try {
+            return hljs.highlight(lang, str).value;
+          } catch (__) {}
+        }
+
+        return ""; // use external default escaping
+      }
+    });
+    contents = document.getElementById("markdown-contents").innerText;
+    result = md.render(contents);
+
+    document.getElementById("example-container").innerHTML = result;
+  };
+</script>
+{% endblock %} {% block content %}
+
+<div class="container">
+  <div class="group-container" style="overflow-y: scroll;">
+    <p hidden id="website-name">{{ website }}</p>
+
+    <h1>API docs</h1>
+    <a href="/editor">Back to editor</a>
+    <main id="example-container"></main>
+
+    <hr />
+  </div>
+</div>
+
+{% endblock %} {% block customjs %}
+<script type="text/javascript" src="/static/javascript/notify.js"></script>
+
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/bootstrap.bundle.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/fontawesome-all.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/codemirror.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/addon/edit/matchbrackets.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/python.js"
+></script>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"
+></script>
+
+<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/underscore.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/backbone.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/backbone-localStorage.min.js"
+></script>
+
+<!-- Some extras for the demo: -->
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/lettering.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/prettify.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/DAT.GUI.min.js"
+></script>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+
+<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/jquery.switchButton.js"
+></script>
+
+<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
+<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
+
+<script src="https://get.mavo.io/mavo.js"></script>
 
 {% endblock %}

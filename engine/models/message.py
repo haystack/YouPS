@@ -132,7 +132,7 @@ class Message(object):
 
     @deadline.setter
     def deadline(self, value):
-        # type: (datetime.datetime -> None
+        # type: (datetime.datetime) -> None
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
             value = tz('US/Eastern').localize(value)
             value = timezone.localtime(value)
@@ -231,7 +231,7 @@ class Message(object):
 
     @property
     def sender(self):
-        # type: () -> t.List[Contact]
+        # type: () -> Contact
         """Get the Contacts the message is sent from
 
         Returns:
