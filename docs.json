@@ -2,9 +2,9 @@
 	"example": [
 		{
 			"votes": "0",
-			"title": "Example Title",
-			"description": "\n            Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quidem\n            velit aperiam adipisci sint repudiandae? In provident voluptatibus\n            recusandae sit quaerat atque ab incidunt aspernatur, esse corporis\n            officia excepturi autem praesentium?\n          ",
-			"code": "\ndef function(on_message):\n  print(\"hello world\")\n              "
+			"title": "Mark Emails with More than 10 recipients as Low Priority",
+			"description": "This rule can help with marking emails in mass newsletters as low priority. ",
+			"code": "# include any code of the example \ndef on_message(msg): \n    if len(msg.to + msg.cc + msg.bcc) > 10:\n        message.add_flags([\"low\"])"
 		}
 	]
 }
