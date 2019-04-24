@@ -2,9 +2,15 @@
 	"example": [
 		{
 			"votes": "0",
-			"title": "Mark Emails with More than 10 recipients as Low Priority",
+			"title": "Mark emails with more than 10 recipients as low priority",
 			"description": "This rule can help with marking emails in mass newsletters as low priority. ",
 			"code": "# include any code of the example \ndef on_message(msg): \n    if len(msg.to + msg.cc + msg.bcc) > 10:\n        message.add_flags([\"low\"])"
+		},
+		{
+			"votes": "0",
+			"title": "Mark emails with more than 10 recipients and last three messages from sender are unread as low priority",
+			"description": "This rule can help with marking emails in mass newletters as low priority while filtering out those emails which you actually want to read.",
+			"code": "# include any code of the example def on_message(msg): \n    sender = message.from\n    prev_msgs = sender.recent_messages(3)\n    if all([not prev_msg.is_read for prev_msg in prev_msgs]):\n        if len(msg.to + msg.cc + msg.bcc) > 10:\n            msg.add_flags([\"low\"])"
 		}
 	]
 }
