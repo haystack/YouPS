@@ -108,3 +108,32 @@ def on_message(msg):
 ```
 
 ----------
+
+### Add Your Own Examples
+
+You can add examples [here](https://github.com/soyapark/murmur/edit/master/docs/examples.md). If you don't have access rights to the repository fork the repository and create a pull request. Or submit an issue containing your example.
+
+We suggest using the following template for your examples.
+
+
+    #### Example Title
+    
+    Example Description
+    
+    Tags: []
+    
+    ```python
+    # fired when a message arrives
+    def on_message(msg):
+    pass
+    
+    # fired when a deadline occurs on a message
+    def on_deadline(msg):
+    pass
+    
+    # fired when you send an email to run@youps.csail.mit.edu
+    def on_command(msg):
+    pass
+    ```
+    
+    ----------

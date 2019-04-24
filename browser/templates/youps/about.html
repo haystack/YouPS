@@ -153,8 +153,6 @@
       linkify: true,
       typographer: true,
       highlight: function(str, lang) {
-        console.log(lang);
-        console.log(hljs.getLanguage(lang));
         if (lang && hljs.getLanguage(lang)) {
           try {
             return hljs.highlight(lang, str).value;
@@ -163,11 +161,13 @@
 
         return ""; // use external default escaping
       }
-    });
-    contents = document.getElementById("markdown-contents").innerText;
-    result = md.render(contents);
-
-    document.getElementById("example-container").innerHTML = result;
+	});
+	fetch('https://raw.githubusercontent.com/soyapark/murmur/master/docs/examples.md')
+	.then(res => res.text())
+	.then(contents => {
+		result = md.render(contents);
+		document.getElementById("example-container").innerHTML = result;
+	})
   };
 </script>
 {% endblock %} {% block content %}
