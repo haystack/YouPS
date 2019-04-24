@@ -548,7 +548,6 @@
 				"params": "name, link, apple=False",
 				"return_type": "Calendar",
                 "return_href": "Calendar",
-				"description": "Create a new calendar object that references the provided link. Currently, we only offer support for Google Calendar and Apple Calendar. <br> To find your Google Calendar link, follow https://support.google.com/calendar/answer/37648?hl=en. <br> To find you Apple  Calendar link, follow https://support.apple.com/guide/calendar/publish-or-unpublish-calendars-on-mac-icl1017/11.0/mac/10.14. If you happen to use an Apple Calendar, you will need to set the name parameter `apple` to `true`.",
 				"example": [
                     "name = 'myClasses'",
                     "link = 'https://calendar.google.com/calendar/ical/<CALENDAR ID>/myclasses.ics'",
@@ -572,16 +571,14 @@
         "method": [
             {
 				"name": "get_conflicts",
-				"params": "startTime, endTime=None, defaultInterval=datetime.timedelta(hours=1)",
+				"params": "startTime=datetime.datetime.now(), endTime=None, defaultInterval=datetime.timedelta(hours=1)",
 				"return_type": "Events []",
 				"description": "Get list of conflicting events on calendar between startTime and endTime",
 				"example": [
                     "classes = MyCalendar(name, link)",
                     "conflicts = classes.get_conflicts(datetime.datetime(2019, 3, 18, hour=10, minute=30), datetime.datetime(2019, 3, 18, hour=11, minute=30))",
-                    "print([conflict for conflict in noConflicts])",
-                    ">>> [<icalevents.icalparser.Event instance at 0x1061067a0>, <icalevents.icalparser.Event instance at 0x106088b00>]",
-                    "print([conflict.summary for conflict in noConflicts])",
-                    ">>> ['6.031 Lecture', '6.UAT Lecture']"
+                    "print([conflict for conflict in conflicts])",
+                    ">>> []",
 				]
 			},
             {
