@@ -548,7 +548,7 @@
 				"params": "name, link, apple=False",
 				"return_type": "Calendar",
                 "return_href": "Calendar",
-				"description": "Create a new calendar object that references the provided link. If the calendar is Apple calendar, apple should be True.",
+				"description": "Create a new calendar object that references the provided link. Currently, we only offer support for Google Calendar and Apple Calendar. <br> To find your Google Calendar link, follow https://support.google.com/calendar/answer/37648?hl=en. <br> To find you Apple  Calendar link, follow https://support.apple.com/guide/calendar/publish-or-unpublish-calendars-on-mac-icl1017/11.0/mac/10.14. If you happen to use an Apple Calendar, you will need to set the name parameter `apple` to `true`.",
 				"example": [
                     "name = 'myClasses'",
                     "link = 'https://calendar.google.com/calendar/ical/<CALENDAR ID>/myclasses.ics'",
