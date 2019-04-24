@@ -571,6 +571,27 @@
                 "return_type": "Events []",
                 "description": "Get list of conflicting events on calendar between startTime and endTime. By default it will get all conflicts from now to an hour from now. If you specify just a start time, it will look from the start time to an hour after the start time.",
                 "example": [
+                    "classes = Calendar(name, link)",
+                    "start = datetime.datetime(2019, 3, 18, hour=10, minute=30)",
+                    "end = datetime.datetime(2019, 3, 18, hour=11, minute=30)",
+                    "conflicts = classes.get_conflicts(startTime=start, endTime=end)",
+                    "print(conflicts)",
+                    ">>> [",
+                    ">>>     {",
+                    ">>>         'start': datetime.datetime(2019, 3, 18, 11, 0, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'location': '34-101', ",
+                    ">>>         'end': datetime.datetime(2019, 3, 18, 12, 30, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'name': '6.031 Lecture', ",
+                    ">>>         'description': 'Introduces fundamental principles and techniques of software development.'",
+                    ">>>     }, ",
+                    ">>>     {",
+                    ">>>         'start': datetime.datetime(2019, 3, 18, 10, 0, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'location': '34-101', ",
+                    ">>>         'end': datetime.datetime(2019, 3, 18, 11, 0, tzinfo=tzfile('/usr/share/zoneinfo/America/New_York')), ",
+                    ">>>         'name': '6.UAT Lecture', ",
+                    ">>>         'description': 'Provides instruction in aspects of effective technical oral presentations and exposure to communication skills useful in a workplace setting.'",
+                    ">>>     }",
+                    ">>> ]"
                 ]
             },
             {
