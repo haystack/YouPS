@@ -326,14 +326,13 @@ $(document).ready(function() {
             (type=="new-message"? `<div class='trigger'>
                 <form class="form-inline">
                     <div class="form-group">
-                        <span>Run following rules when there is </span>
-                        <span>message arrived </span>
+                        <span>When a message arrvies, run the following rules </span>
                     </div>
                     <div class="form-group">
                         <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
-                        <label class="form-check-label" for="inlineRadio1">now</label>
+                        <label class="form-check-label" for="inlineRadio1">immediately</label>
                         <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
-                        <input style='width:50px;' type="text" class="form-control" placeholder="1">
+                        <input style='width:50px;' type="text" class="form-control" placeholder="30">
                         <select id="company" class="form-control">
                             <option>min</option>
                             <option>hr</option>
@@ -341,7 +340,7 @@ $(document).ready(function() {
                         </select> 													
                     </div>
                     <div class="form-group">
-                        <span>ago</span>
+                        <span>later</span>
                     </div>
                 </form></div>`:"") +
             `<textarea class="editor mode-editor">{0}\n{1}</textarea>

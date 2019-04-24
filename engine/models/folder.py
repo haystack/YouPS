@@ -363,8 +363,8 @@ class Folder(object):
                 capabilities = list(capabilities)
                 capabilities = filter(lambda cap: 'THREAD=' in cap, capabilities)
                 capabilities = [cap.replace('THREAD=', '') for cap in capabilities]
-                logger.critical("Add support for one of the following threading algorithms %s" % capabilities)
-                raise NotImplementedError("Unsupported threading algorithm")
+                # logger.debug("Add support for one of the following threading algorithms %s" % capabilities)
+                # raise NotImplementedError("Unsupported threading algorithm")
 
             # this is the date the message was received by the server
             internal_date = message_data['INTERNALDATE']  # type: datetime
