@@ -1,597 +1,597 @@
 {
-	"folder": {
-		"attribute": [
-			{
-			"name": "create_draft",
-			"return_type": "",
-			"return_href": "",
-			"params": "subject='', to=[], cc=[], bcc=[], content='', draft_folder=None",
-			"description": "Create a draft message and save it to your draft folder",
-			"example": ["def on_deadline(my_message):", "\tif 'weekly meeting' in my_message.subject:","\t\tcreate_draft('Schedule meeting next Monday', my_messsage.to, my_message.cc, 'coworker@mit.edu')"]
-			},
-			{
-			"name": "create_folder",
-			"return_type": "",
-			"return_href": "",
-			"params": "folder_name",
-			"description": "Create a new folder folder_name",
-			"example": ""
-			},
-			{
-				"name": "delete_folder",
-				"return_type": "",
-				"return_href": "",
-				"params": "folder_name",
-				"description": "Delete a folder folder_name",
-				"example": ""
+    "folder": {
+        "attribute": [{
+                "name": "create_draft",
+                "return_type": "",
+                "return_href": "",
+                "params": "subject='', to=[], cc=[], bcc=[], content='', draft_folder=None",
+                "description": "Create a draft message and save it to your draft folder",
+                "example": ["def on_deadline(my_message):", "\tif 'weekly meeting' in my_message.subject:", "\t\tcreate_draft('Schedule meeting next Monday', my_messsage.to, my_message.cc, 'coworker@mit.edu')"]
+            },
+            {
+                "name": "create_folder",
+                "return_type": "",
+                "return_href": "",
+                "params": "folder_name",
+                "description": "Create a new folder folder_name",
+                "example": ""
+            },
+            {
+                "name": "delete_folder",
+                "return_type": "",
+                "return_href": "",
+                "params": "folder_name",
+                "description": "Delete a folder folder_name",
+                "example": ""
 
-			},
-			{
-				"name": "get_email_mode",
-				"return_type": "integer",
-				"params": "",
-				"description": "Return the index of the current email mode.",
-				"example": "",
-				"related": [
-					{"name": "set_email_mode"}
-				]
-			},
-			{
-				"name": "set_email_mode",
-				"return_type": "",
-				"params": "mode_index",
-				"description": "Set the current email mode",
-				"example": "",
-				"related": [
-					{"name": "get_email_mode"}
-				]
-			},
-			{
-				"name": "list_folders",
-				"return_type": "",
-				"return_href": "",
-				"params": "",
-				"description": "Get a list of folders",
-				"example": ["print list_folders()", ">>>  [(('\\HasNoChildren',), '/', u'Boomerang'), (('\\HasChildren',), '/', u'Boomerang-Outbox'), (('\\HasNoChildren',), '/', u'Boomerang-Outbox/Cancelled'), (('\\HasNoChildren',), '/', u'Boomerang-Returned'), (('\\HasNoChildren',), '/', u'INBOX'), (('\\HasChildren', '\\Noselect'), '/', u'[Gmail]'), (('\\All', '\\HasNoChildren'), '/', u'[Gmail]/All Mail'), (('\\Drafts', '\\HasNoChildren'), '/', u'[Gmail]/Drafts'), (('\\HasNoChildren', '\\Important'), '/', u'[Gmail]/Important'), (('\\HasNoChildren', '\\Sent'), '/', u'[Gmail]/Sent Mail'), (('\\HasNoChildren', '\\Junk'), '/', u'[Gmail]/Spam'), (('\\Flagged', '\\HasNoChildren'), '/', u'[Gmail]/Starred'), (('\\HasNoChildren', '\\Trash')]"]
-			},
-			{
-				"name": "rename_folder",
-				"return_type": "",
-				"return_href": "",
-				"params": "old_name, new_name",
-				"description": "Change the name of a folder",
-				"example": ""
+            },
+            {
+                "name": "get_email_mode",
+                "return_type": "integer",
+                "params": "",
+                "description": "Return the index of the current email mode.",
+                "example": "",
+                "related": [{
+                    "name": "set_email_mode"
+                }]
+            },
+            {
+                "name": "set_email_mode",
+                "return_type": "",
+                "params": "mode_index",
+                "description": "Set the current email mode",
+                "example": "",
+                "related": [{
+                    "name": "get_email_mode"
+                }]
+            },
+            {
+                "name": "list_folders",
+                "return_type": "",
+                "return_href": "",
+                "params": "",
+                "description": "Get a list of folders",
+                "example": ["print list_folders()", ">>>  [(('\\HasNoChildren',), '/', u'Boomerang'), (('\\HasChildren',), '/', u'Boomerang-Outbox'), (('\\HasNoChildren',), '/', u'Boomerang-Outbox/Cancelled'), (('\\HasNoChildren',), '/', u'Boomerang-Returned'), (('\\HasNoChildren',), '/', u'INBOX'), (('\\HasChildren', '\\Noselect'), '/', u'[Gmail]'), (('\\All', '\\HasNoChildren'), '/', u'[Gmail]/All Mail'), (('\\Drafts', '\\HasNoChildren'), '/', u'[Gmail]/Drafts'), (('\\HasNoChildren', '\\Important'), '/', u'[Gmail]/Important'), (('\\HasNoChildren', '\\Sent'), '/', u'[Gmail]/Sent Mail'), (('\\HasNoChildren', '\\Junk'), '/', u'[Gmail]/Spam'), (('\\Flagged', '\\HasNoChildren'), '/', u'[Gmail]/Starred'), (('\\HasNoChildren', '\\Trash')]"]
+            },
+            {
+                "name": "rename_folder",
+                "return_type": "",
+                "return_href": "",
+                "params": "old_name, new_name",
+                "description": "Change the name of a folder",
+                "example": ""
 
-			}
-		]
-	},
-	"message": {
-		"attribute": [
-			{
-				"name": "to",
-				"return_type": "Contact []",
-				"return_href": "contact",
-				"description": "",
-				"example": [
-					"print (new_message.to) # [<Contact object- David Karger>, <Contact object- Soya Park>]",
-					">>> ['David Karger', 'Soya Park']"
-				]
-			},
-			{
-				"name": "bcc",
-				"return_type": "Contact []",
-				"return_href": "contact",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "cc",
-				"return_type": "Contact []",
-				"return_href": "contact",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "from_",
-				"return_type": "Contact",
-				"return_href": "contact",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "subject",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "date",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "content",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "flags",
-				"return_type": "string []",
-				"description": "",
-				"example": "",
-				"related": [
-					{"name": "add_flags"},
-					{"name": "has_flags"},
-					{"name": "remove_flags"}
-				]
-			},
-			{
-				"name": "progress",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "deadline",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "category",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "topic",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "task",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			}
-		],
-		"method": [
-			{
-				"name": "add_flags",
-				"params": "flags",
-				"description": "Add each of the flags in a list of flags to the message",
-				"example": ""
-			},
-			{
-				"name": "copy",
-				"params": "dst_folder",
-				"description": "Copy this email from the current folder to dst_folder. If folder dst_folder does not exist, our engine creates a new folder with the name dst_folder",
-				"example": ""
-			},
-			{
-				"name": "delete",
-				"params": "",
-				"description": "Delete this email to your trash folder.",
-				"example": ""
-			},
-			{
-				"name": "forward",
-				"params": "to=[], cc=[], bcc=[]",
-				"description": "(Work in progress..) Forward this email to the given recipients.",
-				"example": ""
-			},
-			{
-				"name": "has_flags",
-				"params": "flag",
-				"return_type": "bool",
-				"description": "Check if the message has a given flag",
-				"example": ""
-			},
-			{
-				"name": "is_read",
-				"params": "",
-				"return_type": "bool",
-				"description": "Get if the message has been read",
-				"example": "",
-				"related": [
-					{"name": "mark_read"},
-					{"name": "mark_unread"},
-					{"name": "remove_flags"}
-				]
-			},
-			{
-				"name": "is_recent",
-				"params": "",
-				"return_type": "bool",
-				"description": "Get if the message is recent",
-				"example": "",
-				"related": []
-			},
-			{
-				"name": "remove_flags",
-				"params": "flags",
-				"return_type": "",
-				"description": "Remove each of the flags in a list of flags from the message",
-				"example": ""
-			},
-			{
-				"name": "mark_read",
-				"params": "",
-				"description": "",
-				"example": "",
-				"related": [
-					{"name": "is_read"},
-					{"name": "mark_unread"}
-				]
-			},
-			{
-				"name": "mark_unread",
-				"params": "",
-				"description": "",
-				"example": "",
-				"related": [
-					{"name": "is_read"},
-					{"name": "mark_read"}
-				]
-			},
-			{
-				"name": "move",
-				"params": "dst_folder",
-				"description": "Move this email to dst_folder.",
-				"example": [
-					"msg.move('conference')"
-				]
-			},
-			{
-				"name": "recent_messages",
-				"params": "N=3",
-				"return_type": "Message []",
-				"description": "Return previous messages in this message thread.",
-				"example": [
-				]
-			},
-			{
-				"name": "reply",
-				"params": "content, to=[], cc=[], bcc=[]",
-				"description": "Reply to the sender and additional recipients.",
-				"example": [
-				]
-			},
-			{
-				"name": "reply_all",
-				"params": "address, to=[], cc=[], bcc=[]",
-				"description": "Reply all to the sender & recipients and additional recipients",
-				"example": [
-				]
-			},
-			{
-				"name": "see_later",
-				"params": "later_at=60, hide_in='YoUPS see_later'",
-				"description": "(Beta) Hide temporarily this message into a designated folder (hide_in) then move back to the orginal folder. later_at could be a definite time (datetime instance) or a relative time (number in minute)",
-				"example": [
-				]
-			}
-		]
-	},
-	"contact": {
-		"attribute": [
-			{
-				"name": "name",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "email",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "organization",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			},
-			{
-				"name": "geolocation",
-				"return_type": "string",
-				"description": "",
-				"example": ""
-			}
+            }
+        ]
+    },
+    "message": {
+        "attribute": [{
+                "name": "to",
+                "return_type": "Contact []",
+                "return_href": "contact",
+                "description": "",
+                "example": [
+                    "print (new_message.to) # [<Contact object- David Karger>, <Contact object- Soya Park>]",
+                    ">>> ['David Karger', 'Soya Park']"
+                ]
+            },
+            {
+                "name": "bcc",
+                "return_type": "Contact []",
+                "return_href": "contact",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "cc",
+                "return_type": "Contact []",
+                "return_href": "contact",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "from_",
+                "return_type": "Contact",
+                "return_href": "contact",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "subject",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "date",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "content",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "flags",
+                "return_type": "string []",
+                "description": "",
+                "example": "",
+                "related": [{
+                        "name": "add_flags"
+                    },
+                    {
+                        "name": "has_flags"
+                    },
+                    {
+                        "name": "remove_flags"
+                    }
+                ]
+            },
+            {
+                "name": "progress",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "deadline",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "category",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "topic",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "task",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            }
+        ],
+        "method": [{
+                "name": "add_flags",
+                "params": "flags",
+                "description": "Add each of the flags in a list of flags to the message",
+                "example": ""
+            },
+            {
+                "name": "copy",
+                "params": "dst_folder",
+                "description": "Copy this email from the current folder to dst_folder. If folder dst_folder does not exist, our engine creates a new folder with the name dst_folder",
+                "example": ""
+            },
+            {
+                "name": "delete",
+                "params": "",
+                "description": "Delete this email to your trash folder.",
+                "example": ""
+            },
+            {
+                "name": "forward",
+                "params": "to=[], cc=[], bcc=[]",
+                "description": "(Work in progress..) Forward this email to the given recipients.",
+                "example": ""
+            },
+            {
+                "name": "has_flags",
+                "params": "flag",
+                "return_type": "bool",
+                "description": "Check if the message has a given flag",
+                "example": ""
+            },
+            {
+                "name": "is_read",
+                "params": "",
+                "return_type": "bool",
+                "description": "Get if the message has been read",
+                "example": "",
+                "related": [{
+                        "name": "mark_read"
+                    },
+                    {
+                        "name": "mark_unread"
+                    },
+                    {
+                        "name": "remove_flags"
+                    }
+                ]
+            },
+            {
+                "name": "is_recent",
+                "params": "",
+                "return_type": "bool",
+                "description": "Get if the message is recent",
+                "example": "",
+                "related": []
+            },
+            {
+                "name": "remove_flags",
+                "params": "flags",
+                "return_type": "",
+                "description": "Remove each of the flags in a list of flags from the message",
+                "example": ""
+            },
+            {
+                "name": "mark_read",
+                "params": "",
+                "description": "",
+                "example": "",
+                "related": [{
+                        "name": "is_read"
+                    },
+                    {
+                        "name": "mark_unread"
+                    }
+                ]
+            },
+            {
+                "name": "mark_unread",
+                "params": "",
+                "description": "",
+                "example": "",
+                "related": [{
+                        "name": "is_read"
+                    },
+                    {
+                        "name": "mark_read"
+                    }
+                ]
+            },
+            {
+                "name": "move",
+                "params": "dst_folder",
+                "description": "Move this email to dst_folder.",
+                "example": [
+                    "msg.move('conference')"
+                ]
+            },
+            {
+                "name": "recent_messages",
+                "params": "N=3",
+                "return_type": "Message []",
+                "description": "Return previous messages in this message thread.",
+                "example": []
+            },
+            {
+                "name": "reply",
+                "params": "content, to=[], cc=[], bcc=[]",
+                "description": "Reply to the sender and additional recipients.",
+                "example": []
+            },
+            {
+                "name": "reply_all",
+                "params": "address, to=[], cc=[], bcc=[]",
+                "description": "Reply all to the sender & recipients and additional recipients",
+                "example": []
+            },
+            {
+                "name": "see_later",
+                "params": "later_at=60, hide_in='YoUPS see_later'",
+                "description": "(Beta) Hide temporarily this message into a designated folder (hide_in) then move back to the orginal folder. later_at could be a definite time (datetime instance) or a relative time (number in minute)",
+                "example": []
+            }
+        ]
+    },
+    "contact": {
+        "attribute": [{
+                "name": "name",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "email",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "organization",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            },
+            {
+                "name": "geolocation",
+                "return_type": "string",
+                "description": "",
+                "example": ""
+            }
 
-		],
-		"method": [
-			{
-				"name": "recent_messages",
-				"params": "N=3",
-				"return_type": "Message []",
-				"description": "Return the messages where this contact is listed in the from/to/cc/bcc field",
-				"example": [
-				]
-			}
-		]
-	},
-	"getter_archieve": [
-		{
-			"name": "get_content",
-			"params": "",
-			"description": "Return contents of this email / thread. \n\n Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": "",
-			"thread": "get_contents",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_date",
-			"params": "",
-			"description": "Return arrival date of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": [
-				"print get_date()",
-				">>> ['Wed, 29 Aug 2018 01:59:59 -0400']",
-				" ",
-				"print get_dates()",
-				">>> ['Wed, 29 Aug 2018 00:23:12 -0400', 'Wed, 29 Aug 2018 01:01:03 -0400', 'Wed, 29 Aug 2018 01:59:59 -0400']"
-			],
-			"thread": "get_dates",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_gmail_labels",
-			"params": "",
-			"description": "Return a list of notes of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": "",
-			"thread": "get_notes",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_note",
-			"params": "",
-			"description": "Return a list of notes of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": "",
-			"thread": "get_notes",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_sender",
-			"params": "",
-			"description": "Return a sender of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": [
-				"print get_sender()",
-				">>> ['Soya Park <soya@mit.edu>']",
-				" ",
-				"def only_important():",
-				"   if 'important' in get_note():",
-				"      return True",
-				"   return False",
-				"print get_senders( cond = only_important )",
-				">>> [['David Karger <david@mit.edu>'], ['David Karger <david@mit.edu>']]"
-			],
-			"thread": "get_senders",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_subject",
-			"params": "",
-			"description": "Return a subject of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": "",
-			"thread": "get_subjects",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_recipient",
-			"params": "",
-			"description": "Return a list of recipients of this email. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
-			"example": [
-				"print get_recipient()",
-				">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']",
-				"print get_recipients()",
-				">>> [['Soya Park <soya@mit.edu>'], ['David Karger <david@mit.edu>', 'Amy Zhang <zhang@mit.edu>'], ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']]"],
-			"thread": "get_recipients",
-			"thread_params": "cond = True"
-		}
-	],
-	"getter": [
-		{
-			"name": "get_content",
-			"params": "",
-			"description": "Return a content of this email.",
-			"example": "",
-			"thread": "get_contents",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_date",
-			"params": "",
-			"description": "Return an arrival date of this email.",
-			"example": [
-				"print get_date()",
-				">>> ['Wed, 29 Aug 2018 01:59:59 -0400']"
-			],
-			"thread": "get_dates",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_gmail_labels",
-			"params": "",
-			"description": "Return a list of labels of this email.",
-			"example": "",
-			"thread": "get_notes",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_labels",
-			"params": "",
-			"description": "Return a list of notes of this email.",
-			"example": "",
-			"thread": "get_notes",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_sender",
-			"params": "",
-			"description": "Return a sender of this email.",
-			"example": [
-				"print get_sender()",
-				">>> ['Soya Park <soya@mit.edu>']"
-			],
-			"thread": "get_senders",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_subject",
-			"params": "",
-			"description": "Return a subject of this email.",
-			"example": "",
-			"thread": "get_subjects",
-			"thread_params": "cond = True"
-		},
-		{
-			"name": "get_recipients",
-			"params": "",
-			"description": "Return a list of recipients of this email.",
-			"example": [
-				"print get_recipients()",
-				">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']"
-			],
-			"thread": "get_recipients",
-			"thread_params": "cond = True"
-		}
-	],
-	"mode": [
-		{
-			"name": "get_history",
-			"params": "email, hours = 24, cond = True",
-			"description": "Get an interaction history with this recipient. To specify the range of time, set parameter hours. Parameter cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails exchanged with a contact of the email.",
-			"example": [
-				"def draft_email(email):",
-				"   if 'draft' in email.get_labels():",
-				"      return True",
-				"   return False",
-				"",
-				"print get_history('soya@mit.edu', 3, draft_email) ",
-				">>> {'received_emails': 5, 'cond': 2}"
-			]
-		},
-		{
-			"name": "get_mode",
-			"params": "",
-			"description": "Get an index of a current email mode",
-			"example": ""
-		},
-		{
-			"name": "set_mode",
-			"params": "mode_index",
-			"description": "Change a current email mode",
-			"example": ""
+        ],
+        "method": [{
+            "name": "recent_messages",
+            "params": "N=3",
+            "return_type": "Message []",
+            "description": "Return the messages where this contact is listed in the from/to/cc/bcc field",
+            "example": []
+        }]
+    },
+    "getter_archieve": [{
+            "name": "get_content",
+            "params": "",
+            "description": "Return contents of this email / thread. \n\n Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": "",
+            "thread": "get_contents",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_date",
+            "params": "",
+            "description": "Return arrival date of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": [
+                "print get_date()",
+                ">>> ['Wed, 29 Aug 2018 01:59:59 -0400']",
+                " ",
+                "print get_dates()",
+                ">>> ['Wed, 29 Aug 2018 00:23:12 -0400', 'Wed, 29 Aug 2018 01:01:03 -0400', 'Wed, 29 Aug 2018 01:59:59 -0400']"
+            ],
+            "thread": "get_dates",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_gmail_labels",
+            "params": "",
+            "description": "Return a list of notes of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": "",
+            "thread": "get_notes",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_note",
+            "params": "",
+            "description": "Return a list of notes of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": "",
+            "thread": "get_notes",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_sender",
+            "params": "",
+            "description": "Return a sender of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": [
+                "print get_sender()",
+                ">>> ['Soya Park <soya@mit.edu>']",
+                " ",
+                "def only_important():",
+                "   if 'important' in get_note():",
+                "      return True",
+                "   return False",
+                "print get_senders( cond = only_important )",
+                ">>> [['David Karger <david@mit.edu>'], ['David Karger <david@mit.edu>']]"
+            ],
+            "thread": "get_senders",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_subject",
+            "params": "",
+            "description": "Return a subject of this email / thread. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": "",
+            "thread": "get_subjects",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_recipient",
+            "params": "",
+            "description": "Return a list of recipients of this email. <br>Developers can selectively retrieve some emails of the thread by using parameter cond. cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails in the thread.",
+            "example": [
+                "print get_recipient()",
+                ">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']",
+                "print get_recipients()",
+                ">>> [['Soya Park <soya@mit.edu>'], ['David Karger <david@mit.edu>', 'Amy Zhang <zhang@mit.edu>'], ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']]"
+            ],
+            "thread": "get_recipients",
+            "thread_params": "cond = True"
+        }
+    ],
+    "getter": [{
+            "name": "get_content",
+            "params": "",
+            "description": "Return a content of this email.",
+            "example": "",
+            "thread": "get_contents",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_date",
+            "params": "",
+            "description": "Return an arrival date of this email.",
+            "example": [
+                "print get_date()",
+                ">>> ['Wed, 29 Aug 2018 01:59:59 -0400']"
+            ],
+            "thread": "get_dates",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_gmail_labels",
+            "params": "",
+            "description": "Return a list of labels of this email.",
+            "example": "",
+            "thread": "get_notes",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_labels",
+            "params": "",
+            "description": "Return a list of notes of this email.",
+            "example": "",
+            "thread": "get_notes",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_sender",
+            "params": "",
+            "description": "Return a sender of this email.",
+            "example": [
+                "print get_sender()",
+                ">>> ['Soya Park <soya@mit.edu>']"
+            ],
+            "thread": "get_senders",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_subject",
+            "params": "",
+            "description": "Return a subject of this email.",
+            "example": "",
+            "thread": "get_subjects",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_recipients",
+            "params": "",
+            "description": "Return a list of recipients of this email.",
+            "example": [
+                "print get_recipients()",
+                ">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']"
+            ],
+            "thread": "get_recipients",
+            "thread_params": "cond = True"
+        }
+    ],
+    "mode": [{
+            "name": "get_history",
+            "params": "email, hours = 24, cond = True",
+            "description": "Get an interaction history with this recipient. To specify the range of time, set parameter hours. Parameter cond should be a callable that returns boolean. Default value of cond is True and it will retrieve from all emails exchanged with a contact of the email.",
+            "example": [
+                "def draft_email(email):",
+                "   if 'draft' in email.get_labels():",
+                "      return True",
+                "   return False",
+                "",
+                "print get_history('soya@mit.edu', 3, draft_email) ",
+                ">>> {'received_emails': 5, 'cond': 2}"
+            ]
+        },
+        {
+            "name": "get_mode",
+            "params": "",
+            "description": "Get an index of a current email mode",
+            "example": ""
+        },
+        {
+            "name": "set_mode",
+            "params": "mode_index",
+            "description": "Change a current email mode",
+            "example": ""
 
-		}
-	],
-	"methods": [
-		{
-			"name": "add_gmail_labels",
-			"params": "labels",
-			"description": "Add labels to email in the current folder.",
-			"example": [
-				"add_gmail_labels([“important”, “deadline”])"
-			],
-			"thread": "add_labels",
-			"thread_params": "flags, cond = True"
-		},
-		{
-			"name": "add_labels",
-			"params": "labels",
-			"description": "Add note to email in the currently folder.",
-			"example": [
-				"add_labels([“important”, “deadline”])"
-			],
-			"thread": "add_notes",
-			"thread_params": "flags, cond = True"
-		},
-		{
-			"name": "remove_gmail_labels",
-			"params": "labels",
-			"description": "Remove one or more labels from this email in the currently selected folder. labels should be a list of strings.",
-			"example": "",
-			"thread": "remove_notes",
-			"thread_params": "flags, cond = True"
+        }
+    ],
+    "methods": [{
+            "name": "add_gmail_labels",
+            "params": "labels",
+            "description": "Add labels to email in the current folder.",
+            "example": [
+                "add_gmail_labels([“important”, “deadline”])"
+            ],
+            "thread": "add_labels",
+            "thread_params": "flags, cond = True"
+        },
+        {
+            "name": "add_labels",
+            "params": "labels",
+            "description": "Add note to email in the currently folder.",
+            "example": [
+                "add_labels([“important”, “deadline”])"
+            ],
+            "thread": "add_notes",
+            "thread_params": "flags, cond = True"
+        },
+        {
+            "name": "remove_gmail_labels",
+            "params": "labels",
+            "description": "Remove one or more labels from this email in the currently selected folder. labels should be a list of strings.",
+            "example": "",
+            "thread": "remove_notes",
+            "thread_params": "flags, cond = True"
 
-		},
-		{
-			"name": "remove_labels",
-			"params": "labels",
-			"description": "Remove one or more labels from this email in the currently selected folder. labels should be a list of strings.",
-			"example": "",
-			"thread": "remove_notes",
-			"thread_params": "flags, cond = True"
+        },
+        {
+            "name": "remove_labels",
+            "params": "labels",
+            "description": "Remove one or more labels from this email in the currently selected folder. labels should be a list of strings.",
+            "example": "",
+            "thread": "remove_notes",
+            "thread_params": "flags, cond = True"
 
-		},
-		{
-			"name": "send",
-			"params": "subject, recipient_address, body",
-			"description": "send an email",
-			"example": "",
-			"thread": "remove_notes",
-			"thread_params": "flags, cond = True"
+        },
+        {
+            "name": "send",
+            "params": "subject, recipient_address, body",
+            "description": "send an email",
+            "example": "",
+            "thread": "remove_notes",
+            "thread_params": "flags, cond = True"
 
-		}
-	],
+        }
+    ],
 
-	"calendar" : {
-	"init": [
+    "calendar": {
+        "init": [
 
 
             {
-				"name": "Calendar",
-				"params": "name, link, apple=False",
-				"return_type": "Calendar",
+                "name": "Calendar",
+                "params": "name, link, apple=False",
+                "return_type": "Calendar",
                 "return_href": "Calendar",
-				"example": [
+                "example": [
                     "name = 'myClasses'",
                     "link = 'https://calendar.google.com/calendar/ical/<CALENDAR ID>/myclasses.ics'",
                     "classes = Calendar(name, link)"
-				]
-			}
-		],
-		"attribute": [
+                ]
+            }
+        ],
+        "attribute": [{
+                "name": "name",
+                "return_type": "string",
+                "description": "name of the calendar"
+            },
             {
-				"name": "name",
-				"return_type": "string",
-				"description": "name of the calendar"
-			},
-            {
-				"name": "link",
-				"return_type": "string",
-				"description": "link to .ics file for calendar"
-			}
+                "name": "link",
+                "return_type": "string",
+                "description": "link to .ics file for calendar"
+            }
 
         ],
-        "method": [
-            {
-				"name": "get_conflicts",
-				"params": "startTime=datetime.datetime.now(), endTime=None, defaultInterval=datetime.timedelta(hours=1)",
-				"return_type": "Events []",
-				"description": "Get list of conflicting events on calendar between startTime and endTime",
-				"example": [
+        "method": [{
+                "name": "get_conflicts",
+                "params": "startTime=datetime.datetime.now(), endTime=None, defaultInterval=datetime.timedelta(hours=1)",
+                "return_type": "Events []",
+                "description": "Get list of conflicting events on calendar between startTime and endTime. By default it will get all conflicts from now to an hour from now. If you specify just a start time, it will look from the start time to an hour after the start time.",
+                "example": [
                     "classes = MyCalendar(name, link)",
                     "conflicts = classes.get_conflicts(datetime.datetime(2019, 3, 18, hour=10, minute=30), datetime.datetime(2019, 3, 18, hour=11, minute=30))",
                     "print([conflict for conflict in conflicts])",
                     ">>> []"
-				]
-			},
+                ]
+            },
             {
-				"name": "create_event",
-				"params": "name, startTime, endTime=None, description='', location='', path=''",
-				"return_type": "String",
-				"description": "Create a new .ics file with the specified event. Returns the string of the ics file",
-				"example": [
+                "name": "create_event",
+                "params": "name, startTime, endTime=None, description='', location='', path=''",
+                "return_type": "String",
+                "description": "Create a new .ics file with the specified event. Returns the string of the ics file",
+                "example": [
                     "name = cal.create_event('Available', datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz), datetime.datetime(2019, 3, 4, hour=15, minute=0, tzinfo=tz))",
                     "print(name)",
                     ">>> Available-2019-04-18 15:41:33.570990.ics"
-				]
-			}
+                ]
+            }
         ]
-    	}
+    }
 }
