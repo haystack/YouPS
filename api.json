@@ -398,7 +398,72 @@
             "thread_params": "cond = True"
         }
     ],
-
+    "getter": [{
+            "name": "get_content",
+            "params": "",
+            "description": "Return a content of this email.",
+            "example": "",
+            "thread": "get_contents",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_date",
+            "params": "",
+            "description": "Return an arrival date of this email.",
+            "example": [
+                "print get_date()",
+                ">>> ['Wed, 29 Aug 2018 01:59:59 -0400']"
+            ],
+            "thread": "get_dates",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_gmail_labels",
+            "params": "",
+            "description": "Return a list of labels of this email.",
+            "example": "",
+            "thread": "get_notes",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_labels",
+            "params": "",
+            "description": "Return a list of notes of this email.",
+            "example": "",
+            "thread": "get_notes",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_sender",
+            "params": "",
+            "description": "Return a sender of this email.",
+            "example": [
+                "print get_sender()",
+                ">>> ['Soya Park <soya@mit.edu>']"
+            ],
+            "thread": "get_senders",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_subject",
+            "params": "",
+            "description": "Return a subject of this email.",
+            "example": "",
+            "thread": "get_subjects",
+            "thread_params": "cond = True"
+        },
+        {
+            "name": "get_recipients",
+            "params": "",
+            "description": "Return a list of recipients of this email.",
+            "example": [
+                "print get_recipients()",
+                ">>> ['Soya Park <soya@mit.edu>', 'Amy Zhang <zhang@mit.edu>']"
+            ],
+            "thread": "get_recipients",
+            "thread_params": "cond = True"
+        }
+    ],
     "mode": [{
             "name": "get_history",
             "params": "email, hours = 24, cond = True",
