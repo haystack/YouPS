@@ -246,16 +246,24 @@
 				]
 			},
 			{
+				"name": "recent_messages",
+				"params": "N=3",
+				"return_type": "Message []",
+				"description": "Return previous messages in this message thread.",
+				"example": [
+				]
+			},
+			{
 				"name": "reply",
 				"params": "content, to=[], cc=[], bcc=[]",
-				"description": "reply to the sender and additional recipients.",
+				"description": "Reply to the sender and additional recipients.",
 				"example": [
 				]
 			},
 			{
 				"name": "reply_all",
 				"params": "address, to=[], cc=[], bcc=[]",
-				"description": "reply all to the sender & recipients and additional recipients",
+				"description": "Reply all to the sender & recipients and additional recipients",
 				"example": [
 				]
 			},
