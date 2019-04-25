@@ -212,9 +212,6 @@
             init_syntax();
 
             $('.group-container a[href]').click(function(e){
-                e.preventDefault()
-                // $("body").scrollTop($(this).offset().top-50);
-                var section = $(this).attr("href");
                 $("html, body").animate({
                     scrollTop: $(section).offset().top -50
                 });
