@@ -169,12 +169,13 @@ def mailbot(arrived_message, address=None, host=None):
 
                     cc_field = original_message._get_cc_friendly()
 
-                    new_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
+                    new_msg["timestamp"] = str(datetime.now().strftime("%m/%d %H:%M:%S,%f"))
                     new_msg["type"] = "new_message"
                     new_msg["from_"] = from_field
                     new_msg["to"] = to_field
                     new_msg["cc"] = cc_field
                     new_msg["trigger"] = "shortcut"
+                    new_msg["log"] = body["text"]
                     new_msg.update(original_message._get_meta_data_friendly())
                     log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
                     log_decoded[new_msg["timestamp"]] = new_msg
