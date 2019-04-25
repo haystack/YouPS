@@ -354,14 +354,14 @@ class Folder(object):
             # folder. Here we have all the known labels for gmail
             # other folders are the same as the label name
             gmail_map = {
-                u'INBOX': '\\Inbox',
-                u'[Gmail]/All Mail': '\\AllMail',
-                u'[Gmail]/Drafts': '\\Drafts',
-                u'[Gmail]/Important': '\\Important',
-                u'[Gmail]/Sent Mail': '\\Sent',
-                u'[Gmail]/Spam': '\\Spam',
-                u'[Gmail]/Starred': '\\Starred',
-                u'[Gmail]/Trash': '\\Trash',
+                u'INBOX': u'\\Inbox',
+                u'[Gmail]/All Mail': u'\\AllMail',
+                u'[Gmail]/Drafts': u'\\Draft',
+                u'[Gmail]/Important': u'\\Important',
+                u'[Gmail]/Sent Mail': u'\\Sent',
+                u'[Gmail]/Spam': u'\\Spam',
+                u'[Gmail]/Starred': u'\\Starred',
+                u'[Gmail]/Trash': u'\\Trash',
             }
             # add the label for the current folder to the flags
             if self.name in gmail_map:
@@ -530,7 +530,7 @@ class Folder(object):
                 text, encoding = part[0], part[1]
                 if encoding:
                     if encoding != 'utf-8' and encoding != 'utf8':
-                        logger.critical(
+                        logger.debug(
                             'parse_subject non utf8 encoding: %s' % encoding)
                     text = text.decode(encoding, errors='ignore')
                 else:
