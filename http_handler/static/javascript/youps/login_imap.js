@@ -698,9 +698,22 @@ $(document).ready(function() {
             run_simulate_on_messages(folders, 5, this);
         }) 
 
-        var method_names = [];
-        document.querySelectorAll('#apis-container h4').forEach(function(element) {
-            method_names.push( element.innerHTML.split("(")[0] );
+        var global_method = [];
+        document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
+            global_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        });
+
+        var entity_method = [];
+        document.querySelectorAll('#apis-container div[property="message"] h4').forEach(function(element) {
+            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        });
+
+        document.querySelectorAll('#apis-container div[property="contact"] h4').forEach(function(element) {
+            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        });
+
+        document.querySelectorAll('#apis-container div[property="calendar"] h4').forEach(function(element) {
+            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
         });
 
         CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor) {
@@ -709,14 +722,21 @@ $(document).ready(function() {
             var start = cur.ch;
             var end = start;
 
-            while (end < curLine.length && /[\w$]/.test(curLine.charAt(end))) ++end;
-            while (start && /[\w$]/.test(curLine.charAt(start - 1))) --start;
+            while (end < curLine.length && /[\w|\\.]/.test(curLine.charAt(end))) ++end;
+            while (start && /[\w]/.test(curLine.charAt(start - 1))) --start;
             var curWord = start !== end && curLine.slice(start, end);
             var regex = new RegExp('^' + curWord, 'i');
 
-            var suggestion = method_names.filter(function(item) {
-                return item.match(regex);
-            }).sort();
+            var suggestion = curLine.includes(".") ? 
+                entity_method.filter(function(item) {
+                    return item.match(regex);
+                }).sort() : 
+                global_method.filter(function(item) {
+                    return item.match(regex);
+                }).sort();
+
+            if (curWord[curWord.length -1] == ".") suggestion = [];
+            console.log(suggestion);
             suggestion.length == 1 ? suggestion.push(" ") : console.log();
 
             return {
