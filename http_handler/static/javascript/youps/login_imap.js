@@ -1045,6 +1045,14 @@ $(document).ready(function() {
         run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
     })
 
+    // Ctrl-s or Command-s
+    $(window).keypress(function(event) {
+        if (!(event.which == 115 && (event.metaKey || event.ctrlKey)) && !(event.which == 19)) return true;
+        event.preventDefault();
+        run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
+        return false;
+    });
+
     btn_shortcut_save.click(function() {
         save_shortcut();
     })

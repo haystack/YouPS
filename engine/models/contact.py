@@ -26,8 +26,6 @@ class Contact(object):
     def __eq__(self, other): 
         
         if isinstance(other, basestring):
-            print (self.name)
-            print (self.email)
             return (other == self.name) or (other == self.email)
 
         if isinstance(other, Contact):
