@@ -176,6 +176,17 @@ class ThreadSchema(models.Model):
     class Meta:
         db_table = "youps_thread"
 
+class CalendarSchema(models.Model):
+    # the primary key
+    id = models.AutoField(primary_key=True)
+    link = models.TextField() 
+    content = models.TextField() 
+
+    # timestamp when it is downloaded
+    downloaded_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        db_table = "youps_calendar"
 
 class MailbotMode(models.Model):
     uid = models.IntegerField()

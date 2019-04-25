@@ -42,6 +42,28 @@ def events(url=None, file=None, string_content=None, start=None, end=None, fix_a
 
     return found_events
 
+def download_calendar(url=None, file=None, string_content=None, fix_apple=False):
+    content = None
+
+    if url:
+        content = ICalDownload().data_from_url(url, apple_fix=fix_apple)
+
+    if not content and file:
+        content = ICalDownload().data_from_file(file, apple_fix=fix_apple)
+
+    if not content and string_content:
+        content = ICalDownload().data_from_string(string_content,
+                                                  apple_fix=fix_apple)
+
+    return content
+
+
+def find_conflicts(content, start=None, end=None):
+    found_events = []
+    found_events += parse_events(content, start=start, end=end)
+
+    return found_events
+
 
 def request_data(key, url, file, string_content, start, end, fix_apple):
     """

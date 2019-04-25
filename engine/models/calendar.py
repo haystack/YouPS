@@ -1,9 +1,12 @@
+import logging
 from ics import Calendar, Event
-from icalevents.icalevents import events
+from icalevents.icalevents import events, download_calendar, find_conflicts
 from dateutil.tz import tzlocal
-
+from schema.youps import CalendarSchema
+from django.utils import timezone
 import datetime
 
+logger = logging.getLogger('youps')  # type: logging.Logger
 
 class MyCalendar(object):
     """Calendar Module for Youps."""
@@ -38,8 +41,32 @@ class MyCalendar(object):
         conflicts = []
 
         try:
-            conflicts = events(self.link, fix_apple=self.apple, start=startTime, end=endTime)
-        except:
+            calendars = CalendarSchema.objects.filter(link=self.link)
+            content = ''
+            # if there is no calendar or it is out dated, download calendar again
+            if not calendars.exists():
+                c = CalendarSchema(link= self.link)
+                content = download_calendar(self.link, fix_apple=self.apple)
+
+                c.content = content
+                c.save()
+                
+            elif calendars[0].downloaded_at + datetime.timedelta(seconds=300) < timezone.now():
+                content = download_calendar(self.link, fix_apple=self.apple)
+                c = calendars[0]
+                c.downloaded_at = timezone.now()
+                c.content = content
+                c.save()
+
+            else:
+                c = calendars[0]
+                content = c.content
+
+            conflicts = find_conflicts(content, start=startTime, end=endTime)
+
+
+        except Exception as e:
+            logger.critical(e)
             raise Exception('Provided link was invalid: {}'.format(self.link))
 
         conflictDictionaries = [

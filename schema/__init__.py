@@ -1,7 +1,7 @@
 from schema.models import UserProfile
 from schema.youps import (ContactSchema, EmailRule, FolderSchema, ImapAccount,
                           MailbotMode, Message_Thread,
-                          MessageSchema)
+                          MessageSchema, CalendarSchema)
 
 __all__ = ['ContactSchema',
            'EmailRule',
@@ -11,5 +11,6 @@ __all__ = ['ContactSchema',
            'MessageSchema',
            'Message_Thread',
            'UserProfile',
-           'TaskManager'
+           'TaskManager',
+           'CalendarSchema'
            ]
