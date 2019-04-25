@@ -16,7 +16,7 @@ me = ImapAccount.objects.get(email="$email")
 me.execution_log = ""
 MessageSchema.objects.filter(imap_account=me).delete()
 FolderSchema.objects.filter(imap_account=me).delete()
-UniqueMessageSchema.objects.filter(imap_account=me).delete()
+BaseMessage.objects.filter(imap_account=me).delete()
 me.is_initialized = False
 me.save()
 EOF

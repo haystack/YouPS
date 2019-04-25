@@ -34,13 +34,13 @@ class Message(object):
     _header_descriptors = 'BODY.PEEK[HEADER.FIELDS (MESSAGE-ID SUBJECT FROM TO CC BCC DATE IN-REPLY-TO)]'
     # the key used to access the header descriptors after a fetch
     _header_fields_key = _header_descriptors.replace('.PEEK', '')
-
+    # the descriptors used when we are updating flags
     _flags_descriptors = ['FLAGS']
 
     _user_level_func = ['on_message']
 
     def __init__(self, message_schema, imap_client, is_simulate=False):
-        # type: (MessageSchema, IMAPClient) -> Message
+        # type: (MessageSchema, IMAPClient, t.Optional[bool]) -> Message
 
         self._schema = message_schema  # type: MessageSchema
 
@@ -56,6 +56,12 @@ class Message(object):
 
     @staticmethod
     def _get_flag_descriptors(is_gmail):
+        # type: (bool) -> t.List[t.Text]
+        """get the descriptors for an imap fetch call when updating flags
+        
+        Returns:
+            t.List[t.Text]: descriptors for an imap fetch call 
+        """
         descriptors = Message._flags_descriptors
         if is_gmail:
             return descriptors + ['X-GM-LABELS']
@@ -64,6 +70,11 @@ class Message(object):
     @staticmethod
     def _get_descriptors(is_gmail, use_key=False):
         # type: (bool, bool) -> t.List[t.Text]
+        """Get the descriptors for an imap fetch call when saving messages
+        
+        Returns:
+            t.List[t.Text]: descriptors for an imap fetch call
+        """
         descriptors = Message._descriptors + [Message._header_descriptors]
         if use_key:
             descriptors = Message._descriptors + [Message._header_fields_key]
@@ -75,12 +86,6 @@ class Message(object):
 
     def __repr__(self):
         return repr('Message object "%s"' % str(self.subject))
-
-    def _before(self):
-        pass
-
-    def _after(self):
-        pass
 
     @property
     def _uid(self):
@@ -118,11 +123,6 @@ class Message(object):
             List(str): List of flags on the message
         """
         return self._flags if self.is_simulate else self._schema.base_message.flags
-
-    def diff_attr(self, obj_instance):
-        for attr, value in self.__dict__.iteritems():
-            if getattr(self, attr) != getattr(obj_instance, attr):
-                print ("different val", attr, value)
 
     @flags.setter
     def flags(self, value):
@@ -178,6 +178,7 @@ class Message(object):
         from engine.models.thread import Thread
         if self._schema.base_message._thread is not None:
             return Thread(self._schema.base_message._thread, self._imap_client)
+        # TODO we should create the thread otherwise
         return None
 
     @property
@@ -265,6 +266,9 @@ class Message(object):
     def reply_to(self):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is replied to
+
+        These are the addresses the message is meant to be sent to if the client
+        hits reply.
 
         Returns:
             t.List[Contact]: The contacts in the reply_to field of the message
@@ -425,8 +429,10 @@ class Message(object):
         return flag in self.flags
 
     def add_flags(self, flags):
-        # type: (t.Iterable[t.AnyStr]) -> None
+        # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the flags in a list of flags to the message
+
+        This method can also optionally take a single string as a flag.
 
         Raises:
             TypeError: flags is not an iterable or a string
@@ -438,6 +444,7 @@ class Message(object):
         if not ok:
             return
 
+        # TODO this and remove flags is broken we should map known flags to the correct place and then add everything else in the same place
         if not self.is_simulate:
             # TODO the add methods return flags we should use those values instead of doing the work ourself
             if self._schema.imap_account.is_gmail:
@@ -450,8 +457,10 @@ class Message(object):
         # self.diff_attr(cp_self)
 
     def remove_flags(self, flags):
-        # type: (t.Iterable[t.AnyStr]) -> None
+        # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Remove each of the flags in a list of flags from the message
+        
+        This method can also optionally take a single string as a flag.
 
         Raises:
             TypeError: flags is not an iterable or a string

@@ -65,7 +65,7 @@ mysql -u root -p$password <<EOF
         COLLATE utf8mb4_unicode_ci;
 
     ALTER TABLE
-        youps_unique_message
+        youps_base_message
         CONVERT TO CHARACTER SET utf8mb4
         COLLATE utf8mb4_unicode_ci;
 

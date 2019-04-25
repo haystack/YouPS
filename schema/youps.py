@@ -79,7 +79,7 @@ class FolderSchema(models.Model):
         db_table = "youps_folder"
         unique_together = ("name", "imap_account")
 
-class UniqueMessageSchema(models.Model):
+class BaseMessage(models.Model):
     """Message Schema which is associated with a single message_id
     """
 
@@ -130,7 +130,7 @@ class UniqueMessageSchema(models.Model):
     task = models.CharField('task', max_length=300, blank=True)
 
     class Meta:
-        db_table = "youps_unique_message"
+        db_table = "youps_base_message"
         # message uid is unique per folder, folder is already unique per account
         unique_together = ("imap_account", "message_id")
         
@@ -139,7 +139,7 @@ class MessageSchema(models.Model):
     id = models.AutoField(primary_key=True)
     # the underlying message this message is used for
     # this captures the notion that a message can be in multiple folders
-    base_message = models.ForeignKey(UniqueMessageSchema)  # type: UniqueMessageSchema
+    base_message = models.ForeignKey(BaseMessage)  # type: BaseMessage 
     # TODO we can possibly get rid of imap_account since imap -> folder -> msg
     # each message is associated with a single ImapAccount
     imap_account = models.ForeignKey('ImapAccount')  # type: ImapAccount
@@ -181,12 +181,12 @@ class ThreadSchema(models.Model):
     id = models.AutoField(primary_key=True)
     # each thread is associated with a single ImapAccount
     imap_account = models.ForeignKey('ImapAccount')
-    # each folder is associated with a single folder
-    folder = models.ForeignKey('FolderSchema')
-    gm_thread_id = models.TextField(blank=True) 
+    # gmail threads have a gm_thread_id which ties them all together
+    gm_thread_id = models.CharField(max_length=191, blank=True) 
 
     class Meta:
         db_table = "youps_thread"
+        unique_together = ('imap_account', 'gm_thread_id')
 
 class CalendarSchema(models.Model):
     # the primary key

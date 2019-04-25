@@ -4,7 +4,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 import chardet
 import logging
 from engine.models.message import Message
-from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchema, ImapAccount, UniqueMessageSchema  # noqa: F401 ignore unused we use it for typing
+from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchema, ImapAccount, BaseMessage  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
@@ -379,7 +379,8 @@ class Folder(object):
         """
 
         # get the descriptors for the message
-        descriptors = Message._get_descriptors(self._imap_account.is_gmail)
+        is_gmail = self._imap_account.is_gmail
+        descriptors = Message._get_descriptors(is_gmail)
 
         uid_criteria = ""
         if urgent:
@@ -401,7 +402,7 @@ class Folder(object):
 
             # make sure all the fields we're interested in are in the message_data
             ok = self._check_fields_in_fetch(
-                ['SEQ'] + Message._get_descriptors(self._imap_account.is_gmail, True), message_data)
+                ['SEQ'] + Message._get_descriptors(is_gmail, True), message_data)
             if not ok:
                 continue
 
@@ -417,14 +418,14 @@ class Folder(object):
 
             is_message_arrival = False
             try:
-                base_message = UniqueMessageSchema.objects.get(
-                    imap_account=self._imap_account, message_id=metadata['message-id'])  # type: UniqueMessageSchema
+                base_message = BaseMessage.objects.get(
+                    imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage 
                 if base_message.flags != message_data['FLAGS']:
                     base_message.flags = message_data['FLAGS']
                     base_message.save()
-            except UniqueMessageSchema.DoesNotExist:
+            except BaseMessage.DoesNotExist:
                 is_message_arrival = True
-                base_message = UniqueMessageSchema(
+                base_message = BaseMessage(
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
                     flags=message_data['FLAGS'],
@@ -434,7 +435,7 @@ class Folder(object):
                         message_data.get('INTERNALDATE', '')),
                     from_m=self._find_or_create_contacts(metadata['from'])[
                         0] if 'from' in metadata else None,
-                    _thread=None  # TODO
+                    _thread=self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else None
                 )
                 base_message.save()
                 # create and save the message contacts
@@ -481,7 +482,7 @@ class Folder(object):
                         Message(new_message, self._imap_client)))
                     logger.info('folder {f}: uid {u}: message_moved'.format(f=self.name, u=uid))
 
-    def _find_or_create_thread(self, gm_thread_id):
+    def _find_or_create_gmail_thread(self, gm_thread_id):
         # type: (int) -> ThreadSchema
         """Return a reference to the thread schema.
 
@@ -490,18 +491,14 @@ class Folder(object):
 
         """
 
-        thread_schema = None  # type: ThreadSchema
         try:
-            thread_schema = ThreadSchema.objects.get(
-                imap_account=self._imap_account, folder=self._schema, gm_thread_id=gm_thread_id)
+            return ThreadSchema.objects.get(
+                imap_account=self._imap_account, gm_thread_id=gm_thread_id)
         except ThreadSchema.DoesNotExist:
             thread_schema = ThreadSchema(
-                imap_account=self._imap_account, folder=self._schema, gm_thread_id=gm_thread_id)
+                imap_account=self._imap_account, gm_thread_id=gm_thread_id)
             thread_schema.save()
-            logger.debug("%s created thread %s in database" %
-                         (self, gm_thread_id))
-
-        return thread_schema
+            return thread_schema
 
     def _parse_email_header(self, header):
         # type: (t.Text) -> t.Dict[t.Text, t.Text]
