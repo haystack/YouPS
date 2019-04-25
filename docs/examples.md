@@ -104,7 +104,27 @@ def on_message(msg):
     sender = message.from_
     last_ten_messages = sender.recent_messages(10)
     if all(m.date().date() == datetime.today().date() for m in last_ten_messages):
-        m.priority("urgent")
+        m.priority = "urgent"
+```
+
+----------
+
+#### Set a deadline for a certain message using YoUPS shortcut
+
+Set a deadline of a message within your email interface.
+
+Tags: []
+
+
+```python
+# fired when you forward a message to YoUPS. 
+import re, datetime
+def on_command(my_message, content):
+    # DEADLINE yyyy/mm/dd => add Deadline yyyy/mm/dd to this message
+    m = re.search('(?<=DEADLINE )(.*)', content)
+    yy, mm, dd= m.groups()[0].split("/")
+    
+    my_message.deadline = datetime.datetime.strptime(" ".join([yy,mm,dd]), "%Y %m %d")
 ```
 
 ----------
