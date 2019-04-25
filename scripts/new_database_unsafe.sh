@@ -43,7 +43,7 @@ python manage.py migrate schema && \
         COLLATE utf8mb4_unicode_ci;
 
     ALTER TABLE
-        youps_message
+        youps_unique_message
         CONVERT TO CHARACTER SET utf8mb4
         COLLATE utf8mb4_unicode_ci;
 

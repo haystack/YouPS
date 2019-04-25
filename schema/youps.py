@@ -79,34 +79,27 @@ class FolderSchema(models.Model):
         db_table = "youps_folder"
         unique_together = ("name", "imap_account")
 
+class UniqueMessageSchema(models.Model):
+    """Message Schema which is associated with a single message_id
+    """
 
-class MessageSchema(models.Model):
     # the primary key
     id = models.AutoField(primary_key=True)
-    # TODO we can possibly get rid of imap_account since imap -> folder -> msg
-    # each message is associated with a single ImapAccount
-    imap_account = models.ForeignKey('ImapAccount')  # type: ImapAccount
-    # each message is associated with a single Folder
-    folder_schema = models.ForeignKey(FolderSchema)  # type: FolderSchema
-    # each message has a uid
-    uid = models.IntegerField(default=-1)
-    # the message sequence number identifies the offest of the message in the folder
-    msn = models.IntegerField(default=-1)
+    # imap account associated with the unique message
+    imap_account = models.ForeignKey(ImapAccount)  # type: ImapAccount
+    # the id of the message this is unique for a message on a given email account
+    message_id = models.CharField(max_length=191)
+
     # the flags associated with the message
     _flags = models.TextField(db_column="flags")
-
     # the date when the message was sent
     date = models.DateTimeField(null=True, blank=True)
     # the subject of the message
     subject = models.TextField(null=True, blank=True)
-    # the id of the message
-    message_id = models.TextField()
     # the date when the message was received
     internal_date = models.DateTimeField()
     # the contact the message is from 
     from_m = models.ForeignKey('ContactSchema', null=True, related_name='from_messages')
-    # the contact the message was sent by, i.e. if a program sends a message for someone else
-    sender = models.ForeignKey('ContactSchema', null=True, related_name='sender_messages')
     # if a reply is sent it should be sent to these contacts
     reply_to = models.ManyToManyField('ContactSchema', related_name='reply_to_messages')
     # the contact the message is to
@@ -117,8 +110,6 @@ class MessageSchema(models.Model):
     bcc = models.ManyToManyField('ContactSchema', related_name='bcc_messages')
     # the thread that the message is associated with
     _thread = models.ForeignKey('ThreadSchema', related_name='messages', blank=True, null=True)
-
-
 
     @property
     def flags(self):
@@ -137,6 +128,27 @@ class MessageSchema(models.Model):
     topic = models.CharField('topic', max_length=300, blank=True)
     priority = models.CharField('priority', max_length=300, blank=True)
     task = models.CharField('task', max_length=300, blank=True)
+
+    class Meta:
+        db_table = "youps_unique_message"
+        # message uid is unique per folder, folder is already unique per account
+        unique_together = ("imap_account", "message_id")
+        
+class MessageSchema(models.Model):
+    # the primary key
+    id = models.AutoField(primary_key=True)
+    # the underlying message this message is used for
+    # this captures the notion that a message can be in multiple folders
+    base_message = models.ForeignKey(UniqueMessageSchema)  # type: UniqueMessageSchema
+    # TODO we can possibly get rid of imap_account since imap -> folder -> msg
+    # each message is associated with a single ImapAccount
+    imap_account = models.ForeignKey('ImapAccount')  # type: ImapAccount
+    # each message is associated with a single Folder
+    folder_schema = models.ForeignKey(FolderSchema)  # type: FolderSchema
+    # each message has a uid
+    uid = models.IntegerField(default=-1)
+    # the message sequence number identifies the offest of the message in the folder
+    msn = models.IntegerField(default=-1)
 
     class Meta:
         db_table = "youps_message"

@@ -559,7 +559,7 @@ label {
 
 /* TODO removed after stablized.  */
 /* .debugger-container, */
-div[type='repeat'], div[type='flag-change'] {
+div[type='repeat'] {
   display: none;
 }
 

@@ -10,7 +10,7 @@ from StringIO import StringIO
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema, TaskManager  # noqa: F401 ignore unused we use it for typing
 
-from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
+from engine.models.event_data import MessageArrivalData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
 
@@ -239,7 +239,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                         # TODO this should be cleaned up. accessing class name is ugly and this is very wet (Not DRY)
                         if event_data.message._schema.folder_schema in valid_folders:
                             event_class_name = type(event_data).__name__
-                            if (event_class_name == "NewMessageData" and rule.type =="new-message") or \
+                            if (event_class_name == "MessageArrivalData" and rule.type =="new-message") or \
                                     (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
                                 event_data.fire_event(mailbox.new_message_handler)
                                 is_fired = True
@@ -377,7 +377,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
         # save logs to db
         else:
-            logger.info(new_log)
+            # logger.info(new_log)
             res['imap_log'] = new_log
 
         user_std_out.close()

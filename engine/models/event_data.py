@@ -20,11 +20,10 @@ class AbstractEventData(object):
         """
         pass
 
-
-class NewMessageData(AbstractEventData):
+class MessageMovedData(AbstractEventData):
     def __init__(self, message):
-        # type: (Message) -> NewMessageData
-        super(NewMessageData, self).__init__(message)
+        # type: (Message) -> MessageMovedData 
+        super(MessageMovedData, self).__init__(message)
 
     def fire_event(self, event):
         # type : (Event) -> None
@@ -32,7 +31,18 @@ class NewMessageData(AbstractEventData):
             self.message._schema.folder_schema.name)
         event.fire(self.message)
 
-class NewMessageDataScheduled(NewMessageData):
+class MessageArrivalData(AbstractEventData):
+    def __init__(self, message):
+        # type: (Message) -> MessageArrivalData
+        super(MessageArrivalData, self).__init__(message)
+
+    def fire_event(self, event):
+        # type : (Event) -> None
+        self.message._imap_client.select_folder(
+            self.message._schema.folder_schema.name)
+        event.fire(self.message)
+
+class NewMessageDataScheduled(MessageArrivalData):
     def __init__(self, message):
         # type: (Message) -> NewMessageDataScheduled
         super(NewMessageDataScheduled, self).__init__(message)
@@ -41,7 +51,7 @@ class NewMessageDataScheduled(NewMessageData):
         # type : (Event) -> None
         super(NewMessageDataScheduled, self).fire_event(event)
 
-class NewMessageDataDue(NewMessageData):
+class NewMessageDataDue(MessageArrivalData):
     def __init__(self, message):
         # type: (Message) -> NewMessageDataDue
         super(NewMessageDataDue, self).__init__(message)
