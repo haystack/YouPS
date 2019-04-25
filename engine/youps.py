@@ -381,7 +381,7 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
                 "cc": cc_field,
                 "flags": [f.encode('utf8', 'replace') for f in message.flags],
                 "date": str(message.date),
-                "deadline": message.deadline, 
+                "deadline": str(message.deadline), 
                 "is_read": message.is_read, 
                 "is_deleted": message.is_deleted, 
                 "is_recent": message.is_recent,
