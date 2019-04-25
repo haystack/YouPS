@@ -125,6 +125,11 @@ def loop_sync_user_inbox():
         imapAccounts = ImapAccount.objects.filter(
             is_initialized=True)  # type: t.List[ImapAccount]
         for imapAccount in imapAccounts:
+            # refresh from database
+            imapAccount = ImapAccount.objects.get(id=imapAccount.id)
+            if not imapAccount.is_initialized:
+                continue
+
             imapAccount_email = imapAccount.email
 
             try:
