@@ -773,6 +773,7 @@ $(document).ready(function() {
 
     // add a new editor
     $("#editor-container").on("click", ".btn-new-editor", function() {
+        trackOutboundLink('new editor -' + $(this).attr("type"));
         var $container = $( $(this).siblings("[type='{0}']".format($(this).attr("type"))) );
         var editor_elem = get_panel_elem($(this).attr("type"), true);
         $container.append( editor_elem );
@@ -812,6 +813,7 @@ $(document).ready(function() {
 
     // remove / revive an editor
     $("#editor-container").on("click", ".editable-container .flex_item_left", function() {
+        trackOutboundLink('remove editor -' + $(this).attr("type"));
         if ($(this).parents('.panel').hasClass('removed')) {
             $(this).parents('.panel').removeClass('removed');
             run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
@@ -885,6 +887,7 @@ $(document).ready(function() {
 
     // debugging inspector
     $("#editor-container").on("click", ".debugger-container .detail-inspect", function() {
+        trackOutboundLink('debug - detail');
         // $(this).attr("msg-id") // call simulate value
         $(this).parents("table").find("button").removeClass("detail-viewing");
         $(this).addClass("detail-viewing");
@@ -920,6 +923,7 @@ $(document).ready(function() {
 
     // run simulation on the editor
     $("#editor-container").on("click", ".btn-debug-update", function() {
+        trackOutboundLink('run simulate');
         var editor_rule_container = $(this).parents('div[rule-id]');
         debugger;
 
