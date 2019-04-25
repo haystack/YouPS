@@ -15,7 +15,7 @@ from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it 
 from engine.models.message import Message
 
 from django.utils import timezone
-
+from engine.models.calendar import MyCalendar
 from smtp_handler.utils import send_email
 
 
@@ -89,6 +89,8 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
             'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
             'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
             'handle_on_deadline': lambda f: mailbox.deadline_handler.handle(f),
+            'Calendar': MyCalendar,
+
         }
 
         # simulate request. normally from UI

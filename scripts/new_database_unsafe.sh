@@ -71,6 +71,11 @@ python manage.py migrate schema && \
         schema_emailrule
         CONVERT TO CHARACTER SET utf8mb4
         COLLATE utf8mb4_unicode_ci;
+
+    ALTER TABLE
+        youps_calendar
+        CONVERT TO CHARACTER SET utf8mb4
+        COLLATE utf8mb4_unicode_ci;
 EOF
 } && \
 # set the domain name for the site
