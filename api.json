@@ -568,7 +568,7 @@
         "method": [{
                 "name": "get_conflicts",
                 "params": "startTime=datetime.datetime.now(), endTime=None, defaultInterval=datetime.timedelta(hours=1)",
-                "return_type": "Events []",
+                "return_type": "dict",
                 "description": "Get list of conflicting events on calendar between startTime and endTime. By default it will get all conflicts from now to an hour from now. If you specify just a start time, it will look from the start time to an hour after the start time.",
                 "example": [
                     "classes = Calendar(name, link)",
@@ -597,7 +597,7 @@
             {
                 "name": "create_event",
                 "params": "name, startTime, endTime=None, description='', location='', path=''",
-                "return_type": "String",
+                "return_type": "string",
                 "description": "Create a new .ics file with the specified event. Returns the string of the ics file",
                 "example": [
                     "startTime = datetime.datetime(2019, 3, 4, hour=14, minute=0, tzinfo=tz)",
