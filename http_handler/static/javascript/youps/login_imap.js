@@ -1550,6 +1550,9 @@ $(document).ready(function() {
                             $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
                           });      
                     }
+
+                    // Save the code as well    
+                    run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
                 }
             );
         }
