@@ -1241,7 +1241,9 @@ $(document).ready(function() {
                     notify(res, false);
                 }
             }
-        );
+        ).fail(function(res) {
+            alert("Please refresh the page!");
+        });
         
         setTimeout(fetch_log, 2 * 1000); // 2 second
     }

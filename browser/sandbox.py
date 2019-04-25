@@ -170,14 +170,12 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                 # event for new message arrival
                 # TODO maybe caputre this info after execute log?
                 if True:
+                    # This is to log for users
                     from_field = event_data.message._get_from_friendly()
 
                     to_field = event_data.message._get_to_friendly()
 
                     cc_field = event_data.message._get_cc_friendly()
-
-                    # This is to log for users
-                    new_msg = event_data.message._get_meta_data_friendly()
 
                     new_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
                     new_msg["type"] = "new_message"
@@ -188,6 +186,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                 # if the the engine is not turned on yet, still leave the log of message arrival
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
                 if mode is None:
+                    new_msg = event_data.message._get_meta_data_friendly()
                     new_log[new_msg["timestamp"]] = new_msg
 
                     continue
@@ -272,6 +271,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                         copy_msg["error"] = True
                     finally:
                         if is_fired:
+                            copy_msg.update(event_data.message._get_meta_data_friendly())
                             logger.info("handling fired %s %s" % (rule.name, event_data.message.subject))
                             copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
 
