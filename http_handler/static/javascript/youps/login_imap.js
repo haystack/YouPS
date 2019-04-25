@@ -687,12 +687,15 @@ $(document).ready(function() {
         $("div[rule-id]").each(function() {
             var emailrule_id = $(this).attr('rule-id');
 
+            var folders = [];
             for(var i=0; i < RULE_FOLDER.length ; i++) {
                 if(RULE_FOLDER[i][1] == emailrule_id) {
                     $(this).find('.folder-container input[value="'+ RULE_FOLDER[i][0] + '"]').prop( "checked", true );
-                    run_simulate_on_messages(RULE_FOLDER[i][0], 5, this);
+                    folders.push(RULE_FOLDER[i][0]);
                 }
             }
+
+            run_simulate_on_messages(folders, 5, this);
         }) 
 
         var method_names = [];
@@ -806,7 +809,7 @@ $(document).ready(function() {
         $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
             if(elem.value.toLowerCase() == "inbox") {
                 elem.checked = true;
-                run_simulate_on_messages(elem.value, 5, $($container.find('div[rule-id]').last()[0]));
+                run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
             }
         })
     });
@@ -845,7 +848,7 @@ $(document).ready(function() {
         var editor_rule_container = $(this).parents('div[rule-id]');
 
         if ($(this).is(':checked')) {
-            run_simulate_on_messages($(this).val(), 5, editor_rule_container);
+            run_simulate_on_messages([$(this).val()], 5, editor_rule_container);
         }
         else { // remove from the table
                 var dt_elem = $(this).parents('.panel-body').find('.debugger-container table')[0];
@@ -927,7 +930,11 @@ $(document).ready(function() {
         var editor_rule_container = $(this).parents('div[rule-id]');
         debugger;
 
-        run_simulate_on_messages($(editor_rule_container).find('.folder-container input:checked').val(), 5, editor_rule_container);
+        var folders = [];
+        $.each($(editor_rule_container).find('.folder-container input:checked'), function(index, val) {
+            folders.push($(this).val())
+        })
+        run_simulate_on_messages(folders, 5, editor_rule_container);
     }); 
 
     // Tab name editor
@@ -1350,7 +1357,7 @@ $(document).ready(function() {
             );
         }
 
-        function run_code(is_dry_run, is_running) {
+        function run_code(is_dry_run, is_running, silent=false) {
             var cur_mode;
             try {
                 cur_mode = get_current_mode();
@@ -1398,8 +1405,9 @@ $(document).ready(function() {
                             // $('#donotsend-msg').show();
                             // $('#donotsend-msg').html(res['code']);
                         }
-                        else {                        
-                            notify(res, true);
+                        else {            
+                            if(!silent)             
+                                notify(res, true);
                         }
                     }
                     else {
@@ -1474,8 +1482,7 @@ $(document).ready(function() {
 
         function run_simulate_on_messages(folder_name, N, editor_rule_container) {
             show_loader(true);
-            
-
+        
             var params = {
                 'folder_name': folder_name,
                 'N': N,
@@ -1495,8 +1502,8 @@ $(document).ready(function() {
                         var dt_elem = $(editor_rule_container).find('.debugger-container table')[0];
                         var t = $( dt_elem ).DataTable();
                         // delete all before added new 
-                        $.each($(dt_elem).find('tr[folder]'.format(folder_name)), function(index, elem) {
-                            if(folder_name == $(elem).attr('folder'))
+                        $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
+                            if(folder_name.includes($(elem).attr('folder')))
                                 t.row( elem ).remove().draw();  
                         })
 
@@ -1518,7 +1525,7 @@ $(document).ready(function() {
                                 .attr('line-number2', 1);
                                 
                                 // .attr('line-number{0}', 1); // TODO add activated line
-                            if(Message["error"] == "True")
+                            if(Message["error"])
                                 $( added_row ).find("td:eq(2)").addClass("error");
                             // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
                             if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
@@ -1560,7 +1567,7 @@ $(document).ready(function() {
                     }
 
                     // Save the code as well    
-                    run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
+                    run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active'), true ); 
                 }
             );
         }
