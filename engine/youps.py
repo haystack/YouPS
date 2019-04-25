@@ -300,7 +300,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     logging.debug(res)
     return res
 
-def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
+def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
     """This function is called to evaluate user's code on messages
 
         Args:
@@ -335,62 +335,60 @@ def run_simulate_on_messages(user, email, folder_name, N=3, code=''):
     try:
         res['messages'] = {}
 
-        
-        messages = MessageSchema.objects.filter(imap_account=imapAccount, folder_schema__name=folder_name).order_by("-date")[:N]
-        imap.select_folder( folder_name )
+        for folder_name in folder_names:
+            messages = MessageSchema.objects.filter(imap_account=imapAccount, folder_schema__name=folder_name).order_by("-date")[:N]
 
-        for message_schema in messages:
-            
-            imap_res = interpret(MailBox(imapAccount, imap), None, bypass_queue=True, is_simulate=True, extra_info={'code': code, 'msg-id': message_schema.id})
-            logger.info(imap_res)
+            for message_schema in messages:
+                imap_res = interpret(MailBox(imapAccount, imap), None, bypass_queue=True, is_simulate=True, extra_info={'code': code, 'msg-id': message_schema.id})
+                logger.info(imap_res)
 
-            message = Message(message_schema, imap)
+                message = Message(message_schema, imap)
 
-            from_field = None
-            if message_schema.from_m:
-                from_field = {
-                    "name": message.from_.name,
-                    "email": message.from_.email,
-                    "organization": message.from_.organization,
-                    "geolocation": message.from_.geolocation
+                from_field = None
+                if message_schema.from_m:
+                    from_field = {
+                        "name": message.from_.name,
+                        "email": message.from_.email,
+                        "organization": message.from_.organization,
+                        "geolocation": message.from_.geolocation
+                    }
+                    
+                to_field = [{
+                    "name": t.name,
+                    "email": t.email,
+                    "organization": t.organization,
+                    "geolocation": t.geolocation
+                } for t in message.to]
+
+                cc_field = [{
+                    "name": t.name,
+                    "email": t.email,
+                    "organization": t.organization,
+                    "geolocation": t.geolocation
+                } for t in message.cc]
+
+                # TODO attach activated line
+                # This is to log for users
+                new_msg = {
+                    "timestamp": str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")), 
+                    "type": "new_message", 
+                    "folder": message.folder.name, 
+                    "from_": from_field, 
+                    "subject": message.subject, 
+                    "to": to_field,
+                    "cc": cc_field,
+                    "flags": [f.encode('utf8', 'replace') for f in message.flags],
+                    "date": str(message.date),
+                    "deadline": str(message.deadline), 
+                    "is_read": message.is_read, 
+                    "is_deleted": message.is_deleted, 
+                    "is_recent": message.is_recent,
+                    "log": imap_res['appended_log'][message_schema.id]['log'],
+                    "error": imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
                 }
                 
-            to_field = [{
-                "name": t.name,
-                "email": t.email,
-                "organization": t.organization,
-                "geolocation": t.geolocation
-            } for t in message.to]
 
-            cc_field = [{
-                "name": t.name,
-                "email": t.email,
-                "organization": t.organization,
-                "geolocation": t.geolocation
-            } for t in message.cc]
-
-            # TODO attach activated line
-            # This is to log for users
-            new_msg = {
-                "timestamp": str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")), 
-                "type": "new_message", 
-                "folder": message.folder.name, 
-                "from_": from_field, 
-                "subject": message.subject, 
-                "to": to_field,
-                "cc": cc_field,
-                "flags": [f.encode('utf8', 'replace') for f in message.flags],
-                "date": str(message.date),
-                "deadline": str(message.deadline), 
-                "is_read": message.is_read, 
-                "is_deleted": message.is_deleted, 
-                "is_recent": message.is_recent,
-                "log": imap_res['appended_log'][message_schema.id]['log'],
-                "error": imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
-            }
-            
-
-            res['messages'][message_schema.id] = new_msg
+                res['messages'][message_schema.id] = new_msg
         
         res['status'] = True
     except ImapAccount.DoesNotExist:

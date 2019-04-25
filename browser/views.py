@@ -1564,7 +1564,8 @@ def run_simulate_on_messages(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		
-		folder_name = request.POST['folder_name']
+		# folder_name = request.POST['folder_name']
+		folder_name = request.POST.getlist('folder_name[]')
 		N = request.POST['N']
 		code = request.POST['user_code']
 		

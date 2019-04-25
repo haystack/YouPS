@@ -23,6 +23,14 @@ class Contact(object):
     def __repr__(self):
         return repr("Contact object %s" % str(self.name or self.email))
 
+    def __eq__(self, other): 
+        
+        if isinstance(other, basestring):
+            return (other == self.name) or (other == self.email)
+
+        if isinstance(other, Contact):
+            return (other.name == self.name) and (other.email == self.email)
+
     @property
     def email(self):
         # type: () -> t.AnyStr

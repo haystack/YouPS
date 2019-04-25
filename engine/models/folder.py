@@ -390,7 +390,7 @@ class Folder(object):
     
             try: 
                 f_tmp = ""
-                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'CC:', 'Bcc:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
+                header_field = ['Subject:', 'From:', 'To:', 'Cc:', 'CC:', 'Bcc:', 'date:', 'Date:', 'In-Reply-To:', 'Message-Id:', 'Message-ID:', 'Message-id:']
                 
                 for v in re.split('('+ "|".join(header_field) +')', header):
                     if not v:

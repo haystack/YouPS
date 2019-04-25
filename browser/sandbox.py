@@ -119,6 +119,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                         # _CACHE_ON_MESSAGE_ = None
                         # code = "%s%s%s" %('_CACHE_ON_MESSAGE_= on_message', '\n', code)
                         # user_environ['on_message'] = _CACHE_ON_MESSAGE_
+                        logger.info(new_message.subject)
                         exec(code + "\non_message(new_message)", user_environ)    
 
                     elif "on_flag_change" in code:
@@ -148,7 +149,8 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     msg_log["error"] = True
                 finally:
                     # copy_msg["trigger"] = rule.name
-
+                    logger.debug(user_std_out.getvalue())
+                    logger.debug(msg_log["log"])
                     msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                     res['appended_log'][m_schema.id] = msg_log
 
@@ -186,7 +188,8 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                 # if the the engine is not turned on yet, still leave the log of message arrival
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
                 if mode is None:
-                    new_msg = event_data.message._get_meta_data_friendly()
+                    new_msg.update(event_data.message._get_meta_data_friendly())
+                    # logger.info(new_msg)
                     new_log[new_msg["timestamp"]] = new_msg
 
                     continue
