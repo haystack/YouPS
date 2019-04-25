@@ -186,7 +186,8 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                 # if the the engine is not turned on yet, still leave the log of message arrival
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
                 if mode is None:
-                    new_msg = event_data.message._get_meta_data_friendly()
+                    new_msg.update(event_data.message._get_meta_data_friendly())
+                    # logger.info(new_msg)
                     new_log[new_msg["timestamp"]] = new_msg
 
                     continue

@@ -17,12 +17,79 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-139042591-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-139042591-1');
+</script>
+
+
+<!-- <script src="//www.google-analytics.com/analytics.js"></script> -->
+<script>
+		// (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		// (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		// m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		// })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		
+		// ga('create', 'UA-139052166-1', 'auto');
+		// ga('send', 'pageview');
+		
+
+		// (function(i, s, o, g, r, a, m) {
+        //     i['GoogleAnalyticsObject'] = r;
+        //     i[r] = i[r] || function() {
+        //         (i[r].q = i[r].q || []).push(arguments)
+        //     }, i[r].l = 1 * new Date();
+        //     a = s.createElement(o),
+        //         m = s.getElementsByTagName(o)[0];
+        //     a.async = 1;
+        //     a.src = g;
+        //     m.parentNode.insertBefore(a, m)
+        // })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        // ga('create', 'UA-131048336-2', 'auto');
+		// ga('send', 'pageview');
+		// ga('send', 'event', 'Videos2', 'play', 'Fall Campaign');
+		</script>
+<script>
+	
+//   tracker = ga.create('UA-XXXXXXX-1', 'example.com');
+//   tracker.send('pageview');
+//   (function(i, s, o, g, r, a, m) {
+//             i['GoogleAnalyticsObject'] = r;
+//             i[r] = i[r] || function() {
+//                 (i[r].q = i[r].q || []).push(arguments)
+//             }, i[r].l = 1 * new Date();
+//             a = s.createElement(o),
+//                 m = s.getElementsByTagName(o)[0];
+//             a.async = 1;
+//             a.src = g;
+//             m.parentNode.insertBefore(a, m)
+//         })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+// tracker = ga('create', 'UA-139052166-1', 'auto');
+// tracker = ga.create('UA-139052166-1', 'example.com');
+//         // ga('send', 'pageview');tracker = ga.create('UA-XXXXXXX-1', 'example.com');
+//   tracker.send('pageview');
+// (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+// (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+// m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+// })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+// ga('create', 'UA-139052166-1', 'auto', 'tracker');
+// ga('tracker.send', 'pageview');
+// ga('tracker.send', 'event', 'test', 'click', 'automaticEvent')
+</script>
 	<div id="loading-wall">
 		{% if imap_authenticated %}
 		{% else %}
 			<span style='display:none;top: 300px;position: fixed;'>We are initializing your inbox! Will email you when it is ready!</span>
 		{% endif %}
 	</div>
+	
 	<div class="sk-circle">
 			<div class="sk-circle1 sk-child"></div>
 			<div class="sk-circle2 sk-child"></div>
@@ -713,7 +780,10 @@ print get_sender()
 	<script type="text/javascript" src="/static/javascript/youps/login_imap.js"></script>
 
 
+
     <script>
+
+		
         // window.onbeforeunload = function(event)
         // {
         //     return confirm("Confirm refresh");

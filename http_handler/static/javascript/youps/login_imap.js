@@ -1,3 +1,10 @@
+var trackOutboundLink = function(inCategory) {
+    debugger;
+    if (gtag) {
+        gtag('event', inCategory)
+  }
+}
+
 $(document).ready(function() {
 
     var user_name = $.trim($('#user_email').text()),
@@ -20,7 +27,7 @@ $(document).ready(function() {
             ;
           });
         };
-      }
+    }
 
     function append_log( msg_log, is_error ) {
         if(!msg_log) return;
@@ -756,6 +763,7 @@ $(document).ready(function() {
 
     $('.add-tab').click(function (e) {
         e.preventDefault();
+        trackOutboundLink('addtab');
 
         create_new_tab(this);
 
