@@ -247,7 +247,7 @@
             {
                 "name": "forward",
                 "params": "to=[], cc=[], bcc=[]",
-                "description": "(Work in progress..) Forward this email to the given recipients.",
+                "description": "Forward this email to the given recipients.",
                 "example": ""
             },
             {
@@ -345,7 +345,7 @@
             {
                 "name": "see_later",
                 "params": "later_at=60, hide_in='YoUPS see_later'",
-                "description": "(Beta) Hide temporarily this message into a designated folder (hide_in) then move back to the orginal folder. later_at could be a definite time (datetime instance) or a relative time (number in minute)",
+                "description": "Hide temporarily this message into a designated folder (hide_in) then move back to the orginal folder. later_at could be a definite time (datetime instance) or a relative time (number in minute)",
                 "example": []
             }
         ]
