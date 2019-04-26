@@ -203,7 +203,7 @@
             },
             {
                 "name": "deadline",
-                "return_type": "string",
+                "return_type": "datetime",
                 "description": "",
                 "example": ""
             },
