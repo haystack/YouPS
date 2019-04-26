@@ -186,6 +186,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     new_msg["from_"] = from_field
                     new_msg["to"] = to_field
                     new_msg["cc"] = cc_field
+                    new_msg["log"] = ""
 
                 # if the the engine is not turned on yet, still leave the log of message arrival
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
