@@ -35,7 +35,7 @@ The server requires some setup to be run from scratch.
 2. You must have the requirements in requirements.docker.txt installed 
 3. You must have a mail server running. See instructions at [Murmur](https://github.com/haystack/murmur#if-setting-up-a-local-email-server-not-necessary-to-run-webserver)
 4. You must have apache2 running django
-5. you must have the files in murmur-env stored in /opt/murmur
+5. you must have the files in `murmur-env` stored in `/opt/murmur`
 
 **Set up the cron jobs** by enabling the cronjobs in `tasks-cron-server`. The easiest way to do this is to use `crontab -e` and paste the cron jobs.
 
