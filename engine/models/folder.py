@@ -9,12 +9,10 @@ from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
 from email.header import decode_header
 from engine.models.event_data import MessageArrivalData, NewMessageDataScheduled, NewMessageDataDue, AbstractEventData, NewFlagsData, RemovedFlagsData, MessageMovedData
-from datetime import datetime, timedelta
+from datetime import datetime
 from email.utils import parseaddr
 from dateutil import parser
 from pytz import timezone
-from django.utils import timezone as tz
-import re
 import heapq
 from string import whitespace
 
@@ -35,6 +33,7 @@ class Folder(object):
         # type: () -> t.AnyStr
         return "folder: %s" % (self.name)
 
+    # TODO put this on all our models
     def __eq__(self, other):
         """Overrides the default implementation"""
         if isinstance(other, Folder):
@@ -83,17 +82,6 @@ class Folder(object):
     def name(self, value):
         # type: (t.Text) -> None
         self._schema.name = value
-        self._schema.save()
-
-    @property
-    def flags(self):
-        # type: () -> t.List[t.AnyStr]
-        return self._schema.flags
-
-    @flags.setter
-    def flags(self, value):
-        # type: (t.List[t.AnyStr]) -> None
-        self._schema.flags = value
         self._schema.save()
 
     @property
@@ -369,6 +357,9 @@ class Folder(object):
             else:
                 message_data['FLAGS'] += [self.name]
 
+            # make sure flags are unique
+            message_data['FLAGS'] = list(set(message_data['FLAGS']))
+
     def _save_new_messages(self, last_seen_uid, event_data_list=None, urgent=False):
         # type: (int, t.List[AbstractEventData]) -> None
         """Save any messages we haven't seen before
@@ -462,7 +453,7 @@ class Folder(object):
 
             try:
                 new_message.save()
-            except Exception as e:
+            except Exception:
                 logger.critical("%s failed to save message %d" % (self, uid))
                 logger.critical("%s stored last_seen_uid %d, passed last_seen_uid %d" % (
                     self, self._last_seen_uid, last_seen_uid))

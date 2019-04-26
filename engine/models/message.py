@@ -1,6 +1,6 @@
 from __future__ import unicode_literals, print_function, division
 import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import MessageSchema, EmailRule, TaskManager  # noqa: F401 ignore unused we use it for typing
+from schema.youps import MessageSchema, EmailRule, TaskManager, ImapAccount  # noqa: F401 ignore unused we use it for typing
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from datetime import datetime, timedelta  # noqa: F401 ignore unused we use it for typing
 from engine.models.contact import Contact
@@ -17,7 +17,7 @@ from smtp_handler.utils import get_attachments, format_email_address
 import smtplib
 from pytz import timezone as tz
 from django.utils import timezone
-
+from engine.utils import is_gmail_label, is_imap_flag
 from engine.google_auth import GoogleOauth2
 from browser.imap import decrypt_plain_password
 from http_handler.settings import CLIENT_ID
@@ -58,7 +58,7 @@ class Message(object):
     def _get_flag_descriptors(is_gmail):
         # type: (bool) -> t.List[t.Text]
         """get the descriptors for an imap fetch call when updating flags
-        
+
         Returns:
             t.List[t.Text]: descriptors for an imap fetch call 
         """
@@ -71,7 +71,7 @@ class Message(object):
     def _get_descriptors(is_gmail, use_key=False):
         # type: (bool, bool) -> t.List[t.Text]
         """Get the descriptors for an imap fetch call when saving messages
-        
+
         Returns:
             t.List[t.Text]: descriptors for an imap fetch call
         """
@@ -79,6 +79,11 @@ class Message(object):
         if use_key:
             descriptors = Message._descriptors + [Message._header_fields_key]
         return descriptors + ['X-GM-THRID', 'X-GM-LABELS'] if is_gmail else descriptors
+
+    @property
+    def _imap_account(self):
+        # type: () -> ImapAccount
+        return self._schema.imap_account
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -124,21 +129,16 @@ class Message(object):
         """
         return self._flags if self.is_simulate else self._schema.base_message.flags
 
-    @flags.setter
-    def flags(self, value):
+    def _save_flags(self, flags):
         # type: (t.List[t.AnyStr]) -> None
-        """Set the flags on the message
-        """
-        # TODO we probably don't want user's calling this directly since
-        # we don't validate the input and it doesn't update the server
-        # it shouldn't update the server though since we are using
-        # this method to update only our local copy
-        # users update the server using add_flags or one of the aliases
-        if not self.is_simulate:
-            self._schema.base_message.flags = value
-            self._schema.base_message.save()
+        """Save new flags to the database
 
-        self._flags = value
+        removed the setter from flags since it was too dangerous.
+        """
+        if not self.is_simulate:
+            self._schema.base_message.flags = flags
+        
+        self._flags = flags
 
     @property
     def deadline(self):
@@ -199,13 +199,6 @@ class Message(object):
         Returns:
             bool: True if the message has been read
         """
-        # logger.info('caller name: %s', inspect.stack())
-        caller_line_no = inspect.stack()[1][2]
-        caller_func_name = inspect.stack()[1][3]
-
-        if caller_func_name in self._user_level_func:
-            pass
-        # logger.info('caller name: %s %d' % (, )
         return '\\Seen' in self.flags
 
     @property
@@ -438,28 +431,29 @@ class Message(object):
             TypeError: flags is not an iterable or a string
             TypeError: any flag is not a string
         """
-        # cp_self = copy.deepcopy(self)
 
         ok, flags = self._check_flags(flags)
         if not ok:
             return
 
-        # TODO this and remove flags is broken we should map known flags to the correct place and then add everything else in the same place
+        # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self.is_simulate:
-            # TODO the add methods return flags we should use those values instead of doing the work ourself
-            if self._schema.imap_account.is_gmail:
-                self._imap_client.add_gmail_labels(self._uid, flags)
+            if self._imap_account.is_gmail:
+                gmail_labels = filter(lambda f: not is_imap_flag(f), flags)
+                self._imap_client.add_gmail_labels(self._uid, gmail_labels)
+                self._imap_client.add_flags(self._uid, filter(is_imap_flag, flags))
             else:
                 self._imap_client.add_flags(self._uid, flags)
+                
+        # TODO the add_flags method on imap_client returns the new flags. we could rely on those but we might miss a flag event 
         # update the local flags
-        self.flags = list(set(self.flags + flags))
+        self._save_flags(list(set(self.flags + flags))) 
 
-        # self.diff_attr(cp_self)
 
     def remove_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Remove each of the flags in a list of flags from the message
-        
+
         This method can also optionally take a single string as a flag.
 
         Raises:
@@ -470,15 +464,18 @@ class Message(object):
         if not ok:
             return
 
+        # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self.is_simulate:
-            # TODO the remove methods return flags we should use those values instead of doing the work ourself
-            if self._schema.imap_account.is_gmail:
-                self._imap_client.remove_gmail_labels(self._uid, flags)
+            if self._imap_account.is_gmail:
+                gmail_labels = filter(lambda f: not is_imap_flag(f), flags)
+                self._imap_client.remove_gmail_labels(self._uid, gmail_labels)
+                self._imap_client.remove_flags(self._uid, filter(is_imap_flag, flags))
             else:
                 self._imap_client.remove_flags(self._uid, flags)
 
         # update the local flags
-        self.flags = list(set(self.flags) - set(flags))
+        self._save_flags(list(set(self.flags) - set(flags))) 
+
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -634,7 +631,6 @@ class Message(object):
 
         else:
             cnt_n = 0
-            checked_msg_uid = []
             uid_to_fecth = self._uid
             prev_msg_id = None
             prev_messages = []
@@ -647,7 +643,7 @@ class Message(object):
                         uid_to_fecth = prev_msg_schema[0].uid
                     else:
                         break
-                    #uid_to_fecth = self._imap_client.search(["HEADER", "Message-ID", prev_msg_id])
+                    # uid_to_fecth = self._imap_client.search(["HEADER", "Message-ID", prev_msg_id])
 
                 if uid_to_fecth:
                     in_reply_to_field = 'BODY[HEADER.FIELDS (IN-REPLY-TO)]'
@@ -687,6 +683,7 @@ class Message(object):
             return prev_messages
 
     def _create_message_instance(self, subject='', to='', cc='', bcc='', additional_content=''):
+        import pprint
         new_message_wrapper = MIMEMultipart('mixed')
 
         new_message_wrapper["Subject"] = subject

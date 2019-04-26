@@ -60,20 +60,6 @@ class FolderSchema(models.Model):
     last_seen_uid = models.IntegerField(default=-1)
     # the highest mod seq useful for limiting getting the flags
     highest_mod_seq = models.IntegerField(default=-1)
-    # the flags associated with the folder 
-    _flags = models.TextField(db_column="flags")
-
-    is_selectable = models.BooleanField(default=False)
-
-    @property
-    def flags(self):
-        # type: () -> t.List[t.AnyStr]
-        return json.loads(self._flags)
-
-    @flags.setter
-    def flags(self, value):
-        # type: (t.List[t.AnyStr]) -> None
-        self._flags = json.dumps(value)
 
     class Meta:
         db_table = "youps_folder"
