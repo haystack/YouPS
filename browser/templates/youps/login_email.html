@@ -701,25 +701,47 @@ print get_sender()
 						  </div> -->
 			  </div>
 
-			  <div id="apis-container" style="display:none;" mv-app="api" mv-storage="https://github.com/soyapark/mailbot">
-				<h3>Retreive metadata of an email</h3>
-                <div property="getter" mv-multiple>
-                    <h4>[name] ([params])</h4>
-                </div>
-                <br>
-                <h3>Action on an email</h3>
-                <div property="methods"  mv-multiple>
-                    <h4>[name] ([params])</h4>
-                  </div>
-                  <br>
-                <h3>Action on a folder</h3>
-                <div property="folder"  mv-multiple>
-                    <h4>[name] ([params])</h4>
-				</div>
-				<h3>Action on a mode</h3>
-                <div property="mode"  mv-multiple>
-                    <h4>[name] ([params])</h4>
-                </div>
+			  <div id="apis-container" style="display:none;" mv-app="api" mv-storage="https://github.com/soyapark/murmur">
+					<div property="folder" >
+						<div class='add-sidebar header' id="method"> <h3> Global Methods <a href="#folder-attr">¶</a></h3>   </div>
+						<div id="[name]" class='add-sidebar sub-header' property="attribute" mv-multiple>
+							<h4>[name] ([params]) <a href="#[name]"> ¶ </a> </h4>
+						</div>
+					</div>
+
+					<div property="message">
+							<div class='add-sidebar sub-header' id="message-attr"> <h3> Attribute <a href="#message-attr">¶</a></h3>   </div>
+							<div id="[name]" class='value' property="attribute" mv-multiple>
+								<h4>[name]</h4>
+							</div>
+		
+							<div class='add-sidebar sub-header' id="message-method"> <h3> Method <a href="#message-method">¶</a></h3>   </div>
+							<div id="[name]" class='value' property="method" mv-multiple>
+									<h4>[name] ([params]) </h4>
+							</div>
+					</div>
+
+					<div property="contact">
+							<div id="contact-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#contact-attr">¶</a></h3>   </div>
+							<div id="[name]" class='value' property="attribute" mv-multiple>
+								<h4>[name]</h4>
+							</div>
+							<div id="contact-method" class='add-sidebar sub-header'> <h3> Method <a href="#contact-method">¶</a></h3>   </div>
+							<div id="[name]" class='value' property="method" mv-multiple>
+									<h4>[name] ([params]) </h4>
+							</div>
+					</div>
+
+					<div property="calendar">
+							<div id="calendar-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#calendar-attr">¶</a></h3>   </div>
+							<div id="[name]" class='value' property="attribute" mv-multiple>
+								<h4>[name] </h4>
+							</div>
+							<div id="calendar-method" class='add-sidebar sub-header'> <h3> Method <a href="#calendar-method">¶</a></h3>   </div>
+							<div id="[name]" class='value' property="method" mv-multiple>
+									<h4>[name] ([params])</h4>
+							</div>
+						</div>
 			  </div>
 			  <!-- END editor col -->
 		</div>

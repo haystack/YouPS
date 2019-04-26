@@ -1,4 +1,69 @@
 {
+    "globalm": {
+        "attribute": [{
+                "name": "create_draft",
+                "return_type": "",
+                "return_href": "",
+                "params": "subject='', to=[], cc=[], bcc=[], content='', draft_folder=None",
+                "description": "Create a draft message and save it to your draft folder",
+                "example": ["def on_deadline(my_message):", "\tif 'weekly meeting' in my_message.subject:", "\t\tcreate_draft('Schedule meeting next Monday', my_messsage.to, my_message.cc, 'coworker@mit.edu')"]
+            },
+            {
+                "name": "create_folder",
+                "return_type": "",
+                "return_href": "",
+                "params": "folder_name",
+                "description": "Create a new folder folder_name",
+                "example": ""
+            },
+            {
+                "name": "delete_folder",
+                "return_type": "",
+                "return_href": "",
+                "params": "folder_name",
+                "description": "Delete a folder folder_name",
+                "example": ""
+
+            },
+            {
+                "name": "get_email_mode",
+                "return_type": "integer",
+                "params": "",
+                "description": "Return the index of the current email mode.",
+                "example": "",
+                "related": [{
+                    "name": "set_email_mode"
+                }]
+            },
+            {
+                "name": "set_email_mode",
+                "return_type": "",
+                "params": "mode_index",
+                "description": "Set the current email mode",
+                "example": "",
+                "related": [{
+                    "name": "get_email_mode"
+                }]
+            },
+            {
+                "name": "list_folders",
+                "return_type": "",
+                "return_href": "",
+                "params": "",
+                "description": "Get a list of folders",
+                "example": ["print list_folders()", ">>>  [(('\\HasNoChildren',), '/', u'Boomerang'), (('\\HasChildren',), '/', u'Boomerang-Outbox'), (('\\HasNoChildren',), '/', u'Boomerang-Outbox/Cancelled'), (('\\HasNoChildren',), '/', u'Boomerang-Returned'), (('\\HasNoChildren',), '/', u'INBOX'), (('\\HasChildren', '\\Noselect'), '/', u'[Gmail]'), (('\\All', '\\HasNoChildren'), '/', u'[Gmail]/All Mail'), (('\\Drafts', '\\HasNoChildren'), '/', u'[Gmail]/Drafts'), (('\\HasNoChildren', '\\Important'), '/', u'[Gmail]/Important'), (('\\HasNoChildren', '\\Sent'), '/', u'[Gmail]/Sent Mail'), (('\\HasNoChildren', '\\Junk'), '/', u'[Gmail]/Spam'), (('\\Flagged', '\\HasNoChildren'), '/', u'[Gmail]/Starred'), (('\\HasNoChildren', '\\Trash')]"]
+            },
+            {
+                "name": "rename_folder",
+                "return_type": "",
+                "return_href": "",
+                "params": "old_name, new_name",
+                "description": "Change the name of a folder",
+                "example": ""
+
+            }
+        ]
+    },
     "folder": {
         "attribute": [{
                 "name": "create_draft",
@@ -138,7 +203,7 @@
             },
             {
                 "name": "deadline",
-                "return_type": "string",
+                "return_type": "datetime",
                 "description": "",
                 "example": ""
             },

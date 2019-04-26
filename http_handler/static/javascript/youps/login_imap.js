@@ -355,16 +355,15 @@ $(document).ready(function() {
                     </div>
                 </form></div>`:"") +
             `<textarea class="editor mode-editor">{0}\n{1}</textarea>
-        </div>
-        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+        </div>`.format(import_str, func_name + "\n    pass") +
+        (type=="new-message"? `<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
             <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Reload results</button>
             
             <h2>Test suites</h2>
             <h4>Recent messages from your selected folders to test your rules</h4>
             <table class="example-suites" class="row-border" style="width:100%">
             </table>
-        </div>`
-            .format(import_str, func_name + "\n    pass"), 
+        </div>`: ""), 
     pull_down_arrow = `<span class="pull-right">
         <button class='btn-default btn-incoming-save'>Save</button>
         <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
@@ -699,12 +698,26 @@ $(document).ready(function() {
                 }
             }
 
-            run_simulate_on_messages(folders, 5, this);
+            if($(this).parent().attr("type") == "new-message")
+                run_simulate_on_messages(folders, 5, this);
         }) 
 
-        var method_names = [];
-        document.querySelectorAll('#apis-container h4').forEach(function(element) {
-            method_names.push( element.innerHTML.split("(")[0] );
+        var global_method = [];
+        document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
+            global_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        });
+
+        var entity_method = [];
+        document.querySelectorAll('#apis-container div[property="message"] h4').forEach(function(element) {
+            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        });
+
+        document.querySelectorAll('#apis-container div[property="contact"] h4').forEach(function(element) {
+            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        });
+
+        document.querySelectorAll('#apis-container div[property="calendar"] h4').forEach(function(element) {
+            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
         });
 
         CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor) {
@@ -713,14 +726,21 @@ $(document).ready(function() {
             var start = cur.ch;
             var end = start;
 
-            while (end < curLine.length && /[\w$]/.test(curLine.charAt(end))) ++end;
-            while (start && /[\w$]/.test(curLine.charAt(start - 1))) --start;
+            while (end < curLine.length && /[\w|\\.]/.test(curLine.charAt(end))) ++end;
+            while (start && /[\w]/.test(curLine.charAt(start - 1))) --start;
             var curWord = start !== end && curLine.slice(start, end);
             var regex = new RegExp('^' + curWord, 'i');
 
-            var suggestion = method_names.filter(function(item) {
-                return item.match(regex);
-            }).sort();
+            var suggestion = curLine.includes(".") ? 
+                entity_method.filter(function(item) {
+                    return item.match(regex);
+                }).sort() : 
+                global_method.filter(function(item) {
+                    return item.match(regex);
+                }).sort();
+
+            if (curWord[curWord.length -1] == ".") suggestion = [];
+            console.log(suggestion);
             suggestion.length == 1 ? suggestion.push(" ") : console.log();
 
             return {
@@ -813,7 +833,8 @@ $(document).ready(function() {
         $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
             if(elem.value.toLowerCase() == "inbox") {
                 elem.checked = true;
-                run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
+                if($(this).attr("type") == "new-message")
+                    run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
             }
         })
     });

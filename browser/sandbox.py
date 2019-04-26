@@ -15,7 +15,7 @@ from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it 
 from engine.models.message import Message
 
 from django.utils import timezone
-
+from engine.models.calendar import MyCalendar
 from smtp_handler.utils import send_email
 
 
@@ -89,6 +89,8 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
             'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
             'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
             'handle_on_deadline': lambda f: mailbox.deadline_handler.handle(f),
+            'Calendar': MyCalendar,
+
         }
 
         # simulate request. normally from UI
@@ -184,6 +186,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     new_msg["from_"] = from_field
                     new_msg["to"] = to_field
                     new_msg["cc"] = cc_field
+                    new_msg["log"] = ""
 
                 # if the the engine is not turned on yet, still leave the log of message arrival
                 # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
@@ -278,7 +281,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                             logger.info("handling fired %s %s" % (rule.name, event_data.message.subject))
                             copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
 
-                            copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
+                            copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
 
                             new_log[copy_msg["timestamp"]] = copy_msg
 

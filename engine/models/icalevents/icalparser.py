@@ -225,7 +225,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     for c in calendar.walk():
         if c.name == 'VTIMEZONE':
             cal_tz = gettz(str(c['TZID']))
-            break;
+            break
     else:
         cal_tz = UTC
 

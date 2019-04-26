@@ -5,7 +5,7 @@ from httplib2 import Http
 
 
 # default http connection to use
-default_http = Http('.cache')
+default_http = Http('/home/ubuntu/production/mailx/.cache')
 
 
 def apple_data_fix(content):

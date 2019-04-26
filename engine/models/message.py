@@ -857,6 +857,5 @@ class Message(object):
             "is_read": self.is_read, 
             "is_deleted": self.is_deleted, 
             "is_recent": self.is_recent,
-            "log": "",
             "error": False 
         }
