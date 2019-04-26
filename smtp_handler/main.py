@@ -50,7 +50,7 @@ def mailbot(arrived_message, address=None, host=None):
         logger.info("Email to mailbot@%s" % HOST)
 
         name, addr = parseaddr(arrived_message['from'].lower())
-
+        site = None
         # restart the db connection
         django.db.close_connection()
         
