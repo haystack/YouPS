@@ -427,6 +427,7 @@ class Folder(object):
             self._cleanup_metadata(metadata)
 
             is_message_arrival = False
+
             try:
                 base_message = BaseMessage.objects.get(
                     imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage
@@ -435,16 +436,18 @@ class Folder(object):
                     base_message.save()
             except BaseMessage.DoesNotExist:
                 is_message_arrival = True
+                internal_date = self._parse_header_date(message_data.get('INTERNALDATE', ''))
+                assert internal_date is not None
+                date = self._parse_header_date(metadata.get('date', '')) or internal_date
                 base_message = BaseMessage(
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
                     flags=message_data['FLAGS'],
                     in_reply_to=metadata['in-reply-to'],
                     references=metadata['references'],
-                    date=self._parse_header_date(metadata.get('date', '')),
+                    date=date,
                     subject=metadata.get('subject', ''),
-                    internal_date=self._parse_header_date(
-                        message_data.get('INTERNALDATE', '')),
+                    internal_date=internal_date,
                     from_m=self._find_or_create_contacts(metadata['from'])[
                         0] if 'from' in metadata else None,
                     _thread=self._find_or_create_gmail_thread(

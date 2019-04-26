@@ -142,6 +142,27 @@ class Message(object):
         """
         return self._flags if self.is_simulate else self._schema.base_message.flags
 
+    @property
+    def in_reply_to(self):
+        # type: () -> t.List[t.AnyStr]
+        """Get the message ids in the in_reply_to field 
+
+        Returns:
+            List(str): List of in_reply_to message ids on the message
+        """
+        return self._schema.base_message.in_reply_to
+
+    @property
+    def references(self):
+        # type: () -> t.List[t.AnyStr]
+        """Get the message ids in the references field 
+
+        Returns:
+            List(str): List of references message ids on the message
+        """
+        return self._schema.base_message.references
+
+
     def _save_flags(self, flags):
         # type: (t.List[t.AnyStr]) -> None
         """Save new flags to the database
