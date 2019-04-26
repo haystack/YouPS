@@ -55,6 +55,7 @@ def mailbot(arrived_message, address=None, host=None):
         django.db.close_connection()
         
         try:
+            site = Site.objects.get_current()
             addr = addr.strip()
             imapAccount = ImapAccount.objects.get(email=addr)
             logging.debug("mailbot %s" % addr)
