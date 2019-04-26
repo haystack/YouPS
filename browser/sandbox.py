@@ -280,7 +280,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                             logger.info("handling fired %s %s" % (rule.name, event_data.message.subject))
                             copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
 
-                            copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
+                            copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
 
                             new_log[copy_msg["timestamp"]] = copy_msg
 
