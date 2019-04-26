@@ -24,9 +24,8 @@ class Contact(object):
         return repr("Contact object %s" % str(self.name or self.email))
 
     def __eq__(self, other): 
-        
         if isinstance(other, basestring):
-            return (other == self.name) or (other == self.email)
+            return other == self.name
 
         if isinstance(other, Contact):
             return (other.name == self.name) and (other.email == self.email)

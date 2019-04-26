@@ -75,9 +75,12 @@ class BaseMessage(models.Model):
     imap_account = models.ForeignKey(ImapAccount)  # type: ImapAccount
     # the id of the message this is unique for a message on a given email account
     message_id = models.CharField(max_length=191)
-
     # the flags associated with the message
-    _flags = models.TextField(db_column="flags")
+    _references = models.TextField(db_column="references", default="[]")
+    # the flags associated with the message
+    _in_reply_to = models.TextField(db_column="in_reply_to", default="[]")
+    # the flags associated with the message
+    _flags = models.TextField(db_column="flags", default="[]")
     # the date when the message was sent
     date = models.DateTimeField(null=True, blank=True)
     # the subject of the message
@@ -96,6 +99,26 @@ class BaseMessage(models.Model):
     bcc = models.ManyToManyField('ContactSchema', related_name='bcc_messages')
     # the thread that the message is associated with
     _thread = models.ForeignKey('ThreadSchema', related_name='messages', blank=True, null=True)
+
+    @property
+    def references(self):
+        # type: () -> t.List[t.AnyStr]
+        return json.loads(self._references)
+
+    @references.setter
+    def references(self, value):
+        # type: (t.List[t.AnyStr]) -> None
+        self._references = json.dumps(value)
+
+    @property
+    def in_reply_to(self):
+        # type: () -> t.List[t.AnyStr]
+        return json.loads(self._in_reply_to)
+
+    @in_reply_to.setter
+    def in_reply_to(self, value):
+        # type: (t.List[t.AnyStr]) -> None
+        self._in_reply_to = json.dumps(value)
 
     @property
     def flags(self):

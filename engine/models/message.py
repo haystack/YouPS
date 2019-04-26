@@ -1,26 +1,33 @@
-from __future__ import unicode_literals, print_function, division
-import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import MessageSchema, EmailRule, TaskManager, ImapAccount  # noqa: F401 ignore unused we use it for typing
-from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-from datetime import datetime, timedelta  # noqa: F401 ignore unused we use it for typing
-from engine.models.contact import Contact
-import logging
-from collections import Sequence
+from __future__ import division, print_function, unicode_literals
+
 import email
 import inspect
+import logging
 import re
+import smtplib
+import typing as t  # noqa: F401 ignore unused we use it for typing
+from collections import Sequence
+from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
+                      timedelta)
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-from smtp_handler.utils import get_attachments, format_email_address
-import smtplib
-from pytz import timezone as tz
+from itertools import ifilter, islice, chain
+
 from django.utils import timezone
-from engine.utils import is_gmail_label, is_imap_flag
-from engine.google_auth import GoogleOauth2
+from imapclient import \
+    IMAPClient  # noqa: F401 ignore unused we use it for typing
+from pytz import timezone as tz
+
 from browser.imap import decrypt_plain_password
+from engine.google_auth import GoogleOauth2
+from engine.models.contact import Contact
+from engine.utils import is_imap_flag
 from http_handler.settings import CLIENT_ID
+from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
+                          ImapAccount, MessageSchema, TaskManager)
+from smtp_handler.utils import format_email_address, get_attachments
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -31,7 +38,7 @@ class Message(object):
     # the most basic descriptors we get for all messages
     _descriptors = ['FLAGS', 'INTERNALDATE']
     # the descriptors used to get header metadata about the messages
-    _header_descriptors = 'BODY.PEEK[HEADER.FIELDS (MESSAGE-ID SUBJECT FROM TO CC BCC DATE IN-REPLY-TO)]'
+    _header_descriptors = 'BODY.PEEK[HEADER.FIELDS (DATE MESSAGE-ID SUBJECT FROM TO CC BCC REPLY-TO IN-REPLY-TO REFERENCES)]'
     # the key used to access the header descriptors after a fetch
     _header_fields_key = _header_descriptors.replace('.PEEK', '')
     # the descriptors used when we are updating flags
@@ -56,11 +63,11 @@ class Message(object):
 
     @staticmethod
     def _get_flag_descriptors(is_gmail):
-        # type: (bool) -> t.List[t.Text]
+        # type: (bool) -> t.List[str]
         """get the descriptors for an imap fetch call when updating flags
 
         Returns:
-            t.List[t.Text]: descriptors for an imap fetch call 
+            t.List[str]: descriptors for an imap fetch call 
         """
         descriptors = Message._flags_descriptors
         if is_gmail:
@@ -69,11 +76,11 @@ class Message(object):
 
     @staticmethod
     def _get_descriptors(is_gmail, use_key=False):
-        # type: (bool, bool) -> t.List[t.Text]
+        # type: (bool, bool) -> t.List[str]
         """Get the descriptors for an imap fetch call when saving messages
 
         Returns:
-            t.List[t.Text]: descriptors for an imap fetch call
+            t.List[str]: descriptors for an imap fetch call
         """
         descriptors = Message._descriptors + [Message._header_descriptors]
         if use_key:
@@ -91,6 +98,12 @@ class Message(object):
 
     def __repr__(self):
         return repr('Message object "%s"' % str(self.subject))
+
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, Message):
+            return self._schema == other._schema
+        return False
 
     @property
     def _uid(self):
@@ -299,8 +312,7 @@ class Message(object):
         Returns:
             t.List[Contact]: All the visible recipients of an email
         """
-        # TODO remove any duplicates from this field
-        return [self.to + self.cc + self.bcc]
+        return list(set(chain(self.to, self.cc, self.bcc)))
 
     @property
     def folder(self):
@@ -617,17 +629,8 @@ class Message(object):
         """
 
         if self._schema.imap_account.is_gmail:
-            messages = []
-            cnt_n = 0
-            for m in self._schema.base_message._thread.messages.all():
-                if m != self._schema:
-                    messages.append(Message(m, self._imap_client))
-                    cnt_n = cnt_n + 1
-
-                    if cnt_n == N:
-                        break
-
-            return messages
+            other_messages = ifilter(lambda m: m != self, self.thread.messages)
+            return list(islice(other_messages, N)) 
 
         else:
             cnt_n = 0

@@ -151,7 +151,7 @@ class MailBox(object):
         return Folder(folder_schema, self._imap_client)
 
     def _list_selectable_folders(self, root=''):
-        # type: (t.Text) -> t.Generator[Folder]
+        # type: (str) -> t.Generator[Folder]
         """Generate all the folders in the Mailbox
         """
 

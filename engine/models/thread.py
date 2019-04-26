@@ -22,6 +22,13 @@ class Thread(object):
     def __str__(self):
         return "Thread %d" % self._schema.id
 
+
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, Thread):
+            return self._schema == other._schema
+        return False
+
     @property
     def messages(self):
         # type: () -> t.List[Message]
@@ -30,6 +37,4 @@ class Thread(object):
         Returns:
             t.List[Message]: Get all the messages in the thread
         """
-
-        msg_list = self._schema.messages.all()  # type: t.List[MessageSchema]
-        return [Message(m, self._imap_client) for m in msg_list]
+        return [Message(m, self._imap_client) for m in self._schema.messages.all()]

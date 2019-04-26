@@ -15,6 +15,7 @@ from dateutil import parser
 from pytz import timezone
 import heapq
 from string import whitespace
+from engine.utils import normalize_msg_id
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -33,11 +34,12 @@ class Folder(object):
         # type: () -> t.AnyStr
         return "folder: %s" % (self.name)
 
-    # TODO put this on all our models
     def __eq__(self, other):
         """Overrides the default implementation"""
         if isinstance(other, Folder):
             return self._schema == other._schema
+        if isinstance(other, basestring):
+            return other == self.name
         return False
 
     @property
@@ -75,12 +77,12 @@ class Folder(object):
 
     @property
     def name(self):
-        # type: () -> t.Text
+        # type: () -> str
         return self._schema.name
 
     @name.setter
     def name(self, value):
-        # type: (t.Text) -> None
+        # type: (str) -> None
         self._schema.name = value
         self._schema.save()
 
@@ -145,7 +147,6 @@ class Folder(object):
         min_mail_id = self._get_min_mail_id()
         if min_mail_id is not None:
             self._save_new_messages(min_mail_id)
-        # TODO maybe trigger the user
 
         # finally update our last seen uid (this uses the cached messages to determine last seen uid)
         self._update_last_seen_uid()
@@ -182,7 +183,6 @@ class Folder(object):
         if uid_next != self._uid_next:
             # get all the descriptors for the new messages
             self._save_new_messages(self._last_seen_uid, event_data_list)
-            # TODO maybe trigger the user
 
         # if the last seen uid is zero we haven't seen any messages
         if self._last_seen_uid != 0:
@@ -245,12 +245,18 @@ class Folder(object):
                     "%s matching highest mod seq no flag update" % self)
                 return
 
+        min_mail_id = self._get_min_mail_id()
+
+        # this can happen if we delete all the messages in a folder
+        if min_mail_id == 0:
+            return
+
         logger.debug("%s started updating flags" % self)
 
-        min_mail_id = self._get_min_mail_id()
         # get all the flags for the old messages
-        fetch_data = self._imap_client.fetch('%d:%d' % (min_mail_id, self._last_seen_uid), Message._get_flag_descriptors(
-            self._imap_account.is_gmail))  # type: t.Dict[int, t.Dict[str, t.Any]]
+        uid_criteria = '%d:%d' % (min_mail_id, self._last_seen_uid)
+        descriptors = Message._get_flag_descriptors( self._imap_account.is_gmail)
+        fetch_data = self._imap_client.fetch(uid_criteria, descriptors)  # type: t.Dict[int, t.Dict[str, t.Any]]
 
         # update flags in the cache
         for message_schema in MessageSchema.objects.filter(folder_schema=self._schema).iterator():
@@ -265,8 +271,7 @@ class Folder(object):
                              (self, message_schema.uid))
                 continue
             message_data = fetch_data[message_schema.uid]
-            ok = self._check_fields_in_fetch(Message._get_flag_descriptors(
-                self._imap_account.is_gmail) + ['SEQ'], message_data)
+            ok = self._check_fields_in_fetch(descriptors + ['SEQ'], message_data)
             if not ok:
                 continue
 
@@ -280,12 +285,14 @@ class Folder(object):
 
             if flags_removed:
                 # flag removed old flag exists which does not exist in new flags
-                logger.info('folder {f}: uid {u}: flags_removed {a}'.format(f=self.name, u=message_schema.uid, a=flags_removed))
+                logger.info('folder {f}: uid {u}: flags_removed {a}'.format(
+                    f=self.name, u=message_schema.uid, a=flags_removed))
                 event_data_list.append(RemovedFlagsData(
                     Message(message_schema, self._imap_client), list(flags_removed)))
             if flags_added:
                 # flag added, new flags exists which does not exist in old flags
-                logger.info('folder {f}: uid {u}: flags_added {a}'.format(f=self.name, u=message_schema.uid, a=flags_added))
+                logger.info('folder {f}: uid {u}: flags_added {a}'.format(
+                    f=self.name, u=message_schema.uid, a=flags_added))
                 event_data_list.append(NewFlagsData(
                     Message(message_schema, self._imap_client), list(flags_added)))
 
@@ -304,7 +311,7 @@ class Folder(object):
                          (self, highest_mod_seq))
 
     def _check_fields_in_fetch(self, fields, message_data):
-        # type: (t.List[t.Text], t.Dict[t.Text, t.Any]) -> bool
+        # type: (t.List[str], t.Dict[str, t.Any]) -> bool
         for field in fields:
             if field not in message_data:
                 logger.critical(
@@ -314,7 +321,7 @@ class Folder(object):
         return True
 
     def _parse_header_date(self, str_date):
-        # type: (t.Union[t.Text, datetime]) -> datetime
+        # type: (t.Union[str, datetime]) -> datetime
         try:
             try:
                 date = parser.parse(str_date) if not isinstance(
@@ -330,6 +337,17 @@ class Folder(object):
             logger.exception("failed in parsing date: %s: %s" %
                              (type(str_date), str_date))
         return None
+
+    def _cleanup_metadata(self, metadata):
+        metadata['message-id'] = normalize_msg_id(metadata['message-id'])
+        if metadata.has_key('in-reply-to'):
+            metadata['in-reply-to'] = [normalize_msg_id(m) for m in metadata['in-reply-to'].split()] 
+        else:
+            metadata['in-reply-to'] = []
+        if metadata.has_key('references'):
+            metadata['references'] = [normalize_msg_id(m) for m in metadata['references'].split()] 
+        else:
+            metadata['references'] = []
 
     def _cleanup_message_data(self, message_data):
 
@@ -397,20 +415,21 @@ class Folder(object):
             if not ok:
                 continue
 
-            self._cleanup_message_data(message_data)
-
             # dictionary of header key value pairs
             metadata = self._parse_email_header(
                 message_data[Message._header_fields_key])
 
-            # currently have a bug with parsing
+            # TODO currently have a bug with parsing, if encoding fails we return None
             if metadata is None:
                 continue
+
+            self._cleanup_message_data(message_data)
+            self._cleanup_metadata(metadata)
 
             is_message_arrival = False
             try:
                 base_message = BaseMessage.objects.get(
-                    imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage 
+                    imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage
                 if base_message.flags != message_data['FLAGS']:
                     base_message.flags = message_data['FLAGS']
                     base_message.save()
@@ -420,19 +439,22 @@ class Folder(object):
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
                     flags=message_data['FLAGS'],
+                    in_reply_to=metadata['in-reply-to'],
+                    references=metadata['references'],
                     date=self._parse_header_date(metadata.get('date', '')),
                     subject=metadata.get('subject', ''),
                     internal_date=self._parse_header_date(
                         message_data.get('INTERNALDATE', '')),
                     from_m=self._find_or_create_contacts(metadata['from'])[
                         0] if 'from' in metadata else None,
-                    _thread=self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else None
+                    _thread=self._find_or_create_gmail_thread(
+                        message_data['X-GM-THRID']) if is_gmail else None
                 )
                 base_message.save()
                 # create and save the message contacts
-                if "in-reply-to" in metadata:
+                if "reply-to" in metadata:
                     base_message.reply_to.add(
-                        *self._find_or_create_contacts(metadata["in-reply-to"]))
+                        *self._find_or_create_contacts(metadata["reply-to"]))
                 if "to" in metadata:
                     base_message.to.add(
                         *self._find_or_create_contacts(metadata["to"]))
@@ -467,11 +489,13 @@ class Folder(object):
                 if is_message_arrival:
                     event_data_list.append(MessageArrivalData(
                         Message(new_message, self._imap_client)))
-                    logger.info('folder {f}: uid {u}: message_arrival'.format(f=self.name, u=uid))
+                    logger.info('folder {f}: uid {u}: message_arrival'.format(
+                        f=self.name, u=uid))
                 else:
                     event_data_list.append(MessageMovedData(
                         Message(new_message, self._imap_client)))
-                    logger.info('folder {f}: uid {u}: message_moved'.format(f=self.name, u=uid))
+                    logger.info('folder {f}: uid {u}: message_moved'.format(
+                        f=self.name, u=uid))
 
     def _find_or_create_gmail_thread(self, gm_thread_id):
         # type: (int) -> ThreadSchema
@@ -492,11 +516,11 @@ class Folder(object):
             return thread_schema
 
     def _parse_email_header(self, header):
-        # type: (t.Text) -> t.Dict[t.Text, t.Text]
+        # type: (str) -> t.Dict[str, str]
         """Parse a potentially multiline email header into a dict of key value pairs.
 
         Returns:
-            t.Dict[t.Text, t.Text]: Dictionary of key value pairs found in the header
+            t.Dict[str, str]: Dictionary of key value pairs found in the header
         """
         # the fields that will be returned
         fields = []
