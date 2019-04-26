@@ -70,7 +70,7 @@ def on_message(msg):
     prev_msgs = sender.recent_messages(5)
     recipients = message.to + msg.cc + msg.bcc
     if len(recipients) > 10 and all(not prev_msg.is_read):
-        msg.add_flags('low priority')
+        msg.add_flags = 'low priority'
 ```
 
 ----------
@@ -111,7 +111,7 @@ def on_message(msg):
 
 #### Set a deadline for a certain message using YoUPS shortcut
 
-Set a deadline of a message within your email interface.
+Set a deadline of a message within your email interface. Forward a message you want to add a deadline with a content "DEADLINE yyyy/mm/dd (e.g., DEADLINE 2019/05/01)"
 
 Tags: []
 
@@ -126,6 +126,7 @@ def on_command(my_message, content):
     
     my_message.deadline = datetime.datetime.strptime(" ".join([yy,mm,dd]), "%Y %m %d")
 ```
+
 
 ----------
 
