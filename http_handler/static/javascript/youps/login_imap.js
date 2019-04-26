@@ -686,6 +686,7 @@ $(document).ready(function() {
         // Init folder container
         init_folder_selector( $(".folder-container") )
 
+        var tmp_simulate_load = false;
         // Load EditorRule - folder selection
         $("div[rule-id]").each(function() {
             var emailrule_id = $(this).attr('rule-id');
@@ -698,8 +699,14 @@ $(document).ready(function() {
                 }
             }
 
-            if($(this).parent().attr("type") == "new-message")
+            if(folders.length == 0) return;
+
+            if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
+                // TODO load only one when initialize 
+                tmp_simulate_load = true;
                 run_simulate_on_messages(folders, 5, this);
+            }
+                
         }) 
 
         var global_method = [];

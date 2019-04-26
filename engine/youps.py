@@ -211,14 +211,18 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         for mode_index, mode in modes.iteritems():
             mode_id = mode['id']
             mode_name = mode['name'].encode('utf-8')
-
+            mode_name = mode_name.split("<br>")[0] if mode_name else "mode"
+            logger.info(mode_name)
             mailbotMode = MailbotMode.objects.filter(uid=mode_id, imap_account=imapAccount)
             if not mailbotMode.exists():
                 mailbotMode = MailbotMode(uid=mode_id, name=mode_name, imap_account=imapAccount)
-                mailbotMode.save()
+                
 
             else:
                 mailbotMode = mailbotMode[0]
+                mailbotMode.name = mode_name
+
+            mailbotMode.save()
 
             # Remove old editors to re-save it
             # TODO  dont remove it
