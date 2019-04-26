@@ -120,6 +120,8 @@ $(document).ready(function() {
             <div class='editable-container' type='new-message'></div>
             <div class='editable-container' type='repeat'></div>
             <div class='editable-container' type='flag-change'></div>
+            <div class='editable-container' type='deadline'></div>
+            <div class='editable-container' type='shortcut'></div>
         </div>`.format(id);
         $('.tab-content').append( tab_pane_content );
 
@@ -133,7 +135,9 @@ $(document).ready(function() {
             <!-- add a new flag-change editor button -->
             {1}
             <!-- add a deadline editor button -->
-            {2}`
+            {2}
+            <!-- add a shortcut editor button -->
+            {3}`
             .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
 
         unsaved_tabs.push( id );

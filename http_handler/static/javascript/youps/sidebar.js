@@ -7,7 +7,7 @@ function sidebar_init() {
      *      - `value` uses the id of the div
      */
 
-    var items = document.getElementsByClassName("add-sidebar")
+    var items = document.getElementsByClassName("add-sidebar2")
     var header = ""
     var target = ""
 
