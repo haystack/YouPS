@@ -133,7 +133,9 @@ $(document).ready(function() {
             <!-- add a new flag-change editor button -->
             {1}
             <!-- add a deadline editor button -->
-            {2}`
+            {2}
+            <!-- add a shortcut editor button -->
+            {3}`
             .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
 
         unsaved_tabs.push( id );
@@ -351,16 +353,15 @@ $(document).ready(function() {
                     </div>
                 </form></div>`:"") +
             `<textarea class="editor mode-editor">{0}\n{1}</textarea>
-        </div>
-        <div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+        </div>`.format(import_str, func_name + "\n    pass") +
+        (type=="new-message"? `<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
             <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Reload results</button>
             
             <h2>Test suites</h2>
             <h4>Recent messages from your selected folders to test your rules</h4>
             <table class="example-suites" class="row-border" style="width:100%">
             </table>
-        </div>`
-            .format(import_str, func_name + "\n    pass"), 
+        </div>`: ""), 
     pull_down_arrow = `<span class="pull-right">
         <button class='btn-default btn-incoming-save'>Save</button>
         <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
@@ -695,7 +696,8 @@ $(document).ready(function() {
                 }
             }
 
-            run_simulate_on_messages(folders, 5, this);
+            if($(this).parent().attr("type") == "new-message")
+                run_simulate_on_messages(folders, 5, this);
         }) 
 
         var global_method = [];
@@ -829,7 +831,8 @@ $(document).ready(function() {
         $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
             if(elem.value.toLowerCase() == "inbox") {
                 elem.checked = true;
-                run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
+                if($(this).attr("type") == "new-message")
+                    run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
             }
         })
     });

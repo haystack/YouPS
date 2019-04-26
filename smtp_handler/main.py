@@ -1,4 +1,4 @@
-import logging, time, base64, traceback
+import logging, time, base64, traceback, json
 from lamson.routing import route, stateless
 from config.settings import relay
 from http_handler.settings import WEBSITE
@@ -159,6 +159,31 @@ def mailbot(arrived_message, address=None, host=None):
                 new_message["Subject"] = "Re: " + arrived_message["subject"]
                 new_message["From"] = WEBSITE+"@" + host
                 new_message["In-Reply-To"] = original_message_schema.message_id
+
+        
+                try:
+                    new_msg = {}
+                    from_field = original_message._get_from_friendly()
+
+                    to_field = original_message._get_to_friendly()
+
+                    cc_field = original_message._get_cc_friendly()
+
+                    new_msg["timestamp"] = str(datetime.now().strftime("%m/%d %H:%M:%S,%f"))
+                    new_msg["type"] = "new_message"
+                    new_msg["from_"] = from_field
+                    new_msg["to"] = to_field
+                    new_msg["cc"] = cc_field
+                    new_msg["trigger"] = "shortcut"
+                    new_msg["log"] = body["text"]
+                    new_msg.update(original_message._get_meta_data_friendly())
+                    log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
+                    log_decoded[new_msg["timestamp"]] = new_msg
+
+                    imapAccount.execution_log = json.dumps(log_decoded)
+                    imapAccount.save()
+                except Exception:
+                    logger.critical("error adding logs")
 
                 # new_message.set_payload(content.encode('utf-8')) 
                 if "text" in body and "html" in body:
@@ -836,7 +861,7 @@ handler_funcs = {
 @stateless
 def handle_post(message, address=None, host=None):
     # don't trigger by mailbot
-    if address == "mailbot":
+    if address == "mailbot" or "run":
         return
 
     # restart the db connection
