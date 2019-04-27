@@ -5,6 +5,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from schema.youps import ContactSchema, MessageSchema  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Q
 import logging
+import six
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -26,7 +27,7 @@ class Contact(object):
 
     def __eq__(self, other): 
         
-        if isinstance(other, basestring):
+        if isinstance(other, six.string_types):
             return (other == self.name) or (other == self.email)
 
         if isinstance(other, Contact):

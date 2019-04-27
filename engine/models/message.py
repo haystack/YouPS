@@ -22,6 +22,7 @@ from django.utils import timezone
 from engine.google_auth import GoogleOauth2
 from browser.imap import decrypt_plain_password
 from http_handler.settings import CLIENT_ID
+import six
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -770,7 +771,7 @@ class Message(object):
         return False
 
     def _check_folder(self, dst_folder):
-        if not isinstance(dst_folder, basestring):
+        if not isinstance(dst_folder, six.string_types):
             raise TypeError("folder named must be a string")
         if not self._imap_client.folder_exists(dst_folder):
             userLogger.info(
@@ -791,7 +792,7 @@ class Message(object):
 
         ok = True
         # allow user to pass in a string
-        if isinstance(flags, basestring):
+        if isinstance(flags, six.string_types):
             flags = [flags]
         elif not isinstance(flags, Sequence):
             raise TypeError("flags must be a sequence")
@@ -801,7 +802,7 @@ class Message(object):
 
         # make sure all flags are strings
         for flag in flags:
-            if not isinstance(flag, basestring):
+            if not isinstance(flag, six.string_types):
                 raise TypeError("each flag must be string")
         # remove extraneous white space
         flags = [flag.strip() for flag in flags]
