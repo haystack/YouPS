@@ -1,21 +1,32 @@
-from __future__ import unicode_literals, print_function, division
-from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-import typing as t  # noqa: F401 ignore unused we use it for typing
-import chardet
-import logging
-from engine.models.message import Message
-from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchema, ImapAccount, BaseMessage  # noqa: F401 ignore unused we use it for typing
-from django.db.models import Max
-from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing
-from email.header import decode_header
-from engine.models.event_data import MessageArrivalData, NewMessageDataScheduled, NewMessageDataDue, AbstractEventData, NewFlagsData, RemovedFlagsData, MessageMovedData
-from datetime import datetime
-from email.utils import parseaddr
-from dateutil import parser
-from pytz import timezone
+from __future__ import division, print_function, unicode_literals
+
 import heapq
+import logging
+import typing as t  # noqa: F401 ignore unused we use it for typing
+from datetime import datetime
+from email.header import decode_header
+from email.utils import parseaddr
 from string import whitespace
+
+import chardet
+from django.db.models import Max
+from imapclient import \
+    IMAPClient  # noqa: F401 ignore unused we use it for typing
+from imapclient.response_types import \
+    Address  # noqa: F401 ignore unused we use it for typing
+from pytz import timezone
+
+from dateutil import parser
+from engine.models.event_data import (AbstractEventData, MessageArrivalData,
+                                      MessageMovedData, NewFlagsData,
+                                      NewMessageDataDue,
+                                      NewMessageDataScheduled,
+                                      RemovedFlagsData)
+from engine.models.message import Message
 from engine.utils import normalize_msg_id
+from schema.youps import (  # noqa: F401 ignore unused we use it for typing
+    BaseMessage, ContactSchema, FolderSchema, ImapAccount, MessageSchema,
+    ThreadSchema)
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -166,8 +177,8 @@ class Folder(object):
             self._last_seen_uid = max_uid
             logger.debug('%s updated max_uid %d' % (self, max_uid))
 
-    def _refresh_cache(self, uid_next, highest_mod_seq, event_data_list):
-        # type: (int, int, t.List[AbstractEventData]) -> None
+    def _refresh_cache(self, uid_next, highest_mod_seq, event_data_list, new_message_ids):
+        # type: (int, int, t.List[AbstractEventData], t.Set[str]) -> None
         """Called during normal synchronization to refresh the cache.
 
         Should get new messages and build message number to UID map for the
@@ -182,7 +193,7 @@ class Folder(object):
         # if the uid has not changed then we don't need to get new messages
         if uid_next != self._uid_next:
             # get all the descriptors for the new messages
-            self._save_new_messages(self._last_seen_uid, event_data_list)
+            self._save_new_messages(self._last_seen_uid, event_data_list, new_message_ids)
 
         # if the last seen uid is zero we haven't seen any messages
         if self._last_seen_uid != 0:
@@ -356,7 +367,7 @@ class Folder(object):
             combined_flags = set(message_data['FLAGS'] + list(message_data['X-GM-LABELS']))
             message_data['FLAGS'] = list(combined_flags) 
 
-    def _save_new_messages(self, last_seen_uid, event_data_list=None, urgent=False):
+    def _save_new_messages(self, last_seen_uid, event_data_list=None, new_message_ids=None, urgent=False):
         # type: (int, t.List[AbstractEventData]) -> None
         """Save any messages we haven't seen before
 
@@ -404,13 +415,10 @@ class Folder(object):
             self._cleanup_message_data(message_data)
             self._cleanup_metadata(metadata)
 
-            is_message_arrival = False
-
             try:
                 base_message = BaseMessage.objects.get(
                     imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage
             except BaseMessage.DoesNotExist:
-                is_message_arrival = True
                 internal_date = self._parse_header_date(message_data.get('INTERNALDATE', ''))
                 assert internal_date is not None
                 date = self._parse_header_date(metadata.get('date', '')) or internal_date
@@ -428,6 +436,8 @@ class Folder(object):
                         message_data['X-GM-THRID']) if is_gmail else None
                 )
                 base_message.save()
+                if new_message_ids is not None:
+                    new_message_ids.add(metadata['message-id'])
                 # create and save the message contacts
                 if "reply-to" in metadata:
                     base_message.reply_to.add(
@@ -464,7 +474,8 @@ class Folder(object):
                 continue
 
             if event_data_list is not None:
-                if is_message_arrival:
+                assert new_message_ids is not None
+                if metadata['message-id'] in new_message_ids:
                     event_data_list.append(MessageArrivalData(
                         Message(new_message, self._imap_client)))
                     logger.info('folder {f}: uid {u}: message_arrival'.format(

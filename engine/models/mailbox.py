@@ -35,6 +35,7 @@ class MailBox(object):
         self.moved_message_handler = Event()  # type: Event
 
         self.event_data_list = []  # type: t.List[AbstractEventData]
+        self.new_message_ids = set()  # type: t.Set[str]
         self.is_simulate = False
 
     def __str__(self):
@@ -75,7 +76,7 @@ class MailBox(object):
             if folder._should_completely_refresh(uid_validity):
                 folder._completely_refresh_cache()
             else:
-                folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_list)
+                folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_list, self.new_message_ids)
 
             # update the folder's uid next and uid validity
             folder._uid_next = uid_next
