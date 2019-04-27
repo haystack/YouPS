@@ -58,7 +58,7 @@ var Sandbox = {
 		},
 
 		// Inspect an object and output the results
-		// todo: Implement a custom stringify similar to jsconsole.com, to include native
+		// TODO: Implement a custom stringify similar to jsconsole.com, to include native
 		// and circular objects, and all object methods
 		stringify : function(obj) {
 			try {

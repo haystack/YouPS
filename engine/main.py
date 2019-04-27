@@ -119,7 +119,7 @@ def group_info_page(user, group_name):
             res['code'] = msg_code['NOT_MEMBER']
             res['group'] = None
 
-    except Exception, e:
+    except Exception as e:
         res['code'] = msg_code['UNKNOWN_ERROR']
         logging.debug(e)
     
@@ -215,7 +215,7 @@ def edit_members_table(group_name, toDelete, toAdmin, toMod, user):
                 membergroup.save()
                 email_on_role_change("mod", membergroup.group.name, membergroup.member.email)
         res['status'] = True
-    except Exception, e:
+    except Exception as e:
         print e
         logging.debug(e)
     except Group.DoesNotExist:
@@ -245,7 +245,7 @@ def edit_donotsend_table(group_name, toDelete, user):
                 break
 
         res['status'] = True
-    except Exception, e:
+    except Exception as e:
         print e
         logging.debug(e)
     except Group.DoesNotExist:
@@ -442,7 +442,7 @@ def add_list(group_name, email, can_receive, can_post, list_url, user):
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['NOT_MEMBER']
-    except Exception, e:
+    except Exception as e:
         res['error'] = e
     except:
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -465,7 +465,7 @@ def delete_list(group_name, emails, user):
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['NOT_MEMBER']
-    except Exception, e:
+    except Exception as e:
         res['error'] = e
     except:
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -489,7 +489,7 @@ def adjust_list_can_post(group_name, emails, can_post, user):
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['NOT_MEMBER']
-    except Exception, e:
+    except Exception as e:
         res['error'] = e
     except:
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -514,7 +514,7 @@ def adjust_list_can_receive(group_name, emails, can_receive, user):
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['NOT_MEMBER']
-    except Exception, e:
+    except Exception as e:
         res['error'] = e
     except:
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -824,7 +824,7 @@ def list_posts(group_name=None, user=None, timestamp_str=None, return_replies=Tr
         
         list_posts_page(threads, g, res, user=user, format_datetime=format_datetime, return_replies=return_replies, return_full_content=return_full_content)
             
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
@@ -987,7 +987,7 @@ def _create_post(group, subject, message_text, user, sender_addr, msg_id, verifi
 
     try:
         message_text = message_text.decode("utf-8")
-    except Exception, _:
+    except Exception as _:
         logging.debug("guessing this is unicode then")
 
     message_text = message_text.encode("ascii", "ignore")
@@ -1106,7 +1106,7 @@ def insert_post_web(group_name, subject, message_text, user):
             res['code'] = msg_code['NOT_MEMBER']
     except Group.DoesNotExist:
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
-    except Exception, e:
+    except Exception as e:
         print e
         logging.debug(e)
         if(thread and thread.id):
@@ -1135,7 +1135,7 @@ def insert_post(group_name, subject, message_text, user, sender_addr, msg_id, ve
     except Group.DoesNotExist:
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
 
-    except Exception, e:
+    except Exception as e:
         logging.debug(e)
         if(thread and thread.id):
             thread.delete()
@@ -1215,7 +1215,7 @@ def insert_reply(group_name, subject, message_text, user, sender_addr, msg_id, v
             tag_objs = Tag.objects.filter(tagthread__thread=thread)
             try:
                 message_text = message_text.decode("utf-8")
-            except Exception, e:
+            except Exception as e:
                 logging.debug("guessing this is unicode then")
             
             message_text = message_text.encode("ascii", "ignore")
@@ -1399,7 +1399,7 @@ def unfollow_thread(thread_id, email=None, user=None):
         res['group_name'] = t.group.name
     except Thread.DoesNotExist:
         res['code'] = msg_code['THREAD_NOT_FOUND_ERROR']
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
@@ -1454,7 +1454,7 @@ def unmute_thread(thread_id, email=None, user=None):
         res['group_name'] = t.group.name
     except Thread.DoesNotExist:
         res['code'] = msg_code['THREAD_NOT_FOUND_ERROR']
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
@@ -1500,7 +1500,7 @@ def unfollow_tag(tag_name, group_name, user=None, email=None):
         res['status'] = True
     except Tag.DoesNotExist:
         res['code'] = msg_code['TAG_NOT_FOUND_ERROR']
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
@@ -1546,7 +1546,7 @@ def unmute_tag(tag_name, group_name, user=None, email=None):
         res['status'] = True
     except Tag.DoesNotExist:
         res['code'] = msg_code['TAG_NOT_FOUND_ERROR']
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
@@ -1609,7 +1609,7 @@ def update_donotsend_list(user, group_name, emails, push=True):
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['PRIVILEGE_ERROR']
 
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
 
@@ -1669,7 +1669,7 @@ def update_blacklist_whitelist(user, group_name, emails, whitelist, blacklist, p
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['PRIVILEGE_ERROR']
 
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
 
@@ -1738,7 +1738,7 @@ def update_post_status(user, group_name, post_id, new_status, explanation=None, 
                             logging.error("untrashed count: %s" % updated_count)
                             logging.debug(res)
                             return res 
-                    except Exception, e:
+                    except Exception as e:
                         logging.error(e)
                         pass
 
@@ -1806,7 +1806,7 @@ def update_post_status(user, group_name, post_id, new_status, explanation=None, 
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['PRIVILEGE_ERROR']
 
-    except Exception, e:
+    except Exception as e:
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
 
@@ -1830,7 +1830,7 @@ def load_pending_posts(user, group_name):
         res['code'] = msg_code['NOT_MEMBER']
         res['error'] = e
 
-    except Exception, e:
+    except Exception as e:
         logging.debug(e)
         res['status'] = False
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -1855,7 +1855,7 @@ def load_rejected_posts(user, group_name):
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
     except MemberGroup.DoesNotExist:
         res['code'] = msg_code['PRIVILEGE_ERROR']
-    except Exception, e:
+    except Exception as e:
         logging.debug(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
         res['error'] = e

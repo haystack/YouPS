@@ -234,7 +234,7 @@ class MailBox(object):
                     drafts = self._imap_client.find_special_folder(imapclient.DRAFTS)
                     if drafts is not None:
                         self._imap_client.append(drafts, str(new_message))
-            except IMAPClient.Error, e:
+            except IMAPClient.Error as e:
                 logger.critical('create_draft() failed')
                 return 
 

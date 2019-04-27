@@ -88,9 +88,9 @@ def login_imap(email, password, host, is_oauth):
         res['status'] = True
         logger.info("added new account %s" % imapAccount.email)
 
-    except IMAPClient.Error, e:
+    except IMAPClient.Error as e:
         res['code'] = e
-    except Exception, e:
+    except Exception as e:
         logger.exception("Error while login %s %s " % (e, traceback.format_exc()))
         res['code'] = msg_code['UNKNOWN_ERROR']
 
@@ -107,7 +107,7 @@ def fetch_execution_log(user, email, push=True):
 
     except ImapAccount.DoesNotExist:
         res['code'] = "Error during authentication. Please refresh"
-    except Exception, e:
+    except Exception as e:
         # TODO add exception
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -134,7 +134,7 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except MailbotMode.DoesNotExist:
         res['code'] = "Error during deleting the mode. Please refresh the page."
-    except Exception, e:
+    except Exception as e:
         # TODO add exception
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -159,11 +159,11 @@ def remove_rule(user, email, rule_id):
         er.delete()
 
         res['status'] = True
-    except IMAPClient.Error, e:
+    except IMAPClient.Error as e:
         res['code'] = e
     except ImapAccount.DoesNotExist:
         res['code'] = "Not logged into IMAP"
-    except Exception, e:
+    except Exception as e:
         # TODO add exception
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -283,7 +283,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
         res['status'] = True
 
-    except IMAPClient.Error, e:
+    except IMAPClient.Error as e:
         logger.exception("failed while doing a user code run")
         res['code'] = e
     except ImapAccount.DoesNotExist:
@@ -292,7 +292,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     except FolderSchema.DoesNotExist:
         logger.exception("failed while doing a user code run")
         logger.debug("Folder is not found, but it should exist!")
-    except Exception, e:
+    except Exception as e:
         # TODO add exception
         logger.exception("failed while doing a user code run")
         print e
@@ -331,7 +331,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
             raise ValueError('Something went wrong during authentication. Refresh and try again!')
 
         imap = auth_res['imap']  # noqa: F841 ignore unused
-    except Exception, e:
+    except Exception as e:
         logger.exception("failed while logging into imap")
         res['code'] = "Fail to access your IMAP account"
         return
@@ -401,7 +401,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
     except FolderSchema.DoesNotExist:
         logger.exception("failed while doing a user code run")
         logger.debug("Folder is not found, but it should exist!")
-    except Exception, e:
+    except Exception as e:
         logger.exception("failed while doing a user code run %s %s " % (e, traceback.format_exc()))
         res['code'] = msg_code['UNKNOWN_ERROR']
     finally:
@@ -422,11 +422,11 @@ def save_shortcut(user, email, shortcuts, push=True):
         res['status'] = True
 
 
-    except IMAPClient.Error, e:
+    except IMAPClient.Error as e:
         res['code'] = e
     except ImapAccount.DoesNotExist:
         res['code'] = "Not logged into IMAP"
-    except Exception, e:
+    except Exception as e:
         # TODO add exception
         print e
         res['code'] = msg_code['UNKNOWN_ERROR']

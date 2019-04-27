@@ -105,7 +105,7 @@ def mailbot(arrived_message, address=None, host=None):
                             imap.select_folder(original_message_schema.folder_schema.name)           
                             original_message = Message(original_message_schema, imap)
 
-                    except FolderSchema.DoesNotExist, MessageSchema.DoesNotExist:
+                    except (FolderSchema.DoesNotExist, MessageSchema.DoesNotExist) as e:
                         raise ValueError("Email does not exist. The message is deleted or YoUPS can't detect the message.")
 
 
@@ -207,7 +207,7 @@ def mailbot(arrived_message, address=None, host=None):
             error_msg = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
             mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = error_msg)
             relay.deliver(mail)
-        except Exception, e:
+        except Exception as e:
             logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
             subject = "[YoUPS] shortcuts Errors"
             mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = str(e))
@@ -321,7 +321,7 @@ def admins(message, group_name=None, host=None):
                 email = a.member.email
                 relay.deliver(mail, To = email)
 
-        except Exception, e:
+        except Exception as e:
             logging.debug(e)
             send_error_email(group_name, e, sender_addr, ADMIN_EMAILS)  
             return
@@ -647,7 +647,7 @@ def handle_post_murmur(message, group, host, verified):
                     handle_post(message, address=group_name)
 
 
-        except Exception, e:
+        except Exception as e:
             logging.debug(e)
             send_error_email(group.name, e, None, ADMIN_EMAILS)
             
@@ -656,7 +656,7 @@ def handle_post_murmur(message, group, host, verified):
             mail.Body = msg_text['plain']
             relay.deliver(mail, To = to_send)
                 
-    except Exception, e:
+    except Exception as e:
         logging.debug(e)
         send_error_email(group.name, e, None, ADMIN_EMAILS)
         return
@@ -803,7 +803,7 @@ def handle_post_squadbox(message, group, host, verified):
                 if updated_count > 0:
                     logging.debug("untrashed count: %s" % updated_count)
                     return 
-            except Exception, e:
+            except Exception as e:
                 logging.error("error untrashing msg: %s" % e)
                 pass
 

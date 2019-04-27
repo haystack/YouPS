@@ -39,7 +39,7 @@ def authenticate(imap_account):
 
         res['imap'] = imap_client
         res['status'] = True
-    except IMAPClient.Error, e:
+    except IMAPClient.Error as e:
         try:
             logger.debug('try to renew token')
             if imap_account.is_oauth:
@@ -56,11 +56,11 @@ def authenticate(imap_account):
                 # TODO this is not DRY and not useful error messages
                 logger.error("cannot renew token for non-oauth account")
                 res['code'] = "Can't authenticate your email"
-        except IMAPClient.Error, e:
+        except IMAPClient.Error as e:
             logger.exception("IMAPClient.Error - failed to authenticate email")
             res['imap_error'] = e
             res['code'] = "Can't authenticate your email"
-        except Exception, e:
+        except Exception as e:
             logger.exception("Unknown exception %s failed to authenticate email" %e)
             # TODO add exception
             res['imap_error'] = e

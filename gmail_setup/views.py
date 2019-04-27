@@ -244,7 +244,7 @@ def import_start(request):
             filter_hash = engine.main.get_or_generate_filter_hash(user, group_name, push=False)['hash']
             try:
                 api.create_gmail_filter(service_mail, emails_to_add, forward_address, filter_hash)
-            except Exception, e:
+            except Exception as e:
                 logging.error("Exception creating gmail filter - probably hit request limit")
                 logging.debug(e)
 

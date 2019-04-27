@@ -692,7 +692,7 @@ m = re.search('(?<=LABEL)(.*)', get_content())
 add_labels( m.groups()[0].split(",") ) # if you are using gmail, then add_gmail_labels
 
 if "TODO" in get_content() and "soya@mit.edu" in get_sender():
-    move("todo")
+    move("TODO")
 
 print get_sender()
 										{% endif %}
