@@ -875,7 +875,7 @@ def handle_post(message, address=None, host=None):
 
     address = cleanAddress(address)
 
-    reserved = filter(lambda x: address.endswith(x), RESERVED)
+    reserved = [x for x in RESERVED if address.endswith(x)]
     if(reserved):
         return
     

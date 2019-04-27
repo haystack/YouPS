@@ -58,7 +58,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
     # get the logger for user output
     userLogger = logging.getLogger('youps.user')  # type: logging.Logger
     # get the stream handler associated with the user output
-    userLoggerStreamHandlers = filter(lambda h: isinstance(h, logging.StreamHandler), userLogger.handlers)
+    userLoggerStreamHandlers = [h for h in userLogger.handlers if isinstance(h, logging.StreamHandler)]
     userLoggerStream = userLoggerStreamHandlers[0].stream if userLoggerStreamHandlers else None
     assert userLoggerStream is not None
 

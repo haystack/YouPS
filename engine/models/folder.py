@@ -362,7 +362,7 @@ class Folder(object):
             if not self._imap_account.is_gmail:
                 capabilities = self._imap_client.capabilities()
                 capabilities = list(capabilities)
-                capabilities = filter(lambda cap: 'THREAD=' in cap, capabilities)
+                capabilities = [cap for cap in capabilities if 'THREAD=' in cap]
                 capabilities = [cap.replace('THREAD=', '') for cap in capabilities]
                 # logger.debug("Add support for one of the following threading algorithms %s" % capabilities)
                 # raise NotImplementedError("Unsupported threading algorithm")
