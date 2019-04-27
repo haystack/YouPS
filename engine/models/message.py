@@ -454,28 +454,27 @@ class Message(object):
         """
         return flag in self.flags
 
+    def _flag_change_helper(self, uids, flags, gmail_label_func, imap_flag_func):
+        # type: (t.List[int], t.List[str], t.Callable[[t.List[int], t.List[str]]])
+        ok, flags = self._check_flags(flags)
+        if self._imap_account.is_gmail:
+            gmail_labels = filter(is_gmail_label, flags)
+            gmail_label_func(uids, gmail_labels)
+            not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
+            imap_flag_func(uids, not_gmail_labels)
+        else:
+            imap_flag_func(uids, flags)
+
+
     def add_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the flags in a list of flags to the message
 
         This method can also optionally take a single string as a flag.
-
-        Raises:
-            TypeError: flags is not an iterable or a string
-            TypeError: any flag is not a string
         """
-
-        ok, flags = self._check_flags(flags)
-
         # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self.is_simulate:
-            if self._imap_account.is_gmail:
-                gmail_labels = filter(is_gmail_label, flags)
-                self._imap_client.add_gmail_labels(self._uid, gmail_labels)
-                not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
-                self._imap_client.add_flags(self._uid, not_gmail_labels)
-            else:
-                self._imap_client.add_flags(self._uid, flags)
+            self._flag_change_helper(self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
                 
         # TODO the add_flags method on imap_client returns the new flags. we could rely on those but we might miss a flag event 
         # update the local flags
@@ -487,24 +486,9 @@ class Message(object):
         """Remove each of the flags in a list of flags from the message
 
         This method can also optionally take a single string as a flag.
-
-        Raises:
-            TypeError: flags is not an iterable or a string
-            TypeError: any flag is not a string
         """
-        ok, flags = self._check_flags(flags)
-        if not ok:
-            return
-
-        # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self.is_simulate:
-            if self._imap_account.is_gmail:
-                gmail_labels = filter(is_gmail_label, flags)
-                self._imap_client.remove_gmail_labels(self._uid, gmail_labels)
-                not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
-                self._imap_client.remove_flags(self._uid, not_gmail_labels)
-            else:
-                self._imap_client.remove_flags(self._uid, flags)
+            self._flag_change_helper(self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
 
         # update the local flags
         self._save_flags(list(set(self.flags) - set(flags))) 
@@ -952,36 +936,40 @@ class Message(object):
         }
 
     # example gmail behaviors
+    # TODO reduce to single request by sending all uids
 
-    def mark_spam_gmail(self, is_spam=True):
-        # marks all emails in the thread as spam
-        # gmail does this by removing the Inbox flag and adding the spam flag
+    def add_flags_gmail(self, flags):
+        # adds thhe 
         if not self._imap_account.is_gmail:
             raise IsNotGmailException()
-        if is_spam:
-            for msg in self.thread:
-                msg.add_flags('\\Spam')
-                msg.remove_flags('\\Inbox')
-        else:
-            for msg in self.thread:
-                msg.remove_flags('\\Spam')
-                msg.add_flags('\\Inbox')
+        uids = (m.uid for m in self.thread)
+        self._flag_change_helper(uids, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
+        # TODO this doesn't save the flags locally not sure if we want that
+
+    def remove_flags_gmail(self, flags):
+        if not self._imap_account.is_gmail:
+            raise IsNotGmailException()
+        ok, flags = self._check_flags(flags)
+        uids = (m.uid for m in self.thread)
+        self._flag_change_helper(uids, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
+        # TODO this doesn't save the flags locally not sure if we want that
+
+    def mark_spam_gmail(self):
+        # marks all emails in the thread as spam
+        # gmail does this by removing the Inbox flag and adding the spam flag
+        # TODO just do the inverse to mark as not spam
+        self.add_flags_gmail('\\Spam')
+        self.remove_flags_gmail('\\Inbox')
 
     def archive_gmail(self):
         # marks all emails in the thread as archived 
         # gmail does this by removing the Inbox, Spam, and Trash labels 
         # TODO not sure how to unarchive
-        if not self._imap_account.is_gmail:
-            raise IsNotGmailException()
-        for msg in self.thread:
-            msg.remove_flags([ '\\Spam', '\\Inbox', '\\Trash' ])
+        self.remove_flags_gmail([ '\\Spam', '\\Inbox', '\\Trash' ])
         
     def delete_gmail(self):
         # marks all emails in the thread as deleted 
         # gmail does this by removing the Inbox label, and adding the Trash label 
         # TODO not sure how to undelete
-        if not self._imap_account.is_gmail:
-            raise IsNotGmailException()
-        for msg in self.thread:
-            msg.remove_flags(['\\Inbox'])
-            msg.add_flags(['\\Trash'])
+        self.remove_flags_gmail(['\\Inbox'])
+        self.add_flags_gmail(['\\Trash'])

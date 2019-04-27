@@ -28,6 +28,9 @@ class Thread(object):
             return self._schema == other._schema
         return False
 
+    def __len__(self):
+        return self._schema.messages.all().count()
+
     @property
     def messages(self):
         # type: () -> t.List[Message]
