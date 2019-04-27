@@ -7,6 +7,7 @@ from bleach import clean
 from bs4 import BeautifulSoup
 from schema.models import MemberGroup, Attachment
 from six.moves import zip
+from six.moves import range
 
 ALLOWED_TAGS = [
     'a',

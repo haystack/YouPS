@@ -4,6 +4,7 @@ import heapq
 import email
 from smtp_handler.utils import logging
 import six
+from six.moves import range
 
 def get_text(msg):
     if msg.is_multipart():
