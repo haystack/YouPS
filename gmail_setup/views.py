@@ -221,7 +221,7 @@ def import_start(request):
     
     if request.method == 'POST':
         # process submitted form here
-        raw_response = request.POST.items()
+        raw_response = list(request.POST.items())
         emails_to_add = [] 
         group_name = None
         for item in raw_response:

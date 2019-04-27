@@ -23,6 +23,7 @@ from schema.models import *
 from smtp_handler.utils import *
 
 from engine.youps import login_imap, fetch_execution_log, delete_mailbot_mode, remove_rule, run_mailbot, run_simulate_on_messages, save_shortcut
+import six
 
 def list_groups(user=None):
     groups = []
@@ -2009,7 +2010,7 @@ def call_perspective_api(text):
         spans_simplified = {}
         attribute_scores = data['attributeScores']
 
-        for attr, data in attribute_scores.iteritems():
+        for attr, data in six.iteritems(attribute_scores):
             if attr == 'ATTACK_ON_COMMENTER':
                 attr = 'ATTACK'
             summary = data['summaryScore']

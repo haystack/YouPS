@@ -202,7 +202,7 @@ class MurmurMailResponse(object):
         return self.base.parts
 
     def keys(self):
-        return self.base.keys()
+        return list(self.base.keys())
 
     @property
     def msg(self):

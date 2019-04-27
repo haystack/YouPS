@@ -3,6 +3,7 @@ from email.parser import HeaderParser
 import heapq
 import email
 from smtp_handler.utils import logging
+import six
 
 def get_text(msg):
     if msg.is_multipart():
@@ -397,7 +398,7 @@ class Pile():
         messages = self.imap.search( self.search_criteria )
         response = self.imap.fetch(messages, ['RFC822'])
         bodys = []
-        for msgid, data in response.iteritems():
+        for msgid, data in six.iteritems(response):
             if b'RFC822' not in data:
                 continue
 

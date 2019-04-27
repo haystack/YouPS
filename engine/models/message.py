@@ -102,7 +102,7 @@ class Message(object):
         return self._flags if self.is_simulate else self._schema.flags
 
     def diff_attr(self, obj_instance):
-        for attr, value in self.__dict__.iteritems():
+        for attr, value in six.iteritems(self.__dict__):
             if getattr(self, attr) != getattr(obj_instance, attr):
                 print ("different val", attr, value)
 
@@ -604,7 +604,7 @@ class Message(object):
                     break
 
                 # TODO check if it is read
-                for key, value in prev_msg.iteritems():
+                for key, value in six.iteritems(prev_msg):
                     v = value[in_reply_to_field]
                     v.replace('\r\n\t', ' ')
                     v = v.replace('\r\n', ' ')

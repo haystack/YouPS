@@ -26,6 +26,7 @@ from engine.models.message import Message
 from engine.models.folder import Folder
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import six
 
 
 '''
@@ -133,7 +134,7 @@ def mailbot(arrived_message, address=None, host=None):
                     res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
                     logging.debug(res)
 
-                    for key, value in res['appended_log'].iteritems():
+                    for key, value in six.iteritems(res['appended_log']):
                         if not value['error']:
                             body["text"] = 'Your mail shortcut is successfully applied! \n'
                             body["html"] = 'Your mail shortcut is successfully applied! <br>'

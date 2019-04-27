@@ -16,6 +16,7 @@ from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
+import six
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -209,7 +210,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
         # remove all user's tasks of this user to keep tasks up-to-date
 
-        for mode_index, mode in modes.iteritems():
+        for mode_index, mode in six.iteritems(modes):
             mode_id = mode['id']
             mode_name = mode['name'].encode('utf-8')
             mode_name = mode_name.split("<br>")[0] if mode_name else "mode"
