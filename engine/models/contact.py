@@ -81,6 +81,39 @@ class Contact(object):
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.to_messages.all()]
 
+    @property
+    def messages_from(self):
+        # type: () -> t.List[Message]
+        """Get the Messages which are from this contact
+
+        Returns:
+            t.List[Message]: The messages where this contact is listed in the from field
+        """
+        from engine.models.message import Message
+        return [Message(message_schema, self._imap_client) for message_schema in self._schema.from_messages.all()]
+
+    @property
+    def messages_bcc(self):
+        # type: () -> t.List[Message]
+        """Get the Messages which are bcc this contact
+
+        Returns:
+            t.List[Message]: The messages where this contact is listed in the bcc field
+        """
+        from engine.models.message import Message
+        return [Message(message_schema, self._imap_client) for message_schema in self._schema.bcc_messages.all()]
+
+    @property
+    def messages_cc(self):
+        # type: () -> t.List[Message]
+        """Get the Messages which are cc this contact
+
+        Returns:
+            t.List[Message]: The messages where this contact is listed in the cc field
+        """
+        from engine.models.message import Message
+        return [Message(message_schema, self._imap_client) for message_schema in self._schema.cc_messages.all()]
+
     def recent_messages(self, N=3):
         # type: (t.integer) -> t.List[Message]
         """Get the N Messages which are exchanged with this contact
