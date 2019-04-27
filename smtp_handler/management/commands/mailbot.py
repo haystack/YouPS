@@ -63,5 +63,5 @@ class Command(BaseCommand):
             
             
             
-            "Your YoUPS account is ready!", "no-reply@" + BASE_URL, imapAccount.email, "Start writing your automation rule here! %s://%s" % (PROTOCOL, BASE_URL))
+            "Your YoUPS account is ready!", "no-reply@" + BASE_URL, imapAccount.email, "Start writing your automation rule here! %s://%s" % (PROTOCOL, BASE_URL)
             res['status'] = True

@@ -409,7 +409,7 @@ def login_imap_view(request):
     current_mode = None
     shortcuts = ''
     shortcuts_exist = False
-        is_initialized = False 
+    is_initialized = False 
     folders = []
     email_rule_folder = []
     rules = []
@@ -899,7 +899,7 @@ def refresh_posts(request):
             user = None
         res = engine.main.list_posts(group_name=group_name, user=user, timestamp_str = request.POST['timestamp'])
         return HttpResponse(json.dumps(res), content_type="application/json")
-    except  Exception, e:
+    except Exception, e:
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
