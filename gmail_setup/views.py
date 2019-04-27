@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import os
 import httplib2
 import json
@@ -83,10 +84,10 @@ def auth(request):
     #REDIRECT_URI = 'http://localhost:8000/gmail_setup/callback'
     REDIRECT_URI = "http://%s%s" % (BASE_URL, reverse("oauth2:return")) 
     #REDIRECT_URI = 'https://' + BASE_URL + '/gmail_setup/callback'
-    print "ACCESSING CLIENT SECRETS"
+    print("ACCESSING CLIENT SECRETS")
     with open(CLIENT_SECRETS) as json_data:
         d = json.load(json_data)
-        print "DATA:", d
+        print("DATA:", d)
 
     FLOW = flow_from_clientsecrets(
         CLIENT_SECRETS,

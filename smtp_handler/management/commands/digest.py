@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from smtp_handler.utils import *
 from http_handler.settings import BASE_URL, DEFAULT_FROM_EMAIL, WEBSITE
@@ -36,7 +37,7 @@ class Command(BaseCommand):
                             post_include = False
                             
                         if tp == p:
-                            print "THIS POST" 
+                            print("THIS POST") 
                             break
 
                     if post_include:

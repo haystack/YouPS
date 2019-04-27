@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from email.parser import HeaderParser
 import heapq
 import email
@@ -162,7 +163,7 @@ class Pile():
         if not is_test:
             self.add_gmail_labels_meta(flags)
 
-        print format_log("add_gmail_labels(): add gmail labels to a message %s" % str(flags), False, self.get_subject())
+        print(format_log("add_gmail_labels(): add gmail labels to a message %s" % str(flags), False, self.get_subject()))
 
     def add_flags(self, flags):
         self.imap.add_flags(self.get_IDs(), flags)
@@ -184,7 +185,7 @@ class Pile():
         if not is_test:
             self.add_flags(flags)
 
-        print ("Successfuly add notes: " + str(flags))
+        print(("Successfuly add notes: " + str(flags)))
 
 
     def copy_meta(self, src_folder, dst_folder):
@@ -194,13 +195,13 @@ class Pile():
         src_folder = "INBOX"
         if not self.imap.folder_exists(dst_folder):
             self.create_folder_meta(dst_folder)
-            print format_log("copy(): destionation folder %s not exist. Just create a new folder %s " % (dst_folder, dst_folder), False, self.get_subject())
+            print(format_log("copy(): destionation folder %s not exist. Just create a new folder %s " % (dst_folder, dst_folder), False, self.get_subject()))
 
         if not is_test:
             self.imap.select_folder(src_folder)
             self.copy_meta(self.get_IDs(), dst_folder)
 
-        print format_log("copy(): a message from folder %s to %s" % (src_folder, dst_folder), False, self.get_subject())
+        print(format_log("copy(): a message from folder %s to %s" % (src_folder, dst_folder), False, self.get_subject()))
 
 
     def delete_meta(self):
@@ -210,7 +211,7 @@ class Pile():
         if not is_test:
             self.delete_meta()
 
-        print format_log("delete(): delete a message \n**Warning: your following action might throw erros as you delete the message", False, self.get_subject())
+        print(format_log("delete(): delete a message \n**Warning: your following action might throw erros as you delete the message", False, self.get_subject()))
 
 
     def has_label(self, label):
@@ -232,7 +233,7 @@ class Pile():
         if not is_test:
             self.mark_read_meta(is_seen)
 
-        print format_log("Mark Message a message %s" % ("read" if is_seen else "unread"), False, self.get_subject())
+        print(format_log("Mark Message a message %s" % ("read" if is_seen else "unread"), False, self.get_subject()))
 
 
     def move_meta(self, dst_folder):
@@ -244,14 +245,14 @@ class Pile():
 
         if not self.imap.folder_exists(dst_folder):
             self.create_folder_meta(dst_folder)
-            print format_log("Move Message; destination folder %s not exist. Just create a new folder %s" % (dst_folder, dst_folder), False, self.get_subject())
+            print(format_log("Move Message; destination folder %s not exist. Just create a new folder %s" % (dst_folder, dst_folder), False, self.get_subject()))
 
         src_folder = "INBOX"
         self.imap.select_folder(src_folder)
         if not is_test:
             self.move_meta(dst_folder)
 
-        print format_log("Move Message from %s to %s \n**Warning: your following action might throw erros as you move the message" % (src_folder, dst_folder), False, self.get_subject())
+        print(format_log("Move Message from %s to %s \n**Warning: your following action might throw erros as you move the message" % (src_folder, dst_folder), False, self.get_subject()))
 
 
     def remove_notes_meta(self, flags):
@@ -271,7 +272,7 @@ class Pile():
         if not is_test:
             self.remove_notes_meta(flags)
 
-        print format_log("Remove labels %s of a message" % (flags), False, self.get_subject())
+        print(format_log("Remove labels %s of a message" % (flags), False, self.get_subject()))
 
 
     def remove_gmail_labels(self, flags, is_test=False):
@@ -285,7 +286,7 @@ class Pile():
         if not is_test:
             self.imap.remove_gmail_labels(self.get_IDs(), flags)
 
-        print format_log("Remove labels %s of a message" % (flags), False, self.get_subject())
+        print(format_log("Remove labels %s of a message" % (flags), False, self.get_subject()))
 
     #################################
     ### Folder functions
@@ -298,13 +299,13 @@ class Pile():
             raise Exception('create_folder(): args folder_name must be but non-empty string but a given value is ' + folder)
 
         if self.imap.folder_exists(folder):
-            print format_log("create_folder(): folder %s already exist" % folder, True, self.get_subject())
+            print(format_log("create_folder(): folder %s already exist" % folder, True, self.get_subject()))
             return
 
         if not is_test:
             self.create_folder_meta(folder)
 
-        print format_log("Create a folder %s" % folder, False, self.get_subject())
+        print(format_log("Create a folder %s" % folder, False, self.get_subject()))
 
 
     def delete_folder_meta(self, folder):
@@ -315,13 +316,13 @@ class Pile():
             raise Exception('delete_folder(): args folder_name must be but non-empty string but a given value is ' + folder)
 
         if not self.imap.folder_exists(folder):
-            print format_log("delete_folder(): folder %s not exist" % folder, True, self.get_subject())
+            print(format_log("delete_folder(): folder %s not exist" % folder, True, self.get_subject()))
             return
 
         if not is_test:
             self.delete_folder_meta(folder)
 
-        print format_log("delete_folder(): Delete a folder %s" % folder, False, self.get_subject())
+        print(format_log("delete_folder(): Delete a folder %s" % folder, False, self.get_subject()))
 
 
     def list_folders(self, directory=u'', pattern=u'*'):
@@ -339,13 +340,13 @@ class Pile():
             raise Exception('rename_folder(): args folder_name must be but non-empty string but a given value is ' + new_name)
 
         if self.imap.folder_exists(new_name):
-            print format_log("rename_folder(); folder %s already exist. Try other name" % new_name, True, self.get_subject())
+            print(format_log("rename_folder(); folder %s already exist. Try other name" % new_name, True, self.get_subject()))
             return
 
         if not is_test:
             self.rename_folder_meta(old_name, new_name)
 
-        print format_log("Rename a folder %s to %s" % (old_name, new_name), False, self.get_subject())
+        print(format_log("Rename a folder %s to %s" % (old_name, new_name), False, self.get_subject()))
 
 
     ### Folder functions
@@ -361,7 +362,7 @@ class Pile():
 
     def get_count(self):
         messages = self.imap.search( self.search_criteria )
-        print ("info", "Mmail getCount(): " + self.search_criteria + str(len(messages)))
+        print(("info", "Mmail getCount(): " + self.search_criteria + str(len(messages))))
         # print (messages)
         return len(messages)
 
@@ -440,7 +441,7 @@ class Pile():
                         html += decoded
                     else:
                         # TODO should be a log but idk where logs go... LSM
-                        print 'unknown content type', content_type
+                        print('unknown content type', content_type)
 
             bodys.append(text if text != "" else html)
 

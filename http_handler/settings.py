@@ -1,6 +1,7 @@
 # Django settings for murmur project.
 
 from __future__ import absolute_import
+from __future__ import print_function
 import os
 import django
 import sys
@@ -71,7 +72,7 @@ IMAP_SECRET = ''
 try:
     execfile(SITE_ROOT + '/../private.py')
 except IOError:
-    print "Unable to open configuration file!"
+    print("Unable to open configuration file!")
 
 if ENV == 'prod':
     if WEBSITE == 'murmur':

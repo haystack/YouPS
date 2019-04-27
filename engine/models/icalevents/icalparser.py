@@ -3,6 +3,7 @@ Parse iCal data to Events.
 """
 # for UID generation
 from __future__ import absolute_import
+from __future__ import print_function
 from random import randint
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta

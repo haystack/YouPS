@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from __future__ import absolute_import
+from __future__ import print_function
 import base64
 import logging
 import imaplib
@@ -207,7 +208,7 @@ class GoogleOauth2():
       auth_string: A valid OAuth2 string, as returned by GenerateOAuth2String.
           Must not be base64-encoded, since imaplib does its own base64-encoding.
     """
-    print
+    print()
     imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
     imap_conn.debug = 4
     imap_conn.authenticate('XOAUTH2', lambda x: auth_string)

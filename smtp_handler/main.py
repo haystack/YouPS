@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import logging, time, base64, traceback, json
 from lamson.routing import route, stateless
 from config.settings import relay
@@ -455,17 +456,17 @@ def handle_post_murmur(message, group, host, verified):
         sender_name = None
     else:
         sn = sender_name.split(" ")
-        print "sender name", sender_name
+        print("sender name", sender_name)
         if len(sn) > 0:
             u = UserProfile.objects.filter(email=sender_addr)
-            print "sender name", sender_addr
+            print("sender name", sender_addr)
             # update first/last name 
             if u.exists():
                 first_name = ''
                 last_name = ''
 
                 first_name = sn[0]
-                print "first name", first_name
+                print("first name", first_name)
                 entry = u[0]
                 entry.first_name = first_name
                 
@@ -568,7 +569,7 @@ def handle_post_murmur(message, group, host, verified):
         mail['message-id'] = msg_id
 
         to_send =  res['recipients']
-        print ('TO LIST: ' + str(to_send))
+        print(('TO LIST: ' + str(to_send)))
         
         ccs = email_message.get_all('cc', None)
         if ccs:
@@ -597,7 +598,7 @@ def handle_post_murmur(message, group, host, verified):
                     if recip.email == sender_addr or recip.email in direct_recips:
                         continue
 
-                    print "email to", recip.email
+                    print("email to", recip.email)
                     # Don't send email to the sender if she is at the sender's do-not-send list
                     # up = UserProfile.objects.filter(email=user.member.email)
                     # if DoNotSendList.objects.filter(group=g, user=up[0], donotsend_user=recip).exists():
@@ -628,7 +629,7 @@ def handle_post_murmur(message, group, host, verified):
             fwd_to_lists = ForwardingList.objects.filter(group=g, can_receive=True) 
 
             for l in fwd_to_lists:
-                print "forwarding emails", l.email 
+                print("forwarding emails", l.email) 
                 mail.clear()
 
                 # non murmur list, send as usual 

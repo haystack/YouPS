@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import base64, json, logging,traceback
 
 from annoying.decorators import render_to
@@ -189,7 +190,7 @@ def post_list(request):
                 
                 engine.main.list_posts_page(threads, group, res, user=user, format_datetime=False, return_replies=False, text_limit=250)
             except Exception as e:
-                print e
+                print(e)
                 res['code'] = msg_code['UNKNOWN_ERROR']
             logging.debug(res)
 
@@ -555,7 +556,7 @@ def my_group_settings_view(request, group_name):
     user = get_object_or_404(UserProfile, email=request.user.email)
     groups = Group.objects.filter(membergroup__member=user).values("name")
     try:
-        print "fetch donotsend list"
+        print("fetch donotsend list")
 
         group = Group.objects.get(name=group_name)
         membergroup = MemberGroup.objects.get(member=user, group=group)
@@ -647,7 +648,7 @@ def edit_group_info(request):
 
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -658,7 +659,7 @@ def edit_members(request):
         res = engine.main.edit_members_table(request.POST['group_name'], request.POST['toDelete'], request.POST['toAdmin'], request.POST['toMod'], user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -669,7 +670,7 @@ def edit_donotsend(request):
         res = engine.main.edit_donotsend_table(request.POST['group_name'], request.POST['toDelete'], user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -697,19 +698,19 @@ def create_group(request):
         res = engine.main.create_group(request.POST['group_name'], request.POST['group_desc'], public, attach, send_rejected, store_rejected, mod_edit_wl_bl, mod_rules, auto_approve, user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
 @login_required
 def get_group_settings(request):
     try:
-        print "view get group settings"
+        print("view get group settings")
         user = get_object_or_404(UserProfile, email=request.user.email)
         res = engine.main.get_group_settings(request.POST['group_name'], user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -726,7 +727,7 @@ def edit_group_settings(request):
         res = engine.main.edit_group_settings(request.POST['group_name'], following, upvote_emails, receive_attachments, no_emails, digest, user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -780,7 +781,7 @@ def add_list(request):
             can_receive, can_post, request.POST['list_url'], user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -791,7 +792,7 @@ def delete_list(request):
         res = engine.main.delete_list(request.POST['group_name'], request.POST['lists'], user)
         return HttpResponse(json.dumps(res), content_type='application/json')
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -805,7 +806,7 @@ def adjust_list_can_post(request):
         res = engine.main.adjust_list_can_post(request.POST['group_name'], request.POST['lists'], can_post, user)
         return HttpResponse(json.dumps(res), content_type='application/json')
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -819,7 +820,7 @@ def adjust_list_can_receive(request):
         res = engine.main.adjust_list_can_receive(request.POST['group_name'], request.POST['lists'], can_receive, user)
         return HttpResponse(json.dumps(res), content_type='application/json')
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -868,7 +869,7 @@ def group_info(request):
 @login_required
 def donotsend_info(request):
     try:
-        print "view group_info requested"
+        print("view group_info requested")
         user = get_object_or_404(UserProfile, email=request.user.email)
         res = engine.main.donotsend_info(request.POST['group_name'], user)
         return HttpResponse(json.dumps(res), content_type="application/json")
@@ -888,7 +889,7 @@ def list_posts(request):
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
         logging.debug(e)
-        print e
+        print(e)
         return HttpResponse(request_error, content_type="application/json")
 
 @login_required
@@ -1017,7 +1018,7 @@ def insert_post(request):
         del res['tag_objs']
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
         
@@ -1135,7 +1136,7 @@ def insert_reply(request):
         del res['tag_objs']
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print sys.exc_info()
+        print(sys.exc_info())
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
     
@@ -1277,7 +1278,7 @@ def upvote(request):
         res = engine.main.upvote(request.POST['post_id'], user=user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
     
@@ -1288,7 +1289,7 @@ def unupvote(request):
         res = engine.main.unupvote(request.POST['post_id'], user=user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1456,7 +1457,7 @@ def whitelist(request):
         res = engine.main.update_blacklist_whitelist(user, group_name, sender_emails, True, False)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
     
@@ -1470,7 +1471,7 @@ def blacklist(request):
         res = engine.main.update_blacklist_whitelist(user, group_name, sender_emails, False, True)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1484,7 +1485,7 @@ def donotsend_list(request):
         res = engine.main.update_donotsend_list(user, group_name, sender_emails)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1501,7 +1502,7 @@ def login_imap(request):
         res = engine.main.login_imap(user.email, password, host, is_oauth)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1513,7 +1514,7 @@ def fetch_execution_log(request):
         res = engine.main.fetch_execution_log(user, request.user.email)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1528,7 +1529,7 @@ def folder_recent_messages(request):
         # res = engine.main.folder_recent_messages(user, user.email, folder_name, N)
         return HttpResponse(None, content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1541,7 +1542,7 @@ def remove_rule(request):
         res = engine.main.remove_rule(user, request.user.email, rule_id)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1557,7 +1558,7 @@ def run_mailbot(request):
         res = engine.main.run_mailbot(user, request.user.email, current_mode_id, modes, is_test, run_request)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1587,7 +1588,7 @@ def save_shortcut(request):
         res = engine.main.save_shortcut(user, request.user.email, shortcuts)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
         
@@ -1602,7 +1603,7 @@ def delete_mailbot_mode(request):
         res = engine.main.delete_mailbot_mode(user, request.user.email, mode_id)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1616,7 +1617,7 @@ def unblacklist_unwhitelist(request):
         res = engine.main.update_blacklist_whitelist(user, group_name, sender_emails, False, False)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1660,7 +1661,7 @@ def approve_post(request):
             res = engine.main.update_post_status(user, group_name, post_id, 'A')
             return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1676,7 +1677,7 @@ def reject_post(request):
             res = engine.main.update_post_status(user, group_name, post_id, 'R', explanation=explanation, tags=tags)
             return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1687,7 +1688,7 @@ def delete_post(request):
         res = engine.main.delete_post(user, request.POST['id'], request.POST['thread_id'])
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1703,7 +1704,7 @@ def delete_posts(request):
                 break
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1720,7 +1721,7 @@ def follow_thread(request):
                                         'url': global_settings.LOGIN_URL + "?next=/thread?tid=" + thread}), 
                                         content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1742,7 +1743,7 @@ def follow_tag(request):
             res = engine.main.follow_tag(request.POST['tag_name'], request.POST['group_name'], user=user)
             return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1754,7 +1755,7 @@ def unfollow_tag(request):
             res = engine.main.unfollow_tag(request.POST['tag_name'], request.POST['group_name'], user=user)
             return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1766,7 +1767,7 @@ def mute_tag(request):
             res = engine.main.mute_tag(request.POST['tag_name'], request.POST['group_name'], user=user)
             return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1778,7 +1779,7 @@ def unmute_tag(request):
             res = engine.main.unmute_tag(request.POST['tag_name'], request.POST['group_name'], user=user)
             return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1795,7 +1796,7 @@ def mute_thread(request):
                                         'url': global_settings.LOGIN_URL + "?next=/thread?tid=" + thread}), 
                                         content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 
@@ -1806,7 +1807,7 @@ def unmute_thread(request):
         res = engine.main.unmute_thread(request.POST['thread_id'], user=user)
         return HttpResponse(json.dumps(res), content_type="application/json")
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         return HttpResponse(request_error, content_type="application/json")
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import base64
 import logging
 import random
@@ -111,7 +112,7 @@ def fetch_execution_log(user, email, push=True):
         res['code'] = "Error during authentication. Please refresh"
     except Exception as e:
         # TODO add exception
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
@@ -138,7 +139,7 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except Exception as e:
         # TODO add exception
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
@@ -167,7 +168,7 @@ def remove_rule(user, email, rule_id):
         res['code'] = "Not logged into IMAP"
     except Exception as e:
         # TODO add exception
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
@@ -238,9 +239,9 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
                 logger.info("saving editor %s run request" % uid)
-                print mode_name
-                print code
-                print folders
+                print(mode_name)
+                print(code)
+                print(folders)
                 
                 er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
@@ -297,8 +298,8 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     except Exception as e:
         # TODO add exception
         logger.exception("failed while doing a user code run")
-        print e
-        print (traceback.format_exc())
+        print(e)
+        print((traceback.format_exc()))
         res['code'] = msg_code['UNKNOWN_ERROR']
     finally:
         imap.logout()
@@ -430,7 +431,7 @@ def save_shortcut(user, email, shortcuts, push=True):
         res['code'] = "Not logged into IMAP"
     except Exception as e:
         # TODO add exception
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)

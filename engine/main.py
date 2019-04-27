@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import base64, email, hashlib, json, logging, random, re, requests, sys, time
 
 from bleach import clean
@@ -218,7 +219,7 @@ def edit_members_table(group_name, toDelete, toAdmin, toMod, user):
                 email_on_role_change("mod", membergroup.group.name, membergroup.member.email)
         res['status'] = True
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
     except Group.DoesNotExist:
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
@@ -248,7 +249,7 @@ def edit_donotsend_table(group_name, toDelete, user):
 
         res['status'] = True
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
     except Group.DoesNotExist:
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
@@ -712,7 +713,7 @@ def donotsend_info(group_name, user):
             
             res['members'].append(member_info)
 
-            print "fetch donotsend list", donotsend.donotsend_user.email
+            print("fetch donotsend list", donotsend.donotsend_user.email)
 
     except Group.DoesNotExist:
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR'] 
@@ -827,7 +828,7 @@ def list_posts(group_name=None, user=None, timestamp_str=None, return_replies=Tr
         list_posts_page(threads, g, res, user=user, format_datetime=format_datetime, return_replies=return_replies, return_full_content=return_full_content)
             
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
     return res
@@ -856,7 +857,7 @@ def load_thread(t, user=None, member=None):
     replies = []
     post = None
 
-    print "postS: ", posts
+    print("postS: ", posts)
     
     for p in posts:
         post_likes = p.upvote_set.count()
@@ -865,7 +866,7 @@ def load_thread(t, user=None, member=None):
         if user:
             user_liked = p.upvote_set.filter(user=user).exists()
 
-        print "attachment at load_thread?"
+        print("attachment at load_thread?")
         attachments = []
         for attachment in Attachment.objects.filter(msg_id=p.msg_id):
             url = "attachment/" + attachment.hash_filename
@@ -1036,7 +1037,7 @@ def _create_post(group, subject, message_text, user, sender_addr, msg_id, verifi
         recipients = []
         for m in group_members:
             # print "create post", user.email
-            print "donotsend", m.member.email
+            print("donotsend", m.member.email)
             dm = DoNotSendList.objects.filter(group=group, user=user, donotsend_user=m.member)
             if dm.exists():
                continue 
@@ -1109,7 +1110,7 @@ def insert_post_web(group_name, subject, message_text, user):
     except Group.DoesNotExist:
         res['code'] = msg_code['GROUP_NOT_FOUND_ERROR']
     except Exception as e:
-        print e
+        print(e)
         logging.debug(e)
         if(thread and thread.id):
             thread.delete()
@@ -1402,7 +1403,7 @@ def unfollow_thread(thread_id, email=None, user=None):
     except Thread.DoesNotExist:
         res['code'] = msg_code['THREAD_NOT_FOUND_ERROR']
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
     return res
@@ -1457,7 +1458,7 @@ def unmute_thread(thread_id, email=None, user=None):
     except Thread.DoesNotExist:
         res['code'] = msg_code['THREAD_NOT_FOUND_ERROR']
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
     return res
@@ -1503,7 +1504,7 @@ def unfollow_tag(tag_name, group_name, user=None, email=None):
     except Tag.DoesNotExist:
         res['code'] = msg_code['TAG_NOT_FOUND_ERROR']
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
     return res
@@ -1549,7 +1550,7 @@ def unmute_tag(tag_name, group_name, user=None, email=None):
     except Tag.DoesNotExist:
         res['code'] = msg_code['TAG_NOT_FOUND_ERROR']
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
     logging.debug(res)
     return res
@@ -1612,7 +1613,7 @@ def update_donotsend_list(user, group_name, emails, push=True):
         res['code'] = msg_code['PRIVILEGE_ERROR']
 
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
@@ -1672,7 +1673,7 @@ def update_blacklist_whitelist(user, group_name, emails, whitelist, blacklist, p
         res['code'] = msg_code['PRIVILEGE_ERROR']
 
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
@@ -1809,7 +1810,7 @@ def update_post_status(user, group_name, post_id, new_status, explanation=None, 
         res['code'] = msg_code['PRIVILEGE_ERROR']
 
     except Exception as e:
-        print e
+        print(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
@@ -1821,7 +1822,7 @@ def load_pending_posts(user, group_name):
         mg = MemberGroup.objects.get(member=user, group__name=group_name)
         posts = Post.objects.filter(group__name=group_name, status='P')
         posts_cleaned = fix_posts(posts)
-        print "here"
+        print("here")
         grouped = group_by_thread(posts_cleaned)
         res['threads'] = grouped
         res['status'] = True
@@ -1838,7 +1839,7 @@ def load_pending_posts(user, group_name):
         res['code'] = msg_code['UNKNOWN_ERROR']
         res['error'] = e
 
-    print "res:!!!!", res
+    print("res:!!!!", res)
     return res
 
 def load_rejected_posts(user, group_name):

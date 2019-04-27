@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import email, re, time, hashlib, random, dkim, pytz
 from lamson.server import Relay
 from config.settings import *
@@ -319,7 +320,7 @@ def get_body(email_message):
             elif subtype == 'html':
                 res['html'] += remove_html_ps(body)
 
-    print res
+    print(res)
 
     return res
 
