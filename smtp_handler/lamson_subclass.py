@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import mimetypes
 from lamson import encoding, bounce
 from email.utils import parseaddr

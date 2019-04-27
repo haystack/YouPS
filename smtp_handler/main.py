@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging, time, base64, traceback, json
 from lamson.routing import route, stateless
 from config.settings import relay
@@ -11,7 +12,7 @@ from email.utils import *
 from email import message_from_string, header, message
 from engine.main import *
 from engine.s3_storage import upload_message
-from utils import *
+from .utils import *
 from django.db.utils import OperationalError
 from datetime import datetime
 import pytz

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import datetime 
 from django.contrib.sites.models import Site

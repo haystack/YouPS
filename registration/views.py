@@ -3,6 +3,7 @@ Views which allow users to create and activate accounts.
 
 """
 
+from __future__ import absolute_import
 from django.shortcuts import redirect
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView

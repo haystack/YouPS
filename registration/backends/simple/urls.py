@@ -17,6 +17,7 @@ your own URL patterns for these views instead.
 """
 
 
+from __future__ import absolute_import
 from django.conf.urls import include
 from django.conf.urls import patterns
 from django.conf.urls import url

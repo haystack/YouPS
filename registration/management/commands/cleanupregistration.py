@@ -7,6 +7,7 @@ contains the actual logic for determining which accounts are deleted.
 
 """
 
+from __future__ import absolute_import
 from django.core.management.base import NoArgsCommand
 
 from registration.models import RegistrationProfile

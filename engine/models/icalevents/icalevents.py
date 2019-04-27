@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from threading import Lock, Thread
 
 from .icalparser import parse_events

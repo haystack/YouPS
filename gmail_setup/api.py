@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from apiclient.discovery import build
 import httplib2, logging, re, time
 from oauth2client.django_orm import Storage

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from email.parser import HeaderParser
 import heapq
 import email

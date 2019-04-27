@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import patterns, include, url
 from django.contrib.auth import views as auth_views
 from django.views.generic.base import TemplateView

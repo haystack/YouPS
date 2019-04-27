@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64, email, hashlib, json, logging, random, re, requests, sys, time
 
 from bleach import clean
@@ -11,13 +12,13 @@ from lamson.mail import MailResponse
 from pytz import utc
 
 from browser.util import *
-from constants import *
+from .constants import *
 from engine.google_auth import *
 from engine.constants import extract_hash_tags, ALLOWED_MESSAGE_STATUSES
 from gmail_setup.api import update_gmail_filter, untrash_message
 from gmail_setup.views import build_services
 from http_handler.settings import BASE_URL, WEBSITE, AWS_STORAGE_BUCKET_NAME, PERSPECTIVE_KEY, IMAP_SECRET
-from s3_storage import upload_attachments, download_attachments, download_message
+from .s3_storage import upload_attachments, download_attachments, download_message
 from schema.models import *
 from smtp_handler.utils import *
 

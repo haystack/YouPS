@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from smtp_handler.utils import send_email
 from imapclient import IMAPClient
 from http_handler.settings import BASE_URL, WEBSITE, IMAP_SECRET

@@ -1,8 +1,9 @@
 from __future__ import unicode_literals, print_function, division
+from __future__ import absolute_import
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import logging
-from message import Message
+from .message import Message
 from schema.youps import MessageSchema, FolderSchema, ContactSchema, ThreadSchema, ImapAccount  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Max
 from imapclient.response_types import Address  # noqa: F401 ignore unused we use it for typing

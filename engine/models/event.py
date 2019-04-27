@@ -1,4 +1,5 @@
 # Based on https://stackoverflow.com/questions/1092531/event-system-in-python/1096614#1096614
+from __future__ import absolute_import
 import logging
 
 logger = logging.getLogger('youps')  # type: logging.Logger

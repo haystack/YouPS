@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64, json, logging,traceback
 
 from annoying.decorators import render_to

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, User
 from django.core.mail import send_mail
 from django.db import models

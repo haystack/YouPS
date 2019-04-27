@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function, division
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
-from event import Event  # noqa: F401 ignore unused we use it for typing
+from .event import Event  # noqa: F401 ignore unused we use it for typing
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 

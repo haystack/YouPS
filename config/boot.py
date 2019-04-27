@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from config import settings
 from lamson.routing import Router
 from lamson.server import Relay, SMTPReceiver

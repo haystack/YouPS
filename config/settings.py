@@ -1,4 +1,5 @@
 # This file contains python variables that configure Lamson for email processing.
+from __future__ import absolute_import
 import sys, os
 import logging
 

@@ -7,6 +7,7 @@ django-registration 1.0. For new installs, use
 
 """
 
+from __future__ import absolute_import
 import warnings
 
 warnings.warn("include('registration.urls') is deprecated; use include('registration.backends.default.urls') instead.",

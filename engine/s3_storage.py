@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import hashlib, logging, random, time
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile

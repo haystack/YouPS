@@ -8,6 +8,7 @@ you're using a custom model.
 
 """
 
+from __future__ import absolute_import
 from schema.models import UserProfile
 from django import forms
 from django.contrib.auth import get_user_model

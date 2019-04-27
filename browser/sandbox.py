@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, division
 
+from __future__ import absolute_import
 import logging
 import sys, traceback
 import datetime

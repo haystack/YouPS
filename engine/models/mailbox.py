@@ -1,11 +1,12 @@
 from __future__ import unicode_literals, print_function, division
+from __future__ import absolute_import
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-from event import Event
+from .event import Event
 import logging
 import datetime
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
-from folder import Folder
+from .folder import Folder
 from engine.models.contact import Contact
 from smtp_handler.utils import format_email_address, send_email
 from email import message

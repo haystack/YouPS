@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import httplib2
 import json
@@ -9,7 +10,7 @@ from django.utils.timezone import utc
 from pytz import utc
 
 
-import api
+from . import api
 from browser.util import get_groups_links_from_roles
 import engine
 from gmail_setup.api import create_gmail_filter

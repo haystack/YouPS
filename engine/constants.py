@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 MAX_GROUP_NAME_LENGTH = 20
 MAX_GROUP_DESC_LENGTH = 140

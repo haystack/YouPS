@@ -1,4 +1,5 @@
 from __future__ import unicode_literals, print_function, division
+from __future__ import absolute_import
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema, EmailRule, TaskManager  # noqa: F401 ignore unused we use it for typing
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing

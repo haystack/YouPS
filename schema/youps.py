@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import models
 import json
 import typing as t  # noqa: F401 ignore unused we use it for typing

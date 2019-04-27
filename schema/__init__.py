@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from schema.models import UserProfile
 from schema.youps import (ContactSchema, EmailRule, FolderSchema, ImapAccount,
                           MailbotMode, Message_Thread,

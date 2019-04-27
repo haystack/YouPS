@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import logging
 from ics import Calendar, Event
-from icalevents.icalevents import events, download_calendar, find_conflicts
+from .icalevents.icalevents import events, download_calendar, find_conflicts
 from dateutil.tz import tzlocal
 from schema.youps import CalendarSchema
 from django.utils import timezone
