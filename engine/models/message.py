@@ -529,7 +529,7 @@ class Message(object):
         self.reply(more_to, more_cc, more_bcc, content)
             
     def see_later(self, later_at=60, hide_in='YoUPS see_later'):
-        if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
+        if not isinstance(later_at, datetime) and not isinstance(later_at, (int, int, float)):
             raise TypeError("see_later(): later_at " + later_at + " is not number or datetime")
         
         if isinstance(later_at, datetime) and (later_at.tzinfo is None or later_at.tzinfo.utcoffset(later_at) is None):
@@ -537,7 +537,7 @@ class Message(object):
             later_at = timezone.localtime(later_at)
             logger.info(later_at)
 
-        elif isinstance(later_at, (int, long, float)):
+        elif isinstance(later_at, (int, int, float)):
             later_at = timezone.now().replace(microsecond=0) + timedelta(seconds=later_at*60)
             
         current_folder = self._schema.folder_schema.name
