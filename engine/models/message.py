@@ -58,7 +58,7 @@ class Message(object):
         self.is_simulate = is_simulate  # type: bool
 
         # local copy of flags for simulating
-        self._flags = self._schema.base_message.flags
+        self._flags = self._schema.flags
         logger.debug('caller name: %s', inspect.stack()[1][3])
 
     @staticmethod
@@ -140,7 +140,7 @@ class Message(object):
         Returns:
             List(str): List of flags on the message
         """
-        return self._flags if self.is_simulate else self._schema.base_message.flags
+        return self._flags if self.is_simulate else self._schema.flags
 
     @property
     def in_reply_to(self):
@@ -170,7 +170,7 @@ class Message(object):
         removed the setter from flags since it was too dangerous.
         """
         if not self.is_simulate:
-            self._schema.base_message.flags = flags
+            self._schema.flags = flags
         
         self._flags = flags
 

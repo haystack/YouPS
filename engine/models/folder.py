@@ -277,7 +277,7 @@ class Folder(object):
 
             self._cleanup_message_data(message_data)
 
-            old_flags = set(message_schema.base_message.flags)
+            old_flags = set(message_schema.flags)
             new_flags = set(message_data['FLAGS'])
 
             flags_removed = old_flags - new_flags
@@ -297,8 +297,8 @@ class Folder(object):
                     Message(message_schema, self._imap_client), list(flags_added)))
 
             if flags_added or flags_removed:
-                message_schema.base_message.flags = list(new_flags)
-                message_schema.base_message.save()
+                message_schema.flags = list(new_flags)
+                message_schema.save()
 
             if message_schema.msn != message_data['SEQ']:
                 message_schema.msn = message_data['SEQ']
@@ -350,33 +350,11 @@ class Folder(object):
             metadata['references'] = []
 
     def _cleanup_message_data(self, message_data):
-
         message_data['FLAGS'] = list(message_data['FLAGS'])
         if self._imap_account.is_gmail:
-            # basically treat FLAGS and GMAIL-LABELS as the same thing
-            message_data['FLAGS'] += list(message_data['X-GM-LABELS'])
-
-            # X-GM-LABELS does not include the label associated with the current
-            # folder. Here we have all the known labels for gmail
-            # other folders are the same as the label name
-            gmail_map = {
-                u'INBOX': u'\\Inbox',
-                u'[Gmail]/All Mail': u'\\AllMail',
-                u'[Gmail]/Drafts': u'\\Draft',
-                u'[Gmail]/Important': u'\\Important',
-                u'[Gmail]/Sent Mail': u'\\Sent',
-                u'[Gmail]/Spam': u'\\Spam',
-                u'[Gmail]/Starred': u'\\Starred',
-                u'[Gmail]/Trash': u'\\Trash',
-            }
-            # add the label for the current folder to the flags
-            if self.name in gmail_map:
-                message_data['FLAGS'] += [gmail_map[self.name]]
-            else:
-                message_data['FLAGS'] += [self.name]
-
-            # make sure flags are unique
-            message_data['FLAGS'] = list(set(message_data['FLAGS']))
+            # basically treat FLAGS and GMAIL-LABELS as the same thing but don't duplicate
+            combined_flags = set(message_data['FLAGS'] + list(message_data['X-GM-LABELS']))
+            message_data['FLAGS'] = list(combined_flags) 
 
     def _save_new_messages(self, last_seen_uid, event_data_list=None, urgent=False):
         # type: (int, t.List[AbstractEventData]) -> None
@@ -431,9 +409,6 @@ class Folder(object):
             try:
                 base_message = BaseMessage.objects.get(
                     imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage
-                if base_message.flags != message_data['FLAGS']:
-                    base_message.flags = message_data['FLAGS']
-                    base_message.save()
             except BaseMessage.DoesNotExist:
                 is_message_arrival = True
                 internal_date = self._parse_header_date(message_data.get('INTERNALDATE', ''))
@@ -442,7 +417,6 @@ class Folder(object):
                 base_message = BaseMessage(
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
-                    flags=message_data['FLAGS'],
                     in_reply_to=metadata['in-reply-to'],
                     references=metadata['references'],
                     date=date,
@@ -471,6 +445,7 @@ class Folder(object):
             new_message = MessageSchema(
                 base_message=base_message,
                 imap_account=self._imap_account,
+                flags=message_data['FLAGS'],
                 folder_schema=self._schema,
                 uid=uid,
                 msn=message_data['SEQ']
