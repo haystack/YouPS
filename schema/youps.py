@@ -162,7 +162,8 @@ class MessageSchema(models.Model):
     class Meta:
         db_table = "youps_message"
         # message uid is unique per folder, folder is already unique per account
-        unique_together = ("uid", "folder_schema")
+        # base_message is unique per folder, folder is unique per account
+        unique_together = [("uid", "folder_schema"), ('base_message', 'folder_schema')]
 
 
 class ContactSchema(models.Model):

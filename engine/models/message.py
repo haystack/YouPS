@@ -23,11 +23,11 @@ from pytz import timezone as tz
 from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
 from engine.models.contact import Contact
-from engine.utils import is_imap_flag
 from http_handler.settings import CLIENT_ID
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
+from engine.utils import IsNotGmailException, InvalidFlagException, is_gmail_label
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -466,15 +466,14 @@ class Message(object):
         """
 
         ok, flags = self._check_flags(flags)
-        if not ok:
-            return
 
         # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self.is_simulate:
             if self._imap_account.is_gmail:
-                gmail_labels = filter(lambda f: not is_imap_flag(f), flags)
+                gmail_labels = filter(is_gmail_label, flags)
                 self._imap_client.add_gmail_labels(self._uid, gmail_labels)
-                self._imap_client.add_flags(self._uid, filter(is_imap_flag, flags))
+                not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
+                self._imap_client.add_flags(self._uid, not_gmail_labels)
             else:
                 self._imap_client.add_flags(self._uid, flags)
                 
@@ -500,9 +499,10 @@ class Message(object):
         # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self.is_simulate:
             if self._imap_account.is_gmail:
-                gmail_labels = filter(lambda f: not is_imap_flag(f), flags)
+                gmail_labels = filter(is_gmail_label, flags)
                 self._imap_client.remove_gmail_labels(self._uid, gmail_labels)
-                self._imap_client.remove_flags(self._uid, filter(is_imap_flag, flags))
+                not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
+                self._imap_client.remove_flags(self._uid, not_gmail_labels)
             else:
                 self._imap_client.remove_flags(self._uid, flags)
 
@@ -877,12 +877,14 @@ class Message(object):
             t.Tuple[bool, t.List[t.AnyStr]]: Tuple of whether the check passed and the flags as a list
         """
 
+        # TODO this no longer needs to return ok we have exceptions
+
         ok = True
         # allow user to pass in a string
         if isinstance(flags, basestring):
             flags = [flags]
         elif not isinstance(flags, Sequence):
-            raise TypeError("flags must be a sequence")
+            raise InvalidFlagException("flags must be a sequence")
 
         if not isinstance(flags, list):
             flags = list(flags)
@@ -890,7 +892,7 @@ class Message(object):
         # make sure all flags are strings
         for flag in flags:
             if not isinstance(flag, basestring):
-                raise TypeError("each flag must be string")
+                raise InvalidFlagException("each flag must be string")
         # remove extraneous white space
         flags = [flag.strip() for flag in flags]
         # remove empty strings
@@ -898,6 +900,7 @@ class Message(object):
         if not flags:
             ok = False
             userLogger.info("No valid flags passed")
+            raise InvalidFlagException("No valid flags. Check if flags are empty strings")
         return ok, flags
 
     def _get_from_friendly(self):
@@ -947,3 +950,38 @@ class Message(object):
             "is_recent": self.is_recent,
             "error": False 
         }
+
+    # example gmail behaviors
+
+    def mark_spam_gmail(self, is_spam=True):
+        # marks all emails in the thread as spam
+        # gmail does this by removing the Inbox flag and adding the spam flag
+        if not self._imap_account.is_gmail:
+            raise IsNotGmailException()
+        if is_spam:
+            for msg in self.thread:
+                msg.add_flags('\\Spam')
+                msg.remove_flags('\\Inbox')
+        else:
+            for msg in self.thread:
+                msg.remove_flags('\\Spam')
+                msg.add_flags('\\Inbox')
+
+    def archive_gmail(self):
+        # marks all emails in the thread as archived 
+        # gmail does this by removing the Inbox, Spam, and Trash labels 
+        # TODO not sure how to unarchive
+        if not self._imap_account.is_gmail:
+            raise IsNotGmailException()
+        for msg in self.thread:
+            msg.remove_flags([ '\\Spam', '\\Inbox', '\\Trash' ])
+        
+    def delete_gmail(self):
+        # marks all emails in the thread as deleted 
+        # gmail does this by removing the Inbox label, and adding the Trash label 
+        # TODO not sure how to undelete
+        if not self._imap_account.is_gmail:
+            raise IsNotGmailException()
+        for msg in self.thread:
+            msg.remove_flags(['\\Inbox'])
+            msg.add_flags(['\\Trash'])

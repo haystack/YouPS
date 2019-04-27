@@ -4,10 +4,39 @@ import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
 
-from engine.models.message import Message
-
+if t.TYPE_CHECKING:
+    from engine.models.message import Message
+    from engine.models.folder import Folder
+    from schema.youps import ImapAccount, MessageSchema, FolderSchema, BaseMessage  # noqa: F401 ignore unused we use it for typing
+    from imapclient import IMAPClient
 
 logger = logging.getLogger('youps')  # type: logging.Logger
+
+class YoupsException(Exception):
+    """Base Exception for custom YoupsExceptions
+    """
+    def __init__(self, *args, **kwargs):
+        super(YoupsException, self).__init__(*args, **kwargs)
+
+class IsNotGmailException(YoupsException):
+    """Exception for code which only works for gmail accounts
+    """
+    def __init__(self):
+        # Call super constructor
+        super(IsNotGmailException, self).__init__(
+            'This code only works on gmail accounts')
+
+
+class InvalidFlagException(YoupsException):
+    """Exception for when the user passes an invalid flag
+    """
+
+    def __init__(self, *args, **kwargs):
+        default_message = 'Could not set imap flags'
+        if not (args or kwargs):
+            args = (default_message,)
+        # Call super constructor
+        super(InvalidFlagException, self).__init__(*args, **kwargs)
 
 
 def grouper(iterable, n):
@@ -25,6 +54,7 @@ def grouper(iterable, n):
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
     args = [iter(iterable)] * n
     return izip(*args)
+
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -98,41 +128,39 @@ def strip_wrapping_quotes(string):
     return string
 
 
-def message_exists(msg_id):
+def message_from_message_id(msg_id, imap_account, folder, imap_client):
+    # type: (str, ImapAccount, Folder, IMAPClient) -> Message
     """Check to see if a message exists with the passed in msg_id
-    
+
     Args:
         msg_id (str): message id
-    
+        imap_account (ImapAccount): imap account
+
     Returns:
         bool: true if the message exists in the database
     """
-    from schema.youps import BaseMessage
-    return BaseMessage.objects.filter(message_id=msg_id).exists()
+    from engine.models.message import Message
+    from schema.youps import ImapAccount, MessageSchema, BaseMessage
 
+    try:
+        base_message = BaseMessage.objects.get(
+            message_id=msg_id, imap_account=imap_account)
+        message_schema = MessageSchema.objects.get(
+            folder=folder._schema, imap_account=imap_account, base_message=base_message)
+    except (BaseMessage.DoesNotExist, MessageSchema.DoesNotExist):
+        return None
+    return Message(message_schema, imap_client)
 
 
 def references_algorithm(start_msg):
     # type: (Message) -> t.List[Message]
-    from anytree import Node, LoopError
-
-    # glossary
-    # FWS = \r\n followed by 1 or more whitespace characters
-    # comments can occur which are delimited with parentheses
-    # fields we are interested in
-    #   in-reply-to: one or more message ids
-    #   references: one or more message ids
-    #   message-id: one or more message ids
-    #   the part of a message id before the @ sign can contain quotes
-    #       these quotes should be stripped
+    from anytree import Node, LoopError, PreOrderIter
 
     # find references
     #    # first try message ids in the references header line
-    #    #   if that fails use the first valid messageid in the in-reply-to header line as the only valid parent
-    #    #   if the reply to doesn't work then there are no references
+    #    # if that fails use the first valid messageid in the in-reply-to header line as the only valid parent
+    #    # if the reply to doesn't work then there are no references
     references = start_msg.references or start_msg.in_reply_to[:1]
-    
-
 
     # determine if a message is a reply or a forward
     #    #  A message is considered to be a reply or forward if the base
@@ -143,44 +171,57 @@ def references_algorithm(start_msg):
     #    # see https://tools.ietf.org/html/rfc5256#section-2.1 for base subject extraction
     #    # see https://tools.ietf.org/html/rfc5256#section-5 for def of abnf
 
-
-    # PART 1
+    # PART 1 A from https://tools.ietf.org/html/rfc5256 REFERENCES
     # using the message ids in the messages references link corresponding messages
     # first is parent of second, second is parent of third, etc...
     # make sure there are no loops
     # if a message already has a parent don't change the existing link
     # if no message exists with the reference then create a dummy message
-
-    # Part 1 a from https://tools.ietf.org/html/rfc5256#section-5
     # TODO not sure how to check valid message ids
-    roots = []
-    current = None 
-    node_map = {}
+
+    # nodes which don't have parents
+    orphan_nodes = set()  # type: t.Set[Node]
+    current = None
+    # Map of msg ids to Nodes
+    node_map = {}  # type: t.Dict[str, Node]
     for msg_id in references:
         node = node_map.get(msg_id, Node(msg_id))
+        node_map[msg_id] = node
+        # if we are in a child and the child does not already have a parent
+        # try to add the node
         if current is not None and node.parent is None:
             try:
                 node.parent = current
             except LoopError:
-                current = node 
-                roots.append(current)
-        else:
-            current = node 
-            roots.append(current)
+                current = None
+        # otherwise the node is a new orphan
+        if current is None:
+            current = node
+            orphan_nodes.append(current)
 
-    dummy_nodes = filter(lambda msg_id: not message_exists(msg_id), set(references))
-
+    # nodes which are not in our database
+    msg_map = {node_map[msg_id]: message_from_message_id(
+        msg_id, start_msg._imap_account, start_msg.folder, start_msg._imap_client) for msg_id in references}  # t.Dict[Node, t.Optional[Message]]
+    dummy_nodes = {node for node, msg in msg_map.iteritems()
+                   if msg is None}  # t.Set[Node]
 
     # PART 1 B
-    # create a parent child link between the last references and the current message.
+    # create a parent child link between the last reference and the current message.
     # if the current message already has a parent break the current parent child link unless this would create a loop
-    # 
-    current = Node(start_msg._message_id, parent=current)
+    node = node_map.get(start_msg._message_id, Node(
+        start_msg._message_id))  # type: Node
+    node_map[start_msg._message_id] = node
+    try:
+        node.parent = current
+    except LoopError:
+        pass
 
     # PART 2
     # make any messages without parents children of a dummy root
+    root = Node('root')  # type: Node
+    for orphan in orphan_nodes:
+        orphan.parent = root
 
-    
     # PART 3
     # prune dummy messages from the tree
     #    # If it is a dummy message with NO children, delete it.
@@ -192,9 +233,31 @@ def references_algorithm(start_msg):
     #    # Do not promote the children if doing so would make them
     #    # children of the root, unless there is only one child.
     #    #
-    #    # Sort the messages under the root (top-level siblings only)
-    #    # by sent date as described in section 2.2.  In the case of a
-    #    # dummy message, sort its children by sent date and then use
-    #    # the first child for the top-level sort. 
+    for node in list(PreOrderIter(root)):
+        if node not in dummy_nodes:
+            continue
+        dummy_node = node
+        # if there are no children
+        if not dummy_node.children:
+            dummy_node.parent = None
+        # promote children but only promote at most one child to the root
+        elif dummy_node.parent != root or len(dummy_node.children) == 1:
+            for child in dummy_node.children:
+                child.parent = dummy_node.parent
 
-    pass
+    # PART 4
+    # Sort the messages under the root (top-level siblings only)
+    # by sent date as described in section 2.2.  In the case of a
+    # dummy message, sort its children by sent date and then use
+    # the first child for the top-level sort.
+    def sortkey(node):
+        if node not in dummy_nodes:
+            return msg_map[node].date
+        node.children = sorted(node.children, key=sortkey)
+        # assumes we have no dummies in the middle of the tree
+        return min(msg_map[n].date for n in node.children)
+
+    root.children = sorted(root.children, key=sortkey)
+    assert isinstance(root.children, list)
+
+    # TODO PART 5 and PART 6 RFC 5256
