@@ -6,6 +6,7 @@ from dateutil.tz import tzlocal
 from schema.youps import CalendarSchema
 from django.utils import timezone
 import datetime
+from io import open
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 

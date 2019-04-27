@@ -3,6 +3,7 @@ Downloads an iCal url or reads an iCal file.
 """
 from __future__ import absolute_import
 from httplib2 import Http
+from io import open
 
 
 # default http connection to use

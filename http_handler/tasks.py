@@ -13,6 +13,7 @@ import fcntl
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 import imaplib
 import json
+from io import open
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger

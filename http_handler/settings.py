@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import os
 import django
 import sys
+from io import open
 
 
 DJANGO_ROOT = os.path.dirname(os.path.realpath(django.__file__))
