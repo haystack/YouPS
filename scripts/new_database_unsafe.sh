@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# stop on errors
+set -e
+
+# stop the cron jobs
+pidfile="/home/ubuntu/production/mailx/loop_sync_user_inbox.lock"
+exec 200>$pidfile
+flock 200 || exit 1
+pidfile="/home/ubuntu/production/mailx/register_inbox.lock"
+exec 201>$pidfile
+flock 201 || exit 1
+
 # wait for mysql to start
 echo "checking that mysql has started"
 while ! mysqladmin ping -h"$DATABASE_HOST" --silent; do

@@ -1,15 +1,15 @@
 #!/bin/bash
+
 # stop on errors
 set -e
 
-# file to lock 
+# stop the cron jobs
 pidfile="/home/ubuntu/production/mailx/loop_sync_user_inbox.lock"
- 
-# lock it
 exec 200>$pidfile
 flock 200 || exit 1
- 
-## Your code:
+pidfile="/home/ubuntu/production/mailx/register_inbox.lock"
+exec 201>$pidfile
+flock 201 || exit 1
 
 # read the users email
 if [ $# -eq 0 ]; then
