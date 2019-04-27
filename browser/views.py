@@ -28,6 +28,7 @@ from schema.models import (FollowTag, ForwardingList, Group, MemberGroup, Member
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
 from smtp_handler.utils import *
 import logging
+from six.moves import zip
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -353,7 +354,7 @@ def my_group_list(request):
     user = get_object_or_404(UserProfile, email=request.user.email)
     res = engine.main.list_my_groups(user)
     groups_links = get_groups_links_from_roles(user, res['groups'])
-    pairs = zip(res['groups'], [e[1] for e in groups_links])
+    pairs = list(zip(res['groups'], [e[1] for e in groups_links]))
 
     return {'user': request.user, 'groups': res['groups'], 'group_page': True, 'groups_links' : groups_links,
             'my_groups': True, 'website' : WEBSITE, 'group_or_squad' : group_or_squad, 'pairs' : pairs}

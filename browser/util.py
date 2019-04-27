@@ -6,6 +6,7 @@ from django.core.paginator import EmptyPage, Paginator, PageNotAnInteger
 from bleach import clean
 from bs4 import BeautifulSoup
 from schema.models import MemberGroup, Attachment
+from six.moves import zip
 
 ALLOWED_TAGS = [
     'a',
@@ -129,7 +130,7 @@ def get_groups_links_from_roles(user, groups):
         else:
             links.append(None) # no default link right now for just a member
 
-    return zip(group_names, links)
+    return list(zip(group_names, links))
 
 '''
 so inline attachments weren't displaying if the post was made via SMTP, because they would 
