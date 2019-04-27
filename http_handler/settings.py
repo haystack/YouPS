@@ -69,8 +69,12 @@ CLIENT_ID = ''
 CLIENT_SECRET = ''
 IMAP_SECRET = ''
 
+def compile_file(filename):
+    with open(filename, encoding='utf-8') as f:
+        return compile(f.read(), filename, 'exec')
+
 try:
-    execfile(SITE_ROOT + '/../private.py')
+    exec(compile_file(SITE_ROOT + '/../private.py'))
 except IOError:
     print("Unable to open configuration file!")
 

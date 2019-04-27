@@ -1,5 +1,14 @@
 .PHONY: default
-default: build reset-db start
+default: stop build reset-db start
+
+# reste the entire container without any cacheing
+.PHONY: reset-no-cache 
+reset-no-cache: clean build-no-cache reset-db start
+
+# build the docker image without any cache 
+.PHONY: build-no-cache
+build-no-cache:
+	docker-compose build --no-cache
 
 # build the docker image
 .PHONY: build
