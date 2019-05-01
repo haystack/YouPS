@@ -417,7 +417,7 @@ class Message(object):
             TypeError: flags is not an iterable or a string
             TypeError: any flag is not a string
         """
-        ok, flags = self._check_flags()
+        ok, flags = self._check_flags(flags)
         if not ok:
             return
         
@@ -429,7 +429,7 @@ class Message(object):
                 self._imap_client.remove_flags(self._uid, flags)
                 
         # update the local flags
-        self.flags = set(self.flags) - set(flags)
+        self.flags = list(set(self.flags) - set(flags))
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
