@@ -130,6 +130,31 @@ def on_command(my_message, content):
 
 ----------
 
+#### Archive/Delete Gmail Message
+
+This example is useful when you want to emulate Gmail's archive feature or send a gmail message to the trash. Gmail will retain any deleted messages for 30 days after the message is deleted. Gmail will retain archived messages forever but they are only accessible through search. **Note** In order for this to work properly the rule must be run on any folder the email will appear in. Usually you will want to run this on 'Inbox' and 'Important' but if you want to send emails to yourself for testing you will want to run this on 'Sent Mail' as well.
+
+Tags: [gmail, trash, archive]
+
+```python
+
+# set delete_permanently to True to actually delete the message
+# set delete_permanently to False to archive the message (this is the default)
+def archive_gmail(msg, delete_permanently=False):
+    msg.remove_flags(['\\Inbox', '\\Important'])
+    if delete_permanently:
+        msg.add_flags(['\\Trash'])
+
+# fired when a message arrives
+def on_message(my_message):
+    # this archives any message which contains tonight in the subject
+    if "[tonight]" in my_message.subject.lower():
+        archive_gmail(my_message, True)		
+```
+
+----------
+
+
 ### Add Your Own Examples
 
 You can add examples [here](https://github.com/soyapark/murmur/edit/master/docs/examples.md). If you don't have access rights to the repository fork the repository and create a pull request. Or submit an issue containing your example.
