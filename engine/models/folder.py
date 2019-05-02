@@ -3,10 +3,12 @@ from __future__ import division, print_function, unicode_literals
 import heapq
 import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
+import re
 from datetime import datetime
 from email.header import decode_header
 from email.utils import parseaddr
 from string import whitespace
+from itertools import chain
 
 import chardet
 from django.db.models import Max
@@ -23,7 +25,7 @@ from engine.models.event_data import (AbstractEventData, MessageArrivalData,
                                       NewMessageDataScheduled,
                                       RemovedFlagsData)
 from engine.models.message import Message
-from engine.utils import normalize_msg_id
+from engine.utils import normalize_msg_id, folding_ws_regex, encoded_word_string_regex, header_comment_regex
 from schema.youps import (  # noqa: F401 ignore unused we use it for typing
     BaseMessage, ContactSchema, FolderSchema, ImapAccount, MessageSchema,
     ThreadSchema)
@@ -333,6 +335,7 @@ class Folder(object):
 
     def _parse_header_date(self, str_date):
         # type: (t.Union[str, datetime]) -> datetime
+        # TODO coonvert all this parsing to https://docs.python.org/2/library/email.utils.html#email.utils.parsedate_tz
         try:
             try:
                 date = parser.parse(str_date) if not isinstance(
@@ -350,13 +353,13 @@ class Folder(object):
         return None
 
     def _cleanup_metadata(self, metadata):
-        metadata['message-id'] = normalize_msg_id(metadata['message-id'])
+        metadata['message-id'] = normalize_msg_id(metadata['message-id'])[0]
         if metadata.has_key('in-reply-to'):
-            metadata['in-reply-to'] = [normalize_msg_id(m) for m in metadata['in-reply-to'].split()] 
+            metadata['in-reply-to'] = normalize_msg_id(metadata['in-reply-to']) 
         else:
             metadata['in-reply-to'] = []
         if metadata.has_key('references'):
-            metadata['references'] = [normalize_msg_id(m) for m in metadata['references'].split()] 
+            metadata['references'] = normalize_msg_id(metadata['references']) 
         else:
             metadata['references'] = []
 
@@ -523,32 +526,47 @@ class Folder(object):
                 enc=encoding, h=header))
             return None
 
+        # replace instance of folding white space with nothing
+        header = folding_ws_regex.sub('', header)
         for field in header.split('\r\n'):
-            # decode each part of the header
-            parts = decode_header(field)
-            decoded_field = u""
+            # header can have multiple encoded parts
+            # we can remove this in python3 but its a bug in python2
+            parts = chain.from_iterable(decode_header(f) for f in filter(None, encoded_word_string_regex.split(field)))
+            combined_parts = u""
             for part in parts:
                 text, encoding = part[0], part[1]
                 if encoding:
+                    text = text.decode(encoding, errors='ignore')
                     if encoding != 'utf-8' and encoding != 'utf8':
                         logger.debug(
                             'parse_subject non utf8 encoding: %s' % encoding)
-                    text = text.decode(encoding, errors='ignore')
+                        # TODO not sure if we want everything in utf8 we need some native speakers to test this
+                        # text = text.encode('utf8')
                 else:
                     text = unicode(text, encoding='utf8')
-                decoded_field += text
+                combined_parts += text
 
             # ignore whitespace fields
-            if not decoded_field:
+            if not combined_parts:
                 continue
 
-            # if the line starts with whitespace it is part of the previous line
-            if field[0] in whitespace:
-                assert fields
-                fields[-1] += decoded_field
-            else:
-                fields.append(decoded_field)
-        return {k.lower(): v for (k, v) in [f.split(':', 1) for f in fields]}
+            fields.append(combined_parts)
+        fields = {k.lower().strip(): v.strip() for (k, v) in [f.split(':', 1) for f in fields]}
+        
+        # TODO move this somewhere else
+        # remove comments from message ids, check rfc5322 when 
+        # adding fields to determine if comments need to be removed
+        for k in fields:
+            # these fields contain message ids
+            if k not in ['message-id', 'in-reply-to', 'references']:
+                continue
+            v = fields[k]
+            # nested comments cannot be queried with regex
+            # this hack removes them from the inside out
+            while header_comment_regex.search(v):
+                v = header_comment_regex.sub('', v)
+            fields[k] = v
+        return fields
 
     def _find_or_create_contacts(self, addresses):
         # type: (t.List[Address]) -> t.List[ContactSchema]
@@ -558,6 +576,9 @@ class Folder(object):
             t.List[ContactSchema]: List of contacts associated with the addresses
         """
         assert addresses is not None
+
+        # TODO try to convert this parsing to https://docs.python.org/2/library/email.utils.html#email.utils.getaddresses
+        # where applicable. the split on , is not reliable
 
         contact_schemas = []
         for address in addresses.split(","):

@@ -39,3 +39,5 @@ loop_sync_user_inbox\.lock
 register_inbox\.lock
 
 loop_scheduled_task\.lock
+
+\.pytest_cache/

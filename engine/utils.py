@@ -1,6 +1,7 @@
 # Store utilities for use in the engine for some future where the engine
 # can potentially exist by itself
 import logging
+import re
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
 
@@ -96,30 +97,24 @@ def is_imap_flag(possible_flag):
 
 
 def normalize_msg_id(message_id):
-    # type: (str) -> str
-    """Return a standard message_id which can be compared consistently with other message ids.
+    # type: (str) -> t.List[str]
+    """Converts a string into a list of all the message ids contained within it.
 
-    Message ids can contain optional double quotes and are often surrounded by <>.
-    These double quotes should not be used in string comparison and the brackets 
-    have no semantic meaning. This method removes both if they exist.
-
+    This method will try to make message ids standardized. So that they can be
+    compared with one another. They may have to be destandardized to be used as 
+    headers in emails. 
     Returns:
         str: standard message_id for comparison with other message ids
     """
+    # clean up empty strings
+    message_ids = message_id_split_regex.findall(message_id)
 
-    message_id = message_id.strip()
-    # strip angle brackets
-    if message_id[0] == '<' and message_id[-1] == '>':
-        message_id = message_id[1:-1]
-    # strip quotes
-    if '"' in message_id:
-        message_id = ''.join((strip_wrapping_quotes(s)
-                              for s in message_id.split('@', 1)))
-
+    # TODO better sanity checking from rfc5322
     # sanity check
-    assert '@' in message_id
-    assert not any(s in message_id for s in ['>', '"', '<'])
-    return message_id
+    for message_id in message_ids:
+        assert '@' in message_id
+        assert not any(s in message_id for s in ['>', '"', '<'])
+    return message_ids
 
 
 def strip_wrapping_quotes(string):
@@ -261,3 +256,23 @@ def references_algorithm(start_msg):
     assert isinstance(root.children, list)
 
     # TODO PART 5 and PART 6 RFC 5256
+
+
+# REGEXES
+# Match carriage return new lines followed by whitespace. For example "\r\n   \t\t"
+# this is used to indicate multi line fields in email headers
+folding_ws_regex = re.compile(r'\r\n[\ \t]+')    
+
+
+# Match encoded-word strings in the form =?charset?q?Hello_World?=
+# this is used to indicate encoding in email headers
+# the regex used in python2 decode_header is incorrect, this is from the
+# python3 version and can be removed when/if the project moves to python3
+encoded_word_string_regex = re.compile(r'(=\?[^?]*?\?[qQbB]\?.*?\?=)', re.VERBOSE | re.MULTILINE)
+
+# basically find Parentheses containing text surrounded by optional white space
+# TODO might have to rewrite with RFC5322
+header_comment_regex = re.compile(r'\((?:(?:[\ \t]*\r\n){0,1}[\ \t]*[\x01-\x08\x0B\x0C\x0E-\x1F\x21-\x27\x2A-\x5B\x5D-\x7F]|\\[\x01-\x09\x0B\x0C\x0E-\x7F])*(?:[\ \t]*\r\n){0,1}[\ \t]*\)')
+
+
+message_id_split_regex = re.compile(r'<(.*?)>')
