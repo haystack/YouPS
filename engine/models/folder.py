@@ -376,8 +376,12 @@ class Folder(object):
 
             # header = [h.replace('\r\n\t', ' ') for h in header]
             header = header[list(Message._header_descriptors)[0]]
-            header = header.replace('\r\n\t', ' ')
-            header = header.replace('\r\n', ' ')
+            try:
+                header = header.replace('\r\n\t', ' ')
+                header = header.replace('\r\n', ' ')
+            except UnicodeDecodeError:
+                logger.exception('unicode error in headers, fixed in future branch')
+                continue
             meta_data = {}
 
             # figure out text encoding issue here 
