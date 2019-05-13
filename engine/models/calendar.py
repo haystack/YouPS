@@ -45,12 +45,12 @@ class MyCalendar(object):
             content = ''
             # if there is no calendar or it is out dated, download calendar again
             if not calendars.exists():
-                c = CalendarSchema(link= self.link)
+                c = CalendarSchema(link=self.link)
                 content = download_calendar(self.link, fix_apple=self.apple)
 
                 c.content = content
                 c.save()
-                
+
             elif calendars[0].downloaded_at + datetime.timedelta(seconds=300) < timezone.now():
                 content = download_calendar(self.link, fix_apple=self.apple)
                 c = calendars[0]
@@ -81,9 +81,30 @@ class MyCalendar(object):
 
         return conflictDictionaries
 
+
+
+    def next_available(self, startTime=None, defaultInterval=datetime.timedelta(hours=1)):
+        """Look for the next available time slot.
+
+        Paramters:
+        startTime (DateTime) -- time to start looking
+        defaultInterval (TimeDelta) -- duration of time slot
+        Returns:
+        DateTime: Start of time interval
+        """
+        if startTime is None:
+            startTime = datetime.datetime.now()
+
+        conflicts = self.get_conflicts(startTime=startTime, defaultInterval=defaultInterval)
+        while len(conflicts) > 0:
+            startTime = sorted(conflicts, key=lambda x: x['end'])[-1]['end']
+            conflicts = self.get_conflicts(startTime=startTime, defaultInterval=defaultInterval)
+        return startTime
+
     def create_event(self, name, startTime, endTime=None, description="",
                      location="", path=""):
         """Create an ics file containing a new event.
+
         Parameters:
         name (String) -- name of the event
         startTime (String) -- starting time of the event
@@ -92,6 +113,7 @@ class MyCalendar(object):
         location (String) -- location for the event (default '')
         Returns:
         String: path and name of the file the event is stored in
+
         """
         # NOTE(dzhang98): create a new calendar because using the current
         # calendar would have all the current events

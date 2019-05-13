@@ -13,6 +13,7 @@ from icalendar import Calendar
 from icalendar.prop import vDDDLists
 
 UTC = tzutc()
+MyTZ = gettz()
 
 
 def now():
@@ -122,7 +123,7 @@ class Event:
         return ne
 
 
-def create_event(component, tz=UTC):
+def create_event(component, tz=MyTZ):
     """
     Create an event from its iCal representation.
 
@@ -177,7 +178,7 @@ def create_event(component, tz=UTC):
     return event
 
 
-def normalize(dt, tz=UTC):
+def normalize(dt, tz=MyTZ):
     """
     Convert date or datetime to datetime with timezone.
 
@@ -227,7 +228,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
             cal_tz = gettz(str(c['TZID']))
             break
     else:
-        cal_tz = UTC
+        cal_tz = MyTZ
 
     start = normalize(start, cal_tz)
     end = normalize(end, cal_tz)
@@ -256,7 +257,7 @@ def parse_events(content, start=None, end=None, default_span=timedelta(days=7)):
     return found
 
 
-def parse_rrule(component, tz=UTC):
+def parse_rrule(component, tz=MyTZ):
     """
     Extract a dateutil.rrule object from an icalendar component. Also includes
     the component's dtstart and exdate properties. The rdate and exrule
