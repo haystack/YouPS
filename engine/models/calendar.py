@@ -1,21 +1,23 @@
 import logging
 from ics import Calendar, Event
-from icalevents.icalevents import events, download_calendar, find_conflicts
-from dateutil.tz import tzlocal
+from icalevents.icalevents import download_calendar, find_conflicts
 from schema.youps import CalendarSchema
 from django.utils import timezone
 import datetime
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
+
 class MyCalendar(object):
     """Calendar Module for Youps."""
 
     def __init__(self, name, link, apple=False):
         """Create a new YoupsCalendar instance.
+
         Parameters:
         name (String) -- the name of the character
         link (String) -- public ics link to the calendar
+
         """
         self.name = name
         self.link = link
@@ -64,24 +66,21 @@ class MyCalendar(object):
 
             conflicts = find_conflicts(content, start=startTime, end=endTime)
 
-
         except Exception as e:
             logger.critical(e)
             raise Exception('Provided link was invalid: {}'.format(self.link))
 
         conflictDictionaries = [
             {
-                "name": e.summary,
-                "start": e.start,
-                "end": e.end,
-                "description": e.description,
-                "location": e.location
-            } for e in conflicts
+                "name": ev.summary,
+                "start": ev.start,
+                "end": ev.end,
+                "description": ev.description,
+                "location": ev.location
+            } for ev in conflicts
         ]
 
         return conflictDictionaries
-
-
 
     def next_available(self, startTime=None, defaultInterval=datetime.timedelta(hours=1)):
         """Look for the next available time slot.
@@ -94,12 +93,12 @@ class MyCalendar(object):
         """
         if startTime is None:
             startTime = datetime.datetime.now()
-
-        conflicts = self.get_conflicts(startTime=startTime, defaultInterval=defaultInterval)
+        startTime = startTime + datetime.timedelta(seconds=1)
+        conflicts = self.get_conflicts(startTime=startTime, endTime=startTime + defaultInterval - datetime.timedelta(seconds=2))
         while len(conflicts) > 0:
-            startTime = sorted(conflicts, key=lambda x: x['end'])[-1]['end']
-            conflicts = self.get_conflicts(startTime=startTime, defaultInterval=defaultInterval)
-        return startTime
+            startTime = sorted(conflicts, key=lambda x: x['end'])[-1]['end'] + datetime.timedelta(seconds=1)
+            conflicts = self.get_conflicts(startTime=startTime, endTime=startTime + defaultInterval - datetime.timedelta(seconds=2))
+        return startTime - datetime.timedelta(seconds=1)
 
     def create_event(self, name, startTime, endTime=None, description="",
                      location="", path=""):
