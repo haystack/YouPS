@@ -144,6 +144,10 @@ def docs_view(request):
 @render_to(WEBSITE+"/about.html")
 def about_view(request):
 	return {'website': WEBSITE}
+
+@render_to(WEBSITE+"/calendar.html")
+def calendar_view(request):
+	return {'website': WEBSITE}
 		
 @login_required
 def login_imap(request):
