@@ -1,0 +1,144 @@
+{% extends website|add:"/base.html" %} {% block customcss %}
+
+<link rel="stylesheet" href="/static/css/youps/libs/codemirror.css" />
+<!-- <link rel="stylesheet" href="/static/css/youps/libs/fontawesome-all.min.css"> -->
+<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> -->
+<!-- Interactive console styles -->
+<!-- <link rel="stylesheet" href="/static/css/youps/libs/sandbox.css" /> -->
+
+<link rel="stylesheet" href="/static/css/youps/libs/jquery.switchButton.css" />
+<link rel="stylesheet" href="https://get.mavo.io/mavo.css" />
+<link rel="stylesheet" href="/static/css/youps/libs/prism.css" />
+<link rel="stylesheet" href="/static/css/youps/style.css" />
+
+<!-- Markdown converter -->
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/8.4.2/markdown-it.js"
+  integrity="sha256-L6nwQfrUv4YrDu/OyAjehTyMjZ7d0n0tjm8aBxHEn18="
+  crossorigin="anonymous"
+></script>
+<!-- highlighting scripts -->
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js"
+  integrity="sha256-aYTdUrn6Ow1DDgh5JTc3aDGnnju48y/1c8s1dgkYPQ8="
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/python.min.js"
+  integrity="sha256-68czD4LOxm3vDFkFAirVhzdq3N3aXwf8BT4q9kb3kHM="
+  crossorigin="anonymous"
+></script>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css"
+  integrity="sha256-iAmWN8uaUdN6Y9FCf8srQdrx3eVVwouJ5QtEiyuTQ6A="
+  crossorigin="anonymous"
+/>
+<script>
+  window.onload = function() {
+    md = markdownit({
+      html: true,
+      linkify: true,
+      typographer: true,
+      highlight: function(str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          try {
+            return hljs.highlight(lang, str).value;
+          } catch (__) {}
+        }
+
+        return ""; // use external default escaping
+      }
+	});
+	fetch('https://raw.githubusercontent.com/soyapark/murmur/master/docs/calendar.md')
+	.then(res => res.text())
+	.then(contents => {
+		result = md.render(contents);
+		document.getElementById("example-container").innerHTML = result;
+	})
+  };
+</script>
+{% endblock %} {% block content %}
+
+<div class="container">
+  <div class="group-container" style="overflow-y: scroll;">
+    <p hidden id="website-name">{{ website }}</p>
+
+    <a href="/editor">Back to editor</a>
+    <main id="example-container"></main>
+
+    <hr />
+  </div>
+</div>
+
+{% endblock %} {% block customjs %}
+<script type="text/javascript" src="/static/javascript/notify.js"></script>
+
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/bootstrap.bundle.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/fontawesome-all.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/codemirror.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/addon/edit/matchbrackets.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/python.js"
+></script>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"
+></script>
+
+<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/underscore.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/backbone.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/backbone-localStorage.min.js"
+></script>
+
+<!-- Some extras for the demo: -->
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/lettering.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/prettify.js"
+></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/console/DAT.GUI.min.js"
+></script>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+
+<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
+<script
+  type="text/javascript"
+  src="/static/javascript/youps/jquery.switchButton.js"
+></script>
+
+<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
+<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
+
+<script src="https://get.mavo.io/mavo.js"></script>
+
+{% endblock %}
