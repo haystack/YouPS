@@ -17,11 +17,8 @@ class Command(BaseCommand):
     args = ''
     help = 'Process email'
 
+    # Run unit tests 
     def handle(self, *args, **options):
-        if len(args) == 0:
-            print "give recipients address as an argument!"
-            return
-
         to_addr = args[0]
         test_cases = [
             {
@@ -41,5 +38,12 @@ class Command(BaseCommand):
         for t in test_cases:
             send_email(t['subject'].decode('utf-8'), t['from_addr'], to_addr, t['body_plain'], t['body_html'].decode('utf-8'))
 
-                    
+        # Auth to our test account
+
+
+        # Sync inbox
+        
+
+        # Run test
+
             
