@@ -1,185 +1,83 @@
-# Calendar blah blah
+# Calendar Module
 
-The object you will be interacting with most commonly is the `Message` object. Rules generally are run on one `Message` at a time, for example when a `Message` arrives in your inbox, or when a `Message` has a flag change.
+## Introduction
+With our current YouPS library users have control over automating their emails. From our initial user study, we found that users would like their email to interface with third party applications as well. Users stated they wanted to `put "attending" emails in their calendar`, `make a career calendar out of emails containing applications`, and `calendars to ask for approval of the events before filling it in on the calendar.`
 
-A key thing to keep in mind about email messages is that they are mostly immutable. The only part of an email message that is mutable for most email systems is the flags and the folder that it is stored in. 
+## Related Works
+Currently calendar apps, such as [Google Calendar](https://www.google.com/calendar) allow users to manually schedule events and put in recurring events. Other applications, such as [Calendly](https://calendly.com/), allow others to interact with a user’s calendar. These cause the calendar to be a stand alone application that the users need to maintain. We want to bridge this gap by provide third party applications to calendars.
 
-The `Message` object contains useful names for properties you would expect to find on an email, such as `to`, `from`, `bcc`, `cc`, `date` etc.... You can find documentation about these properties in the [api documentation](TODO insert link). 
+## Our Approach
+In our library, users are able to write functions to automate away email tasks. By introducing this Calendar Module, we allow users to connect a third party calendar application and work with additional context. This new module will allow users to connect to their calendars and use additional data, such as their availability and upcoming event, in their email automation process.
 
-Because most of these properties are immutable they return data. So to get the list of people a `Message` is sent to you can use `people = message.to`.  To add flags or remove flags you can use `message.add_flags(['your', 'flags']` and `message.remove_flags(['your', 'flags'])`. Using these methods will keep you completely compatible with most existing email software.
+## Design Scenarios
 
-<!-- TODO we need to make it possible to set custom methods such as deadline using our API. -->
+#### Delaying emails to specific times
 
-<!-- TODO might be useful to express flags as a custom list so people can use append pop etc... -->
-
-<!-- TODO: what happened to the on flag changed -->
-
-## Examples
-
-#### Highlight Emails from Friends or Family
-
-This example is useful for marking emails from a group of people, i.e. your coworkers, people working on a project, etc...
-
-Tags: []
+User Joon is a student who is frequently receiving emails during his class and is distracted by these emails. He does not want to turn off all notifications since he would miss emails when he was outside of class. Using YouPS with the Calendar Module, he is able to write the following.
 
 ```python
+
+link = 'LINK TO CAL'
+classCalendar = Calendar('My Classes', link)
 
 # fired when a message arrives
 def on_message(msg):
-    friends = ["soya@example.com", "karger@example.com", "Amy Zhang"]
-    if msg.sender in friends:
-        msg.add_flags('MIT Friends')
-    family = ["brother@example.com", "father@example.com", "mother@example.com"]
-    if msg.sender in family:
-        msg.add_flags(['Family', 'Important'])
+    if classCalender.get_conflicts():
+        message.add_gmail_labels("To Dos")
+        message.mark_read()  
 ```
 
 ----------
 
-<!-- TODO: why does return_only_text in message.content also return the HTML?? -->
+#### Automating event recurring event invites
 
-#### Add a flag to an email based on it's message contents
+User Matt is part of the student group ESP. The event coordinator sends out a weekly email with all the events will occur that week with a following format:
 
-Useful for processing emails, shows how to access message contents and can be extended to do things like natural language processing.
+```
+Event: <Event Name> (<Start>, <End>):
+Description
 
-Tags: []
+Event: <Event Name> (<Start>, <End>):
+Description
+```
 
+Matt is an active member of the ESP community and would like to participate in as many events as he can. As a busy MIT student, he tends to have prior commitments. Currently, he checks each event against his calendar and adds it if there is no conflict. Using YouPS with the Calendar Module, he is able to write the following.
 
 ```python
+link = 'LINK TO CAL'
+classCalendar = Calendar('My Calendar', link)
+
 # fired when a message arrives
 def on_message(msg):
-    keywords = [ "NIH", "NSF", "OSP", "ISCB", "Proposal", "Review requests", "AAAS", "IEEE"]
-    content = msg.content["text"]
-    if any(keyword in content for keyword in keywords):
-        msg.add_flags(["urgent", "work"])
+    if message.subject == 'ESP This Week':
+      events = {}
+      lines = message.body
+      for i in range(len(lines)):
+        line = lines[i]
+        if line[:6] == "Event:":
+          name = line[7:line.find('(') - 1]
+          start = line[line.find('(') + 1, line.find(',')]
+          end = line[line.find(',') + 1, line.find(')')]
+          description = lines[i+1]
+          event = classCalendar.create_event(name, start, end, description)
+          events[event] = len(classCalendar.get_conflicts(start, end)) == 0
+
+      body = ""
+      for event in events:
+        body += "You are " + "not " * (!events[event]) + "for " + event.name + "\n"
+
+      send('ESP This Week Summary', "matt's email", body)
 ```
 
-----------
+## Design Goals
+From our initial surveys and need finding, we discovered users would like the ability to connect their emails to third party contexts, such as their to-do lists and calendars. To address this need, we focused on connecting users to their calendars. We initially identified two main needs of users to accessing their calendars.
 
-#### Mark an email as low priority if you have not read the last five emails from that sender and it is addressed to more than 10 people
+Checking for availability. Users use their calendars to keep track of their availability. During our initial surveys, users wanted to be able to delay emails until they were available. Accessing the user’s calendar, we were able to check if there existed conflicting events during the time an email was received. Another use case for this capability was events emails. If the user received an invite to an event, they would be able to automatically check if they were already booked and by what event.
 
-This is useful for filtering out emails that come from mass mailing lists without missing out on the mailing lists you are actually interested in
+Creating events. Upon receiving invites to events, users wanted to be able to add them to their calendar. By allowing users to create .ics files, we have given the user the ability to modify their calendar by adding the .ics file to their calendar. This makes the process easier for the user.
 
-Tags: []
+## Implementation
+Calendars are important to users. This means that we need to gain the trust of users and ensure we would not damage their calendars. In order to do this, we access read only version of their calendars and provide .ics files for users to add to their calendars. This ensures that we cannot do any harm to their original calendars. We also ran into the issue of querying calendars too often and implemented a local cache for calendar data.
 
-
-```python
-# fired when a message arrives
-def on_message(msg):
-    sender = message.from_
-    prev_msgs = sender.recent_messages(5)
-    recipients = message.to + msg.cc + msg.bcc
-    if len(recipients) > 10 and all(not prev_msg.is_read):
-        msg.add_flags = 'low priority'
-```
-
-----------
-
-#### Archive unread messages marked as low priority after three days
-
-This example is useful for maintaining a clean inbox. On gmail using the delete flag will simply archive the email. This rule requires that you set the delay for the on_message rule to three days
-
-Tags: []
-
-
-```python
-# fired when a message arrives
-def on_message(msg):
-    if msg.has_flag('low priority') and not msg.is_read:
-        msg.delete()
-```
-
-----------
-
-#### If you've exchanged more than 10 emails with someone in one day mark any emails you get from them as urgent
-
-This is helpful when you have a long email thread and want to make sure you are getting updates
-
-Tags: []
-
-
-```python
-# fired when a message arrives
-def on_message(msg):
-    sender = message.from_
-    last_ten_messages = sender.recent_messages(10)
-    if all(m.date().date() == datetime.today().date() for m in last_ten_messages):
-        m.priority = "urgent"
-```
-
-----------
-
-#### Set a deadline for a certain message using YoUPS shortcut
-
-Set a deadline of a message within your email interface. Forward a message you want to add a deadline with a content "DEADLINE yyyy/mm/dd (e.g., DEADLINE 2019/05/01)"
-
-Tags: []
-
-
-```python
-# fired when you forward a message to YoUPS. 
-import re, datetime
-def on_command(my_message, content):
-    # DEADLINE yyyy/mm/dd => add Deadline yyyy/mm/dd to this message
-    m = re.search('(?<=DEADLINE )(.*)', content)
-    yy, mm, dd= m.groups()[0].split("/")
-    
-    my_message.deadline = datetime.datetime.strptime(" ".join([yy,mm,dd]), "%Y %m %d")
-```
-
-
-----------
-
-#### Archive/Delete Gmail Message
-
-This example is useful when you want to emulate Gmail's archive feature or send a gmail message to the trash. Gmail will retain any deleted messages for 30 days after the message is deleted. Gmail will retain archived messages forever but they are only accessible through search. **Note** In order for this to work properly the rule must be run on any folder the email will appear in. Usually you will want to run this on 'Inbox' and 'Important' but if you want to send emails to yourself for testing you will want to run this on 'Sent Mail' as well.
-
-Tags: [gmail, trash, archive]
-
-```python
-
-# set delete_permanently to True to actually delete the message
-# set delete_permanently to False to archive the message (this is the default)
-def archive_gmail(msg, delete_permanently=False):
-    msg.remove_flags(['\\Inbox', '\\Important'])
-    if delete_permanently:
-        msg.add_flags(['\\Trash'])
-
-# fired when a message arrives
-def on_message(my_message):
-    # this archives any message which contains tonight in the subject
-    if "[tonight]" in my_message.subject.lower():
-        archive_gmail(my_message, True)		
-```
-
-----------
-
-
-### Add Your Own Examples
-
-You can add examples [here](https://github.com/soyapark/murmur/edit/master/docs/examples.md). If you don't have access rights to the repository fork the repository and create a pull request. Or submit an issue containing your example.
-
-We suggest using the following template for your examples.
-
-
-    #### Example Title
-    
-    Example Description
-    
-    Tags: []
-    
-    ```python
-    # fired when a message arrives
-    def on_message(msg):
-    pass
-    
-    # fired when a deadline occurs on a message
-    def on_deadline(msg):
-    pass
-    
-    # fired when you send an email to run@youps.csail.mit.edu
-    def on_command(msg):
-    pass
-    ```
-    
-    ----------
+## Results
+After user study, we found a third need that users wanted. Finding availabilities. One of our tasks was to delay emails until they were available, users looked for an easy way to find their next availability. One user checked every minute to until he found a time he was available. The other two users just used the end time of the last conflict that was found. This did not account for events after that conflict. In order to address this need, we added additional functionality after the user study to return the next time their calendar said they were available.
