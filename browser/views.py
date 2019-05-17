@@ -22,15 +22,13 @@ import engine.main
 from engine.constants import *
 from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from registration.forms import RegistrationForm
-from schema.models import (FollowTag, ForwardingList, Group, MemberGroup, MemberGroupPending,
-                           MuteTag, Tag, UserProfile, Post, Attachment, DoNotSendList)
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
 from smtp_handler.utils import *
 import logging
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
-request_error = json.dumps({'code': msg_code['REQUEST_ERROR'],'status':False})
+request_error = json.dumps({'code': msg_code['REQUEST_ERROR'], 'status': False})
 
 if WEBSITE == 'murmur':
 	group_or_squad = 'group'
