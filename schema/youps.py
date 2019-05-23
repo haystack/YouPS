@@ -107,7 +107,7 @@ class BaseMessage(models.Model):
     bcc = models.ManyToManyField('ContactSchema', related_name='bcc_messages')
     # the thread that the message is associated with
     _thread = models.ForeignKey(
-        'ThreadSchema', related_name='messages', blank=True, null=True)
+        'ThreadSchema', related_name='baseMessages', blank=True, null=True)
 
     @property
     def references(self):
@@ -148,13 +148,13 @@ class MessageSchema(models.Model):
     id = models.AutoField(primary_key=True)
     # the underlying message this message is used for
     # this captures the notion that a message can be in multiple folders
-    base_message = models.ForeignKey(BaseMessage)  # type: BaseMessage
+    base_message = models.ForeignKey(BaseMessage, related_name="messages")  # type: BaseMessage
     # the flags associated with the message
     _flags = models.TextField(db_column="flags", default="[]")
     # each message is associated with a single ImapAccount
     imap_account = models.ForeignKey('ImapAccount')  # type: ImapAccount
     # each message is associated with a single Folder
-    folder_schema = models.ForeignKey(FolderSchema)  # type: FolderSchema
+    folder = models.ForeignKey(FolderSchema, related_name="messages")  # type: FolderSchema
     # each message has a uid
     uid = models.IntegerField(default=-1)
     # the message sequence number identifies the offest of the message in the folder
@@ -174,8 +174,8 @@ class MessageSchema(models.Model):
         db_table = "youps_message"
         # message uid is unique per folder, folder is already unique per account
         # base_message is unique per folder, folder is unique per account
-        unique_together = [("uid", "folder_schema"),
-                           ('base_message', 'folder_schema')]
+        unique_together = [("uid", "folder"),
+                           ('base_message', 'folder')]
 
 
 class ContactSchema(models.Model):

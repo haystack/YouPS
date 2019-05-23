@@ -6,9 +6,7 @@ import datetime
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
-from engine.models.contact import Contact
 from smtp_handler.utils import format_email_address, send_email
-from email import message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 

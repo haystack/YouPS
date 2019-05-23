@@ -344,7 +344,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
         res['messages'] = {}
 
         for folder_name in folder_names:
-            messages = MessageSchema.objects.filter(imap_account=imapAccount, folder_schema__name=folder_name).order_by("-base_message__date")[:N]
+            messages = MessageSchema.objects.filter(imap_account=imapAccount, folder__name=folder_name).order_by("-base_message__date")[:N]
 
             for message_schema in messages:
                 assert isinstance(message_schema, MessageSchema)

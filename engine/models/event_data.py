@@ -28,7 +28,7 @@ class MessageMovedData(AbstractEventData):
     def fire_event(self, event):
         # type : (Event) -> None
         self.message._imap_client.select_folder(
-            self.message._schema.folder_schema.name)
+            self.message._schema.folder.name)
         event.fire(self.message)
 
 class MessageArrivalData(AbstractEventData):
@@ -39,7 +39,7 @@ class MessageArrivalData(AbstractEventData):
     def fire_event(self, event):
         # type : (Event) -> None
         self.message._imap_client.select_folder(
-            self.message._schema.folder_schema.name)
+            self.message._schema.folder.name)
         event.fire(self.message)
 
 class NewMessageDataScheduled(MessageArrivalData):
@@ -69,7 +69,7 @@ class NewFlagsData(AbstractEventData):
     def fire_event(self, event):
         # type : (Event) -> None
         self.message._imap_client.select_folder(
-            self.message._schema.folder_schema.name)
+            self.message._schema.folder.name)
         event.fire(self.message, self.flags)
 
 class RemovedFlagsData(NewFlagsData):

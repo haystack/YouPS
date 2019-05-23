@@ -155,7 +155,7 @@ class Folder(object):
         logger.debug("%s completely refreshing cache" % self)
 
         # delete any messages already stored in the folder
-        MessageSchema.objects.filter(folder_schema=self._schema).delete()
+        MessageSchema.objects.filter(folder=self._schema).delete()
 
         min_mail_id = self._get_min_mail_id()
         if min_mail_id is not None:
@@ -170,7 +170,7 @@ class Folder(object):
         """Updates the last seen uid to be equal to the maximum uid in this folder's cache
         """
 
-        max_uid = MessageSchema.objects.filter(folder_schema=self._schema).aggregate(
+        max_uid = MessageSchema.objects.filter(folder=self._schema).aggregate(
             Max('uid'))  # type: t.Dict[t.AnyStr, int]
         max_uid = max_uid['uid__max']
         if max_uid is None:
@@ -206,7 +206,7 @@ class Folder(object):
 
     def _search_scheduled_message(self, event_data_list, time_start, time_end):
         message_schemas = MessageSchema.objects.filter(
-            folder_schema=self._schema).filter(date__range=[time_start, time_end])
+            folder=self._schema).filter(date__range=[time_start, time_end])
 
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:
@@ -217,7 +217,7 @@ class Folder(object):
 
     def _search_due_message(self, event_data_list, time_start, time_end):
         message_schemas = MessageSchema.objects.filter(
-            folder_schema=self._schema).filter(deadline__range=[time_start, time_end])
+            folder=self._schema).filter(deadline__range=[time_start, time_end])
 
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:
@@ -272,7 +272,7 @@ class Folder(object):
         fetch_data = self._imap_client.fetch(uid_criteria, descriptors)  # type: t.Dict[int, t.Dict[str, t.Any]]
 
         # update flags in the cache
-        for message_schema in MessageSchema.objects.filter(folder_schema=self._schema).iterator():
+        for message_schema in MessageSchema.objects.filter(folder=self._schema).iterator():
             assert isinstance(message_schema, MessageSchema)
             # ignore cached messages that we just fetched
             if message_schema.uid > self._last_seen_uid:
@@ -459,7 +459,7 @@ class Folder(object):
                 base_message=base_message,
                 imap_account=self._imap_account,
                 flags=message_data['FLAGS'],
-                folder_schema=self._schema,
+                folder=self._schema,
                 uid=uid,
                 msn=message_data['SEQ']
             )
