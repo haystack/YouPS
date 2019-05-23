@@ -50,7 +50,7 @@
         return ""; // use external default escaping
       }
 	});
-	fetch('https://raw.githubusercontent.com/soyapark/murmur/master/docs/calendar.md')
+	fetch('https://raw.githubusercontent.com/haystack/YouPS/master/docs/calendar.md')
 	.then(res => res.text())
 	.then(contents => {
 		result = md.render(contents);
