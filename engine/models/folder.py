@@ -325,6 +325,7 @@ class Folder(object):
 
     def _check_fields_in_fetch(self, fields, message_data):
         # type: (t.List[str], t.Dict[str, t.Any]) -> bool
+
         for field in fields:
             if field not in message_data:
                 logger.critical(
@@ -412,7 +413,7 @@ class Folder(object):
                 message_data[Message._header_fields_key])
 
             # TODO currently have a bug with parsing, if encoding fails we return None
-            if metadata is None:
+            if metadata is None or metadata.get('message-id') is None:
                 continue
 
             self._cleanup_message_data(message_data)
