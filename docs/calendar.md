@@ -1,5 +1,5 @@
 # Incorporating your schedule into email automation
-<p align="right">Dillon Zhang</p>
+<p align="right"><b>Dillon Zhang</b></p>
 
 From [our need-finding study on email automation](https://dl.acm.org/citation.cfm?id=3300604), we found that email users would like their email to interface with their schedule. For instance, users stated they wanted to `highlight emails related to my current schedule`, `put "attending" emails in their calendar`, `make a career calendar out of emails containing applications`, and `calendars to ask for approval of the events before filling it in on the calendar.`
 
