@@ -154,6 +154,23 @@ def on_message(my_message):
 
 ----------
 
+#### Archive Gmail Message
+
+When a gmail message arrives you can archive it immediately. You want to make sure that this rule is running on inbox and important at the very least.
+
+Tags: [gmail, archive, inbox zero]
+
+```python
+# fired when a message arrives
+def on_message(msg):
+    if msg.sender == "someone_spammy@example.com":
+        print('archiving', msg)
+        msg.archive_gmail()
+								
+```
+
+----------
+
 
 ### Add Your Own Examples
 

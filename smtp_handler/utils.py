@@ -1,17 +1,25 @@
-import email, re, time, hashlib, random, dkim, pytz
+import email
+import re
+import time
+import hashlib
+import random
+import dkim
+import pytz
 from lamson.server import Relay
-from config.settings import *
+from config.settings import relay_config
 from lamson_subclass import MurmurMailResponse
-from schema.models import *
+from schema.youps import ImapAccount
+from schema.models import Post, UserProfile, WhiteOrBlacklist, MemberGroup, ForwardingList, ThreadHash
 from http_handler.settings import BASE_URL, DEFAULT_FROM_EMAIL, WEBSITE
 from datetime import datetime, timedelta
-from email.utils import *
-from email import message_from_string
+from email.utils import parseaddr
 from hashlib import sha1
 from html2text import html2text
 from markdown2 import markdown
-from engine.models.contact import Contact
-import new, pickle, chardet
+import new
+import pickle
+import chardet
+import logging
 
 '''
 Murmur Mail Utils and Constants
@@ -74,10 +82,10 @@ RESERVED = ['+create', '+activate', '+deactivate', '+subscribe', '+unsubscribe',
 relay_mailer = Relay(host=relay_config['host'], port=relay_config['port'], debug=1)
 
 ALLOWED_MIMETYPES = ["image/jpeg", "image/bmp", "image/gif", "image/png", "application/pdf", "application/mspowerpoint",
-                    "application/x-mspowerpoint", "application/powerpoint", "application/vnd.ms-powerpoint",
-                    "application/msword", "text/plain", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-                    "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/pkcs7-signature"]
+                     "application/x-mspowerpoint", "application/powerpoint", "application/vnd.ms-powerpoint",
+                     "application/msword", "text/plain", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                     "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+                     "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/pkcs7-signature"]
 
 ALLOWED_MIMETYPES_STR = 'images (JPEG, BMP, GIF, PNG), PDFs, and Microsoft Office (Word, Excel, Powerpoint) files'
 
@@ -144,9 +152,9 @@ def setup_post(From, Subject, group_name):
     
     post_addr = '%s <%s>' %(group_name, group_name + '@' + HOST)
 
-    mail = MurmurMailResponse(From = From, 
-                        To = post_addr, 
-                        Subject = Subject)
+    mail = MurmurMailResponse(From = From,
+                              To = post_addr,
+                              Subject = Subject)
 
     mail.update({
         "Sender": post_addr, 
@@ -176,11 +184,11 @@ def setup_moderation_post(group_name):
         "List-Id" : from_addr,
         "Return-Path": from_addr,
         "Precedence": 'list'
-        })
+    })
 
     pending_count = Post.objects.filter(group__name=group_name, status='P').count()
 
-    body_base = 'As of now, there are %s pending posts. To view all of them, visit the ' %  pending_count
+    body_base = 'As of now, there are %s pending posts. To view all of them, visit the ' % pending_count
     plain_body = body_base + "moderation queue: %s/mod_queue/%s" % (BASE_URL, group_name)
     html_body = body_base + "<a href='%s/mod_queue/%s'>moderation queue</a>." % (BASE_URL, group_name)
 
@@ -453,8 +461,8 @@ def ps_squadbox(sender, reason, squad_name, squad_auto_approve, subject, mod_ema
         return '%s%s%s' % (PLAIN_SUBHEAD, content, PLAIN_SUBTAIL)
 
 def html_ps(group, thread, post_id, membergroup, following, muting, tag_following, tag_muting, tags, had_attachments, original_list_email=None):
-    #follow_addr = 'mailto:%s' %(group_name + '+' + FOLLOW_SUFFIX + '@' + HOST)
-    #unfollow_addr = 'mailto:%s' %(group_name + '+'  + UNFOLLOW_SUFFIX + '@' + HOST)
+    # follow_addr = 'mailto:%s' %(group_name + '+' + FOLLOW_SUFFIX + '@' + HOST)
+    # unfollow_addr = 'mailto:%s' %(group_name + '+'  + UNFOLLOW_SUFFIX + '@' + HOST)
     content = ""
 
     if original_list_email:
@@ -614,9 +622,9 @@ def isSenderVerified(message):
                 new_hash = hashlib.sha1(sender_addr+to_addr+salt).hexdigest()[:20]
                 user.hash = new_hash
                 user.save()
-                #mail = MurmurMailResponse(From = NO_REPLY, Subject = "Please use your secret code in future emails")
-                #mail.Body = "In future, to ensure your message is delivered, please include the code %s within the address of your emails, before the '@' symbol and after a '+' symbol. E.g. if you are emailing testgroup@%s, you should now email testgroup+%s@%s to ensure your email is verified as coming directly from you, and thus delivered correctly." % (new_hash, HOST, new_hash, HOST)
-                #relay.deliver(mail, To = sender_addr)
+                # mail = MurmurMailResponse(From = NO_REPLY, Subject = "Please use your secret code in future emails")
+                # mail.Body = "In future, to ensure your message is delivered, please include the code %s within the address of your emails, before the '@' symbol and after a '+' symbol. E.g. if you are emailing testgroup@%s, you should now email testgroup+%s@%s to ensure your email is verified as coming directly from you, and thus delivered correctly." % (new_hash, HOST, new_hash, HOST)
+                # relay.deliver(mail, To = sender_addr)
             hash_group = re.search(r'\+(.{20,40}?)\@', to_addr)
             if hash_group:
                 sender_hash = hash_group.group(1)
@@ -670,8 +678,10 @@ def check_duplicate(message, group, sender_addr):
     # (this might happen if we get a post via multiple mailing lists, for example, 
     # and the mailing list changes the ID.)
     ten_minutes_ago = datetime.now(pytz.utc) + timedelta(minutes=-10)
-    existing_post_recent = Post.objects.filter(poster_email=sender_addr, group=group, 
-                                    subject=message['Subject'], timestamp__gte = ten_minutes_ago)
+    existing_post_recent = Post.objects.filter(poster_email=sender_addr,
+                                               group=group,
+                                               subject=message['Subject'],
+                                               timestamp__gte = ten_minutes_ago)
     if existing_post_recent.exists():
         logging.debug("Post with same sender and subject sent to this group < 10 min ago")
         return True
@@ -704,7 +714,7 @@ def check_if_can_post_murmur(group, sender_addr, possible_list_addresses):
 
 def fix_headers(message, mail):
     if 'References' in message:
-            mail['References'] = message['References']
+        mail['References'] = message['References']
 
     # a message's own ID shouldn't show up in its references. commenting out for now.
     # elif 'message-id' in message:
@@ -744,15 +754,15 @@ def check_if_sender_moderated_for_thread(group_name, sender_addr, subject):
 
 def codeobject_dumps(co):
     """pickles a code object,arg s is the string with code returns the code object pickled as a string"""
-    co_tup=[co.co_argcount,co.co_nlocals, co.co_stacksize,co.co_flags,
-    co.co_code,co.co_consts,co.co_names,co.co_varnames,co.co_filename,
-    co.co_name,co.co_firstlineno,co.co_lnotab]
+    co_tup=[co.co_argcount, co.co_nlocals, co.co_stacksize, co.co_flags,
+            co.co_code, co.co_consts, co.co_names, co.co_varnames,
+            co.co_filename, co.co_name, co.co_firstlineno, co.co_lnotab]
     return pickle.dumps(co_tup)
 
 def codeobject_loads(s):
     """loads a code object pickled with co_dumps() return a code object ready for exec()"""
     r = pickle.loads(s)
-    return new.code(r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11])
+    return new.code(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11])
 
 def is_gmail(imap_account=None):
     # type: (ImapAccount) -> bool
@@ -803,12 +813,14 @@ def utf8_str_to_utf8_unicode(encoded_str):
 
     return unicode(encoded_str, 'utf8', 'replace')
 
+# TODO move to engine utils
 def format_email_address(email_addrs):
     """Format a single instance or list to an approriate form to message instance e.g., user1@email.com, user2@email.com
 
         Args:
             email_addrs (a single instance|list of string|Contact)
     """    
+    from engine.models.contact import Contact
 
     if isinstance(email_addrs, list):
         to_string = []

@@ -15,6 +15,7 @@ from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
+import typing as t
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -233,12 +234,15 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             for value in mode['editors']:
                 uid = value['uid']
                 name = value['name'].encode('utf-8')
+
+                logger.critical('uid: {uid} name: {name}'.format(uid=uid, name=name))
+
+            for value in mode['editors']:
+                uid = value['uid']
+                name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
                 logger.info("saving editor %s run request" % uid)
-                print mode_name
-                print code
-                print folders
                 
                 er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
@@ -340,16 +344,17 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
         res['messages'] = {}
 
         for folder_name in folder_names:
-            messages = MessageSchema.objects.filter(imap_account=imapAccount, folder_schema__name=folder_name).order_by("-date")[:N]
+            messages = MessageSchema.objects.filter(imap_account=imapAccount, folder__name=folder_name).order_by("-base_message__date")[:N]
 
             for message_schema in messages:
+                assert isinstance(message_schema, MessageSchema)
                 imap_res = interpret(MailBox(imapAccount, imap), None, bypass_queue=True, is_simulate=True, extra_info={'code': code, 'msg-id': message_schema.id})
                 logger.info(imap_res)
 
                 message = Message(message_schema, imap)
 
                 from_field = None
-                if message_schema.from_m:
+                if message.from_:
                     from_field = {
                         "name": message.from_.name,
                         "email": message.from_.email,
@@ -358,18 +363,18 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
                     }
                     
                 to_field = [{
-                    "name": t.name,
-                    "email": t.email,
-                    "organization": t.organization,
-                    "geolocation": t.geolocation
-                } for t in message.to]
+                    "name": tt.name,
+                    "email": tt.email,
+                    "organization": tt.organization,
+                    "geolocation": tt.geolocation
+                } for tt in message.to]
 
                 cc_field = [{
-                    "name": t.name,
-                    "email": t.email,
-                    "organization": t.organization,
-                    "geolocation": t.geolocation
-                } for t in message.cc]
+                    "name": tt.name,
+                    "email": tt.email,
+                    "organization": tt.organization,
+                    "geolocation": tt.geolocation
+                } for tt in message.cc]
 
                 # TODO attach activated line
                 # This is to log for users

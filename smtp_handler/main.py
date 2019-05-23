@@ -70,7 +70,7 @@ def mailbot(arrived_message, address=None, host=None):
             if original_message_schema.exists():
                 original_message_schema = original_message_schema[0]
 
-                imap.select_folder(original_message_schema.folder_schema.name)           
+                imap.select_folder(original_message_schema.folder.name)           
                 original_message = Message(original_message_schema, imap)
             else:
                 # in case YoUPS didn't register to DB yet, save the message to DB immediately 
@@ -100,7 +100,7 @@ def mailbot(arrived_message, address=None, host=None):
                             original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
                             if not original_message_schema.exists():
                                 raise
-                            imap.select_folder(original_message_schema.folder_schema.name)           
+                            imap.select_folder(original_message_schema.folder.name)           
                             original_message = Message(original_message_schema, imap)
 
                     except FolderSchema.DoesNotExist, MessageSchema.DoesNotExist:
@@ -197,7 +197,7 @@ def mailbot(arrived_message, address=None, host=None):
                     part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                     new_message.attach(part1)
 
-                imap.append(original_message_schema.folder_schema.name, str(new_message))
+                imap.append(original_message_schema.folder.name, str(new_message))
                 # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
 
         except ImapAccount.DoesNotExist:

@@ -31,6 +31,10 @@ reset-db:
 shell:
 	docker exec -it youps_web /bin/sh -c "[ -e /bin/bash ] && /bin/bash || /bin/sh" || echo "\e[33mmake sure you already ran make start\e[0m"
 
+.PHONY: solo-shell
+solo-shell:
+	docker-compose run web /bin/sh -c "[ -e /bin/bash ] && /bin/bash || /bin/sh"
+
 # get a manage.py shell for running django things
 .PHONY: django-shell
 django-shell:

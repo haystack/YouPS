@@ -10,7 +10,7 @@ from StringIO import StringIO
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import MessageSchema, TaskManager  # noqa: F401 ignore unused we use it for typing
 
-from engine.models.event_data import NewMessageData, NewMessageDataScheduled, NewFlagsData
+from engine.models.event_data import MessageArrivalData, NewMessageDataScheduled, NewFlagsData
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
 
@@ -113,7 +113,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
                 user_environ['new_message'] = new_message
                 try:
-                    mailbox._imap_client.select_folder(m_schema.folder_schema.name)
+                    mailbox._imap_client.select_folder(m_schema.folder.name)
 
                     # execute the user's code
                     if "on_message" in code:
@@ -139,15 +139,8 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     # Get error message for users if occurs
                     # print out error messages for user
                     exc_type, exc_obj, exc_tb = sys.exc_info()
-                    logger.info(e)
-                    logger.info(exc_obj)
-                    # logger.info(traceback.print_exception())
-
-                    # TODO find keyword 'in on_message' or on_flag_change
-                    # logger.info(traceback.format_tb(exc_tb))
-                    # logger.info(sys.exc_info())
-
-                    msg_log["log"] = str(e)
+                    logger.exception("failure simulating user %s code" % mailbox._imap_account.email)
+                    msg_log["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
                     msg_log["error"] = True
                 finally:
                     # copy_msg["trigger"] = rule.name
@@ -237,9 +230,9 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
 
                         # TODO this should be cleaned up. accessing class name is ugly and this is very wet (Not DRY)
-                        if event_data.message._schema.folder_schema in valid_folders:
+                        if event_data.message._schema.folder in valid_folders:
                             event_class_name = type(event_data).__name__
-                            if (event_class_name == "NewMessageData" and rule.type =="new-message") or \
+                            if (event_class_name == "MessageArrivalData" and rule.type =="new-message") or \
                                     (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
                                 event_data.fire_event(mailbox.new_message_handler)
                                 is_fired = True
@@ -259,20 +252,12 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
                     except Exception as e:
                         # Get error message for users if occurs
                         # print out error messages for user
-
                         # if len(inspect.trace()) < 2:
                         #     logger.exception("System error during running user code")
                         # else:
 
                         exc_type, exc_obj, exc_tb = sys.exc_info()
-                        logger.info(e)
-                        logger.debug(exc_obj)
-                        # logger.info(traceback.print_exception())
-
-                        # TODO find keyword 'in on_message' or on_flag_change
-                        logger.info(traceback.format_tb(exc_tb))
-                        logger.info(sys.exc_info())
-
+                        logger.exception("failure running user %s code" % mailbox._imap_account.email)
                         copy_msg["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
                         copy_msg["error"] = True
                     finally:
@@ -377,7 +362,7 @@ def interpret(mailbox, mode, bypass_queue=False, is_simulate=False, extra_info={
 
         # save logs to db
         else:
-            logger.info(new_log)
+            # logger.info(new_log)
             res['imap_log'] = new_log
 
         user_std_out.close()

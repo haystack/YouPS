@@ -6,9 +6,7 @@ import datetime
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
-from engine.models.contact import Contact
 from smtp_handler.utils import format_email_address, send_email
-from email import message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -32,8 +30,10 @@ class MailBox(object):
         self.added_flag_handler = Event()  # type: Event
         self.removed_flag_handler = Event()  # type: Event
         self.deadline_handler = Event()  # type: Event
+        self.moved_message_handler = Event()  # type: Event
 
         self.event_data_list = []  # type: t.List[AbstractEventData]
+        self.new_message_ids = set()  # type: t.Set[str]
         self.is_simulate = False
 
     def __str__(self):
@@ -74,7 +74,7 @@ class MailBox(object):
             if folder._should_completely_refresh(uid_validity):
                 folder._completely_refresh_cache()
             else:
-                folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_list)
+                folder._refresh_cache(uid_next, highest_mod_seq, self.event_data_list, self.new_message_ids)
 
             # update the folder's uid next and uid validity
             folder._uid_next = uid_next
@@ -150,7 +150,7 @@ class MailBox(object):
         return Folder(folder_schema, self._imap_client)
 
     def _list_selectable_folders(self, root=''):
-        # type: (t.Text) -> t.Generator[Folder]
+        # type: (str) -> t.Generator[Folder]
         """Generate all the folders in the Mailbox
         """
 

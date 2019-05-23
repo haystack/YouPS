@@ -1,26 +1,33 @@
-from __future__ import unicode_literals, print_function, division
-import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import MessageSchema, EmailRule, TaskManager  # noqa: F401 ignore unused we use it for typing
-from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-from datetime import datetime, timedelta  # noqa: F401 ignore unused we use it for typing
-from engine.models.contact import Contact
-import logging
-from collections import Sequence
+from __future__ import division, print_function, unicode_literals
+
 import email
 import inspect
+import logging
 import re
+import smtplib
+import typing as t  # noqa: F401 ignore unused we use it for typing
+from collections import Sequence
+from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
+                      timedelta)
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase 
-from email import encoders  
-from smtp_handler.utils import get_attachments, format_email_address
-import smtplib
-from pytz import timezone as tz
-from django.utils import timezone
+from itertools import ifilter, islice, chain
 
-from engine.google_auth import GoogleOauth2
+from django.utils import timezone
+from imapclient import \
+    IMAPClient  # noqa: F401 ignore unused we use it for typing
+from pytz import timezone as tz
+
 from browser.imap import decrypt_plain_password
+from engine.google_auth import GoogleOauth2
+from engine.models.contact import Contact
 from http_handler.settings import CLIENT_ID
+from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
+                          ImapAccount, MessageSchema, TaskManager)
+from smtp_handler.utils import format_email_address, get_attachments
+from engine.utils import IsNotGmailException, InvalidFlagException, is_gmail_label
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -28,26 +35,62 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 class Message(object):
 
-    # the descriptors we are cacheing for each message
-    _descriptors = ['FLAGS', 'INTERNALDATE',
-                    'RFC822.SIZE']  # type: t.List[t.Text]
-    _header_descriptors= ['BODY[HEADER.FIELDS (SUBJECT FROM TO CC BCC DATE IN-REPLY-TO MESSAGE-ID)]']
+    # the most basic descriptors we get for all messages
+    _descriptors = ['FLAGS', 'INTERNALDATE']
+    # the descriptors used to get header metadata about the messages
+    _header_descriptors = 'BODY.PEEK[HEADER.FIELDS (DATE MESSAGE-ID SUBJECT FROM TO CC BCC REPLY-TO IN-REPLY-TO REFERENCES)]'
+    # the key used to access the header descriptors after a fetch
+    _header_fields_key = _header_descriptors.replace('.PEEK', '')
+    # the descriptors used when we are updating flags
+    _flags_descriptors = ['FLAGS']
+
     _user_level_func = ['on_message']
 
     def __init__(self, message_schema, imap_client, is_simulate=False):
-        # type: (MessageSchema, IMAPClient) -> Message
+        # type: (MessageSchema, IMAPClient, t.Optional[bool]) -> Message
 
         self._schema = message_schema  # type: MessageSchema
 
         # the connection to the server
         self._imap_client = imap_client  # type: IMAPClient
-        
-        # if True, then only local execute and don't transmit to the server. 
-        self.is_simulate = is_simulate  # type: bool
+
+        # if True, then only local execute and don't transmit to the server.
+        self._is_simulate = is_simulate  # type: bool
 
         # local copy of flags for simulating
         self._flags = self._schema.flags
-        logger.debug( 'caller name: %s', inspect.stack()[1][3] )
+        logger.debug('caller name: %s', inspect.stack()[1][3])
+
+    @staticmethod
+    def _get_flag_descriptors(is_gmail):
+        # type: (bool) -> t.List[str]
+        """get the descriptors for an imap fetch call when updating flags
+
+        Returns:
+            t.List[str]: descriptors for an imap fetch call 
+        """
+        descriptors = Message._flags_descriptors
+        if is_gmail:
+            return descriptors + ['X-GM-LABELS']
+        return descriptors
+
+    @staticmethod
+    def _get_descriptors(is_gmail, use_key=False):
+        # type: (bool, bool) -> t.List[str]
+        """Get the descriptors for an imap fetch call when saving messages
+
+        Returns:
+            t.List[str]: descriptors for an imap fetch call
+        """
+        descriptors = Message._descriptors + [Message._header_descriptors]
+        if use_key:
+            descriptors = Message._descriptors + [Message._header_fields_key]
+        return descriptors + ['X-GM-THRID', 'X-GM-LABELS'] if is_gmail else descriptors
+
+    @property
+    def _imap_account(self):
+        # type: () -> ImapAccount
+        return self._schema.imap_account
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -56,11 +99,11 @@ class Message(object):
     def __repr__(self):
         return repr('Message object "%s"' % str(self.subject))
 
-    def _before(self):
-        pass
-
-    def _after(self):
-        pass
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, Message):
+            return self._schema == other._schema
+        return False
 
     @property
     def _uid(self):
@@ -87,7 +130,7 @@ class Message(object):
     @property
     def _message_id(self):
         # type: () -> int
-        return self._schema.message_id
+        return self._schema.base_message.message_id
 
     @property
     def flags(self):
@@ -97,28 +140,39 @@ class Message(object):
         Returns:
             List(str): List of flags on the message
         """
-        return self._flags if self.is_simulate else self._schema.flags
+        return self._flags if self._is_simulate else self._schema.flags
 
-    def diff_attr(self, obj_instance):
-        for attr, value in self.__dict__.iteritems():
-            if getattr(self, attr) != getattr(obj_instance, attr):
-                print ("different val", attr, value)
+    @property
+    def in_reply_to(self):
+        # type: () -> t.List[t.AnyStr]
+        """Get the message ids in the in_reply_to field 
 
-    @flags.setter
-    def flags(self, value):
-        # type: (t.List[t.AnyStr]) -> None
-        """Set the flags on the message
+        Returns:
+            List(str): List of in_reply_to message ids on the message
         """
-        # TODO we probably don't want user's calling this directly since
-        # we don't validate the input and it doesn't update the server
-        # it shouldn't update the server though since we are using
-        # this method to update only our local copy
-        # users update the server using add_flags or one of the aliases
-        if not self.is_simulate:
-            self._schema.flags = value
+        return self._schema.base_message.in_reply_to
+
+    @property
+    def references(self):
+        # type: () -> t.List[t.AnyStr]
+        """Get the message ids in the references field 
+
+        Returns:
+            List(str): List of references message ids on the message
+        """
+        return self._schema.base_message.references
+
+    def _save_flags(self, flags):
+        # type: (t.List[t.AnyStr]) -> None
+        """Save new flags to the database
+
+        removed the setter from flags since it was too dangerous.
+        """
+        if not self._is_simulate:
+            self._schema.flags = flags
             self._schema.save()
 
-        self._flags = value
+        self._flags = flags
 
     @property
     def deadline(self):
@@ -128,7 +182,7 @@ class Message(object):
         Returns:
             str: The deadline
         """
-        return self._schema.deadline
+        return self._schema.base_message.deadline
 
     @deadline.setter
     def deadline(self, value):
@@ -138,9 +192,9 @@ class Message(object):
             value = timezone.localtime(value)
             logger.info(value)
 
-        if not self.is_simulate:
-            self._schema.deadline = value
-            self._schema.save()
+        if not self._is_simulate:
+            self._schema.base_message.deadline = value
+            self._schema.base_message.save()
 
     @property
     def subject(self):
@@ -150,14 +204,15 @@ class Message(object):
         Returns:
             str: The subject of the message
         """
-        return self._schema.subject
+        return self._schema.base_message.subject
 
     @property
     def thread(self):
         # type: () -> t.Optional[Thread]
         from engine.models.thread import Thread
-        if self._schema._thread is not None:
-            return Thread(self._schema._thread, self._imap_client)
+        if self._schema.base_message._thread is not None:
+            return Thread(self._schema.base_message._thread, self._imap_client, self._is_simulate, self._schema.folder)
+        # TODO we should create the thread otherwise
         return None
 
     @property
@@ -168,7 +223,7 @@ class Message(object):
         Returns:
             datetime: The date and time the message was sent
         """
-        return self._schema.date
+        return self._schema.base_message.date
 
     @property
     def is_read(self):
@@ -178,13 +233,6 @@ class Message(object):
         Returns:
             bool: True if the message has been read
         """
-        # logger.info('caller name: %s', inspect.stack())
-        caller_line_no = inspect.stack()[1][2]
-        caller_func_name = inspect.stack()[1][3]
-
-        if caller_func_name in self._user_level_func:
-            pass
-        # logger.info('caller name: %s %d' % (, )
         return '\\Seen' in self.flags
 
     @property
@@ -216,38 +264,43 @@ class Message(object):
         Returns:
             t.List[Contact]: The contacts in the to field of the message
         """
-        
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.to.all()]
+
+        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.to.all()]
 
     @property
     def from_(self):
         # type: () -> Contact
-        """Get the Contacts the message is addressed from
+        """Get the Contact the message is addressed from
 
         Returns:
             Contact: The contact in the from field of the message
         """
-        return Contact(self._schema.from_m, self._imap_client) if self._schema.from_m else None
+        return Contact(self._schema.base_message.from_m, self._imap_client) if self._schema.base_message.from_m else None
 
     @property
     def sender(self):
         # type: () -> Contact
-        """Get the Contacts the message is sent from
+        """Get the Contact the message is addressed from
+
+        See also Message.from_
 
         Returns:
-            Contact: The contact in the sender field of the message
+            Contact: The contact in the from field of the message
         """
-        return Contact(self._schema.sender, self._imap_client)
+        return self.from_
 
     @property
     def reply_to(self):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is replied to
 
+        These are the addresses the message is meant to be sent to if the client
+        hits reply.
+
         Returns:
             t.List[Contact]: The contacts in the reply_to field of the message
         """
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.reply_to.all()]
+        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.reply_to.all()]
 
     @property
     def cc(self):
@@ -257,7 +310,7 @@ class Message(object):
         Returns:
             t.List[Contact]: The contacts in the cc field of the message
         """
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.cc.all()]
+        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.cc.all()]
 
     @property
     def bcc(self):
@@ -267,7 +320,20 @@ class Message(object):
         Returns:
             t.List[Contact]: The contacts in the bcc field of the message
         """
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.bcc.all()]
+        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.bcc.all()]
+
+    @property
+    def recipients(self):
+        # type: () -> t.List[Contact]
+        """Shortcut method to get a list of all the recipients of an email.
+
+        Returns the people in the to field, cc field, and bcc field 
+        Useful for doing things like getting the total number of people a message is sent to
+
+        Returns:
+            t.List[Contact]: All the visible recipients of an email
+        """
+        return list(set(chain(self.to, self.cc, self.bcc)))
 
     @property
     def folder(self):
@@ -278,7 +344,7 @@ class Message(object):
             Folder: the folder that the message is contained in
         """
         from engine.models.folder import Folder
-        return Folder(self._schema.folder_schema, self._imap_client)
+        return Folder(self._schema.folder, self._imap_client)
 
     @property
     def content(self, return_only_text=True):
@@ -295,7 +361,7 @@ class Message(object):
         initially_unread = self.is_read
         try:
 
-            # fetch the data its a dictionary from uid to data so extract the data 
+            # fetch the data its a dictionary from uid to data so extract the data
             response = self._imap_client.fetch(
                 self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
             if self._uid not in response:
@@ -304,7 +370,8 @@ class Message(object):
 
             # get the rfc data we're looking for
             if 'RFC822' not in response:
-                logger.critical('%s:%s response: %s' % (self.folder, self, pprint.pformat(response)))
+                logger.critical('%s:%s response: %s' %
+                                (self.folder, self, pprint.pformat(response)))
                 logger.critical("%s did not return RFC822" % self)
                 raise RuntimeError("Could not find RFC822")
             rfc_contents = email.message_from_string(
@@ -335,7 +402,7 @@ class Message(object):
                         text_contents = unicode(part.get_payload(
                             decode=True), charset, "ignore")
                     else:
-                        try: 
+                        try:
                             text_contents = unicode(part.get_payload(
                                 decode=True))
                         except Exception:
@@ -360,10 +427,13 @@ class Message(object):
                         raise NotImplementedError(
                             "Unsupported sub type %s" % sub_type)
 
+            # I think this is less confusing than returning an empty string - LM
+            text = text if text else None
+            html = html if html else None
             # return text if we have it otherwise html
             # return text if text else html
             if return_only_text:
-                return {"text": text, "html": html}
+                return text
             else:
                 extra['text'] = text
                 extra['html'] = html
@@ -373,7 +443,7 @@ class Message(object):
         finally:
             # mark the message unread if it is unread
             if initially_unread:
-                self.mark_read() 
+                self.mark_read()
 
     def has_flag(self, flag):
         # type: (t.AnyStr) -> bool
@@ -384,82 +454,84 @@ class Message(object):
         """
         return flag in self.flags
 
+    def _flag_change_helper(self, uids, flags, gmail_label_func, imap_flag_func):
+        # type: (t.List[int], t.List[str], t.Callable[[t.List[int], t.List[str]]])
+        import pprint
+        flags = self._check_flags(flags)
+        if self._imap_account.is_gmail:
+            gmail_labels = filter(is_gmail_label, flags)
+            returned_labels = gmail_label_func(uids, gmail_labels)
+            logger.info("flag change returned labels {flags}".format(
+                flags=pprint.pformat(returned_labels)))
+            not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
+            returned_flags = imap_flag_func(uids, not_gmail_labels)
+            logger.info("flag change returned flags {flags}".format(
+                flags=pprint.pformat(returned_flags)))
+        else:
+            returned_flags = imap_flag_func(uids, flags)
+            logger.info("flag change returned flags {flags}".format(
+                flags=pprint.pformat(returned_flags)))
+            
+
     def add_flags(self, flags):
-        # type: (t.Iterable[t.AnyStr]) -> None
+        # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the flags in a list of flags to the message
 
-        Raises:
-            TypeError: flags is not an iterable or a string
-            TypeError: any flag is not a string
+        This method can also optionally take a single string as a flag.
         """
-        # cp_self = copy.deepcopy(self)
+        flags = self._check_flags(flags)
+        # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
+        if not self._is_simulate:
+            self._flag_change_helper(
+                self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
 
-        ok, flags = self._check_flags(flags)
-        if not ok:
-            return
-
-        if not self.is_simulate:
-            # TODO the add methods return flags we should use those values instead of doing the work ourself
-            if self._schema.imap_account.is_gmail:
-                self._imap_client.add_gmail_labels(self._uid, flags)
-            else:
-                self._imap_client.add_flags(self._uid, flags)
+        # TODO the add_flags method on imap_client returns the new flags. we could rely on those but we might miss a flag event
         # update the local flags
-        self.flags = list(set(self.flags + flags))
-
-        # self.diff_attr(cp_self)
+        self._save_flags(list(set(self.flags + flags)))
 
     def remove_flags(self, flags):
-        # type: (t.Iterable[t.AnyStr]) -> None
+        # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Remove each of the flags in a list of flags from the message
 
-        Raises:
-            TypeError: flags is not an iterable or a string
-            TypeError: any flag is not a string
+        This method can also optionally take a single string as a flag.
         """
-        ok, flags = self._check_flags(flags)
-        if not ok:
-            return
-        
-        if not self.is_simulate:
-            # TODO the remove methods return flags we should use those values instead of doing the work ourself
-            if self._schema.imap_account.is_gmail:
-                self._imap_client.remove_gmail_labels(self._uid, flags)
-            else:
-                self._imap_client.remove_flags(self._uid, flags)
-                
+        flags = self._check_flags(flags)
+        if not self._is_simulate:
+            self._flag_change_helper(
+                self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
+
         # update the local flags
-        self.flags = list(set(self.flags) - set(flags))
+        self._save_flags(list(set(self.flags) - set(flags)))
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
         """Copy the message to another folder.
         """
         self._check_folder(dst_folder)
-        
+
         if not self._is_message_already_in_dst_folder(dst_folder):
-            if not self.is_simulate:
+            if not self._is_simulate:
                 self._imap_client.copy(self._uid, dst_folder)
 
     def delete(self):
         # type: () -> None
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
-        if not self.is_simulate:
+        if not self._is_simulate:
             self.add_flags('\\Deleted')
 
     def mark_read(self):
         # type: () -> None
         """Mark a message as read.
         """
-        if not self.is_simulate:
+        if not self._is_simulate:
             self._imap_client.add_flags(self._uid, ['\\Seen'])
 
     def mark_unread(self):
         # type: () -> None
         """Mark a message as unread
         """
-        if not self.is_simulate:
+        if not self._is_simulate:
             self._imap_client.remove_flags(self._uid, ['\\Seen'])
 
     def move(self, dst_folder):
@@ -468,18 +540,17 @@ class Message(object):
         """
         self._check_folder(dst_folder)
         if not self._is_message_already_in_dst_folder(dst_folder):
-            if not self.is_simulate:
+            if not self._is_simulate:
                 self._imap_client.move([self._uid], dst_folder)
 
-            
-
     def forward(self, to=[], cc=[], bcc=[], content=""):
-        if not self.is_simulate:
+        if not self._is_simulate:
             to = format_email_address(to)
             cc = format_email_address(cc)
             bcc = format_email_address(bcc)
 
-            new_message_wrapper = self._create_message_instance("Fwd: " + self.subject, to, cc, bcc, content)
+            new_message_wrapper = self._create_message_instance(
+                "Fwd: " + self.subject, to, cc, bcc, content)
 
             if new_message_wrapper:
                 self._send_message(new_message_wrapper)
@@ -488,7 +559,7 @@ class Message(object):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message
         """
-        if not self.is_simulate:
+        if not self._is_simulate:
             to_addr = ""
             if isinstance(to, list):
                 to_addr = to.append(self._schema.from_)
@@ -499,7 +570,8 @@ class Message(object):
             cc = format_email_address(cc)
             bcc = format_email_address(bcc)
 
-            new_message_wrapper = self._create_message_instance("Re: " + self.subject, to, cc, bcc, content)
+            new_message_wrapper = self._create_message_instance(
+                "Re: " + self.subject, to, cc, bcc, content)
 
             if new_message_wrapper:
                 self._send_message(new_message_wrapper)
@@ -511,9 +583,7 @@ class Message(object):
 
         else:
             if more_cc:
-                l = self.cc
-                l.append(more_cc)
-                more_cc = l
+                more_cc = self.cc + more_cc
 
         if isinstance(more_bcc, list):
             if len(self.bcc) > 0:
@@ -521,42 +591,44 @@ class Message(object):
 
         else:
             if more_bcc:
-                l = self.bcc
-                l.append(more_bcc)
-                more_bcc = l
+                more_bcc = self.bcc + more_bcc
 
         self.reply(more_to, more_cc, more_bcc, content)
-            
+
     def see_later(self, later_at=60, hide_in='YoUPS see_later'):
         if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
-            raise TypeError("see_later(): later_at " + later_at + " is not number or datetime")
-        
+            raise TypeError("see_later(): later_at " +
+                            later_at + " is not number or datetime")
+
         if isinstance(later_at, datetime) and (later_at.tzinfo is None or later_at.tzinfo.utcoffset(later_at) is None):
             later_at = tz('US/Eastern').localize(later_at)
             later_at = timezone.localtime(later_at)
             logger.info(later_at)
 
         elif isinstance(later_at, (int, long, float)):
-            later_at = timezone.now().replace(microsecond=0) + timedelta(seconds=later_at*60)
-            
-        current_folder = self._schema.folder_schema.name
+            later_at = timezone.now().replace(microsecond=0) + \
+                timedelta(seconds=later_at*60)
+
+        current_folder = self._schema.folder.name
         if self._schema.imap_account.is_gmail and current_folder == "INBOX":
             current_folder = 'inbox'
-            
-        if not self.is_simulate:
+
+        if not self._is_simulate:
             self.move(hide_in)
 
             import random
 
-            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later', code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nif msg:\n    imap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
+            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later',
+                           code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nif msg:\n    imap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
             er.save()
 
-            t = TaskManager(email_rule=er, date=later_at, imap_account=self._schema.imap_account)
+            t = TaskManager(email_rule=er, date=later_at,
+                            imap_account=self._schema.imap_account)
             t.save()
             logger.critical("here %s" % hide_in)
 
-        print("see_later(): Hide the message until %s at %s" % (later_at, hide_in))
-        
+        print("see_later(): Hide the message until %s at %s" %
+              (later_at, hide_in))
 
     def recent_messages(self, N=3):
         # type: (t.integer) -> t.List[Message]
@@ -567,37 +639,29 @@ class Message(object):
         """
 
         if self._schema.imap_account.is_gmail:
-            messages = []
-            cnt_n = 0
-            for m in self._schema._thread.messages.all():
-                if m != self._schema:
-                    messages.append(Message(m, self._imap_client))
-                    cnt_n = cnt_n + 1
+            other_messages = ifilter(lambda m: m != self, self.thread.messages)
+            return list(islice(other_messages, N))
 
-                    if cnt_n == N:
-                        break
-
-            return messages
-        
         else:
             cnt_n = 0
-            checked_msg_uid = []
             uid_to_fecth = self._uid
             prev_msg_id = None
             prev_messages = []
             logger.critical("recentmessages ")
             while cnt_n < N:
                 if uid_to_fecth is None and prev_msg_id:
-                    prev_msg_schema = MessageSchema.objects.filter(folder_schema__name=self.folder.name, message_id=prev_msg_id)
+                    prev_msg_schema = MessageSchema.objects.filter(
+                        folder__name=self.folder.name, message_id=prev_msg_id)
                     if prev_msg_schema.exists():
                         uid_to_fecth = prev_msg_schema[0].uid
                     else:
                         break
-                    #uid_to_fecth = self._imap_client.search(["HEADER", "Message-ID", prev_msg_id])
+                    # uid_to_fecth = self._imap_client.search(["HEADER", "Message-ID", prev_msg_id])
 
                 if uid_to_fecth:
                     in_reply_to_field = 'BODY[HEADER.FIELDS (IN-REPLY-TO)]'
-                    prev_msg = self._imap_client.fetch([uid_to_fecth], ['FLAGS', in_reply_to_field])
+                    prev_msg = self._imap_client.fetch(
+                        [uid_to_fecth], ['FLAGS', in_reply_to_field])
                 else:
                     break
 
@@ -610,25 +674,29 @@ class Message(object):
                     if not v:
                         continue
 
-                    prev_msg_id = re.split('(IN-REPLY-TO:|In-Reply-To:)', v.strip())[-1].strip()
-                    logger.critical(prev_msg_id) 
+                    prev_msg_id = re.split(
+                        '(IN-REPLY-TO:|In-Reply-To:)', v.strip())[-1].strip()
+                    logger.critical(prev_msg_id)
                     uid_to_fecth = None
 
-                    m_schema = MessageSchema.objects.filter(message_id=prev_msg_id)
-                    logger.critical(m_schema) 
+                    m_schema = MessageSchema.objects.filter(
+                        message_id=prev_msg_id)
+                    logger.critical(m_schema)
                     if m_schema.exists():
-                        prev_messages.append(Message(m_schema[0], self._imap_client))
-                    # else: 
+                        prev_messages.append(
+                            Message(m_schema[0], self._imap_client))
+                    # else:
                     #     break
                     # TODO message repr()
                     # TODO move run_simulate spinning bar under the table, not global
-                    
+
                 cnt_n = cnt_n + 1
-            # TODO mark as unread 
+            # TODO mark as unread
 
             return prev_messages
-    
+
     def _create_message_instance(self, subject='', to='', cc='', bcc='', additional_content=''):
+        import pprint
         new_message_wrapper = MIMEMultipart('mixed')
 
         new_message_wrapper["Subject"] = subject
@@ -643,7 +711,7 @@ class Message(object):
         # check if the message is initially read
         initially_read = self.is_read
         try:
-            # fetch the data its a dictionary from uid to data so extract the data 
+            # fetch the data its a dictionary from uid to data so extract the data
             response = self._imap_client.fetch(
                 self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
             if self._uid not in response:
@@ -651,17 +719,21 @@ class Message(object):
             response = response[self._uid]
 
             if 'RFC822' not in response:
-                logger.critical('%s:%s response: %s' % (self.folder, self, pprint.pformat(response)))
+                logger.critical('%s:%s response: %s' %
+                                (self.folder, self, pprint.pformat(response)))
                 logger.critical("%s did not return RFC822" % self)
                 raise RuntimeError("Could not find RFC822")
 
             # text content
-            new_message = MIMEMultipart('alternative')   
+            new_message = MIMEMultipart('alternative')
 
             content = self.content
-            separator = "On %s, (%s) wrote:" % (datetime.now().ctime(), self._schema.imap_account.email)
-            text_content = additional_content + "\n\n" + separator + "\n\n" + content["text"]
-            html_content = additional_content + "<br><br>" + separator + "<br><br>" + content["html"]
+            separator = "On %s, (%s) wrote:" % (
+                datetime.now().ctime(), self._schema.imap_account.email)
+            text_content = additional_content + "\n\n" + \
+                separator + "\n\n" + content["text"]
+            html_content = additional_content + "<br><br>" + \
+                separator + "<br><br>" + content["html"]
 
             part1 = MIMEText(text_content.encode('utf-8'), 'plain')
             part2 = MIMEText(html_content.encode('utf-8'), 'html')
@@ -673,19 +745,20 @@ class Message(object):
                 response.get('RFC822'))  # type: email.message.Message
 
             res = get_attachments(rfc_contents)
-                
+
             attachments = res['attachments']
 
             for attachment in attachments:
-                p = MIMEBase('application', 'octet-stream') 
-    
-                # To change the payload into encoded form 
-                p.set_payload(attachment['content']) 
-                
-                # encode into base64 
-                encoders.encode_base64(p) 
-                
-                p.add_header('Content-Disposition', "attachment; filename= %s" % attachment['filename']) 
+                p = MIMEBase('application', 'octet-stream')
+
+                # To change the payload into encoded form
+                p.set_payload(attachment['content'])
+
+                # encode into base64
+                encoders.encode_base64(p)
+
+                p.add_header('Content-Disposition',
+                             "attachment; filename= %s" % attachment['filename'])
                 new_message_wrapper.attach(p)
 
             new_message_wrapper.attach(new_message)
@@ -695,30 +768,35 @@ class Message(object):
         finally:
             # mark the message unread if it is unread
             if not initially_read:
-                self.mark_unread() 
+                self.mark_unread()
 
         return new_message_wrapper
 
     def _send_message(self, new_message_wrapper):
-        try: 
-            # SMTP authenticate 
+        try:
+            # SMTP authenticate
             if self._schema.imap_account.is_gmail:
                 oauth = GoogleOauth2()
-                response = oauth.RefreshToken(self._schema.imap_account.refresh_token)
-            
-                auth_string = oauth.generate_oauth2_string(self._schema.imap_account.email, response['access_token'], as_base64=True)
+                response = oauth.RefreshToken(
+                    self._schema.imap_account.refresh_token)
+
+                auth_string = oauth.generate_oauth2_string(
+                    self._schema.imap_account.email, response['access_token'], as_base64=True)
                 s = smtplib.SMTP('smtp.gmail.com', 587)
                 s.ehlo(CLIENT_ID)
                 s.starttls()
                 s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
-                
+
             else:
-                s = smtplib.SMTP(self._schema.imap_account.host.replace("imap", "smtp"), 587)
-                s.login(self._schema.imap_account.email, decrypt_plain_password(self._schema.imap_account.password))
+                s = smtplib.SMTP(
+                    self._schema.imap_account.host.replace("imap", "smtp"), 587)
+                s.login(self._schema.imap_account.email, decrypt_plain_password(
+                    self._schema.imap_account.password))
                 s.ehlo()
 
             # TODO check if it sent to cc-ers
-            s.sendmail(self._schema.imap_account.email, new_message_wrapper["To"], new_message_wrapper.as_string())
+            s.sendmail(self._schema.imap_account.email,
+                       new_message_wrapper["To"], new_message_wrapper.as_string())
         except Exception as e:
             print (e)
 
@@ -734,13 +812,13 @@ class Message(object):
 
         for part in orig.walk():
             if (part.get('Content-Disposition')
-                and part.get('Content-Disposition').startswith("attachment")):
+                    and part.get('Content-Disposition').startswith("attachment")):
 
                 part.set_type("text/plain")
                 part.set_payload("Attachment removed: %s (%s, %d bytes)"
-                            %(part.get_filename(), 
-                            part.get_content_type(), 
-                            len(part.get_payload(decode=True))))
+                                 % (part.get_filename(),
+                                    part.get_content_type(),
+                                    len(part.get_payload(decode=True))))
                 del part["Content-Disposition"]
                 del part["Content-Transfer-Encoding"]
 
@@ -748,7 +826,7 @@ class Message(object):
                 newtext += "\n"
                 newtext += part.get_payload(decode=False)
                 if google:
-                    newtext = newtext.replace("\n","\n> ")
+                    newtext = newtext.replace("\n", "\n> ")
 
             elif part.get_content_type().startswith("text/html"):
                 newhtml += "\n"
@@ -762,7 +840,7 @@ class Message(object):
         return (text+'\n\n'+newtext, html+'<br/>'+newhtml)
 
     def _is_message_already_in_dst_folder(self, dst_folder):
-        if dst_folder == self._schema.folder_schema.name:
+        if dst_folder == self._schema.folder.name:
             userLogger.info(
                 "message already in destination folder: %s" % dst_folder)
             return True
@@ -777,23 +855,22 @@ class Message(object):
             self._imap_client.create_folder(dst_folder)
 
     def _check_flags(self, flags):
-        # type: (t.Iterable[t.AnyStr]) -> bool, t.Iterable[t.AnyStr]
+        # type: (t.Iterable[t.AnyStr]) -> t.Iterable[t.AnyStr]
         """Check user defined flags
 
         Raises:
-            TypeError: Flag is not an instance of a python Sequence
-            TypeError: Some flag is not a string
+            InvalidFlagException: The flags are invalid
 
         Returns:
-            t.Tuple[bool, t.List[t.AnyStr]]: Tuple of whether the check passed and the flags as a list
+            t.List[t.AnyStr]: the valid flags as a list
         """
 
-        ok = True
         # allow user to pass in a string
         if isinstance(flags, basestring):
             flags = [flags]
         elif not isinstance(flags, Sequence):
-            raise TypeError("flags must be a sequence")
+            raise InvalidFlagException(
+                "flags must be a sequence or a a string")
 
         if not isinstance(flags, list):
             flags = list(flags)
@@ -801,16 +878,16 @@ class Message(object):
         # make sure all flags are strings
         for flag in flags:
             if not isinstance(flag, basestring):
-                raise TypeError("each flag must be string")
+                raise InvalidFlagException("each flag must be string")
         # remove extraneous white space
         flags = [flag.strip() for flag in flags]
         # remove empty strings
         flags = [flag for flag in flags if flag]
         if not flags:
-            ok = False
             userLogger.info("No valid flags passed")
-        return ok, flags
-
+            raise InvalidFlagException(
+                "No valid flags. Check if flags are empty strings")
+        return flags
 
     def _get_from_friendly(self):
         if self.from_._schema:
@@ -849,13 +926,64 @@ class Message(object):
 
     def _get_meta_data_friendly(self):
         return {
-            "folder": self.folder.name, 
-            "subject": self.subject, 
+            "folder": self.folder.name,
+            "subject": self.subject,
             "flags": [f.encode('utf8', 'replace') for f in self.flags],
             "date": str(self.date),
-            "deadline": str(self.deadline), 
-            "is_read": self.is_read, 
-            "is_deleted": self.is_deleted, 
+            "deadline": str(self.deadline),
+            "is_read": self.is_read,
+            "is_deleted": self.is_deleted,
             "is_recent": self.is_recent,
-            "error": False 
+            "error": False
         }
+
+    # example gmail behaviors
+    # TODO reduce to single request by sending all uids
+
+    def add_flags_gmail(self, flags):
+        if not self._imap_account.is_gmail:
+            raise IsNotGmailException()
+        flags = self._check_flags(flags)
+        uids = [m._uid for m in self.thread]
+        if not self._is_simulate:
+            self._flag_change_helper(
+                uids, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
+        for m in self.thread:
+            m._save_flags(list(set(m.flags + flags)))
+
+    def remove_flags_gmail(self, flags):
+
+        # TODO this still feels broken. flags need to be removed from each message which has that flag
+        # we need to go from the base message of this message to all the related messages
+        # and then for each of those related messages if it contains a flag we want to remove
+        # this from we need to remove that flag. but that requires calling imap_client.select_folder() which
+        # i want to avoid
+
+        if not self._imap_account.is_gmail:
+            raise IsNotGmailException()
+        uids = [m._uid for m in self.thread]
+        if not self._is_simulate:
+            self._flag_change_helper(
+                uids, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
+        for m in self.thread:
+            m._save_flags(list(set(m.flags) - set(flags)))
+
+    def mark_spam_gmail(self):
+        # marks all emails in the thread as spam
+        # gmail does this by removing the Inbox flag and adding the spam flag
+        # TODO just do the inverse to mark as not spam
+        self.add_flags_gmail('\\Spam')
+        self.remove_flags_gmail('\\Inbox')
+
+    def archive_gmail(self):
+        # marks all emails in the thread as archived
+        # gmail does this by removing the Inbox, Spam, and Trash labels
+        # TODO not sure how to unarchive
+        self.remove_flags_gmail(['\\Spam', '\\Inbox', '\\Trash'])
+
+    def delete_gmail(self):
+        # marks all emails in the thread as deleted
+        # gmail does this by removing the Inbox label, and adding the Trash label
+        # TODO not sure how to undelete
+        self.remove_flags_gmail(['\\Inbox'])
+        self.add_flags_gmail(['\\Trash'])
