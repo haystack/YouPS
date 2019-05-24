@@ -28,12 +28,12 @@ def interpret_bypass_queue(mailbox, mode, extra_info):
 
     # create a string buffer to store stdout
     user_std_out = StringIO()
-    with sandbox_helpers.override_print(user_std_out):
+    with sandbox_helpers.override_print(user_std_out) as fakeprint:
         code = extra_info['code']
         message_schemas = MessageSchema.objects.filter(id=extra_info['msg-id'])
 
         # define the variables accessible to the user
-        user_environ = sandbox_helpers.get_default_user_environment(mailbox) 
+        user_environ = sandbox_helpers.get_default_user_environment(mailbox, fakeprint)
 
         # Applying diff msgs to a same source code
         # TODO this code is completely broken and fires events based on function names
@@ -64,7 +64,9 @@ def interpret_bypass_queue(mailbox, mode, extra_info):
             except Exception:
                 # Get error message for users if occurs
                 # print out error messages for user
-                sandbox_helpers.handle_interpret_error(mailbox, msg_log)
+                logger.exception("failure simulating user %s code" % mailbox._imap_account.email)
+                msg_log["error"] = True
+                fakeprint(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])

@@ -7,29 +7,24 @@ from engine.models.calendar import MyCalendar
 import traceback
 import logging 
 if t.TYPE_CHECKING:
-    from engine.models.mailbox import Mailbox
+    from engine.models.mailbox import Mailbox  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 
-def handle_interpret_error(mailbox, output):
-    # type: (Mailbox, t.Dict) -> None
-    logger.exception("failure simulating user %s code" % mailbox._imap_account.email)
-    output["error"] = True
-
+def get_error_as_string_for_user():
+    # type: () -> t.AnyStr
+    """Call this to get a string representation of an error for the user
+    
+    Returns:
+        t.AnyStr: a string representing an error message
+    """
+    # see this for other options https://docs.python.org/2.7/library/traceback.html
     # show just the error type
     error_messages = traceback.format_exc().splitlines()
-    print(error_messages[-1])
+    return error_messages[-1]
 
-    # show the whole tracebook
-    # exc_type, exc_value, exc_traceback = sys.exc_info()
-    # for line in traceback.format_tb(exc_traceback):
-    #     print(line)
-
-    # show the line number and some file stufff
-    # print(traceback.format_tb(exc_traceback))
-
-def get_default_user_environment(mailbox):
+def get_default_user_environment(mailbox, fakeprint):
     return {
         'create_draft': mailbox.create_draft,
         'create_folder': mailbox.create_folder,
@@ -41,13 +36,14 @@ def get_default_user_environment(mailbox):
         'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
         'handle_on_deadline': lambda f: mailbox.deadline_handler.handle(f),
         'Calendar': MyCalendar,
+        'print': fakeprint
     }
 
 
 @contextmanager
 def override_print(output):
     #  type: (t.TextIO) -> t.Generator[None, None, None]
-    """Temporarily override builtin print to go to output object
+    """Safely create a new version of print that prints to the passed in output
 
     If this isn't working make sure that from __future__ import print_function
     is at the top of every file that you are printing in
@@ -55,7 +51,7 @@ def override_print(output):
     Usage:
         output = StringIO() 
         with override_print(output):
-            print("this will go to standard out")
+            print("this will go to StringIO")
     
     Args:
         output (t.TextIO): Object that can be written to like a file
@@ -69,8 +65,8 @@ def override_print(output):
         if 'file' not in kwargs:
             kwargs['file'] = output
         return original_print(*args, **kwargs)
-    __builtin__.print = fake_print
+    # __builtin__.print = fake_print
     try:
-        yield
+        yield fake_print
     finally:
         __builtin__.print = original_print
