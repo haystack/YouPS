@@ -15,7 +15,6 @@ from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
-import typing as t
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -349,7 +348,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
             for message_schema in messages:
                 assert isinstance(message_schema, MessageSchema)
                 imap_res = interpret(MailBox(imapAccount, imap), None, bypass_queue=True, is_simulate=True, extra_info={'code': code, 'msg-id': message_schema.id})
-                logger.info(imap_res)
+                logger.debug(imap_res)
 
                 message = Message(message_schema, imap)
 

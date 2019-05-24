@@ -10,6 +10,9 @@ from engine.models.message import Message
 
 from itertools import chain, ifilter
 
+import logging 
+
+logger = logging.getLogger('youps')  # type: logging.Logger
 
 class Thread(object):
 
@@ -25,8 +28,12 @@ class Thread(object):
 
         self._is_simulate = is_simulate
 
-    def __str__(self):
-        return "Thread %d" % self._schema.id
+
+    # TODO ideally we would have a __str__ method for printing thread which
+    # outputs the subject but the subject can have unicode in it which 
+    # screws things up since __str__ has to return bytes
+    def __repr__(self):
+        return "Thread object %d" % self._schema.id
 
     def __eq__(self, other):
         """Overrides the default implementation"""

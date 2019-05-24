@@ -18,10 +18,10 @@ class Contact(object):
         self._imap_client = imap_client  # type: IMAPClient
 
     def __str__(self):
-        return self.name
+        return self.email
 
     def __repr__(self):
-        return repr("Contact object %s" % str(self.name or self.email))
+        return "Contact object: %s" % self.email
 
     def __eq__(self, other): 
         if isinstance(other, basestring):

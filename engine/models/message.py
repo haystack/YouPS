@@ -6,7 +6,6 @@ import logging
 import re
 import smtplib
 import typing as t  # noqa: F401 ignore unused we use it for typing
-from collections import Sequence
 from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from email import encoders
@@ -27,7 +26,8 @@ from http_handler.settings import CLIENT_ID
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
-from engine.utils import IsNotGmailException, InvalidFlagException, is_gmail_label
+from engine.utils import IsNotGmailException
+from engine.models.helpers import message_helpers
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -87,11 +87,6 @@ class Message(object):
             descriptors = Message._descriptors + [Message._header_fields_key]
         return descriptors + ['X-GM-THRID', 'X-GM-LABELS'] if is_gmail else descriptors
 
-    @property
-    def _imap_account(self):
-        # type: () -> ImapAccount
-        return self._schema.imap_account
-
     def __str__(self):
         # type: () -> t.AnyStr
         return "Message %d" % self._uid
@@ -104,6 +99,11 @@ class Message(object):
         if isinstance(other, Message):
             return self._schema == other._schema
         return False
+
+    @property
+    def _imap_account(self):
+        # type: () -> ImapAccount
+        return self._schema.imap_account
 
     @property
     def _uid(self):
@@ -161,18 +161,6 @@ class Message(object):
             List(str): List of references message ids on the message
         """
         return self._schema.base_message.references
-
-    def _save_flags(self, flags):
-        # type: (t.List[t.AnyStr]) -> None
-        """Save new flags to the database
-
-        removed the setter from flags since it was too dangerous.
-        """
-        if not self._is_simulate:
-            self._schema.flags = flags
-            self._schema.save()
-
-        self._flags = flags
 
     @property
     def deadline(self):
@@ -234,6 +222,16 @@ class Message(object):
             bool: True if the message has been read
         """
         return '\\Seen' in self.flags
+
+    @property
+    def is_unread(self):
+        # type: () -> bool
+        """Get if the message is unread
+
+        Returns:
+            bool: True if the message is unread
+        """
+        return not self.is_read
 
     @property
     def is_deleted(self):
@@ -354,96 +352,7 @@ class Message(object):
         Returns:
             dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """
-
-        import pprint
-
-        # check if the message is initially read
-        initially_unread = self.is_read
-        try:
-
-            # fetch the data its a dictionary from uid to data so extract the data
-            response = self._imap_client.fetch(
-                self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
-            if self._uid not in response:
-                raise RuntimeError('Invalid response missing UID')
-            response = response[self._uid]
-
-            # get the rfc data we're looking for
-            if 'RFC822' not in response:
-                logger.critical('%s:%s response: %s' %
-                                (self.folder, self, pprint.pformat(response)))
-                logger.critical("%s did not return RFC822" % self)
-                raise RuntimeError("Could not find RFC822")
-            rfc_contents = email.message_from_string(
-                response.get('RFC822'))  # type: email.message.Message
-
-            text = ""
-            html = ""
-            extra = {}
-
-            # walk the message
-            for part in rfc_contents.walk():
-                # TODO respect multipart/[alternative, mixed] etc... see RFC1341
-                if part.is_multipart():
-                    continue
-
-                # for each part get the maintype and subtype
-                main_type = part.get_content_maintype()
-                sub_type = part.get_content_subtype()
-
-                # parse text types
-                if main_type == "text":
-                    text_contents = None
-                    # get the charset used to encode the message
-                    charset = part.get_content_charset()
-
-                    # get the text as encoded unicode
-                    if charset is not None:
-                        text_contents = unicode(part.get_payload(
-                            decode=True), charset, "ignore")
-                    else:
-                        try:
-                            text_contents = unicode(part.get_payload(
-                                decode=True))
-                        except Exception:
-                            logger.critical("%s no charset found on" % self)
-                            raise RuntimeError("Message had no charset")
-
-                    # extract plain text
-                    if sub_type == "plain":
-                        text += text_contents
-                    # extract html
-                    elif sub_type == "html":
-                        html += text_contents
-                    # extract calendar
-                    elif sub_type == "calendar":
-                        if sub_type not in extra:
-                            extra[sub_type] = ""
-                        extra[sub_type] += text_contents
-                    # fail otherwise
-                    else:
-                        logger.critical(
-                            "%s unsupported sub type %s" % (self, sub_type))
-                        raise NotImplementedError(
-                            "Unsupported sub type %s" % sub_type)
-
-            # I think this is less confusing than returning an empty string - LM
-            text = text if text else None
-            html = html if html else None
-            # return text if we have it otherwise html
-            # return text if text else html
-            if return_only_text:
-                return text
-            else:
-                extra['text'] = text
-                extra['html'] = html
-
-                return extra
-
-        finally:
-            # mark the message unread if it is unread
-            if initially_unread:
-                self.mark_read()
+        return message_helpers.get_content_from_message(self, return_only_text)
 
     def has_flag(self, flag):
         # type: (t.AnyStr) -> bool
@@ -454,40 +363,19 @@ class Message(object):
         """
         return flag in self.flags
 
-    def _flag_change_helper(self, uids, flags, gmail_label_func, imap_flag_func):
-        # type: (t.List[int], t.List[str], t.Callable[[t.List[int], t.List[str]]])
-        import pprint
-        flags = self._check_flags(flags)
-        if self._imap_account.is_gmail:
-            gmail_labels = filter(is_gmail_label, flags)
-            returned_labels = gmail_label_func(uids, gmail_labels)
-            logger.info("flag change returned labels {flags}".format(
-                flags=pprint.pformat(returned_labels)))
-            not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
-            returned_flags = imap_flag_func(uids, not_gmail_labels)
-            logger.info("flag change returned flags {flags}".format(
-                flags=pprint.pformat(returned_flags)))
-        else:
-            returned_flags = imap_flag_func(uids, flags)
-            logger.info("flag change returned flags {flags}".format(
-                flags=pprint.pformat(returned_flags)))
-            
-
     def add_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the flags in a list of flags to the message
 
         This method can also optionally take a single string as a flag.
         """
-        flags = self._check_flags(flags)
+        if self._is_simulate:
+            flags = message_helpers._check_flags(self, flags)
         # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self._is_simulate:
-            self._flag_change_helper(
-                self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
+            message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
 
-        # TODO the add_flags method on imap_client returns the new flags. we could rely on those but we might miss a flag event
-        # update the local flags
-        self._save_flags(list(set(self.flags + flags)))
+        message_helpers._save_flags(self, list(set(self.flags + flags)))
 
     def remove_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
@@ -495,13 +383,13 @@ class Message(object):
 
         This method can also optionally take a single string as a flag.
         """
-        flags = self._check_flags(flags)
+        if self._is_simulate:
+            flags = message_helpers._check_flags(self, flags)
         if not self._is_simulate:
-            self._flag_change_helper(
-                self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
+            message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
 
         # update the local flags
-        self._save_flags(list(set(self.flags) - set(flags)))
+        message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -517,22 +405,19 @@ class Message(object):
         # type: () -> None
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
-        if not self._is_simulate:
-            self.add_flags('\\Deleted')
+        self.add_flags('\\Deleted')
 
     def mark_read(self):
         # type: () -> None
         """Mark a message as read.
         """
-        if not self._is_simulate:
-            self._imap_client.add_flags(self._uid, ['\\Seen'])
+        self.add_flags('\\Seen')
 
     def mark_unread(self):
         # type: () -> None
         """Mark a message as unread
         """
-        if not self._is_simulate:
-            self._imap_client.remove_flags(self._uid, ['\\Seen'])
+        self.remove_flags('\\Seen')
 
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -854,40 +739,6 @@ class Message(object):
                 "folder %s does not exist creating it for you" % dst_folder)
             self._imap_client.create_folder(dst_folder)
 
-    def _check_flags(self, flags):
-        # type: (t.Iterable[t.AnyStr]) -> t.Iterable[t.AnyStr]
-        """Check user defined flags
-
-        Raises:
-            InvalidFlagException: The flags are invalid
-
-        Returns:
-            t.List[t.AnyStr]: the valid flags as a list
-        """
-
-        # allow user to pass in a string
-        if isinstance(flags, basestring):
-            flags = [flags]
-        elif not isinstance(flags, Sequence):
-            raise InvalidFlagException(
-                "flags must be a sequence or a a string")
-
-        if not isinstance(flags, list):
-            flags = list(flags)
-
-        # make sure all flags are strings
-        for flag in flags:
-            if not isinstance(flag, basestring):
-                raise InvalidFlagException("each flag must be string")
-        # remove extraneous white space
-        flags = [flag.strip() for flag in flags]
-        # remove empty strings
-        flags = [flag for flag in flags if flag]
-        if not flags:
-            userLogger.info("No valid flags passed")
-            raise InvalidFlagException(
-                "No valid flags. Check if flags are empty strings")
-        return flags
 
     def _get_from_friendly(self):
         if self.from_._schema:
@@ -937,19 +788,17 @@ class Message(object):
             "error": False
         }
 
-    # example gmail behaviors
-    # TODO reduce to single request by sending all uids
-
     def add_flags_gmail(self, flags):
+        # TODO see remove_flags_gmail same issue applies here
         if not self._imap_account.is_gmail:
             raise IsNotGmailException()
-        flags = self._check_flags(flags)
+        if self._is_simulate:
+            flags = message_helpers._check_flags(self, flags)
         uids = [m._uid for m in self.thread]
         if not self._is_simulate:
-            self._flag_change_helper(
-                uids, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
+            message_helpers._flag_change_helper(self, uids, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
         for m in self.thread:
-            m._save_flags(list(set(m.flags + flags)))
+            message_helpers._save_flags(m, list(set(m.flags + flags)))
 
     def remove_flags_gmail(self, flags):
 
@@ -963,27 +812,37 @@ class Message(object):
             raise IsNotGmailException()
         uids = [m._uid for m in self.thread]
         if not self._is_simulate:
-            self._flag_change_helper(
-                uids, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
+            message_helpers._flag_change_helper(self, uids, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
         for m in self.thread:
-            m._save_flags(list(set(m.flags) - set(flags)))
+            message_helpers._save_flags(m, list(set(m.flags) - set(flags)))
 
     def mark_spam_gmail(self):
         # marks all emails in the thread as spam
         # gmail does this by removing the Inbox flag and adding the spam flag
-        # TODO just do the inverse to mark as not spam
         self.add_flags_gmail('\\Spam')
         self.remove_flags_gmail('\\Inbox')
+
+    def unmark_spam_gmail(self):
+        # unmark any email which has been marked as spam
+        self.remove_flags_gmail('\\Spam')
+        self.add_flags_gmail('\\Inbox')
 
     def archive_gmail(self):
         # marks all emails in the thread as archived
         # gmail does this by removing the Inbox, Spam, and Trash labels
-        # TODO not sure how to unarchive
         self.remove_flags_gmail(['\\Spam', '\\Inbox', '\\Trash'])
+
+    def unarchive_gmail(self):
+        # unarchive any messages that have been archived
+        self.add_flags_gmail(['\\Inbox'])
 
     def delete_gmail(self):
         # marks all emails in the thread as deleted
         # gmail does this by removing the Inbox label, and adding the Trash label
-        # TODO not sure how to undelete
         self.remove_flags_gmail(['\\Inbox'])
         self.add_flags_gmail(['\\Trash'])
+
+    def undelete_gmail(self):
+        # undelete any deleted email
+        self.add_flags_gmail(['\\Inbox'])
+        self.remove_flags_gmail(['\\Trash'])
