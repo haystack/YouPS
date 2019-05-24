@@ -440,6 +440,19 @@ class Message(object):
             if new_message_wrapper:
                 self._send_message(new_message_wrapper)
 
+
+    def contains(self, string):
+        # type: (t.AnyStr) -> bool
+        """check if a string is contained in the content of a message
+
+        Args:
+            string (str): string to check for
+
+        Returns:
+            bool: true if the passed in string is in the message content
+        """
+        return string in self.content
+
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message
