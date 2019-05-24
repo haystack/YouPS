@@ -1,14 +1,9 @@
 from django.core.management.base import BaseCommand
 from schema.youps import ImapAccount
-from datetime import datetime
 from browser.imap import authenticate
-from browser.sandbox import interpret
 from engine.models.mailbox import MailBox
-from imapclient import IMAPClient
-from engine.constants import msg_code
-from smtp_handler.Pile import Pile
 from smtp_handler.utils import send_email
-from http_handler.settings import WEBSITE, BASE_URL, PROTOCOL
+from http_handler.settings import BASE_URL
 import logging
 
 # Get an instance of a logger
@@ -61,7 +56,4 @@ class Command(BaseCommand):
             imapAccount.is_running = False
             imapAccount.save()
             
-            
-            
-            "Your YoUPS account is ready!", "no-reply@" + BASE_URL, imapAccount.email, "Start writing your automation rule here! %s://%s" % (PROTOCOL, BASE_URL))
             res['status'] = True

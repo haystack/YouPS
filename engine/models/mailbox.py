@@ -14,7 +14,7 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 
 class MailBox(object):
-    def __init__(self, imap_account, imap_client):
+    def __init__(self, imap_account, imap_client, is_simulate=False):
         # type: (ImapAccount, IMAPClient) -> MailBox
         """Create a new instance of the client's mailbox using a connection
         to an IMAPClient.
@@ -34,7 +34,7 @@ class MailBox(object):
 
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.new_message_ids = set()  # type: t.Set[str]
-        self.is_simulate = False
+        self.is_simulate = is_simulate  # type: bool
 
     def __str__(self):
         # type: () -> t.AnyStr
