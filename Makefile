@@ -24,6 +24,7 @@ clean:
 # reset the database
 .PHONY: reset-db
 reset-db:
+	mkdir -p schema/migrations
 	docker-compose run web scripts/new_database_unsafe.sh
 
 # attach a shell to the running docker image

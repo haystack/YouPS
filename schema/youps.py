@@ -183,7 +183,6 @@ class ContactSchema(models.Model):
     id = models.AutoField(primary_key=True)
     # each contact is associated with a single ImapAccount
     imap_account = models.ForeignKey('ImapAccount')
-    name = models.TextField(null=True, blank=True)
     email = models.EmailField(
         verbose_name='email address',
         max_length=191
@@ -196,6 +195,19 @@ class ContactSchema(models.Model):
         db_table = "youps_contact"
         # each contact is stored once per account
         unique_together = ("imap_account", "email")
+
+
+class ContactAlias(models.Model):
+    id = models.AutoField(primary_key=True)
+    contact = models.ForeignKey(ContactSchema, related_name="aliases")
+    # each alias is associated with a single ImapAccount
+    imap_account = models.ForeignKey('ImapAccount')
+    name = models.CharField(max_length=191, blank=False, null=False)
+    count = models.IntegerField(null=False, default=0)
+
+    class Meta:
+        db_table = "youps_contact_alias"
+        unique_together = ("contact", "name")
 
 
 class ThreadSchema(models.Model):

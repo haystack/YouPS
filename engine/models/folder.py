@@ -6,7 +6,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 import re
 from datetime import datetime
 from email.header import decode_header
-from email.utils import parseaddr
+from email.utils import parseaddr, getaddresses
 from string import whitespace
 from itertools import chain
 
@@ -27,8 +27,8 @@ from engine.models.event_data import (AbstractEventData, MessageArrivalData,
 from engine.models.message import Message
 from engine.utils import normalize_msg_id, folding_ws_regex, encoded_word_string_regex, header_comment_regex
 from schema.youps import (  # noqa: F401 ignore unused we use it for typing
-    BaseMessage, ContactSchema, FolderSchema, ImapAccount, MessageSchema,
-    ThreadSchema)
+    BaseMessage, ContactSchema, ContactAlias, FolderSchema, ImapAccount,
+    MessageSchema, ThreadSchema)
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -402,6 +402,7 @@ class Folder(object):
             # dictionary of general data about the message
             message_data = fetch_data[uid]
 
+
             # make sure all the fields we're interested in are in the message_data
             ok = self._check_fields_in_fetch(
                 ['SEQ'] + Message._get_descriptors(is_gmail, True), message_data)
@@ -452,6 +453,7 @@ class Folder(object):
                 if "cc" in metadata:
                     base_message.cc.add(
                         *self._find_or_create_contacts(metadata["cc"]))
+                # TODO test if bcc is working - LM (use yagmail and look at original on GMAIL)
                 if "bcc" in metadata:
                     base_message.bcc.add(
                         *self._find_or_create_contacts(metadata["bcc"]))
@@ -508,6 +510,7 @@ class Folder(object):
             thread_schema.save()
             return thread_schema
 
+    # TODO header keys can show up more than once we should check if we support that
     def _parse_email_header(self, header):
         # type: (str) -> t.Dict[str, str]
         """Parse a potentially multiline email header into a dict of key value pairs.
@@ -577,31 +580,33 @@ class Folder(object):
             t.List[ContactSchema]: List of contacts associated with the addresses
         """
         assert addresses is not None
-
-        # TODO try to convert this parsing to https://docs.python.org/2/library/email.utils.html#email.utils.getaddresses
-        # where applicable. the split on , is not reliable
-
         contact_schemas = []
-        for address in addresses.split(","):
+
+        for address in getaddresses([addresses]):
+            name, email = address
+            # this can happen when i send emails to myself - LM not sure why
+            if not email or "@" not in email:
+                continue
             contact_schema = None  # type: ContactSchema
 
-            # email = "%s@%s" % (address.mailbox, address.host)
-            name, email = parseaddr(address)
-            logger.info(name, email)
             try:
-                contact_schema = ContactSchema.objects.get(
-                    imap_account=self._imap_account, email=email)
-
-                # if we get a new name, then save the name to the contact
-                if name:
-                    contact_schema.name = name
-                    contact_schema.save()
-
+                contact_schema = ContactSchema.objects.prefetch_related(
+                    'aliases').get(imap_account=self._imap_account, email=email)
             except ContactSchema.DoesNotExist:
                 contact_schema = ContactSchema(
-                    imap_account=self._imap_account, email=email, name=name)
+                    imap_account=self._imap_account, email=email)
                 contact_schema.save()
-                logger.debug("created contact %s in database" % name)
+                logger.debug("created contact %s in database" % email)
+
+            if name:
+                try:
+                    alias = contact_schema.aliases.get(name=name)
+                    alias.count += 1
+                    alias.save()
+                except ContactAlias.DoesNotExist:
+                    alias = ContactAlias(contact=contact_schema, imap_account=self._imap_account, name=name, count=1)
+                    alias.save()
+                    logger.debug("created contact alias %s in database" % name)
 
             contact_schemas.append(contact_schema)
         return contact_schemas
