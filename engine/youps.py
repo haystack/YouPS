@@ -10,7 +10,7 @@ from imapclient import IMAPClient
 
 from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
-from browser.sandbox import interpret
+from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
@@ -248,9 +248,6 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 logger.info("user %s test run " % imapAccount.email)
 
-                # res = interpret(MailBox(imapAccount, imap), None, True, {'code' : code})
-                # logger.critical(res["appended_log"])
-
                 # # Save selected folder for the mode
                 for f in folders:
                     folder = FolderSchema.objects.get(imap_account=imapAccount, name=f)
@@ -347,7 +344,8 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
 
             for message_schema in messages:
                 assert isinstance(message_schema, MessageSchema)
-                imap_res = interpret(MailBox(imapAccount, imap), None, bypass_queue=True, is_simulate=True, extra_info={'code': code, 'msg-id': message_schema.id})
+                mailbox = MailBox(imapAccount, imap, is_simulate=True)
+                imap_res = interpret_bypass_queue(mailbox, None, extra_info={'code': code, 'msg-id': message_schema.id})
                 logger.debug(imap_res)
 
                 message = Message(message_schema, imap)

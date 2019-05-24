@@ -17,7 +17,7 @@ from datetime import datetime
 import pytz
 import django.db
 from browser.imap import *
-from browser.sandbox import interpret
+from browser.sandbox import interpret_bypass_queue
 from imapclient import IMAPClient
 from schema.youps import MessageSchema, EmailRule, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from engine.models.mailbox import MailBox
@@ -127,7 +127,7 @@ def mailbot(arrived_message, address=None, host=None):
                 
                 body = {"text": "", "html": ""}
                 for shortcut in shortcuts:
-                    res = interpret(mailbox, None, bypass_queue=True, is_simulate=False, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
+                    res = interpret_bypass_queue(mailbox, None, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
                     logging.debug(res)
 
                     for key, value in res['appended_log'].iteritems():
