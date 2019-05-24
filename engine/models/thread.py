@@ -32,9 +32,9 @@ class Thread(object):
     # TODO ideally we would have a __str__ method for printing thread which
     # outputs the subject but the subject can have unicode in it which 
     # screws things up since __str__ has to return bytes
-    
-    def __str__(self):
-        return "Thread: %s" % self._schema.baseMessages.order_by('date').first().subject
+    # def __str__(self):
+    #     return "Thread: %s" % self._schema.baseMessages.order_by('date').first().subject
+
 
     def __repr__(self):
         return "Thread object %d" % self._schema.id
