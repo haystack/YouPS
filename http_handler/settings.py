@@ -65,7 +65,7 @@ PROTOCOL = _get_protocol()
 CLIENT_ID = ''
 CLIENT_SECRET = ''
 IMAP_SECRET = ''
-PRETEST_EMAIL = []
+PRETEST_EMAIL = [] 
 
 try:
     execfile(SITE_ROOT + '/../private.py')

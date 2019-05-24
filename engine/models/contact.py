@@ -25,10 +25,12 @@ class Contact(object):
 
     def __eq__(self, other): 
         if isinstance(other, basestring):
-            return (other == self.name) or (other == self.email) 
+            return other in self.aliases or other == self.email
 
         if isinstance(other, Contact):
-            return (other.name == self.name) and (other.email == self.email)
+            return other._schema == self._schema 
+
+        return False
 
     @property
     def email(self):
@@ -41,6 +43,16 @@ class Contact(object):
         return self._schema.email
 
     @property
+    def aliases(self):
+        # type: () -> t.List[t.AnyStr]
+        """Get all the names associated with this contact
+
+        Returns:
+            str: The names associated with this contact
+        """
+        return self._schema.aliases.all().values_list('name', flat=True)
+
+    @property
     def name(self):
         # type: () -> t.AnyStr
         """Get the name associated with this contact
@@ -48,7 +60,8 @@ class Contact(object):
         Returns:
             str: The name associated with this contact
         """
-        return self._schema.name or self.email
+        # simply returns the most common alias
+        return self._schema.aliases.order_by('-count').first().name
 
     @property
     def organization(self):
