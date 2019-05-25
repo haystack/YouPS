@@ -4,6 +4,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from schema.youps import ContactSchema, MessageSchema  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Q
 import logging
+from engine.models.helpers import CustomProperty
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -32,7 +33,7 @@ class Contact(object):
 
         return False
 
-    @property
+    @CustomProperty
     def email(self):
         # type: () -> t.AnyStr
         """Get the email address associated with this contact
@@ -42,7 +43,7 @@ class Contact(object):
         """
         return self._schema.email
 
-    @property
+    @CustomProperty
     def aliases(self):
         # type: () -> t.List[t.AnyStr]
         """Get all the names associated with this contact
@@ -52,7 +53,7 @@ class Contact(object):
         """
         return self._schema.aliases.all().values_list('name', flat=True)
 
-    @property
+    @CustomProperty
     def name(self):
         # type: () -> t.AnyStr
         """Get the name associated with this contact
@@ -63,7 +64,7 @@ class Contact(object):
         # simply returns the most common alias
         return self._schema.aliases.order_by('-count').first().name
 
-    @property
+    @CustomProperty
     def organization(self):
         # type: () -> t.AnyStr
         """Get the organization of this contact
@@ -73,7 +74,7 @@ class Contact(object):
         """
         return self._schema.organization
 
-    @property
+    @CustomProperty
     def geolocation(self):
         # type: () -> t.AnyStr
         """Get the location of this contact
@@ -83,7 +84,7 @@ class Contact(object):
         """
         return self._schema.geolocation
 
-    @property
+    @CustomProperty
     def messages_to(self):
         # type: () -> t.List[Message]
         """Get the Messages which are to this contact
@@ -94,7 +95,7 @@ class Contact(object):
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.to_messages.all()]
 
-    @property
+    @CustomProperty
     def messages_from(self):
         # type: () -> t.List[Message]
         """Get the Messages which are from this contact
@@ -105,7 +106,7 @@ class Contact(object):
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.from_messages.all()]
 
-    @property
+    @CustomProperty
     def messages_bcc(self):
         # type: () -> t.List[Message]
         """Get the Messages which are bcc this contact
@@ -116,7 +117,7 @@ class Contact(object):
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.bcc_messages.all()]
 
-    @property
+    @CustomProperty
     def messages_cc(self):
         # type: () -> t.List[Message]
         """Get the Messages which are cc this contact

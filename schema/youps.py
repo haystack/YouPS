@@ -67,6 +67,8 @@ class FolderSchema(models.Model):
     last_seen_uid = models.IntegerField(default=-1)
     # the highest mod seq useful for limiting getting the flags
     highest_mod_seq = models.IntegerField(default=-1)
+    # whether or not the folder is selectable 
+    is_selectable = models.BooleanField(default=False)
 
     class Meta:
         db_table = "youps_folder"

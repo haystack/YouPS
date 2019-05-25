@@ -1,16 +1,14 @@
 from __future__ import division, print_function, unicode_literals
 
+import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
+from itertools import chain, ifilter
 
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 
-from schema.youps import MessageSchema, ThreadSchema, FolderSchema  # noqa: F401 ignore unused we use it for typing
-
 from engine.models.message import Message
-
-from itertools import chain, ifilter
-
-import logging 
+from engine.models.helpers import CustomProperty
+from schema.youps import (FolderSchema, MessageSchema, ThreadSchema)  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -48,7 +46,7 @@ class Thread(object):
     def __len__(self):
         return self._schema.baseMessages.all().count()
 
-    @property
+    @CustomProperty
     def messages(self):
         # type: () -> t.List[Message]
         """Get the messages associated with the thread

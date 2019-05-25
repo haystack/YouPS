@@ -28,6 +28,7 @@ def interpret_bypass_queue(mailbox, mode, extra_info):
 
     # create a string buffer to store stdout
     user_std_out = StringIO()
+    user_property_log = StringIO()
     with sandbox_helpers.override_print(user_std_out) as fakeprint:
         code = extra_info['code']
         message_schemas = MessageSchema.objects.filter(id=extra_info['msg-id'])
@@ -46,6 +47,9 @@ def interpret_bypass_queue(mailbox, mode, extra_info):
                 user_environ['new_message'] = new_message
                 mailbox._imap_client.select_folder(message_schema.folder.name)
 
+                # clear the property log at the last possible moment
+                user_property_log.truncate(0)
+                mailbox._imap_client.user_property_log = user_property_log
                 # execute the user's code
                 if "on_message" in code:
                     exec(code + "\non_message(new_message)", user_environ)    
@@ -61,6 +65,8 @@ def interpret_bypass_queue(mailbox, mode, extra_info):
                 elif "on_deadline" in code:
                     exec(code + "\non_deadline(new_message)", user_environ)    
 
+                mailbox._imap_client.user_property_log = None 
+
             except Exception:
                 # Get error message for users if occurs
                 # print out error messages for user
@@ -69,6 +75,7 @@ def interpret_bypass_queue(mailbox, mode, extra_info):
                 fakeprint(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
+                msg_log["log"] += user_property_log.getvalue()
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
 
