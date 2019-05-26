@@ -453,6 +453,10 @@ class Message(object):
         """
         return string in self.content
 
+    @CustomProperty
+    def attachments(self):
+        return message_helpers.get_attachments(self)
+
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message

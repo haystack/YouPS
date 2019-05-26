@@ -2,8 +2,9 @@ import email
 import logging
 import pprint
 import typing as t
-from collections import Sequence
+from collections import Sequence, namedtuple
 from contextlib import contextmanager
+from itertools import izip
 
 from engine.utils import InvalidFlagException, is_gmail_label
 
@@ -191,3 +192,53 @@ def _save_flags(message, flags):
         message._schema.save()
 
     message._flags = flags
+
+
+# TODO test this attachment parsing stuff somoe more and make it more legible
+
+Part = namedtuple('Part', ['maintype', 'subtype', 'parameters', 'id_',
+                  'description', 'encoding', 'size']
+                  )
+
+def _walk_bodystructure(part):
+    yield part
+    if part.is_multipart:
+        for sub_part in part[0]:
+            for p in _walk_bodystructure(sub_part):
+                yield p
+
+def _pairwise(iterable):
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(iterable)
+    return izip(a, a)
+
+def _parse_part(part):
+    # type: (t.Tuple) -> Part
+    assert not part.is_multipart
+    part = list(part)
+    parameter_dict = {k: v for k, v in _pairwise(list(part[2]))}
+    part[2] = parameter_dict
+    parsed_part = Part(*(list(part)[:7]))
+    return parsed_part
+
+def get_attachments(message):
+    import pprint
+    response = message._imap_client.fetch(message._uid, ['BODYSTRUCTURE'])
+    if message._uid not in response:
+        raise RuntimeError('Failed to get message content')
+    response = response[message._uid]
+
+    # get the rfc data we're looking for
+    if 'BODYSTRUCTURE' not in response:
+        logger.critical('%s:%s response: %s' %
+                        (message.folder, message, pprint.pformat(response)))
+        logger.critical("%s did not return BODYSTRUCTURE" % message)
+        raise RuntimeError("Failed to get message attachment names")
+    bodystructure = response['BODYSTRUCTURE']
+
+    parts = [_parse_part(p) for p in _walk_bodystructure(bodystructure) if not p.is_multipart]
+    file_names = []
+    for part in parts:
+        if 'NAME' in part.parameters:
+            file_names.append(part.parameters['NAME'])
+    return file_names
