@@ -3,11 +3,9 @@ from __future__ import division, print_function, unicode_literals
 import heapq
 import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
-import re
 from datetime import datetime
 from email.header import decode_header
-from email.utils import parseaddr, getaddresses
-from string import whitespace
+from email.utils import getaddresses
 from itertools import chain
 
 import chardet
@@ -25,10 +23,11 @@ from engine.models.event_data import (AbstractEventData, MessageArrivalData,
                                       NewMessageDataScheduled,
                                       RemovedFlagsData)
 from engine.models.message import Message
-from engine.utils import normalize_msg_id, folding_ws_regex, encoded_word_string_regex, header_comment_regex
+from engine.utils import normalize_msg_id, FOLDING_WS_RE, ENCODED_WORD_STRING_RE, HEADER_COMMENT_RE
 from schema.youps import (  # noqa: F401 ignore unused we use it for typing
     BaseMessage, ContactSchema, ContactAlias, FolderSchema, ImapAccount,
     MessageSchema, ThreadSchema)
+from engine.models.helpers import CustomProperty
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -55,7 +54,7 @@ class Folder(object):
             return other == self.name
         return False
 
-    @property
+    @CustomProperty
     def _uid_next(self):
         # type: () -> int
         return self._schema.uid_next
@@ -66,7 +65,7 @@ class Folder(object):
         self._schema.uid_next = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _uid_validity(self):
         # type: () -> int
         return self._schema.uid_validity
@@ -77,7 +76,7 @@ class Folder(object):
         self._schema.uid_validity = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _highest_mod_seq(self):
         # type: () -> int
         return self._schema.highest_mod_seq
@@ -88,7 +87,7 @@ class Folder(object):
         self._schema.highest_mod_seq = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def name(self):
         # type: () -> str
         return self._schema.name
@@ -99,7 +98,7 @@ class Folder(object):
         self._schema.name = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _last_seen_uid(self):
         # type: () -> int
         return self._schema.last_seen_uid
@@ -110,7 +109,7 @@ class Folder(object):
         self._schema.last_seen_uid = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _is_selectable(self):
         # type: () -> bool
         return self._schema.is_selectable
@@ -121,7 +120,7 @@ class Folder(object):
         self._schema.is_selectable = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _imap_account(self):
         # type: () -> ImapAccount
         return self._schema.imap_account
@@ -531,11 +530,11 @@ class Folder(object):
             return None
 
         # replace instance of folding white space with nothing
-        header = folding_ws_regex.sub('', header)
+        header = FOLDING_WS_RE.sub('', header)
         for field in header.split('\r\n'):
             # header can have multiple encoded parts
             # we can remove this in python3 but its a bug in python2
-            parts = chain.from_iterable(decode_header(f) for f in filter(None, encoded_word_string_regex.split(field)))
+            parts = chain.from_iterable(decode_header(f) for f in filter(None, ENCODED_WORD_STRING_RE.split(field)))
             combined_parts = u""
             for part in parts:
                 text, encoding = part[0], part[1]
@@ -567,8 +566,8 @@ class Folder(object):
             v = fields[k]
             # nested comments cannot be queried with regex
             # this hack removes them from the inside out
-            while header_comment_regex.search(v):
-                v = header_comment_regex.sub('', v)
+            while HEADER_COMMENT_RE.search(v):
+                v = HEADER_COMMENT_RE.sub('', v)
             fields[k] = v
         return fields
 
