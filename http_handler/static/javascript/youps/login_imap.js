@@ -701,9 +701,9 @@ $(document).ready(function() {
 
             if(folders.length == 0) return;
 
-            if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
+            if($(this).parent().attr("type") == "new-message") {
                 // TODO load only one when initialize 
-                tmp_simulate_load = true;
+                // tmp_simulate_load = true;
                 run_simulate_on_messages(folders, 5, this);
             }
                 

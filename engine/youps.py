@@ -345,7 +345,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
             for message_schema in messages:
                 assert isinstance(message_schema, MessageSchema)
                 mailbox = MailBox(imapAccount, imap, is_simulate=True)
-                imap_res = interpret_bypass_queue(mailbox, None, extra_info={'code': code, 'msg-id': message_schema.id})
+                imap_res = interpret_bypass_queue(mailbox, extra_info={'code': code, 'msg-id': message_schema.id})
                 logger.debug(imap_res)
 
                 message = Message(message_schema, imap)

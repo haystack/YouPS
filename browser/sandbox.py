@@ -18,8 +18,8 @@ from schema.youps import MailbotMode, MessageSchema, TaskManager  # noqa: F401 i
 import sandbox_helpers
 logger = logging.getLogger('youps')  # type: logging.Logger
 
-def interpret_bypass_queue(mailbox, mode, extra_info):
-    # type: (MailBox, MailbotMode, t.Dict[t.AnyStr, t.Any]) -> None
+def interpret_bypass_queue(mailbox, extra_info):
+    # type: (MailBox, t.Dict[t.AnyStr, t.Any]) -> None
 
     assert mailbox.is_simulate, "if you change this then we risk committing fake info to user accounts"
 

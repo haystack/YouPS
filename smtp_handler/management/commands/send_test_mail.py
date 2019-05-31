@@ -20,7 +20,7 @@ class Command(BaseCommand):
     # Auto-send messages to the given email address
     def handle(self, *args, **options):
         if len(args) == 0:
-            print "give recipients address as an argument!"
+            print ("give recipients address as an argument!")
             return
 
         to_addr = args[0]
