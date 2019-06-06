@@ -13,12 +13,6 @@ from django.utils.translation import ugettext_lazy as _
 from http_handler.settings import WEBSITE, PROTOCOL
 
 try:
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-except ImportError:
-    from schema.models import UserProfile as User
-
-try:
     from django.utils.timezone import now as datetime_now
 except ImportError:
     datetime_now = datetime.datetime.now
@@ -83,6 +77,12 @@ class RegistrationManager(models.Manager):
         user. To disable this, pass ``send_email=False``.
         
         """
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+        except ImportError:
+            from schema.models import UserProfile as User
+
         new_user = User.objects.create_user(email, password)
         new_user.is_active = False
         new_user.save()
@@ -153,6 +153,12 @@ class RegistrationManager(models.Manager):
         be deleted.
         
         """
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+        except ImportError:
+            from schema.models import UserProfile as User
+
         for profile in self.all():
             try:
                 if profile.activation_key_expired():
@@ -180,8 +186,7 @@ class RegistrationProfile(models.Model):
     
     """
     ACTIVATED = u"ALREADY_ACTIVATED"
-    
-    user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
+    user = None
     activation_key = models.CharField(_('activation key'), max_length=40)
     
     objects = RegistrationManager()
@@ -189,7 +194,19 @@ class RegistrationProfile(models.Model):
     class Meta:
         verbose_name = _('registration profile')
         verbose_name_plural = _('registration profiles')
+
+
+    def get_user(self):
+        if self.user is None:
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+            except ImportError:
+                from schema.models import UserProfile as User
+            self.user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
     
+        return self.user
+
     def __unicode__(self):
         return u"Registration information for %s" % self.user
     
@@ -217,7 +234,7 @@ class RegistrationProfile(models.Model):
         """
         expiration_date = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
         return self.activation_key == self.ACTIVATED or \
-               (self.user.date_joined + expiration_date <= datetime_now())
+               (self.get_user().date_joined + expiration_date <= datetime_now())
     activation_key_expired.boolean = True
 
     def send_activation_email(self, site):
@@ -271,5 +288,5 @@ class RegistrationProfile(models.Model):
         message = render_to_string('registration/activation_email.txt',
                                    ctx_dict)
         
-        self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+        self.get_user().email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
     
