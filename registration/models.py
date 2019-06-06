@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import random
 import re
+import logging
 
 from django.conf import settings
 from schema.models import UserProfile
@@ -11,6 +12,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 from http_handler.settings import WEBSITE, PROTOCOL
+
+logger = logging.getLogger('youps')  # type: logging.Logger
 
 try:
     from django.utils.timezone import now as datetime_now
@@ -80,8 +83,12 @@ class RegistrationManager(models.Manager):
         try:
             from django.contrib.auth import get_user_model
             User = get_user_model()
-        except ImportError:
+            logger.info("Importing django auth User model")
+        except Exception:
             from schema.models import UserProfile as User
+            logger.exception("Can't import django auth User model")
+
+        logger.info(User)
 
         new_user = User.objects.create_user(email, password)
         new_user.is_active = False
@@ -93,6 +100,7 @@ class RegistrationManager(models.Manager):
             registration_profile.send_activation_email(site)
 
         return new_user
+
     create_inactive_user = transaction.commit_on_success(create_inactive_user)
 
     def create_profile(self, user):
@@ -186,7 +194,13 @@ class RegistrationProfile(models.Model):
     
     """
     ACTIVATED = u"ALREADY_ACTIVATED"
-    user = None
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+    except Exception:
+        from schema.models import UserProfile as User
+    user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
+    # user = None
     activation_key = models.CharField(_('activation key'), max_length=40)
     
     objects = RegistrationManager()
