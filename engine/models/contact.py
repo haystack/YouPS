@@ -48,7 +48,7 @@ class Contact(object):
         """Get all the names associated with this contact
 
         Returns:
-            str: The names associated with this contact
+            list: The names associated with this contact
         """
         return self._schema.aliases.all().values_list('name', flat=True)
 
@@ -60,8 +60,13 @@ class Contact(object):
         Returns:
             str: The name associated with this contact
         """
-        # simply returns the most common alias
-        return self._schema.aliases.order_by('-count').first().name
+        # simply returns the most common alias which has name
+        for alias in self._schema.aliases.order_by('-count'):
+            if alias.name:
+                return alias.name
+
+        # if none of them has name, return null string
+        return ""
 
     @property
     def organization(self):
