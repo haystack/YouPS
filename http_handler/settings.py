@@ -98,9 +98,6 @@ EMAIL_USE_TLS = False
 DEFAULT_EMAIL = 'no-reply@' + BASE_URL
 DEFAULT_FROM_EMAIL = DEFAULT_EMAIL
 
-TEST_ACCOUNT_EMAIL = ''
-TEST_ACCOUNT_PASSWORD = '' 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.

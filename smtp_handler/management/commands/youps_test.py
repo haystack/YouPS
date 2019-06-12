@@ -42,11 +42,11 @@ class Command(BaseCommand):
         ]
 
         index = 1
-        for t in test_emails:
-            # TODO send using django core
-            send_mail("#%d " % index + t['subject'].decode('utf-8'), t['body_plain'], TEST_ACCOUNT_EMAIL, [TEST_ACCOUNT_EMAIL])
-            send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'], t['body_html'].decode('utf-8'))
-            index = index + 1
+        # for t in test_emails:
+        #     # TODO send using django core
+        #     send_mail("#%d " % index + t['subject'].decode('utf-8'), t['body_plain'], TEST_ACCOUNT_EMAIL, [TEST_ACCOUNT_EMAIL])
+        #     send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'], t['body_html'].decode('utf-8'))
+        #     index = index + 1
 
         imapAccount = None
         imap = None
@@ -60,13 +60,13 @@ class Command(BaseCommand):
 
             imap = auth_res['imap']  # noqa: F841 ignore unused
         except Exception, e:
-            logger.exception("failed while logging into imap")
+            print("failed while logging into imap")
             return
 
         test_cases = [
-            [ # test cases for #1 email
+            [ # test cases for #0 email
                 {
-                    'code': 'print (my_message.from_)',
+                    'code': 'print (my_message.subject)',
                     'expected': 'test@youps.csail.mit.edu'
                 }, 
             ],
@@ -82,20 +82,25 @@ class Command(BaseCommand):
                 for folder_name in folder_names:
                     # pick up recent messages 
                     message = MessageSchema.objects.filter( \
-                        imap_account=imapAccount, folder__name=folder_name, base_message__subject__startswith='#%d ' % msg_index).order_by("-base_message__date")[0]
+                        imap_account=imapAccount, folder__name=folder_name, base_message__subject__startswith='#%d ' % msg_index).order_by("-base_message__date")
 
-                    if not message:
+                    if not message.exists():
                         print ("Unable to load the corresponding message #%d %s" % (msg_index, test_emails[msg_index]['subject']))
+                        continue
 
+                    message = message[0]
                     assert isinstance(message, MessageSchema)
-                    mailbox = MailBox(imapAccount, imap, is_simulate=True)
-                    imap_res = interpret_bypass_queue(mailbox, extra_info={'code': test_cases[msg_index]['code'], 'msg-id': message.id})
-                    logger.debug(imap_res)
 
-                    assert imap_res['appended_log'][message.id] == test_cases[msg_index]['expected']
+                    mailbox = MailBox(imapAccount, imap, is_simulate=True)
+                    for test_per_message_index in range(len(test_cases[msg_index])):
+                        imap_res = interpret_bypass_queue(mailbox, extra_info={'code': "def on_message(my_message):\n\t" + \
+                            test_cases[msg_index][test_per_message_index]['code'], 'msg-id': message.id})
+                        print(imap_res)
+
+                        assert imap_res['appended_log'][message.id]['log'] == test_cases[msg_index][test_per_message_index]['expected']
 
                     print ("SUCCESS #%d %s - case #%d" % ((msg_index+1), test_emails[msg_index]['subject'], msg_index))
         except Exception, e:
-            logger.exception("failed while doing a user code run %s %s " % (e, traceback.format_exc()))
+            print("failed while doing a user code run %s %s " % (e, traceback.format_exc()))
         finally:
             imap.logout()
