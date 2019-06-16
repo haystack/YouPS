@@ -207,7 +207,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
+# Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
     'django_mobile.middleware.MobileDetectionMiddleware',
@@ -254,7 +254,7 @@ INSTALLED_APPS = (
 
     # third party apps
     'registration',
-    'south',
+    # 'south',
     'django_mobile',
     'storages',
 )
