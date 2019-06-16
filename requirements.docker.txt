@@ -42,3 +42,4 @@ python-dateutil >= 2.7.0
 httplib2
 icalendar
 ics
+salmon-mail
