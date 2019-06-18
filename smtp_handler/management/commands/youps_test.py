@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 import base64
 import logging
 import traceback
@@ -42,7 +42,7 @@ class Command(BaseCommand):
                 {
                     'subject': 'test email with emoji 🤷‍♀️ %s ' % str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
                     'from_addr': 'test@youps.csail.mit.edu',
-                    'body_plain': 'hello world',
+                    'body_plain': '😎',
                     'body_html': '😎'
                 },
             ]
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             for t in test_emails:
             #     # TODO send using django core
             #     send_mail("#%d " % index + t['subject'].decode('utf-8'), t['body_plain'], TEST_ACCOUNT_EMAIL, [TEST_ACCOUNT_EMAIL])
-                send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'], t['body_html'].decode('utf-8'))
+                send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'].decode('utf-8'), t['body_html'].decode('utf-8'))
                 index = index + 1
 
         if args[0] == "run-test":
@@ -91,6 +91,10 @@ class Command(BaseCommand):
                         'code': 'print ("True" if "🤷‍♀️" in my_message.subject else "")',
                         'expected': 'True'
                     },
+                    {
+                        'code': 'print ("True" if my_message.contains("😎") else "")',
+                        'expected': 'True'
+                    },
                 ]
             ]            
             
@@ -113,7 +117,7 @@ class Command(BaseCommand):
                         mailbox = MailBox(imapAccount, imap, is_simulate=True)
                         for test_per_message_index in range(len(test_cases[msg_index])):
                             imap_res = interpret_bypass_queue(mailbox, extra_info={'code': "def on_message(my_message):\n\t" + \
-                                test_cases[msg_index][test_per_message_index]['code'], 'msg-id': message.id})
+                                test_cases[msg_index][test_per_message_index]['code'].decode("utf-8", "replace"), 'msg-id': message.id})
                             # print(imap_res)
 
                             try:
