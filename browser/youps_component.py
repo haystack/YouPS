@@ -1,11 +1,15 @@
 from django.template import Context, Template, loader
+from django.http import HttpResponse
 
 import json
 import logging
+from engine.constants import msg_code
 
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
 
 logger = logging.getLogger('youps')  # type: logging.Logger
+
+request_error = json.dumps({'code': msg_code['REQUEST_ERROR'], 'status': False})
 
 def load_new_editor(request):
     email_rule_folder = []
@@ -46,37 +50,10 @@ def load_new_editor(request):
 
                             e = {'type': rule.type, 'mode_uid': rule.mode.uid, 'template': template.render(Context(c))}
 
-                            editors.append(e)
+                            editors.append( e )
     except Exception as e:
-        logger.info(e)
-    # mark_current = False	
-	# tab_contents = []
-	# for mode in modes:
-	# 	if current_mode == None or mark_current == True:
-	# 		mark_current = False
-		
-	# 	c = {'rules':rules, 'mode': mode}
-	# 	msg = loader.get_template('youps/new_message.html')
-	# 	flag = loader.get_template('youps/flag_change.html')
-	# 	deadline = loader.get_template('youps/deadline.html')
-	# 	shortcut = loader.get_template('youps/shortcut.html')
-	
-	# 	c = {'new_message': msg.render(Context(c)), 'flag_change': flag.render(Context(c)), 'deadline': deadline.render(Context(c)), 'shortcut': shortcut.render(Context(c)), 'mark_current': mark_current}
+		logger.debug(e)
+		return HttpResponse(request_error, content_type="application/json")
 
-	# 	tab_content = loader.get_template('youps/tab_content.html')
 
-	# 	tab_contents.append(tab_content)
-	# logger.info(msg.render(Context(c)))
-
-	# c = {'modes':modes}
-
-	# c = {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
-	# 	'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
-	# 	'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
-	# 	'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
-
-	# t = loader.get_template('youps/login_email.html')
-
-    logger.info(editors)
-
-    return HttpResponse(json.dumps({"res": editors}), content_type="application/json")
+    return HttpResponse(json.dumps({"editors": editors, "status": True, "code": 200}), content_type="application/json")

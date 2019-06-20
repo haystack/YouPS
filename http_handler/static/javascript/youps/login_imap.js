@@ -1307,11 +1307,11 @@ $(document).ready(function() {
         setTimeout(fetch_log, 2 * 1000); // 2 second
     }
   
-    function load_rule(rule_uid) {
+    function load_rule(load_exist, rule_type=null) {
         show_loader(true);
 
         var params = {
-            'load_exist' : true
+            'load_exist' : load_exist
         };
 
         $.post('/load_new_editor', params,
@@ -1319,18 +1319,21 @@ $(document).ready(function() {
                 show_loader(false);
                 console.log(res);
                 
-                // // Auth success
-                // if (res.status) {
-                //     console.log(res)
-                //     if (res.code) { 
-                //     }
-                //     else {                        
-                //         notify(res, true);
-                //     }
-                // }
-                // else {
-                //     notify(res, false);
-                // }
+                if (res.status) {
+                    console.log(res)
+                    if (res.code) { 
+                        $.each(res.editors, function( index, value ) {
+                            $( "#tab_{0} .editable-container[type='{1}']".format(value['mode_uid'], value['type']) ).append(value['template']);
+                        });
+                        
+                    }
+                    else {                        
+                        notify(res, true);
+                    }
+                }
+                else {
+                    notify(res, false);
+                }
             }
         );
     }
@@ -1664,6 +1667,9 @@ $(document).ready(function() {
         }
     
         $(".default-text").blur();
+        
+        // 
+        load_rule(true);
 
         tinyMCE.init({
             mode: "textareas",

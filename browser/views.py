@@ -13,14 +13,14 @@ from django.core.context_processors import csrf
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models.aggregates import Count
-from django.http import *
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.template.context import RequestContext
 from django.utils.encoding import *
 
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
-from engine.constants import *
+from engine.constants import msg_code
 from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from registration.forms import RegistrationForm
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
