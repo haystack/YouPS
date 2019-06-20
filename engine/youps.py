@@ -231,19 +231,12 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             er.delete()
 
             for value in mode['editors']:
-                uid = value['uid']
-                name = value['name'].encode('utf-8')
-
-                logger.critical('uid: {uid} name: {name}'.format(uid=uid, name=name))
-
-            for value in mode['editors']:
-                uid = value['uid']
                 name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
-                logger.info("saving editor %s run request" % uid)
+                logger.info("saving editor %s run request" % name)
                 
-                er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
+                er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
                 logger.info("user %s test run " % imapAccount.email)
@@ -256,6 +249,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 er.save()
 
+            logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         
 
         if run_request:

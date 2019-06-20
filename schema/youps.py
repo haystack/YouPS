@@ -247,7 +247,7 @@ class MailbotMode(models.Model):
 
 
 class EmailRule(models.Model):
-    uid = models.IntegerField(default=1)
+    id = models.AutoField(primary_key=True)
 
     # e.g. new-message, old-message-[time span]
     type = models.CharField('rule_type', default='new-message', max_length=100)
@@ -264,7 +264,7 @@ class EmailRule(models.Model):
     executed_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
-        unique_together = ("uid", "mode")
+        unique_together = ("id", "mode")
 
 
 # # This model is to have many-to-many relation of EmailRule and Folder
