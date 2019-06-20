@@ -197,7 +197,7 @@
 												<div class='editable-container' type='new-message'>
 													{% for rule in rules %}
 														{% if rule.mode == mode and rule.type|slice:":11" == "new-message" %}
-															<div rule-id={{rule.uid}} class="panel panel-success">
+															<div rule-id={{rule.id}} class="panel panel-success">
 																<div class="flex_container">
 																	<div class="flex_item_left">
 																		<i class="fas fa-3x fa-trash"></i>
@@ -280,7 +280,7 @@
 												<div class='editable-container' type='flag-change'>
 													{% for rule in rules %}
 															{% if rule.mode == mode and rule.type == "flag-change" %}
-																<div rule-id={{rule.uid}} class="panel panel-warning">
+																<div rule-id={{rule.id}} class="panel panel-warning">
 																	<div class="flex_container">
 																		<div class="flex_item_left">
 																			<i class="fas fa-3x fa-trash"></i>
@@ -317,7 +317,7 @@
 												<div class='editable-container' type='deadline'>
 													{% for rule in rules %}
 															{% if rule.mode == mode and rule.type == "deadline" %}
-																<div rule-id={{rule.uid}} class="panel panel-default">
+																<div rule-id={{rule.id}} class="panel panel-default">
 																	<div class="flex_container">
 																		<div class="flex_item_left"> 
 																			<i class="fas fa-3x fa-trash"></i> 
@@ -354,7 +354,7 @@
 												<div class='editable-container' type='shortcut'>
 													{% for rule in rules %}
 															{% if rule.mode == mode and rule.type == "shortcut" %}
-																<div rule-id={{rule.uid}} class="panel panel-primary">
+																<div rule-id={{rule.id}} class="panel panel-primary">
 																	<div class="flex_container">
 																		<div class="flex_item_left"> 
 																			<i class="fas fa-3x fa-trash"></i> 
@@ -393,7 +393,7 @@
 												<div class='editable-container' type='repeat'>
 													{% for rule in rules %}
 														{% if rule.mode == mode and rule.type == "repeat" %}
-														<div rule-id={{rule.uid}} class="panel panel-warning">
+														<div rule-id={{rule.id}} class="panel panel-warning">
 															<div class="flex_container">
 																<div class="flex_item_left">
 																	<i class="fas fa-3x fa-trash"></i>
