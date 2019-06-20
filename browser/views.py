@@ -5,6 +5,7 @@ from boto.s3.connection import S3Connection
 from html2text import html2text
 from lamson.mail import MailResponse
 
+
 from django.conf import global_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -25,6 +26,8 @@ from registration.forms import RegistrationForm
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
 from smtp_handler.utils import *
 import logging
+
+from browser.youps_component import load_new_editor
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -130,7 +133,6 @@ def login_imap_view(request):
 					for rule in rules:
 						for f in rule.folders.all():
 							email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.uid)]  )
-				
 
 	return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
 		'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,

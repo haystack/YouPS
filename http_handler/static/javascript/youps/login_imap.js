@@ -1306,6 +1306,34 @@ $(document).ready(function() {
         
         setTimeout(fetch_log, 2 * 1000); // 2 second
     }
+  
+    function load_rule(rule_uid) {
+        show_loader(true);
+
+        var params = {
+            'load_exist' : true
+        };
+
+        $.post('/load_new_editor', params,
+            function(res) {
+                show_loader(false);
+                console.log(res);
+                
+                // // Auth success
+                // if (res.status) {
+                //     console.log(res)
+                //     if (res.code) { 
+                //     }
+                //     else {                        
+                //         notify(res, true);
+                //     }
+                // }
+                // else {
+                //     notify(res, false);
+                // }
+            }
+        );
+    }
 
     function validateEmail(email) {
         var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
