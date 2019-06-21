@@ -1,4 +1,4 @@
-YoUPS
+YouPS
 =
 
 YouPS is forked from the codebase of Murmur. If you run into issues in your installation check out [Murmur](https://github.com/haystack/murmur/blob/master/README.md) and you may find an answer. Otherwise open an issue and let us know! 
