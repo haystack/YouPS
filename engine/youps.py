@@ -1,3 +1,4 @@
+import sys
 import base64
 import logging
 import random
@@ -429,3 +430,127 @@ def save_shortcut(user, email, shortcuts, push=True):
 
     logging.debug(res)
     return res
+
+def handle_imap_idle(user, email):
+	folder = 'INBOX'
+
+	while True:
+		# <--- Start of IMAP server connection loop
+		
+		# Attempt connection to IMAP server
+		logger.info('connecting to IMAP server - %s' % email)
+		try:
+			imap_account = ImapAccount.objects.get(email=email)
+			res = authenticate(imap_account)
+			if not res['status']:
+				return
+				
+			imap = res['imap']
+		except Exception:
+			# If connection attempt to IMAP server fails, retry
+			etype, evalue = sys.exc_info()[:2]
+			estr = traceback.format_exception_only(etype, evalue)
+			logstr = 'failed to connect to IMAP server - '
+			for each in estr:
+				logstr += '{0}; '.format(each.strip('\n'))
+			logger.error(logstr)
+			sleep(10)
+			continue
+		logger.info('server connection established')
+
+		# Select IMAP folder to monitor
+		logger.info('selecting IMAP folder - {0}'.format(folder))
+		try:
+			result = imap.select_folder(folder)
+			logger.info('folder selected')
+		except Exception:
+			# Halt script when folder selection fails
+			etype, evalue = sys.exc_info()[:2]
+			estr = traceback.format_exception_only(etype, evalue)
+			logstr = 'failed to select IMAP folder - '
+			for each in estr:
+				logstr += '{0}; '.format(each.strip('\n'))
+			logger.critical(logstr)
+			break
+		
+		# latest_seen_UID = None
+		# # Retrieve and process all unread messages. Should errors occur due
+		# # to loss of connection, attempt restablishing connection 
+		# try:
+		# 	result = imap.search('UNSEEN')
+		# 	latest_seen_UID = max(result)
+		# except Exception:
+		# 	continue
+		# log.info('{0} unread messages seen - {1}'.format(
+		# 	len(result), result
+		# 	))
+		
+		# for each in result:
+			# try:
+			# 	# result = imap.fetch(each, ['RFC822'])
+			# except Exception:
+			# 	log.error('failed to fetch email - {0}'.format(each))
+			# 	continue
+			# mail = email.message_from_string(result[each]['RFC822'])
+			# try:
+			# 	# process_email(mail, download, log)
+			# 	log.info('processing email {0} - {1}'.format(
+			# 		each, mail['subject']
+			# 		))
+			# except Exception:
+			# 	log.error('failed to process email {0}'.format(each))
+			# 	raise
+			# 	continue
+				
+		while True:
+			# <--- Start of mail monitoring loop
+			
+			# After all unread emails are cleared on initial login, start
+			# monitoring the folder for new email arrivals and process 
+			# accordingly. Use the IDLE check combined with occassional NOOP
+			# to refresh. Should errors occur in this loop (due to loss of
+			# connection), return control to IMAP server connection loop to
+			# attempt restablishing connection instead of halting script.
+			imap.idle()
+			result = imap.idle_check(1)
+			print (result)
+
+			# check if there is any request from users
+			# if diff folder:
+			#	break
+			
+
+			# either mark as unread/read or new message
+			if result:
+				# EXISTS command mean: if the size of the mailbox changes (e.g., new messages)
+				print (result)
+				imap.idle_done()
+				result = imap.search('UID %d' % result[0][2][1])
+				logger.info('{0} new unread messages - {1}'.format(
+					len(result),result
+					))
+				for each in result:
+					_header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'
+					fetch = imap.fetch(each, [_header_descriptor])
+					# mail = email.message_from_string(
+					# 	fetch[each][_header_descriptor]
+					# 	)
+					try:
+						# process_email(mail, download, log)
+						logger.info('processing email {0} - {1}'.format(
+							each, fetch[each]
+							))
+					except Exception:
+						logger.error(
+							'failed to process email {0}'.format(each))
+						raise
+						continue
+			else:
+				imap.idle_done()
+				imap.noop()
+				logger.info('no new messages seen')
+			# End of mail monitoring loop --->
+			continue
+			
+		# End of IMAP server connection loop --->
+		break

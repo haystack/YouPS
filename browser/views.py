@@ -150,6 +150,14 @@ def about_view(request):
 @render_to(WEBSITE+"/calendar.html")
 def calendar_view(request):
 	return {'website': WEBSITE}
+
+@render_to(WEBSITE+"/email_button.html")
+def email_button_view(request):
+	folders = FolderSchema.objects.filter(imap_account__email=request.user.email).filter(is_selectable=True).values('name')
+				
+	folders = [f['name'].encode('utf8', 'replace') for f in folders]
+
+	return {'website': WEBSITE, 'folders': folders}
 		
 @login_required
 def login_imap(request):
@@ -267,6 +275,18 @@ def delete_mailbot_mode(request):
 	except Exception, e:
 		print e
 		logging.debug(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def handle_imap_idle(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		logger.info("HERE")
+		engine.main.handle_imap_idle(user, request.user.email)
+		res = {}
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception, e:
+		logger.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required

@@ -68,6 +68,8 @@ class FolderSchema(models.Model):
     # the highest mod seq useful for limiting getting the flags
     highest_mod_seq = models.IntegerField(default=-1)
 
+    is_selectable = models.BooleanField(default=False)
+
     class Meta:
         db_table = "youps_folder"
         unique_together = ("name", "imap_account")

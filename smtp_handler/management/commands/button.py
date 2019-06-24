@@ -11,6 +11,7 @@ from datetime import datetime, time
 import imapclient 
 
 from schema.youps import ImapAccount
+from browser.imap import GoogleOauth2, authenticate
 
 class Command(BaseCommand):
     args = ''
@@ -20,8 +21,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 		host = 'imap.gmail.com'
 		ssl = 'True'
-		username='kixlab.rally@gmail.com'
-		password=FILL HERE
+		username='sbhappylee@gmail.com'
 		folder = 'INBOX'
 
 		# Setup the log handlers to stdout and file.
@@ -52,7 +52,12 @@ class Command(BaseCommand):
 			# Attempt connection to IMAP server
 			log.info('connecting to IMAP server - {0}'.format(host))
 			try:
-				imap = imapclient.IMAPClient(host, use_uid=True, ssl=ssl)
+				imap_account = ImapAccount.objects.get(email=username)
+				res = authenticate(imap_account)
+				if not res['status']:
+					return
+					
+				imap = res['imap']
 			except Exception:
 				# If connection attempt to IMAP server fails, retry
 				etype, evalue = sys.exc_info()[:2]
@@ -64,22 +69,7 @@ class Command(BaseCommand):
 				sleep(10)
 				continue
 			log.info('server connection established')
-			
-			# Attempt login to IMAP server
-			log.info('logging in to IMAP server - {0}'.format(username))
-			try:
-				result = imap.login(username, password)
-				log.info('login successful - {0}'.format(result))
-			except Exception:
-				# Halt script when login fails
-				etype, evalue = sys.exc_info()[:2]
-				estr = traceback.format_exception_only(etype, evalue)
-				logstr = 'failed to login to IMAP server - '
-				for each in estr:
-					logstr += '{0}; '.format(each.strip('\n'))
-				log.critical(logstr)
-				break
-			
+
 			# Select IMAP folder to monitor
 			log.info('selecting IMAP folder - {0}'.format(folder))
 			try:
@@ -134,9 +124,13 @@ class Command(BaseCommand):
 				# connection), return control to IMAP server connection loop to
 				# attempt restablishing connection instead of halting script.
 				imap.idle()
-				# TODO: Remove hard-coded IDLE timeout; place in config file
-				result = imap.idle_check(5*60)
+				result = imap.idle_check(1)
 				print (result)
+
+				# check if there is any request from users
+				# if diff folder:
+				#	break
+				
 
 				# either mark as unread/read or new message
 				if result:

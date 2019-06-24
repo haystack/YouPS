@@ -1307,6 +1307,24 @@ $(document).ready(function() {
         setTimeout(fetch_log, 2 * 1000); // 2 second
     }
 
+    function watch_current_message() {
+        var params = {};
+        
+        $.post('/watch_current_message', params,
+            function(res) {
+                console.log(res);
+                
+                if (res.status) {
+                }
+                else {
+                    notify(res, false);
+                }
+            }
+        ).fail(function(res) {
+            alert("Please refresh the page!");
+        });
+    }
+
     function validateEmail(email) {
         var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(String(email).toLowerCase());

@@ -75,6 +75,7 @@ shared_patterns = [
     url(r'^docs', 'browser.views.docs_view'),
     url(r'^about', 'browser.views.about_view'),
     url(r'^calendar', 'browser.views.calendar_view'),
+    url(r'^button', 'browser.views.email_button_view'),
     url(r'^login_imap', 'browser.views.login_imap'),
     url(r'^remove_rule', 'browser.views.remove_rule'),
     url(r'^run_mailbot', 'browser.views.run_mailbot'),
@@ -84,6 +85,7 @@ shared_patterns = [
     url(r'^delete_mailbot_mode', 'browser.views.delete_mailbot_mode'),
     url(r'^fetch_execution_log', 'browser.views.fetch_execution_log'),
     url(r'^folder_recent_messages', 'browser.views.folder_recent_messages'),
+    url(r'^watch_current_message', 'browser.views.handle_imap_idle'),
 ]
 
 urlpatterns.extend(shared_patterns)
