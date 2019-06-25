@@ -534,7 +534,7 @@ $(document).ready(function() {
     // Disable all the buttons for a while until it is sure that the user is authenticated
     $(".btn").prop("disabled",true);
     
-    var test_mode_msg = {true: "You are currently at test mode. YoUPS will simulate your rule but not actually run the rule.", 
+    var test_mode_msg = {true: "You are currently at test mode. YouPS will simulate your rule but not actually run the rule.", 
         false: "YoUPS will apply your rules to your incoming emails. "};
 
     $("#mode-msg").text( test_mode_msg[is_test] );

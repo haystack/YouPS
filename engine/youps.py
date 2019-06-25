@@ -9,12 +9,13 @@ import datetime
 from Crypto.Cipher import AES
 from imapclient import IMAPClient
 
+from django.utils import timezone
 from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, ButtonChannel)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -97,25 +98,6 @@ def login_imap(email, password, host, is_oauth):
 
     return res
 
-def fetch_execution_log(user, email, push=True):
-    res = {'status' : False}
-
-    try:
-        imapAccount = ImapAccount.objects.get(email=email)
-        res['imap_log'] = imapAccount.execution_log
-        res['user_status_msg'] = imapAccount.status_msg
-        res['status'] = True
-
-    except ImapAccount.DoesNotExist:
-        res['code'] = "Error during authentication. Please refresh"
-    except Exception, e:
-        # TODO add exception
-        print e
-        res['code'] = msg_code['UNKNOWN_ERROR']
-
-    logging.debug(res)
-    return res
-
 def delete_mailbot_mode(user, email, mode_id, push=True):
     res = {'status' : False}
 
@@ -141,6 +123,47 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
+    return res
+
+def fetch_execution_log(user, email, push=True):
+    res = {'status' : False}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        res['imap_log'] = imapAccount.execution_log
+        res['user_status_msg'] = imapAccount.status_msg
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+    except Exception, e:
+        # TODO add exception
+        print e
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
+    return res
+
+def fetch_watch_message(user, email, folder_name):
+    res = {'status' : False}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        bc = ButtonChannel.objects.filter(message__imap_account=imapAccount).filter(message__folder__name=folder_name).latest('timestamp')
+        res['folder'] = bc.message.folder.name
+        res['uid'] = bc.message.uid 
+        res['subject'] = bc.message.base_message.subject
+        res['watch_status'] = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name).exists()
+
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+    except ButtonChannel.DoesNotExist:
+        res['uid'] = 0
+    except Exception as e:
+        logger.exception(e)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
     return res
 
 def remove_rule(user, email, rule_id):
@@ -431,16 +454,21 @@ def save_shortcut(user, email, shortcuts, push=True):
     logging.debug(res)
     return res
 
-def handle_imap_idle(user, email):
-	folder = 'INBOX'
+def handle_imap_idle(user, email, folder='INBOX'):
+    imap_account = ImapAccount.objects.get(email=email)
 
-	while True:
+    watching_folder = FolderSchema.objects.get(imap_account=imap_account, name=folder)
+
+    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
+    if bc.exists() and timezone.now() - bc.latest('timestamp').timestamp < timezone.timedelta(seconds=3*60):    # there is something running so noop
+        return
+
+    while True:
 		# <--- Start of IMAP server connection loop
 		
 		# Attempt connection to IMAP server
 		logger.info('connecting to IMAP server - %s' % email)
 		try:
-			imap_account = ImapAccount.objects.get(email=email)
 			res = authenticate(imap_account)
 			if not res['status']:
 				return
@@ -501,56 +529,75 @@ def handle_imap_idle(user, email):
 			# 	log.error('failed to process email {0}'.format(each))
 			# 	raise
 			# 	continue
-				
-		while True:
-			# <--- Start of mail monitoring loop
-			
-			# After all unread emails are cleared on initial login, start
-			# monitoring the folder for new email arrivals and process 
-			# accordingly. Use the IDLE check combined with occassional NOOP
-			# to refresh. Should errors occur in this loop (due to loss of
-			# connection), return control to IMAP server connection loop to
-			# attempt restablishing connection instead of halting script.
-			imap.idle()
-			result = imap.idle_check(1)
-			print (result)
 
-			# check if there is any request from users
-			# if diff folder:
-			#	break
-			
+		try: 		
+			while True:
+			    # <--- Start of mail monitoring loop
 
-			# either mark as unread/read or new message
-			if result:
-				# EXISTS command mean: if the size of the mailbox changes (e.g., new messages)
-				print (result)
-				imap.idle_done()
-				result = imap.search('UID %d' % result[0][2][1])
-				logger.info('{0} new unread messages - {1}'.format(
-					len(result),result
-					))
-				for each in result:
-					_header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'
-					fetch = imap.fetch(each, [_header_descriptor])
-					# mail = email.message_from_string(
-					# 	fetch[each][_header_descriptor]
-					# 	)
-					try:
-						# process_email(mail, download, log)
-						logger.info('processing email {0} - {1}'.format(
-							each, fetch[each]
-							))
-					except Exception:
-						logger.error(
-							'failed to process email {0}'.format(each))
-						raise
-						continue
-			else:
-				imap.idle_done()
-				imap.noop()
-				logger.info('no new messages seen')
-			# End of mail monitoring loop --->
-			continue
-			
-		# End of IMAP server connection loop --->
-		break
+                # Create a new entry for watching this folder 
+			    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
+			    bc.delete()
+
+			    bc = ButtonChannel( watching_folder=watching_folder )
+			    bc.save()
+			    
+			    # After all unread emails are cleared on initial login, start
+			    # monitoring the folder for new email arrivals and process 
+			    # accordingly. Use the IDLE check combined with occassional NOOP
+			    # to refresh. Should errors occur in this loop (due to loss of
+			    # connection), return control to IMAP server connection loop to
+			    # attempt restablishing connection instead of halting script.
+			    imap.idle()
+			    result = imap.idle_check(3*60)  # timeout
+
+			    # either mark as unread/read or new message
+			    if result:
+			        # EXISTS command mean: if the size of the mailbox changes (e.g., new messages)
+			        logger.info(result)
+			        imap.idle_done()
+			        result = imap.search('UID %d' % result[0][2][1])
+			        logger.info('{0} new unread messages - {1}'.format(
+			            len(result),result
+			            ))
+			        for each in result:
+			            _header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'
+			            fetch = imap.fetch(each, [_header_descriptor])
+			            # mail = email.message_from_string(
+			            # 	fetch[each][_header_descriptor]
+			            # 	)
+			            try:
+			                # process_email(mail, download, log)
+			                logger.info('processing email {0} - {1}'.format(
+			                    each, fetch[each]
+			                    ))
+			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=each)
+			                bc = ButtonChannel(message=message)
+			                bc.save()
+
+			            except MessageSchema.DoesNotExist:
+			                logger.error("Catch new messages but can't find the message %s " % fetch[each])
+			            except Exception:
+			                logger.error(
+			                    'failed to process email {0}'.format(each))
+			                raise
+			                continue
+			    else:   # After time-out && no operation 
+			        imap.idle_done()
+			        imap.noop()
+			        logger.info('no new messages seen')      
+
+			        return
+
+			    # End of mail monitoring loop --->           
+		except Exception as e:
+		    logger.exception("Error while  %s" % str(e))
+		finally:
+		    # Remove the entry with this folder and terminate the request 
+		    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
+		    bc.delete()
+
+		    imap.logout()
+
+		    return
+
+            

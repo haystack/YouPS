@@ -153,11 +153,16 @@ def calendar_view(request):
 
 @render_to(WEBSITE+"/email_button.html")
 def email_button_view(request):
-	folders = FolderSchema.objects.filter(imap_account__email=request.user.email).filter(is_selectable=True).values('name')
-				
-	folders = [f['name'].encode('utf8', 'replace') for f in folders]
+	try: 
+		if request.user.email:
+			folders = FolderSchema.objects.filter(imap_account__email=request.user.email).filter(is_selectable=True).values('name')
+						
+			folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
-	return {'website': WEBSITE, 'folders': folders}
+			return {'website': WEBSITE, 'folders': folders}
+	except:
+		return {'website': WEBSITE, 'folders': []}
+	
 		
 @login_required
 def login_imap(request):
@@ -184,8 +189,20 @@ def fetch_execution_log(request):
 		res = engine.main.fetch_execution_log(user, request.user.email)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
-		print e
-		logging.debug(e)
+		logger.debug(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def fetch_watch_message(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		
+		folder_name = request.POST['folder']
+
+		res = engine.main.fetch_watch_message(user, request.user.email, folder_name)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception as e:
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
@@ -281,12 +298,13 @@ def delete_mailbot_mode(request):
 def handle_imap_idle(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-		logger.info("HERE")
-		engine.main.handle_imap_idle(user, request.user.email)
+		folder = request.POST['folder']
+
+		engine.main.handle_imap_idle(user, request.user.email, folder)
 		res = {}
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
-		logger.debug(e)
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required

@@ -305,3 +305,15 @@ class TaskManager(models.Model):
 
     class Meta:
         db_table = "youps_taskmanager"
+
+# TODO later be replaced with websocket or django channel
+class ButtonChannel(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    message = models.ForeignKey('MessageSchema', blank=True, null=True)
+    watching_folder = models.ForeignKey('FolderSchema', blank=True, null=True)  # type: FolderSchema
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "youps_buttonchannel"

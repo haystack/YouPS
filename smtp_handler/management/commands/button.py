@@ -21,7 +21,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 		host = 'imap.gmail.com'
 		ssl = 'True'
-		username='sbhappylee@gmail.com'
+		username='kixlab.rally@gmail.com'
 		folder = 'INBOX'
 
 		# Setup the log handlers to stdout and file.

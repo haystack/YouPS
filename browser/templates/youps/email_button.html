@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/static/css/youps/libs/show-hint.css" />
 <link rel="stylesheet" type="text/css" href="/static/css/youps/libs/qunit.css">
 <link rel="stylesheet" href="/static/css/youps/libs/jsonpanel.css">
-<link rel="stylesheet" href="/static/css/youps/style.css">
+<link rel="stylesheet" href="/static/css/youps/email_button.css">
 {% endblock %}
 
 {% block content %}
@@ -51,7 +51,11 @@
 
 			<div id="button-container">
                 <button class='btn btn-primary' id='btn-watch'>Watch</button>
-            </div>
+			</div>
+			
+			<div id='watching-msg-container'>
+				
+			</div>
 
             <select name="folder">
                 {% for folder in folders %}

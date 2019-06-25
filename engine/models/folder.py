@@ -377,7 +377,8 @@ class Folder(object):
 
         Args:
             last_seen_uid (int): the max uid we have stored, should be 0 if there are no messages stored.
-            urgent (bool): if True, save only one email 
+            urgent (bool): if True, save only one email. This is used to save a message and bypass syncing loop. 
+                e.g. when users try to manipulate this message but when it is not registered yet 
         """
 
         # get the descriptors for the message
@@ -386,7 +387,7 @@ class Folder(object):
 
         uid_criteria = ""
         if urgent:
-            uid_criteria = '%d' % (last_seen_uid + 1)
+            uid_criteria = '%d' % last_seen_uid
         else:
             uid_criteria = '%d:*' % (last_seen_uid + 1)
 

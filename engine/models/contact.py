@@ -61,7 +61,11 @@ class Contact(object):
             str: The name associated with this contact
         """
         # simply returns the most common alias
-        return self._schema.aliases.order_by('-count').first().name
+        try:
+            return self._schema.aliases.order_by('-count').first().name
+        except Exception as e:
+            logger.exception(e)
+            return ""
 
     @property
     def organization(self):
