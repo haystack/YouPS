@@ -22,11 +22,13 @@ $(document).ready(function() {
           });
         };
     }
+
     btn_watch.click(function (e) {
         $(this).hide();
 
         request_watch_message();
-
+        
+        // Call this after some delay so the server has enough time to set up IDLE()
         setTimeout(fetch_watch_message, 1 * 1000); // 1 second
     });
 
@@ -115,14 +117,7 @@ $(document).ready(function() {
 
         $.post('/watch_current_message', params,
             function(res) {
-                console.log(res);
-                
-                if (res.status) {
-                    
-                }
-                else {
-                    notify(res, false);
-                }
+                // This function doesn't return
             }
         ).fail(function(res) {
             alert("Please refresh the page!");

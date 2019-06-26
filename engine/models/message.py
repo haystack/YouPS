@@ -164,11 +164,11 @@ class Message(object):
 
     @property
     def deadline(self):
-        # type: () -> t.AnyStr
+        # type: () -> datetime.datetime
         """Get the user-defined deadline of the message
 
         Returns:
-            str: The deadline
+            datetime: The deadline
         """
         return self._schema.base_message.deadline
 
@@ -183,6 +183,22 @@ class Message(object):
         if not self._is_simulate:
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
+
+    @property
+    def task(self):
+        # type: () -> t.AnyStr
+        """Get the user-defined task of the message
+
+        Returns:
+            str: The tasks
+        """
+        return self._schema.base_message.task
+
+    @deadline.setter
+    def task(self, value):
+        # type: (t.AnyStr) -> None
+        self._schema.task = value
+        self._schema.save()
 
     @property
     def subject(self):
@@ -795,9 +811,8 @@ class Message(object):
             "flags": [f.encode('utf8', 'replace') for f in self.flags],
             "date": str(self.date),
             "deadline": str(self.deadline),
+            "task": self.task,
             "is_read": self.is_read,
-            "is_deleted": self.is_deleted,
-            "is_recent": self.is_recent,
             "error": False
         }
 

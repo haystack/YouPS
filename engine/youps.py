@@ -151,7 +151,9 @@ def fetch_watch_message(user, email, folder_name):
         bc = ButtonChannel.objects.filter(message__imap_account=imapAccount).filter(message__folder__name=folder_name).latest('timestamp')
         res['folder'] = bc.message.folder.name
         res['uid'] = bc.message.uid 
-        res['subject'] = bc.message.base_message.subject
+
+        message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
+        res['message'] = message._get_meta_data_friendly() 
         res['watch_status'] = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name).exists()
 
         res['status'] = True
@@ -160,6 +162,26 @@ def fetch_watch_message(user, email, folder_name):
         res['code'] = "Error during authentication. Please refresh"
     except ButtonChannel.DoesNotExist:
         res['uid'] = 0
+    except Exception as e:
+        logger.exception(e)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
+    return res
+
+def fetch_available_email_rule(user, email):
+    res = {'status' : False}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+
+        # list available rules 
+        # Send name of emailrule and its args 
+        ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type__startswith='new-message')
+
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
     except Exception as e:
         logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']

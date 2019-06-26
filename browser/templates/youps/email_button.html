@@ -52,10 +52,6 @@
 			<div id="button-container">
                 <button class='btn btn-primary' id='btn-watch'>Watch</button>
 			</div>
-			
-			<div id='watching-msg-container'>
-				
-			</div>
 
             <select name="folder">
                 {% for folder in folders %}
@@ -65,9 +61,36 @@
                         <option>{{ folder }}</option>
                     {% endif %}
                 {% endfor %}
-            </select>
-            
+			</select>
 
+			<div id='watching-msg-container'>
+					
+			</div>
+
+			<div id='selected-rule-container'>
+				
+			</div>
+
+			<div id='rule-container'>
+				<table class="table table-striped">
+					<thead>
+						<tr>
+						<th scope="col">Name</th>
+						<th scope="col">Apply this rule?</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for er in email_rules %}
+							<tr>
+								<td>{{ er.name }}</td>
+								<td><button class='btn btn-info' er-id={{er.id}}>Select</button></td>	
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			
+			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
 		</div>
 	</div>
 	<script type="text/javascript">

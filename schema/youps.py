@@ -137,7 +137,7 @@ class BaseMessage(models.Model):
     category = models.CharField('category', max_length=300, blank=True)
     topic = models.CharField('topic', max_length=300, blank=True)
     priority = models.CharField('priority', max_length=300, blank=True)
-    task = models.CharField('task', max_length=300, blank=True)
+    task = models.TextField('task', blank=True)
 
     class Meta:
         db_table = "youps_base_message"
