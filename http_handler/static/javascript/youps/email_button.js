@@ -33,10 +33,17 @@ $(document).ready(function() {
     });
 
     $( "select[name='folder']" ).change(function() {
-        // Change a watching folder
-        
-        console.log( $(this).find("option:selected").text() );
+        // Open a new socket watching the another folder
+        request_watch_message();
+        // console.log( $(this).find("option:selected").text() );
     });
+
+    // Apply rule on the current message
+    $( "#rule-container" ).on("click", "button", function(e) {
+        // If no message
+        // then alert("No message is selected! Please mark the message read/unread to select the message!");
+        $(this).attr("er-id");
+    })
 
     function show_loader( is_show ) {
         if(is_show) $(".sk-circle").show();
@@ -92,6 +99,9 @@ $(document).ready(function() {
                         btn_watch.show();
                         return;
                     }
+
+                    // TODO if the message is from a different folder, noop 
+
                     if( latest_watched_message != res['uid'] ) {
                         watching_msg_container.text( res['subject'] );
                     }
