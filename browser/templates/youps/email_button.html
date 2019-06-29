@@ -49,11 +49,7 @@
 			<h3>YouPS button</h3>
 			<hr>
 
-			<div id="button-container">
-                <button class='btn btn-primary' id='btn-watch'>Watch</button>
-			</div>
-
-            <select name="folder">
+	        <select name="folder">
                 {% for folder in folders %}
                     {% if folder|lower == "inbox" %}
                         <option selected="selected">{{ folder }}</option>
@@ -61,7 +57,11 @@
                         <option>{{ folder }}</option>
                     {% endif %}
                 {% endfor %}
-			</select>
+			</select>		
+
+			<div id="button-container">
+                <button class='btn btn-primary' id='btn-watch'>Watch</button>
+			</div>
 
 			<div id='watching-msg-container'>
 					
@@ -76,7 +76,7 @@
 					<thead>
 						<tr>
 						<th scope="col">Name</th>
-						<th scope="col">Apply this?</th>
+						<th scope="col">Available rules</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -88,10 +88,14 @@
 						{% endfor %}
 					</tbody>
 				</table>
+
+				<div id='option-container'>
+						
+				</div>
 			</div>
 
 			<div id='result-container'>
-				
+
 			</div>
 			
 			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
@@ -142,15 +146,4 @@
 	<script src="/static/javascript/youps/tests.js"></script>
 
 	<script type="text/javascript" src="/static/javascript/youps/email_button.js"></script>
-
-
-
-    <script>
-
-		
-        // window.onbeforeunload = function(event)
-        // {
-        //     return confirm("Confirm refresh");
-        // };
-    </script>
 {% endblock %}

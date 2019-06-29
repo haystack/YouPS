@@ -86,6 +86,7 @@ shared_patterns = [
     url(r'^fetch_execution_log', 'browser.views.fetch_execution_log'),
     url(r'^fetch_watch_message', 'browser.views.fetch_watch_message'),
     url(r'^folder_recent_messages', 'browser.views.folder_recent_messages'),
+    url(r'^load_components', 'browser.views.load_components'),
     url(r'^watch_current_message', 'browser.views.handle_imap_idle'),
 ]
 

@@ -16,6 +16,8 @@ from django.http import *
 from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.template.context import RequestContext
 from django.utils.encoding import *
+from django.template import Context, Template, loader
+from django.utils import timezone
 
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
@@ -164,7 +166,30 @@ def email_button_view(request):
 			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules}
 	except:
 		return {'website': WEBSITE, 'folders': []}
-	
+
+def load_components(request):
+	res = {"status": True, "code": 200}
+
+	try:
+		component = request.POST['component']
+		logger.info(component)
+		# basemsg_uid = request.POST['FILL HERE']
+		
+		template = loader.get_template('youps/components/%s.html' % component)
+		c = {}
+		if component == 'datepicker':
+			# if base msg has deadline
+			# set as the deadline
+			# else today date
+			today = timezone.now()
+			
+			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00')}
+        	res['template'] = template.render( Context(c) )
+
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception as e:
+		logger.info(e)
+		return HttpResponse(request_error, content_type="application/json")
 		
 @login_required
 def login_imap(request):

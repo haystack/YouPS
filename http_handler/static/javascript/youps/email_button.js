@@ -43,6 +43,15 @@ $(document).ready(function() {
         // If no message
         // then alert("No message is selected! Please mark the message read/unread to select the message!");
         $(this).attr("er-id");
+
+        // TODO remove this hardcode 
+        fetch_components('datepicker');
+
+        // var iframe = document.createElement('iframe');
+        // var html = '<body>Foo</body>';
+        // iframe.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+        // document.body.appendChild(iframe);
+        // console.log('iframe.contentWindow =', iframe.contentWindow);
     })
 
     function show_loader( is_show ) {
@@ -83,6 +92,27 @@ $(document).ready(function() {
             if( idle_mark = document.querySelector(".idle-mark"))   
                 idle_mark.style.display = "inline-block";
         }
+    }
+
+    function fetch_components(component) {
+        var params = {
+            "component": component
+        };
+        
+        $.post('/load_components', params,
+            function(res) {
+                console.log(res);
+
+                if (res.status) {
+                    $("#option-container").append( res['template'] );
+                }
+                else {
+                    notify(res, false);
+                }
+            }
+        ).fail(function(res) {
+            alert("Please refresh the page!");
+        });
     }
 
     function fetch_watch_message() {
