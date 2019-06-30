@@ -1320,7 +1320,6 @@ $(document).ready(function() {
                 console.log(res);
                 
                 if (res.status) {
-                    console.log(res)
                     if (res.code) { 
                         $.each(res.editors, function( index, value ) {
                             $( "#tab_{0} .editable-container[type='{1}']".format(value['mode_uid'], value['type']) ).append(value['template']);

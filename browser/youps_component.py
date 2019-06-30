@@ -42,17 +42,17 @@ def load_new_editor(request):
 
                         for rule in rules:
                             for f in rule.folders.all():
-                                email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.uid)]  )
+                                email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
 
                             c = {'rule': rule}
                             logger.info('youps/%s.html' % rule.type.replace("-", "_"))
                             template = loader.get_template('youps/%s.html' % rule.type.replace("-", "_"))
 
-                            e = {'type': rule.type, 'mode_uid': rule.mode.uid, 'template': template.render(Context(c))}
+                            e = {'type': rule.type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
 
                             editors.append( e )
     except Exception as e:
-		logger.debug(e)
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 

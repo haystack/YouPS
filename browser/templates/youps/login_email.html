@@ -176,9 +176,9 @@
 										{% else %}
 											<li>
 										{% endif %}
-											<a href="#tab_{{mode.uid}}" data-toggle="tab">
-													<span class="tab-title" mode-id={{ mode.uid }}>
-													{{ mode.name }} <span>({{ mode.uid }})</span>
+											<a href="#tab_{{mode.id}}" data-toggle="tab">
+													<span class="tab-title" mode-id={{ mode.id }}>
+													{{ mode.name }} <span>({{ mode.id }})</span>
 													</span>
 													<i class="fas fa-pencil-alt"></i>
 												</a><span class="close">x</span>
@@ -190,9 +190,9 @@
 								{% for mode in modes %}		
 										<!-- Mark current mode as an acitve tab, if there is no current mode mark the first one active. -->
 									{% if current_mode == None and forloop.first or current_mode == mode %}
-										<div class="tab-pane active" id="tab_{{mode.uid}}">
+										<div class="tab-pane active" id="tab_{{mode.id}}">
 									{% else %}
-										<div class="tab-pane" id="tab_{{mode.uid}}">
+										<div class="tab-pane" id="tab_{{mode.id}}">
 									{% endif %}
 											<div class='editable-container' type='new-message'>
 												<!-- This will be filled with Django templates -->
@@ -543,7 +543,7 @@ print get_sender()
 			FOLDERS = {{ folders|safe }},
 			RULE_FOLDER = {{ rule_folder|safe }},
 			current_mode = "{{ current_mode.name }}",
-			current_mode_id = "{{ current_mode.uid }}";
+			current_mode_id = "{{ current_mode.id }}";
 
 	</script>
 

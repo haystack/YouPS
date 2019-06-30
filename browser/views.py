@@ -101,43 +101,48 @@ def login_imap_view(request):
 	email_rule_folder = []
 	rules = []
 
-	if request.user.id != None:
-		imap = ImapAccount.objects.filter(email=request.user.email)
-		
-		if imap.exists():
-			if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
-				imap_authenticated = True
-				is_test = imap[0].is_test
-				is_running = imap[0].is_running
-				is_initialized = imap[0].is_initialized
+	try: 
+		if request.user.id != None:
+			imap = ImapAccount.objects.filter(email=request.user.email)
+			
+			if imap.exists():
+				if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
+					imap_authenticated = True
+					is_test = imap[0].is_test
+					is_running = imap[0].is_running
+					is_initialized = imap[0].is_initialized
 
-				current_mode = imap[0].current_mode
+					current_mode = imap[0].current_mode
 
-				modes = MailbotMode.objects.filter(imap_account=imap[0])
-				mode_exist = modes.exists()
+					modes = MailbotMode.objects.filter(imap_account=imap[0])
+					logger.info(modes.values())
+					mode_exist = modes.exists()
 
-				shortcuts = imap[0].shortcuts
-				if len(shortcuts) > 0:
-					shortcuts_exist = True
+					shortcuts = imap[0].shortcuts
+					if len(shortcuts) > 0:
+						shortcuts_exist = True
 
-				if is_initialized:
-					# send their folder list
-					folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
-				
-					folders = [f['name'].encode('utf8', 'replace') for f in folders]
+					if is_initialized:
+						# send their folder list
+						folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
+					
+						folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
-					# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
-					# mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
+						# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
+						# mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
 
-					rules = EmailRule.objects.filter(mode__imap_account=imap[0])
-					for rule in rules:
-						for f in rule.folders.all():
-							email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.uid)]  )
+						rules = EmailRule.objects.filter(mode__imap_account=imap[0])
+						for rule in rules:
+							for f in rule.folders.all():
+								email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
 
-	return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
-		'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
-		'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
-		'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
+		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
+			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
+			'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
+	except Exception as e:
+		logger.exception(e)
+		return {'user': request.user, 'website': WEBSITE}
 
 @render_to(WEBSITE+"/docs.html")
 def docs_view(request):
