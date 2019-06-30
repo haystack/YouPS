@@ -1,5 +1,4 @@
 var trackOutboundLink = function(inCategory) {
-    debugger;
     if (gtag) {
         gtag('event', inCategory)
   }
@@ -259,75 +258,8 @@ $(document).ready(function() {
         $root_elem.find('.debugger-container tr[line-number{0}]'.format(line_number)).removeClass('hover-selected');
     })
 
-    function init_folder_selector($folder_container) {
-        // nested tree checkboxs http://jsfiddle.net/rn290ywf/
-        if (FOLDERS.length ==0)
-            FOLDERS = ['INBOX', 'Family','Family/Sub folder1','Family/Sub folder2', 'Conference', 'Internship', 'Budget']
-        
-        // Init a new folder list
-
-        // create folder nested structures
-        folders_nested = {}
-        $.each(FOLDERS, function(index, value) {
-            if(value.includes("/")) {
-                pwd = value.split("/")
-                d = folders_nested
-                $.each(pwd, function(i, v) {
-                    if(v in d) {}
-                    else { d[v] = {}
-                    }
-                    d = d[v]
-                })
-                folders_nested = $.extend(folders_nested,d)
-            } else { 
-                if( (value in folders_nested) == false)  
-                    folders_nested[value]= {} 
-                }        
-        })
-
-        function isDict(v) {
-            return typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date);
-        }
-
-        // dict => <ul><li>key1 <ul><li>key1-1</li></ul></li> <li>key2</li></ul>
-        function rec_add_nested(d, path) {
-            var $ul = $("<ul></ul>");
-            for (var key in d) {
-                var p = "";
-                if (path=="") p = key;
-                else  p = path + "/" + key;
-                var $li;
-                
-                // if has children
-                if( Object.keys(d[key]).length > 0 ) { 
-                    $li = $("<li><input type='checkbox' value='"+ p + "' style='visibility:hidden;'>" + '<i class="far fa-folder-open"></i> ' + key + "</li>");
-                    $li.append(rec_add_nested(d[key], p)) } 
-                else {
-                    $li = $("<li><input type='checkbox' value='"+ p + "'>" + '<i class="far fa-folder-open"></i> ' + key + "</li>");
-                }
-
-                $ul.append($li);
-            }
-
-            return $ul;
-        }
-        
-        u = rec_add_nested(folders_nested, "")
-        $folder_container.append(u)
-    }
-
     function get_panel_elem(type, editable) {
-        var func_name = ""
-        switch(type) {
-            case "new-message": 
-                func_name="def on_message(my_message):";break;
-            case "deadline": 
-                func_name="def on_deadline(my_message):";break;
-            case "flag-change": 
-                func_name="def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):";break;
-            case "shortcut": 
-                func_name="def on_command(my_message, content):";break;    
-        }
+        var func_name = "";
 
         var instruction_for_shortcut = `<div class='instruction-container'><span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span></div>`;
 
@@ -387,16 +319,13 @@ $(document).ready(function() {
                 </div>
                 <!-- Panel body -->
                 {6}
-            </div>`.format("", "",
-                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
-                editable ? "trash" : "plus-circle",
+            </div>`.format("", "", "",
+                "plus-circle",
                 `<span style='float:left;' class="fa-layers fa-fw fa-2x"> 
                     <i class="far fa-envelope"></i>
                     <span class="fa-layers-counter" style="background:Tomato">NEW</span>
-                </span>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `Create message arrival handler <span class=""></span>`), 
-                editable ? pull_down_arrow : "",
-                editable ? editor_elem : "");
+                </span>` + `Create message arrival handler <span class=""></span>`, 
+                "", "");
         } else if (type == "flag-change"){
             elem_content = `{0}{1}<div {2} class="panel panel-warning">
                 <div class="flex_container">
@@ -414,13 +343,9 @@ $(document).ready(function() {
                 <!-- Panel body -->
                 {6}
             </div>
-        </div>`.format("", "",
-                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
-                editable ? "trash" : "plus-circle",
-                '<i style="float:left;" class="far fa-2x fa-flag"></i>' + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `Create a flag change event handler <span class=""></span>`), 
-                editable ? pull_down_arrow : "",
-                editable ? editor_elem : "");
+        </div>`.format("", "", "", "plus-circle",
+                '<i style="float:left;" class="far fa-2x fa-flag"></i>' + `Create a flag change event handler <span class=""></span>`, 
+                "", "");
         } else if (type == "deadline"){
             elem_content = `{0}{1}<div {2} class="panel panel-default">
                 <div class="flex_container">
@@ -438,13 +363,9 @@ $(document).ready(function() {
                 <!-- Panel body -->
                 {6}
             </div>
-        </div>`.format("", "",
-                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
-                editable ? "trash" : "plus-circle",
-                `<i style="float:left;" class="far fa-2x fa-clock"></i>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `Create a deadline event handler <span class=""></span>`), 
-                editable ? pull_down_arrow : "",
-                editable ? editor_elem : "");
+        </div>`.format("", "", "", "plus-circle",
+                `<i style="float:left;" class="far fa-2x fa-clock"></i>` + `Create a deadline event handler <span class=""></span>`, 
+                "", "");
         } else if (type == "shortcut"){
             elem_content = `{0}{1}<div {2} class="panel panel-primary">
                 <div class="flex_container">
@@ -462,13 +383,9 @@ $(document).ready(function() {
                 <!-- Panel body -->
                 {6}
             </div>
-        </div>`.format("", "",
-                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
-                editable ? "trash" : "plus-circle",
-                `<i style="float:left;" class="fas fa-2x fa-terminal"></i>` + (editable ? `<input type="text" style="border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" /> 
-                    <span class="preview-folder"></span>` : `Create a shortcut handler <span class=""></span>`), 
-                editable ? pull_down_arrow : "",
-                editable ? editor_elem : "");
+        </div>`.format("", "", "", "plus-circle",
+                `<i style="float:left;" class="fas fa-2x fa-terminal"></i>` + `Create a shortcut handler <span class=""></span>`, 
+                "", "");
         } else if (type == "repeat") {
             elem_content = `{0}{1}<div {2} class="panel panel-warning">
                 <div class="flex_container">
@@ -488,11 +405,7 @@ $(document).ready(function() {
                 <!-- Panel body -->
                 {4}
             </div>
-        </div>`.format("", "",
-                editable ? "rule-id={0}".format(Math.floor(Math.random() * 10000) + 1) : "",
-                editable ? "trash" : "plus-circle",
-                editable ? editor_elem : "",
-                editable? pull_down_arrow : "");
+        </div>`.format("", "", "", "plus-circle", "", "");
         }
 
         if (!editable) 
@@ -647,68 +560,7 @@ $(document).ready(function() {
         // Init editor & its autocomplete
         if(e.srcElement.id != "apis-container") return;
 
-        // remember which tab should be active 
-        var active_tab = $('.nav-tabs li.active');
-
-        // Open individual tab and panel to load style properly
-        $('.nav-tabs li').each(function() {
-            if ( !$(this).find('span') || $(this).find('a').hasClass('add-tab') ) return;
-            $(this).find('a').click();
-					
-			// At each tab
-            $( $(this).find('a').attr('href') ).find('.panel').each(function() {
-			    $(this).parents('.editable-container').find('.panel-heading').click();
-                if ($(this).find('textarea').length) {
-                    init_editor( $(this).find('textarea')[0] );
-                }
-                    
-            })
-            
-        })
-
-        // set dropdown to current mode name if exist
-        if(current_mode) {
-            active_tab.find('a').click();
-            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
-            $(".dropdown .btn").attr('mode-id', current_mode_id);
-        }
-
-        else {
-            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
-            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
-            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
-            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
-            
-            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
-            $(".dropdown .btn").attr('mode-id', last_id);
-        }
-
-        // Init folder container
-        init_folder_selector( $(".folder-container") )
-
-        var tmp_simulate_load = false;
-        // Load EditorRule - folder selection
-        $("div[rule-id]").each(function() {
-            var emailrule_id = $(this).attr('rule-id');
-
-            var folders = [];
-            for(var i=0; i < RULE_FOLDER.length ; i++) {
-                if(RULE_FOLDER[i][1] == emailrule_id) {
-                    $(this).find('.folder-container input[value="'+ RULE_FOLDER[i][0] + '"]').prop( "checked", true );
-                    folders.push(RULE_FOLDER[i][0]);
-                }
-            }
-
-            if(folders.length == 0) return;
-
-            if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
-                // TODO load only one when initialize 
-                tmp_simulate_load = true;
-                run_simulate_on_messages(folders, 5, this);
-            }
-                
-        }) 
-
+        // Editor autocomplete
         var global_method = [];
         document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
             global_method.push( $.trim(element.innerHTML.split("(")[0]) );
@@ -809,41 +661,7 @@ $(document).ready(function() {
     $("#editor-container").on("click", ".btn-new-editor", function() {
         trackOutboundLink('new editor -' + $(this).attr("type"));
         var $container = $( $(this).siblings("[type='{0}']".format($(this).attr("type"))) );
-        var editor_elem = get_panel_elem($(this).attr("type"), true);
-        $container.append( editor_elem );
-
-        // open briefly to set styling
-        $container.find(".panel-heading").last().click();
-        init_editor( $container.find('textarea').last()[0] );
-        debugger;
-        $($container.find('.example-suites').last()[0]).DataTable( {
-            "bPaginate": false,
-            "bLengthChange": false,
-            "bFilter": true,
-            "bInfo": false,
-            "bAutoWidth": false,
-            "searching": false,
-            "columns": [
-                { "width": "40px", "orderable": false },
-                null,
-                { "width": "300px" }
-            ],
-            "order": [[1, 'asc']]
-        } );
-        $container.find(".panel-heading").last().click();
-
-        
-
-        init_folder_selector( $($container.find('.folder-container').last()[0]) );
-
-        // check inbox folder by default
-        $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
-            if(elem.value.toLowerCase() == "inbox") {
-                elem.checked = true;
-                if($(this).attr("type") == "new-message")
-                    run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
-            }
-        })
+        var editor_elem = load_rule(false, $(this).attr("type"), $container);
     });
 
     // remove / revive an editor
@@ -1145,12 +963,10 @@ $(document).ready(function() {
     }
 
     function get_current_mode() {
-        var id = $("#current_mode_dropdown").attr('mode-id'),
-            code = document.querySelector('#tab_'+ id +' .CodeMirror').CodeMirror.getValue();
+        var id = $("#current_mode_dropdown").attr('mode-id');
 
         return {"id": id,
-            "name": $.trim(document.querySelector('.nav.nav-tabs li.active .tab-title').innerHTML), 
-            "code": code
+            "name": $.trim(document.querySelector('.nav.nav-tabs li.active .tab-title').innerHTML)
         };
     }
 
@@ -1306,6 +1122,141 @@ $(document).ready(function() {
         
         setTimeout(fetch_log, 2 * 1000); // 2 second
     }
+  
+    function load_rule(load_exist, rule_type=null, $container=null) {
+        show_loader(true);
+
+        var params = {
+            'load_exist' : load_exist,
+            'type': rule_type
+        };
+
+        if (!load_exist) params['mode'] = get_current_mode()['id'];
+
+        $.post('/load_new_editor', params,
+        function(res) {
+            show_loader(false);
+            console.log(res);
+            
+            if (res.status) {
+                if (res.code) { 
+                    if (load_exist) {
+                        $.each(res.editors, function( index, value ) {
+                            $( "#tab_{0} .editable-container[type='{1}']".format(value['mode_uid'], value['type']) ).append(value['template']);
+                        });
+                        
+                        var active_tab = $('.nav-tabs li.active');
+                        
+                        // Open individual tab and panel to load style properly
+                        $('.nav-tabs li').each(function() {
+                            if ( !$(this).find('span') || $(this).find('a').hasClass('add-tab') ) return;
+                        
+                            // open this tab
+                            $(this).find('a').click();
+                                
+                            // open all the editors
+                            // NOTE: weird bootstrap bug, it only opens if following lines are here. It doesn't work with only either one
+                            $( $(this).find('a').attr('href') ).find('.editable-container .panel-heading').click();
+                            $( $(this).find('a').attr('href') ).find('.editable-container .panel-heading').each(function() {
+                                $(this).click();
+                            })
+    
+                            $( $(this).find('a').attr('href') ).find('.editable-container textarea.editor').each(function() {
+                                init_editor( this );
+                            })
+                        })
+                        
+                        // set dropdown to current mode name if exist
+                        if(current_mode) {
+                            active_tab.find('a').click();
+                            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
+                            $(".dropdown .btn").attr('mode-id', current_mode_id);
+                        }
+                        
+                        else {
+                            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
+                            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+                            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
+                            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+                            
+                            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+                            $(".dropdown .btn").attr('mode-id', last_id);
+                        }
+                        
+                        // Init folder container
+                        // init_folder_selector( $(".folder-container") )
+                        
+                        // var tmp_simulate_load = false;
+                        // // Load EditorRule - folder selection
+                        // $("div[rule-id]").each(function() {
+                        //     var emailrule_id = $(this).attr('rule-id');
+                        
+                        //     var folders = [];
+                        //     for(var i=0; i < RULE_FOLDER.length ; i++) {
+                        //         if(RULE_FOLDER[i][1] == emailrule_id) {
+                        //             $(this).find('.folder-container input[value="'+ RULE_FOLDER[i][0] + '"]').prop( "checked", true );
+                        //             folders.push(RULE_FOLDER[i][0]);
+                        //         }
+                        //     }
+                        
+                        //     if(folders.length == 0) return;
+                        
+                        //     if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
+                        //         // TODO load only one when initialize 
+                        //         tmp_simulate_load = true;
+                        //         run_simulate_on_messages(folders, 5, this);
+                        //     }
+                                
+                        // }) 
+                    } 
+
+                    else {
+                        $container.append( res.editors[0]['template'] );
+                        
+                        // open briefly to set styling
+                        $container.find(".panel-heading").last().click();
+                        $container.find(".panel-heading").last().click();
+                                init_editor( $container.find('textarea').last()[0] );
+        
+                                $($container.find('.example-suites').last()[0]).DataTable( {
+                                    "bPaginate": false,
+                                    "bLengthChange": false,
+                                    "bFilter": true,
+                                    "bInfo": false,
+                                    "bAutoWidth": false,
+                                    "searching": false,
+                                    "columns": [
+                                        { "width": "40px", "orderable": false },
+                                        null,
+                                        { "width": "300px" }
+                                    ],
+                                    "order": [[1, 'asc']]
+                                } );
+                        
+                                
+                        
+                                // init_folder_selector( $($container.find('.folder-container').last()[0]) );
+                        
+                                // check inbox folder by default
+                                // $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
+                                //     if(elem.value.toLowerCase() == "inbox") {
+                                //         elem.checked = true;
+                                //         if($(this).attr("type") == "new-message")
+                                //             run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
+                                //     }
+                                // })
+                    }
+                }
+                else {                        
+                    notify(res, true);
+                }
+            }
+            else {
+                notify(res, false);
+            }
+        }
+    );
+}
 
     function validateEmail(email) {
         var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -1636,6 +1587,9 @@ $(document).ready(function() {
         }
     
         $(".default-text").blur();
+        
+        // 
+        load_rule(true);
 
         tinyMCE.init({
             mode: "textareas",

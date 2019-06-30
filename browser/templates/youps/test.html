@@ -1,0 +1,11 @@
+{% if rule == 'new-message' %}
+																						<input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
+																						<label class="form-check-label">immediately</label>
+																						<input class="form-check-input" type="radio" name="new-message-timespan" value="before">
+																						<input style='width:50px;' type="text" class="form-control" placeholder="30">
+																					{% else %}
+																						<input class="form-check-input" type="radio" name="new-message-timespan" value="now" >
+																						<label class="form-check-label">immediately</label>
+																						<input class="form-check-input" type="radio" name="new-message-timespan" value="before" checked>
+																						<input style='width:50px;' type="text" class="form-control" placeholder="30" value="{% widthratio rule|slice:"12:"|slugify 60 1 %}">
+																					{% endif %}

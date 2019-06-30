@@ -5,6 +5,7 @@ from boto.s3.connection import S3Connection
 from html2text import html2text
 from lamson.mail import MailResponse
 
+
 from django.conf import global_settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -12,19 +13,21 @@ from django.core.context_processors import csrf
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models.aggregates import Count
-from django.http import *
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.template.context import RequestContext
 from django.utils.encoding import *
 
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
-from engine.constants import *
+from engine.constants import msg_code
 from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from registration.forms import RegistrationForm
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
 from smtp_handler.utils import *
 import logging
+
+from browser.youps_component import load_new_editor
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -93,51 +96,53 @@ def login_imap_view(request):
 	current_mode = None
 	shortcuts = ''
 	shortcuts_exist = False
-        is_initialized = False 
+	is_initialized = False 
 	folders = []
 	email_rule_folder = []
 	rules = []
 
-	if request.user.id != None:
-		imap = ImapAccount.objects.filter(email=request.user.email)
-		
-		if imap.exists():
-			if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
-				imap_authenticated = True
-				is_test = imap[0].is_test
-				is_running = imap[0].is_running
-				is_initialized = imap[0].is_initialized
+	try: 
+		if request.user.id != None:
+			imap = ImapAccount.objects.filter(email=request.user.email)
+			
+			if imap.exists():
+				if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
+					imap_authenticated = True
+					is_test = imap[0].is_test
+					is_running = imap[0].is_running
+					is_initialized = imap[0].is_initialized
 
-				current_mode = imap[0].current_mode
+					current_mode = imap[0].current_mode
 
-				modes = MailbotMode.objects.filter(imap_account=imap[0])
-				mode_exist = modes.exists()
+					modes = MailbotMode.objects.filter(imap_account=imap[0])
+					logger.info(modes.values())
+					mode_exist = modes.exists()
 
-				shortcuts = imap[0].shortcuts
-				if len(shortcuts) > 0:
-					shortcuts_exist = True
+					shortcuts = imap[0].shortcuts
+					if len(shortcuts) > 0:
+						shortcuts_exist = True
 
-				if is_initialized:
-					# send their folder list
-					folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
-				
-					folders = [f['name'].encode('utf8', 'replace') for f in folders]
+					if is_initialized:
+						# send their folder list
+						folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
+					
+						folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
-					# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
-					# mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
+						# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
+						# mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
 
-					rules = EmailRule.objects.filter(mode__imap_account=imap[0])
-					for rule in rules:
-						for f in rule.folders.all():
-							email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
+						rules = EmailRule.objects.filter(mode__imap_account=imap[0])
+						for rule in rules:
+							for f in rule.folders.all():
+								email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
 
-					logger.info(rules)
-				
-
-	return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
-		'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
-		'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
-		'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
+		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
+			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
+			'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
+	except Exception as e:
+		logger.exception(e)
+		return {'user': request.user, 'website': WEBSITE}
 
 @render_to(WEBSITE+"/docs.html")
 def docs_view(request):
@@ -265,8 +270,7 @@ def delete_mailbot_mode(request):
 		res = engine.main.delete_mailbot_mode(user, request.user.email, mode_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
-		print e
-		logging.debug(e)
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
