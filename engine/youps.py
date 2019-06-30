@@ -120,7 +120,7 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        mm = MailbotMode.objects.get(uid=mode_id, imap_account=imapAccount)
+        mm = MailbotMode.objects.get(id=mode_id, imap_account=imapAccount)
 
         if imapAccount.current_mode == mm:
             imapAccount.current_mode = None
@@ -135,11 +135,10 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
     except MailbotMode.DoesNotExist:
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except Exception, e:
-        # TODO add exception
-        print e
+        logger.exception(res)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
-    logging.debug(res)
+    
     return res
 
 def remove_rule(user, email, rule_id):
@@ -154,7 +153,7 @@ def remove_rule(user, email, rule_id):
 
     try:
         imap_account = ImapAccount.objects.get(email=email)
-        er = EmailRule.objects.filter(uid=rule_id, mode__imap_account=imap_account)
+        er = EmailRule.objects.filter(id=rule_id, mode__imap_account=imap_account)
 
         er.delete()
 

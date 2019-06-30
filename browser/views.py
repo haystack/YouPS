@@ -270,8 +270,7 @@ def delete_mailbot_mode(request):
 		res = engine.main.delete_mailbot_mode(user, request.user.email, mode_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
-		print e
-		logging.debug(e)
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
