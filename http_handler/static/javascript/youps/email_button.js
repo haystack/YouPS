@@ -133,7 +133,7 @@ $(document).ready(function() {
                     // TODO if the message is from a different folder, noop 
 
                     if( latest_watched_message != res['uid'] ) {
-                        watching_msg_container.text( res['subject'] );
+                        watching_msg_container.text( res['message']['subject'] + " (" + res['message']['date'] + ")"  );
                     }
                     
                     latest_watched_message = res['uid'];

@@ -96,7 +96,7 @@ def register_inbox():
                 imapAccount.save()
 
                 site = Site.objects.get_current()
-                send_email("Your YoUPS account is ready!",
+                send_email("Your YouPS account is ready!",
                            "no-reply@" + BASE_URL,
                            imapAccount.email,
                            "Start writing your automation rule here! %s://%s" % (PROTOCOL, site.domain))
