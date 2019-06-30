@@ -13,7 +13,7 @@ from django.core.context_processors import csrf
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models.aggregates import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.template.context import RequestContext
 from django.utils.encoding import *
@@ -96,7 +96,7 @@ def login_imap_view(request):
 	current_mode = None
 	shortcuts = ''
 	shortcuts_exist = False
-        is_initialized = False 
+	is_initialized = False 
 	folders = []
 	email_rule_folder = []
 	rules = []
