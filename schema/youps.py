@@ -268,15 +268,22 @@ class EmailRule(models.Model):
     class Meta:
         unique_together = ("id", "mode")
 
+class EmailRule_Args(models.Model):
+    id = models.AutoField(primary_key=True)
 
-# # This model is to have many-to-many relation of EmailRule and Folder
-# class EmailRule_Folder(models.Model):
-#     rule = models.ForeignKey('EmailRule')
-#     folder = models.ForeignKey('FolderSchema')
-
-#     class Meta:
-#         db_table = "youps_emailrule_folder"
-#         unique_together = ("rule", "folder")
+    name = models.CharField(default='name', max_length=100)
+    rule = models.ForeignKey('EmailRule', related_name="rule")
+    TYPE_CHOICES = (
+        (STRING, 'string'),
+        (DATETIME, 'datetime'),
+        (CONTACT, 'ContactSchema'),
+        (MESSAGE, 'MessageSchema'),
+    )
+    type = models.CharField(
+        max_length=2,
+        choices=TYPE_CHOICES,
+        default=STRING,
+    )
 
 class Message_Thread(models.Model):
     id = models.AutoField(primary_key=True)
