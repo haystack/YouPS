@@ -74,7 +74,13 @@ def load_new_editor(request):
 
                     user_inbox = FolderSchema.objects.get(imap_account=imap[0], name__iexact="inbox")
 
-                    new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+                    try:
+                        new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+                    except MailbotMode.DoesNotExist:
+                        new_mm = MailbotMode(imap_account=imap[0])
+                        new_mm.save()
+
+                        new_er = EmailRule(type=rule_type, mode=new_mm, code=get_base_code(rule_type))
                     new_er.save()
                     new_er.folders.add(user_inbox)
 

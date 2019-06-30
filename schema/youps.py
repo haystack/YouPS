@@ -70,8 +70,6 @@ class FolderSchema(models.Model):
     
     is_selectable = models.BooleanField(default=False)
 
-    is_selectable = models.BooleanField(default=False)
-
     class Meta:
         db_table = "youps_folder"
         unique_together = ("name", "imap_account")
@@ -276,15 +274,15 @@ class EmailRule_Args(models.Model):
     name = models.CharField(default='name', max_length=100)
     rule = models.ForeignKey('EmailRule', related_name="rule")
     TYPE_CHOICES = (
-        (STRING, 'string'),
-        (DATETIME, 'datetime'),
-        (CONTACT, 'ContactSchema'),
-        (MESSAGE, 'MessageSchema'),
+        ("string", 'string'),
+        ("datetime", 'datetime'),
+        ("contact", 'ContactSchema'),
+        ("message", 'MessageSchema'),
     )
     type = models.CharField(
-        max_length=2,
+        max_length=8,
         choices=TYPE_CHOICES,
-        default=STRING,
+        default="string"
     )
 
 class Message_Thread(models.Model):
