@@ -19,6 +19,38 @@
 																	</div>
 																	<div class="panel-body" style="display:none;">
 																		<div class="instruction-container">
+																			<ul id="arg-list-{{rule.id}}">
+																				<li class="element">I am a new element<button class="btn">X</button></li>
+																			</ul>
+																				
+																			<button id="add-{{rule.id}}">Add an element to the list</button>
+	
+																			<script type="text/javascript">
+																				var add = document.getElementById('add');
+	
+																				//adding a new element to the list
+																				$("#add-{{rule.id}}").click(function() {
+																					$("#arg-list-{{rule.id}}").append("<li>I am a new element<button class='btn'>X</button></li>");
+																				})
+	
+																				$("#arg-list-{{rule.id}}").click(function(e) {
+																					if(e.target && e.target.nodeName == "BUTTON") {
+																						// List item found!  Output the ID!
+																						console.log("Button ", e, " was clicked!");
+																						e.target.parentNode.remove();
+																					}
+																				})
+
+																				$("#display").click(function(){
+																					$(this).hide();
+																					$(this).siblings("#edit").show().val($(this).text()).focus();
+																				});
+
+																				$("#edit").focusout(function(){
+																					$(this).hide();  $(this).siblings("#display").show().text($(this).val());
+																				});
+																			</script>
+
 																			<span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span>
 																		</div>
 																		<div class="editor-container">

@@ -60,7 +60,7 @@ def load_new_editor(request):
                             folders = FolderSchema.objects.filter(imap_account=imap[0])
                             c = {'rule': rule, 'folders': folders}
                             # logger.info('youps/%s.html' % rule.type.replace("-", "_"))
-                            template = loader.get_template('youps/%s.html' % rule.type.replace("-", "_"))
+                            template = loader.get_template('youps/components/%s.html' % rule.type.replace("-", "_"))
 
                            
 
@@ -88,7 +88,7 @@ def load_new_editor(request):
                     folders = FolderSchema.objects.filter(imap_account=imap[0])
                     c = {'rule': new_er, 'folders': folders}
                     # logger.info('youps/%s.html' % rule_type.replace("-", "_"))
-                    template = loader.get_template('youps/%s.html' % rule_type.replace("-", "_"))
+                    template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
 
                     e = {'template': template.render(Context(c))}
 
