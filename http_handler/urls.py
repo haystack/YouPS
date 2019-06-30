@@ -77,6 +77,7 @@ shared_patterns = [
     url(r'^calendar', 'browser.views.calendar_view'),
     url(r'^button', 'browser.views.email_button_view'),
     url(r'^login_imap', 'browser.views.login_imap'),
+    url(r'^load_new_editor', 'browser.views.load_new_editor'),
     url(r'^remove_rule', 'browser.views.remove_rule'),
     url(r'^run_mailbot', 'browser.views.run_mailbot'),
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),

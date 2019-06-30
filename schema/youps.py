@@ -241,13 +241,13 @@ class CalendarSchema(models.Model):
 
 
 class MailbotMode(models.Model):
-    uid = models.IntegerField()
+    id = models.AutoField(primary_key=True)
 
     name = models.CharField('mode_name', max_length=100)
     imap_account = models.ForeignKey('ImapAccount')
 
     class Meta:
-        unique_together = ("uid", "imap_account")
+        unique_together = ("id", "imap_account")
 
 
 class EmailRule(models.Model):

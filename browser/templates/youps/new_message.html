@@ -1,0 +1,92 @@
+
+		<div rule-id={{rule.id}} class="panel panel-success">
+			<div class="flex_container">
+				<div class="flex_item_left">
+					<i class="fas fa-3x fa-trash"></i>
+				</div>
+
+				<div class="flex_item_right panel-heading">
+					<h3 class="panel-title">
+						<span style='float:left;' class="fa-layers fa-fw fa-2x"> 
+									<i class="far fa-envelope"></i>
+									<span class="fa-layers-counter" style="background:Tomato">NEW</span>
+						</span>
+						<input type="text" placeholder="My email rule" value="{{ rule.name }}" />
+						<span class="preview-folder"></span>
+					</h3>
+					<span class="pull-right">
+						<button class='btn-default btn-incoming-save'>Save</button>
+						<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+					</span>
+				</div>
+			</div>
+			<div class="panel-body" style="display:none;">
+				<div class="folder-container">
+					<ul>
+						{% for folder in folders %}
+							<li>
+								{% if folder.is_selectable %}
+									{% if folder in rule.folders.all %}
+										<input type="checkbox" value="{{folder.name}}" checked>
+									{% else %}
+										<input type="checkbox" value="{{folder.name}}">
+									{% endif %}
+								{% endif %}
+								<i class="far fa-folder-open"></i> {{ folder.name }}
+							</li>
+						{% endfor %}
+					</ul>
+				</div>
+				<div class="editor-container">
+					<div class='trigger'>
+						<form class="form-inline">
+							<div class="form-group">
+								<span>When a message arrvies, run the following rules  </span>
+							</div>
+							<div class="form-group">
+								{% if rule.type == 'new-message' %}
+									<input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
+									<label class="form-check-label">immediately</label>
+									<input class="form-check-input" type="radio" name="new-message-timespan" value="before">
+									<input style='width:50px;' type="text" class="form-control" placeholder="30">
+								{% else %}
+									<input class="form-check-input" type="radio" name="new-message-timespan" value="now" >
+									<label class="form-check-label">immediately</label>
+									<input class="form-check-input" type="radio" name="new-message-timespan" value="before" checked>
+									<input style='width:50px;' type="text" class="form-control" placeholder="30" value="{% widthratio rule.type|slice:"12:"|slugify 60 1 %}">
+								{% endif %}
+								<select class="time_unit" class="form-control">
+									<option>min</option>
+									<option>hr</option>
+									<option>day</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<span>later</span>
+							</div>
+						</form>
+					</div>
+					<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
+{{ rule.code }}
+					</textarea>
+				</div>
+				<!-- Separte row for debugging -->
+				<div class='debugger-container'>
+						<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Update results</button>
+
+						<h2>Test suites</h2>
+						<h4>Recent messages from your selected folders to test your rules</h4>
+						<table class="example-suites" class="table" style="width:100%">
+						<thead>
+								<tr>
+								  <th>Sender</th>
+								  <th>Message</th>
+								  <th>Expected Result</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+				</div>
+			</div>
+		</div>
