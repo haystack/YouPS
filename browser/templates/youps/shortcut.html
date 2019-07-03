@@ -1,0 +1,33 @@
+
+																<div rule-id={{rule.id}} class="panel panel-primary">
+																	<div class="flex_container">
+																		<div class="flex_item_left"> 
+																			<i class="fas fa-3x fa-trash"></i> 
+																		</div>
+	
+																		<div class="flex_item_right panel-heading panel-collapsed">
+																			<h3 class="panel-title">
+																				<i style="float:left;" class="fas fa-2x fa-terminal"></i>
+																				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
+																				<span class="preview-folder"></span>
+																			</h3>
+																			<span class="pull-right">
+																				<button class='btn-default btn-incoming-save'>Save</button>
+																				<i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
+																			</span>
+																		</div>
+																	</div>
+																	<div class="panel-body" style="display:none;">
+																		<div class="instruction-container">
+																			<span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span>
+																		</div>
+																		<div class="editor-container">
+																			<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
+{{ rule.code }}
+																			</textarea>
+																		</div>
+																		<!-- Separte row for debugging -->
+																		<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
+																		</div>
+																	</div>
+																</div>

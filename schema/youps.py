@@ -67,6 +67,8 @@ class FolderSchema(models.Model):
     last_seen_uid = models.IntegerField(default=-1)
     # the highest mod seq useful for limiting getting the flags
     highest_mod_seq = models.IntegerField(default=-1)
+    
+    is_selectable = models.BooleanField(default=False)
 
     class Meta:
         db_table = "youps_folder"
@@ -237,17 +239,17 @@ class CalendarSchema(models.Model):
 
 
 class MailbotMode(models.Model):
-    uid = models.IntegerField()
+    id = models.AutoField(primary_key=True)
 
     name = models.CharField('mode_name', max_length=100)
     imap_account = models.ForeignKey('ImapAccount')
 
     class Meta:
-        unique_together = ("uid", "imap_account")
+        unique_together = ("id", "imap_account")
 
 
 class EmailRule(models.Model):
-    uid = models.IntegerField(default=1)
+    id = models.AutoField(primary_key=True)
 
     # e.g. new-message, old-message-[time span]
     type = models.CharField('rule_type', default='new-message', max_length=100)
@@ -264,7 +266,7 @@ class EmailRule(models.Model):
     executed_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
-        unique_together = ("uid", "mode")
+        unique_together = ("id", "mode")
 
 
 # # This model is to have many-to-many relation of EmailRule and Folder

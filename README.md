@@ -1,5 +1,6 @@
-YoUPS
+YouPS
 =
+[![Django version](https://img.shields.io/badge/django-1.7-blue.svg)](https://docs.djangoproject.com/en/2.2/releases/1.7/) [![python version](https://img.shields.io/badge/python-2.7-yellowgreen.svg)](https://www.python.org/download/releases/2.7/)
 
 YouPS is forked from the codebase of Murmur. If you run into issues in your installation check out [Murmur](https://github.com/haystack/murmur/blob/master/README.md) and you may find an answer. Otherwise open an issue and let us know! 
 

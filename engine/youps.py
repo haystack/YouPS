@@ -120,7 +120,7 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        mm = MailbotMode.objects.get(uid=mode_id, imap_account=imapAccount)
+        mm = MailbotMode.objects.get(id=mode_id, imap_account=imapAccount)
 
         if imapAccount.current_mode == mm:
             imapAccount.current_mode = None
@@ -135,11 +135,10 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
     except MailbotMode.DoesNotExist:
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except Exception, e:
-        # TODO add exception
-        print e
+        logger.exception(res)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
-    logging.debug(res)
+    
     return res
 
 def remove_rule(user, email, rule_id):
@@ -154,7 +153,7 @@ def remove_rule(user, email, rule_id):
 
     try:
         imap_account = ImapAccount.objects.get(email=email)
-        er = EmailRule.objects.filter(uid=rule_id, mode__imap_account=imap_account)
+        er = EmailRule.objects.filter(id=rule_id, mode__imap_account=imap_account)
 
         er.delete()
 
@@ -207,21 +206,15 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         # imapAccount.newest_msg_id = uid
 
         # remove all user's tasks of this user to keep tasks up-to-date
+        old_mailbotMode = MailbotMode.objects.filter(imap_account=imapAccount)
+        old_mailbotMode.delete()
 
         for mode_index, mode in modes.iteritems():
-            mode_id = mode['id']
             mode_name = mode['name'].encode('utf-8')
             mode_name = mode_name.split("<br>")[0] if mode_name else "mode"
             logger.info(mode_name)
-            mailbotMode = MailbotMode.objects.filter(uid=mode_id, imap_account=imapAccount)
-            if not mailbotMode.exists():
-                mailbotMode = MailbotMode(uid=mode_id, name=mode_name, imap_account=imapAccount)
-                
-
-            else:
-                mailbotMode = mailbotMode[0]
-                mailbotMode.name = mode_name
-
+            
+            mailbotMode = MailbotMode(name=mode_name, imap_account=imapAccount)
             mailbotMode.save()
 
             # Remove old editors to re-save it
@@ -231,19 +224,12 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             er.delete()
 
             for value in mode['editors']:
-                uid = value['uid']
-                name = value['name'].encode('utf-8')
-
-                logger.critical('uid: {uid} name: {name}'.format(uid=uid, name=name))
-
-            for value in mode['editors']:
-                uid = value['uid']
                 name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
-                logger.info("saving editor %s run request" % uid)
+                logger.info("saving editor %s run request" % name)
                 
-                er = EmailRule(uid=uid, name=name, mode=mailbotMode, type=value['type'], code=code)
+                er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
                 logger.info("user %s test run " % imapAccount.email)
@@ -256,10 +242,11 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 er.save()
 
+            logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         
 
         if run_request:
-            imapAccount.current_mode = MailbotMode.objects.filter(uid=current_mode_id, imap_account=imapAccount)[0]
+            imapAccount.current_mode = MailbotMode.objects.filter(id=current_mode_id, imap_account=imapAccount)[0]
 
             # if the code execute well without any bug, then save the code to DB
             if not res['imap_error']:
