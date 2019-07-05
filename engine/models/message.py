@@ -19,10 +19,7 @@ from imapclient import \
     IMAPClient  # noqa: F401 ignore unused we use it for typing
 from pytz import timezone as tz
 
-from browser.imap import decrypt_plain_password
-from engine.google_auth import GoogleOauth2
 from engine.models.contact import Contact
-from http_handler.settings import CLIENT_ID
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
@@ -438,7 +435,9 @@ class Message(object):
                 "Fwd: " + self.subject, to, cc, bcc, content)
 
             if new_message_wrapper:
-                self._send_message(new_message_wrapper)
+                from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
+                mailbox = MailBox(self._schema.imap_account, self._imap_client)
+                mailbox._send_message( new_message_wrapper )
 
 
     def contains(self, string):
@@ -472,7 +471,9 @@ class Message(object):
                 "Re: " + self.subject, to, cc, bcc, content)
 
             if new_message_wrapper:
-                self._send_message(new_message_wrapper)
+                from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
+                mailbox = MailBox(self._schema.imap_account, self._imap_client)
+                mailbox._send_message( new_message_wrapper )
 
     def reply_all(self, more_to=[], more_cc=[], more_bcc=[], content=""):
         if isinstance(more_cc, list):
@@ -669,34 +670,6 @@ class Message(object):
                 self.mark_unread()
 
         return new_message_wrapper
-
-    def _send_message(self, new_message_wrapper):
-        try:
-            # SMTP authenticate
-            if self._schema.imap_account.is_gmail:
-                oauth = GoogleOauth2()
-                response = oauth.RefreshToken(
-                    self._schema.imap_account.refresh_token)
-
-                auth_string = oauth.generate_oauth2_string(
-                    self._schema.imap_account.email, response['access_token'], as_base64=True)
-                s = smtplib.SMTP('smtp.gmail.com', 587)
-                s.ehlo(CLIENT_ID)
-                s.starttls()
-                s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
-
-            else:
-                s = smtplib.SMTP(
-                    self._schema.imap_account.host.replace("imap", "smtp"), 587)
-                s.login(self._schema.imap_account.email, decrypt_plain_password(
-                    self._schema.imap_account.password))
-                s.ehlo()
-
-            # TODO check if it sent to cc-ers
-            s.sendmail(self._schema.imap_account.email,
-                       new_message_wrapper["To"], new_message_wrapper.as_string())
-        except Exception as e:
-            print (e)
 
     def _append_original_text(self, text, html, orig, google=False):
         """

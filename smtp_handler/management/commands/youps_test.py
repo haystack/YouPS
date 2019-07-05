@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from browser.imap import *
 from imapclient import IMAPClient
 from engine.constants import *
+from engine.youps import login_imap
 from smtp_handler.Pile import *
 import datetime
 from http_handler.settings import WEBSITE, TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD
@@ -55,20 +56,27 @@ class Command(BaseCommand):
                 send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'].decode('utf-8'), t['body_html'].decode('utf-8'))
                 index = index + 1
 
-        if args[0] == "run-test":
+        elif args[0] == "run-test":
             imapAccount = None
             imap = None
 
             # Auth to test email accountss
             try:
                 imapAccount = ImapAccount.objects.get(email=TEST_ACCOUNT_EMAIL)
+            except ImapAccount.DoesNotExist:
+                login_imap(TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD, 'imap.gmail.com',is_oauth=False)
+
+                print("Just created a YouPS account for a test account. It will take couple minutes to set up")
+                return
+
+            try:
                 auth_res = authenticate( imapAccount )
                 if not auth_res['status']:
                     raise ValueError('Something went wrong during authentication. Refresh and try again!')
 
                 imap = auth_res['imap']  # noqa: F841 ignore unused
             except Exception, e:
-                print("failed while logging into imap")
+                print("failed logging into imap", str(e))
                 return
 
             test_cases = [
@@ -83,6 +91,10 @@ class Command(BaseCommand):
                     }, 
                     {
                         'code': 'print("True" if "test email " in my_message.subject else "") ',
+                        'expected': 'True'
+                    }, 
+                    {
+                        'code': 'send(subject="hello", to="soyapark2535@gmail.com")',
                         'expected': 'True'
                     }, 
                 ],

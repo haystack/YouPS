@@ -115,6 +115,26 @@ def fetch_execution_log(user, email, push=True):
     logging.debug(res)
     return res
 
+def create_mailbot_mode(user, email, push=True):
+    res = {'status' : False}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        mm = MailbotMode(imap_account=imapAccount)
+        mm.save()
+        
+        res["mode-id"] = mm.id
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during deleting the mode. Please refresh the page."
+    except MailbotMode.DoesNotExist:
+        res['code'] = "Error during deleting the mode. Please refresh the page."
+    except Exception, e:
+        logger.exception(res)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+    return res
+
 def delete_mailbot_mode(user, email, mode_id, push=True):
     res = {'status' : False}
 
@@ -137,8 +157,6 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
     except Exception, e:
         logger.exception(res)
         res['code'] = msg_code['UNKNOWN_ERROR']
-
-    
     return res
 
 def remove_rule(user, email, rule_id):
@@ -206,16 +224,22 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         # imapAccount.newest_msg_id = uid
 
         # remove all user's tasks of this user to keep tasks up-to-date
-        old_mailbotMode = MailbotMode.objects.filter(imap_account=imapAccount)
-        old_mailbotMode.delete()
+        # old_mailbotMode = MailbotMode.objects.filter(imap_account=imapAccount)
+        # old_mailbotMode.delete()
 
         for mode_index, mode in modes.iteritems():
             mode_name = mode['name'].encode('utf-8')
             mode_name = mode_name.split("<br>")[0] if mode_name else "mode"
-            logger.info(mode_name)
+            logger.info(mode)
             
-            mailbotMode = MailbotMode(name=mode_name, imap_account=imapAccount)
-            mailbotMode.save()
+            mailbotMode = MailbotMode.objects.filter(id=mode['id'], imap_account=imapAccount)
+            if mailbotMode.exists():
+                mailbotMode = mailbotMode[0]
+                mailbotMode.name = mode_name
+                mailbotMode.save()
+            else:
+                mailbotMode = MailbotMode(name=mode_name, imap_account=imapAccount)
+                mailbotMode.save()
 
             # Remove old editors to re-save it
             # TODO  dont remove it
