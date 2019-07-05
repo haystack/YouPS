@@ -46,6 +46,6 @@ The server requires some setup to be run from scratch.
 2. If you make any change to the database, you should migrate those change like this:
 
 ```sh
-python manage.py schemamigration schema --auto && \
+python manage.py makemigrations schema && \
 python manage.py migrate schema
 ```
