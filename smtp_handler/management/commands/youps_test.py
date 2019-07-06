@@ -36,65 +36,73 @@ class Command(BaseCommand):
         test_emails = [
                 {
                     'subject': 'test email %s ' % str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
-                    'from_addr': 'test@youps.csail.mit.edu',
+                    'from_addr': TEST_ACCOUNT_EMAIL,
+                    'to': "youps.test@gmail.com",
+                    'cc': "",
+                    'bcc': "",
                     'body_plain': 'hello world',
                     'body_html': 'hi'
                 },
                 {
                     'subject': 'test email with emoji 🤷‍♀️ %s ' % str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")),
-                    'from_addr': 'test@youps.csail.mit.edu',
+                    'from_addr': TEST_ACCOUNT_EMAIL,
+                    'to': "youps.test@gmail.com, abc@gmail.com",
+                    'cc': "cc1@qwer.com, cc2@slkdfl.com",
+                    'bcc': "bcc1@qwer.com, bcc2@slkdfl.com, bcc3@slkdfl.com",
                     'body_plain': '😎',
                     'body_html': '😎'
                 },
             ]
 
+        imapAccount = None
+        imap = None
+
+        # Auth to test email accountss
+        try:
+            imapAccount = ImapAccount.objects.get(email=TEST_ACCOUNT_EMAIL)
+        except ImapAccount.DoesNotExist:
+            login_imap(TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD, 'imap.gmail.com',is_oauth=False)
+
+            print("Just created a YouPS account for a test account. It will take couple minutes to set up")
+            return
+
+        try:
+            auth_res = authenticate( imapAccount )
+            if not auth_res['status']:
+                raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+            imap = auth_res['imap']  # noqa: F841 ignore unused
+        except Exception, e:
+            print("failed logging into imap", str(e))
+            return
+
         if args[0] == "send-test":
-            index = 0
-            for t in test_emails:
-            #     # TODO send using django core
-            #     send_mail("#%d " % index + t['subject'].decode('utf-8'), t['body_plain'], TEST_ACCOUNT_EMAIL, [TEST_ACCOUNT_EMAIL])
-                send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'].decode('utf-8'), t['body_html'].decode('utf-8'))
-                index = index + 1
+            mailbox = MailBox(imapAccount, imap, is_simulate=False)
+            for i in range(len(test_emails)):
+                test = test_emails[i]
+                mailbox.send(subject="#%d " % i + test['subject'].decode('utf-8'), to=test['to'], cc=test['cc'], bcc=test['bcc'], \
+                    body=test['body_plain'].decode('utf-8'), body_html=test['body_html'].decode('utf-8')) # TODO cc, bcc
+
+            # index = 0
+            # for t in test_emails:
+            # #     # TODO send using django core
+            # #     send_mail("#%d " % index + t['subject'].decode('utf-8'), t['body_plain'], TEST_ACCOUNT_EMAIL, [TEST_ACCOUNT_EMAIL])
+            #     send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'].decode('utf-8'), t['body_html'].decode('utf-8'))
+            #     index = index + 1
 
         elif args[0] == "run-test":
-            imapAccount = None
-            imap = None
-
-            # Auth to test email accountss
-            try:
-                imapAccount = ImapAccount.objects.get(email=TEST_ACCOUNT_EMAIL)
-            except ImapAccount.DoesNotExist:
-                login_imap(TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD, 'imap.gmail.com',is_oauth=False)
-
-                print("Just created a YouPS account for a test account. It will take couple minutes to set up")
-                return
-
-            try:
-                auth_res = authenticate( imapAccount )
-                if not auth_res['status']:
-                    raise ValueError('Something went wrong during authentication. Refresh and try again!')
-
-                imap = auth_res['imap']  # noqa: F841 ignore unused
-            except Exception, e:
-                print("failed logging into imap", str(e))
-                return
-
             test_cases = [
                 [ # test cases for #0 email
                     {
                         'code': 'print (my_message.from_)',
-                        'expected': 'test@youps.csail.mit.edu'
+                        'expected': TEST_ACCOUNT_EMAIL
                     }, 
                     {
-                        'code': 'print("True" if "test@youps.csail.mit.edu" == my_message.from_ else "") ',
-                        'expected': 'test@youps.csail.mit.edu'
+                        'code': 'print("True" if "%s" == my_message.from_ else "") ' % TEST_ACCOUNT_EMAIL,
+                        'expected': "True"
                     }, 
                     {
                         'code': 'print("True" if "test email " in my_message.subject else "") ',
-                        'expected': 'True'
-                    }, 
-                    {
-                        'code': 'send(subject="hello", to="soyapark2535@gmail.com")',
                         'expected': 'True'
                     }, 
                 ],
@@ -107,6 +115,14 @@ class Command(BaseCommand):
                         'code': 'print ("True" if my_message.contains("😎") else "")',
                         'expected': 'True'
                     },
+                    {
+                        'code': 'print ("abc@gmail.com" in my_message.to)',
+                        'expected': 'True'
+                    },
+                    {
+                        'code': 'print (len(my_message.cc) == 2)',
+                        'expected': 'True'
+                    }
                 ]
             ]            
             
@@ -126,17 +142,18 @@ class Command(BaseCommand):
                         message = message[0]
                         assert isinstance(message, MessageSchema)
 
-                        mailbox = MailBox(imapAccount, imap, is_simulate=True)
+                        mailbox = MailBox(imapAccount, imap, is_simulate=False)
                         for test_per_message_index in range(len(test_cases[msg_index])):
                             imap_res = interpret_bypass_queue(mailbox, extra_info={'code': "def on_message(my_message):\n\t" + \
                                 test_cases[msg_index][test_per_message_index]['code'].decode("utf-8", "replace"), 'msg-id': message.id})
                             # print(imap_res)
 
                             try:
-                                assert imap_res['appended_log'][message.id]['log'].rstrip("\n\r") == test_cases[msg_index][test_per_message_index]['expected']
+                                result = imap_res['appended_log'][message.id]['log'].rstrip("\n\r")
+                                assert result == test_cases[msg_index][test_per_message_index]['expected']
                             except AssertionError:
                                 print ("CASE #%d-%d %s (expected %s)" % (msg_index, test_per_message_index, \
-                                    imap_res['appended_log'][message.id]['log'].rstrip("\n\r"), test_cases[msg_index][test_per_message_index]['expected']))
+                                    result, test_cases[msg_index][test_per_message_index]['expected']))
                                 continue
 
                             print ("SUCCESS #%d-%d %s" % (msg_index, test_per_message_index, test_emails[msg_index]['subject']))

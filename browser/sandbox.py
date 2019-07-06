@@ -15,13 +15,14 @@ from engine.models.calendar import MyCalendar
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
 from schema.youps import MailbotMode, MessageSchema, TaskManager  # noqa: F401 ignore unused we use it for typing
+from http_handler.settings import TEST_ACCOUNT_EMAIL
 import sandbox_helpers
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 def interpret_bypass_queue(mailbox, extra_info):
     # type: (MailBox, t.Dict[t.AnyStr, t.Any]) -> None
 
-    assert mailbox.is_simulate, "if you change this then we risk committing fake info to user accounts"
+    assert mailbox.is_simulate or mailbox._imap_account.email == TEST_ACCOUNT_EMAIL, "if you change this then we risk committing fake info to user accounts"
 
     # set up the default result
     res = {'status': True, 'imap_error': False, 'imap_log': "", 'appended_log': {}}

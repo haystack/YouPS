@@ -194,7 +194,7 @@ class MailBox(object):
 
             yield folder
 
-    def _create_message_wrapper(self, subject="", to="", cc="", bcc="", content=""):
+    def _create_message_wrapper(self, subject="", to="", cc="", bcc="", content="", content_html=""):
         new_message = MIMEMultipart('alternative')
         new_message["Subject"] = subject
         
@@ -206,16 +206,13 @@ class MailBox(object):
         new_message["Cc"] = cc
         new_message["Bcc"] = bcc
         
-        # new_message.set_payload(content.encode('utf-8')) 
-        if "text" in content and "html" in content:
-            part1 = MIMEText(content["text"].encode('utf-8'), 'plain')
-            part2 = MIMEText(content["html"].encode('utf-8'), 'html')
-            new_message.attach(part1)
+        part1 = MIMEText(content.encode('utf-8'), 'plain')
+        new_message.attach(part1)
+        
+        if content_html:
+            part2 = MIMEText(content_html.encode('utf-8'), 'html')
             new_message.attach(part2)
-        else: 
-            part1 = MIMEText(content.encode('utf-8'), 'plain')
-            new_message.attach(part1)
-
+    
         return new_message
 
     def create_draft(self, subject="", to="", cc="", bcc="", content="", draft_folder=None):
@@ -274,11 +271,10 @@ class MailBox(object):
 
         logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
 
-    def send(self, subject="", to="", cc="", bcc="", body="", smtp=""):  # TODO add "cc", "bcc"
-        if len(to) == 0:
-            raise Exception('send(): recipient email address is not provided')
-
-        msg_wrapper = self._create_message_wrapper(subject, to, cc, bcc, body)
+    def send(self, subject="", to="", cc="", bcc="", body="", body_html="", smtp=""):  # TODO add "cc", "bcc"
+        # if len(to) == 0:
+        #     raise Exception('send(): recipient email address is not provided')
+        msg_wrapper = self._create_message_wrapper(subject, to, cc, bcc, body, body_html)
 
         if not self.is_simulate:
             # send_email(subject, self._imap_account.email, to, body)
@@ -308,9 +304,11 @@ class MailBox(object):
             else:
                 s = smtplib.SMTP(
                     self._imap_account.host.replace("imap", "smtp"), 587)
+                s.ehlo()
+                s.starttls()
+                s.ehlo
                 s.login(self._imap_account.email, decrypt_plain_password(
                     self._imap_account.password))
-                s.ehlo()
 
             receip_list = []
             for i in ["To", "Cc", "Bcc"]:
