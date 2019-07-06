@@ -3,12 +3,17 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from event import Event
 import logging
 import datetime
+import smtplib
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from smtp_handler.utils import format_email_address, send_email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from browser.imap import decrypt_plain_password
+from engine.google_auth import GoogleOauth2
+from http_handler.settings import CLIENT_ID
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -189,6 +194,26 @@ class MailBox(object):
 
             yield folder
 
+    def _create_message_wrapper(self, subject="", to="", cc="", bcc="", content="", content_html=""):
+        new_message = MIMEMultipart('alternative')
+        new_message["Subject"] = subject
+        
+        to = format_email_address(to)
+        cc = format_email_address(cc)
+        bcc = format_email_address(bcc)
+         
+        new_message["To"] = to
+        new_message["Cc"] = cc
+        new_message["Bcc"] = bcc
+        
+        part1 = MIMEText(content.encode('utf-8'), 'plain')
+        new_message.attach(part1)
+        
+        if content_html:
+            part2 = MIMEText(content_html.encode('utf-8'), 'html')
+            new_message.attach(part2)
+    
+        return new_message
 
     def create_draft(self, subject="", to="", cc="", bcc="", content="", draft_folder=None):
         """Create a draft message and save it to user's draft folder
@@ -202,26 +227,7 @@ class MailBox(object):
                 draft_folder (string): a name of draft folder 
         """
         
-        new_message = MIMEMultipart('alternative')
-        new_message["Subject"] = subject
-        
-        to = format_email_address(to)
-        cc = format_email_address(cc)
-        bcc = format_email_address(bcc)
-         
-        new_message["To"] = to
-        new_message["Cc"] = cc
-        new_message["Bcc"] = bcc
-        
-        # new_message.set_payload(content.encode('utf-8')) 
-        if "text" in content and "html" in content:
-            part1 = MIMEText(content["text"].encode('utf-8'), 'plain')
-            part2 = MIMEText(content["html"].encode('utf-8'), 'html')
-            new_message.attach(part1)
-            new_message.attach(part2)
-        else: 
-            part1 = MIMEText(content.encode('utf-8'), 'plain')
-            new_message.attach(part1)
+        new_message = self._create_message_wrapper(subject, to, cc, bcc, content)
             
         if not self.is_simulate:
             try:
@@ -265,10 +271,53 @@ class MailBox(object):
 
         logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
 
-    def send(self, subject="", to="", body="", smtp=""):  # TODO add "cc", "bcc"
-        if len(to) == 0:
-            raise Exception('send(): recipient email address is not provided')
+    def send(self, subject="", to="", cc="", bcc="", body="", body_html="", smtp=""):  # TODO add "cc", "bcc"
+        # if len(to) == 0:
+        #     raise Exception('send(): recipient email address is not provided')
+        msg_wrapper = self._create_message_wrapper(subject, to, cc, bcc, body, body_html)
 
         if not self.is_simulate:
-            send_email(subject, self._imap_account.email, to, body)
+            # send_email(subject, self._imap_account.email, to, body)
+            self._send_message( msg_wrapper )
+
         logger.debug("send(): sent a message to  %s" % str(to))
+
+    def _send_message(self, new_message_wrapper):
+        # type: (MIMEMultipart) -> None
+        """Send out a message with the user's credential  
+        """
+
+        try:
+            # SMTP authenticate
+            if self._imap_account.is_oauth:
+                oauth = GoogleOauth2()
+                response = oauth.RefreshToken(
+                    self._imap_account.refresh_token)
+
+                auth_string = oauth.generate_oauth2_string(
+                    self._imap_account.email, response['access_token'], as_base64=True)
+                s = smtplib.SMTP('smtp.gmail.com', 587)
+                s.ehlo(CLIENT_ID)
+                s.starttls()
+                s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
+
+            else:
+                s = smtplib.SMTP(
+                    self._imap_account.host.replace("imap", "smtp"), 587)
+                s.ehlo()
+                s.starttls()
+                s.ehlo
+                s.login(self._imap_account.email, decrypt_plain_password(
+                    self._imap_account.password))
+
+            receip_list = []
+            for i in ["To", "Cc", "Bcc"]:
+                if i in new_message_wrapper and new_message_wrapper[i]:
+                    receip_list.append( new_message_wrapper[i] )
+
+
+            # TODO check if it sent to cc-ers
+            s.sendmail(self._imap_account.email,
+                       ', '.join(receip_list), new_message_wrapper.as_string())
+        except Exception as e:
+            print (e)

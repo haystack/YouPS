@@ -102,46 +102,7 @@ $(document).ready(function() {
         // var datetime = format_date();
         // $( "<p>{0}</p>".format(datetime)).prependTo( "#console-output" ).addClass("info");
     }   
-
-    function create_new_tab(nav_bar) {
-        // Get ID of last tab and increment to avoid same ID
-        var id_list = [];
-        $("#editor-container .tab-pane").each(function(index,elem) {
-            id_list.push(parseInt(elem.id.split("_")[1]))
-        })
-        var id = Math.max.apply(null, id_list) + 1;
-
-        // Add tab
-        $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting <span>({0})</span></span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
-
-        // Insert tab pane first
-        var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
-            <div class='editable-container' type='new-message'></div>
-            <div class='editable-container' type='repeat'></div>
-            <div class='editable-container' type='flag-change'></div>
-            <div class='editable-container' type='deadline'></div>
-            <div class='editable-container' type='shortcut'></div>
-        </div>`.format(id);
-        $('.tab-content').append( tab_pane_content );
-
-        // Move to the newly added tab to load style properly
-        $('.nav-tabs li:nth-child(' + ($('.nav-tabs li').length-1) + ') a').click();
-
-        // Add elements in the tab pane
-        $('.tab-content').find('.tab-pane').last().append(
-            `<!-- add a new message editor button -->
-            {0}
-            <!-- add a new flag-change editor button -->
-            {1}
-            <!-- add a deadline editor button -->
-            {2}
-            <!-- add a shortcut editor button -->
-            {3}`
-            .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
-
-        unsaved_tabs.push( id );
-    }
-
+    
     function append_status_msg( msg, is_error ) {
         if(!msg) return;
 
@@ -651,7 +612,7 @@ $(document).ready(function() {
         e.preventDefault();
         trackOutboundLink('addtab');
 
-        create_new_tab(this);
+        create_mode(this);
 
         // Then save to DB.
         run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
@@ -920,6 +881,53 @@ $(document).ready(function() {
         if(get_running())
             run_code( want_test, true ); 
     });
+
+    function create_mode( nav_bar ) {
+        var params = {};
+
+        $.post('/create_mailbot_mode', params,
+            function(res) {
+                console.log(res);
+                
+                // Create success
+                if (res.status) {
+                    var id = res["mode-id"]
+
+                    // Add tab
+                    $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting <span>({0})</span></span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
+
+                    // Insert tab pane first
+                    var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
+                        <div class='editable-container' type='new-message'></div>
+                        <div class='editable-container' type='repeat'></div>
+                        <div class='editable-container' type='flag-change'></div>
+                        <div class='editable-container' type='deadline'></div>
+                        <div class='editable-container' type='shortcut'></div>
+                    </div>`.format(id);
+                    $('.tab-content').append( tab_pane_content );
+
+                    // Move to the newly added tab to load style properly
+                    $('.nav-tabs li:nth-child(' + ($('.nav-tabs li').length-1) + ') a').click();
+
+                    // Add elements in the tab pane
+                    $('.tab-content').find('.tab-pane').last().append(
+                        `<!-- add a new message editor button -->
+                        {0}
+                        <!-- add a new flag-change editor button -->
+                        {1}
+                        <!-- add a deadline editor button -->
+                        {2}
+                        <!-- add a shortcut editor button -->
+                        {3}`
+                        .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
+                        
+                }
+                else {
+                    notify(res, false);
+                }
+            }
+        );
+    }
 
     function delete_mode( id_to_delete ) {
         var params = {

@@ -259,6 +259,16 @@ def save_shortcut(request):
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 		
+@login_required
+def create_mailbot_mode(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+
+		res = engine.main.create_mailbot_mode(user, request.user.email)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception, e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
 def delete_mailbot_mode(request):
