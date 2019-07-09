@@ -634,8 +634,26 @@ class Message(object):
             html_content = additional_content + "<br><br>" + \
                 separator + "<br><br>" + content["html"]
 
-            part1 = MIMEText(text_content.encode('utf-8'), 'plain')
-            part2 = MIMEText(html_content.encode('utf-8'), 'html')
+            # We must choose the body charset manually
+            for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+                try:
+                    text_content.encode(body_charset)
+                except UnicodeError:
+                    pass
+                else:
+                    break
+            
+            # We must choose the body charset manually
+            for body_charset2 in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+                try:
+                    html_content.encode(body_charset2)
+                except UnicodeError:
+                    pass
+                else:
+                    break
+
+            part1 = MIMEText(text_content.encode(body_charset), 'plain', body_charset)
+            part2 = MIMEText(html_content.encode(body_charset2), 'html', body_charset2)
             new_message.attach(part1)
             new_message.attach(part2)
 

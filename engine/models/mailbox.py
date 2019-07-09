@@ -205,12 +205,32 @@ class MailBox(object):
         new_message["To"] = to
         new_message["Cc"] = cc
         new_message["Bcc"] = bcc
+
+        header_charset = 'ISO-8859-1'
+
+        # We must choose the body charset manually
+        for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+            try:
+                content.encode(body_charset)
+            except UnicodeError:
+                pass
+            else:
+                break
         
-        part1 = MIMEText(content.encode('utf-8'), 'plain')
+        # We must choose the body charset manually
+        for body_charset2 in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+            try:
+                content_html.encode(body_charset2)
+            except UnicodeError:
+                pass
+            else:
+                break
+
+        part1 = MIMEText(content.encode(body_charset), 'plain', body_charset)
         new_message.attach(part1)
         
         if content_html:
-            part2 = MIMEText(content_html.encode('utf-8'), 'html')
+            part2 = MIMEText(content_html.encode(body_charset2), 'html', body_charset2)
             new_message.attach(part2)
     
         return new_message
