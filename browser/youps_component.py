@@ -5,7 +5,7 @@ import json
 import logging
 from engine.constants import msg_code
 
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args)
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -59,10 +59,12 @@ def load_new_editor(request):
 
                             folders = FolderSchema.objects.filter(imap_account=imap[0])
                             c = {'rule': rule, 'folders': folders}
+                            if rule.type == "shortcut":
+                                args = EmailRule_Args.objects.filter(rule=rule)
+                                c = {'rule': rule, 'folders': folders, 'args': args}
+                            
                             # logger.info('youps/%s.html' % rule.type.replace("-", "_"))
                             template = loader.get_template('youps/components/%s.html' % rule.type.replace("-", "_"))
-
-                           
 
                             e = {'type': rule.type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
 

@@ -166,7 +166,7 @@ def email_button_view(request):
 						
 			folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
-			email_rules = EmailRule.objects.filter(mode__imap_account__email=request.user.email, type__startswith='new-message')
+			email_rules = EmailRule.objects.filter(mode__imap_account__email=request.user.email, type__startswith='shortcut')
 
 			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules}
 	except:

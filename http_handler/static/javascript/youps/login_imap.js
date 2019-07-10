@@ -1015,7 +1015,20 @@ $(document).ready(function() {
                     selected_folders.push($(this).attr('value'));
                 });
 
-                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders}); 
+                var args = [];
+                // Get params
+                if( type == "shortcut" ) {
+                    
+                    $parent_container.find('.instruction-container ul li').each(function (index, elem) {
+                        var args_name = $(elem).find(".args-name").val() || "";
+                        var args_type = $(elem).find("select").val();
+
+                        args.push({"name": args_name, "type": args_type})
+                    })
+                    debugger;
+                }
+
+                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders, "args": args}); 
             })
 
             modes[id] = {

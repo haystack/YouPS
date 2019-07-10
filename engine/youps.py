@@ -15,7 +15,7 @@ from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, ButtonChannel)
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -164,8 +164,8 @@ def create_mailbot_mode(user, email, push=True):
 	return res
 
 def delete_mailbot_mode(user, email, mode_id, push=True):
-	    res = {'status' : False}
-	
+    res = {'status' : False}
+    
     try:
         imapAccount = ImapAccount.objects.get(email=email)
         mm = MailbotMode.objects.get(id=mode_id, imap_account=imapAccount)
@@ -178,9 +178,9 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except MailbotMode.DoesNotExist:
         res['code'] = "Error during deleting the mode. Please refresh the page."
-	    except Exception, e:
-	        logger.exception(res)
-	        res['code'] = msg_code['UNKNOWN_ERROR']
+    except Exception, e:
+        logger.exception(res)
+        res['code'] = msg_code['UNKNOWN_ERROR']
     
     return res
 
@@ -290,7 +290,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         imapAccount.is_running = run_request
 
         # TODO these don't work anymore
-        # uid = fetch_latest_email_id(imapAccount, imap)
+        # uid = fetch_latest_email_id(imapAccount, imap)'
         # imapAccount.newest_msg_id = uid
 
         # remove all user's tasks of this user to keep tasks up-to-date
@@ -300,7 +300,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         for mode_index, mode in modes.iteritems():
             mode_name = mode['name'].encode('utf-8')
             mode_name = mode_name.split("<br>")[0] if mode_name else "mode"
-            logger.info(mode)
+            logger.info(mode_name)
             
             mailbotMode = MailbotMode.objects.filter(id=mode['id'], imap_account=imapAccount)
             if mailbotMode.exists():
@@ -315,26 +315,34 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             # TODO  dont remove it
             er = EmailRule.objects.filter(mode=mailbotMode)
             logger.debug("deleting er editor run request")
+            args = EmailRule_Args.objects.filter(rule=er)
+            args.delete()
             er.delete()
 
             for value in mode['editors']:
                 name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
-                logger.info("saving editor %s run request" % name)
+                logger.info(value)
                 
                 er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
-                logger.info("user %s test run " % imapAccount.email)
-
-                # # Save selected folder for the mode
+                # Save selected folder for the mode
                 for f in folders:
                     folder = FolderSchema.objects.get(imap_account=imapAccount, name=f)
                     logger.info("saving folder to the editor %s run request" % folder.name)
                     er.folders.add(folder)
 
                 er.save()
+
+                # Save shortcut email args
+                if value['type'] == "shortcut":
+                    for arg in value['args']:
+                        logger.info(arg)
+                        new_arg = EmailRule_Args(name=arg['name'], type=arg['type'], rule=er)
+                        new_arg.save()
+                
 
             logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         
