@@ -48,7 +48,7 @@ class Contact(object):
         """Get all the names associated with this contact
 
         Returns:
-            str: The names associated with this contact
+            list: The names associated with this contact
         """
         return self._schema.aliases.all().values_list('name', flat=True)
 

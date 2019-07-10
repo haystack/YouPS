@@ -4,7 +4,7 @@ Downloads an iCal url or reads an iCal file.
 from httplib2 import Http
 
 
-# default http connection to use
+# default http connection to use TODO fix this with the curent path
 default_http = Http('/home/ubuntu/production/mailx/.cache')
 
 
