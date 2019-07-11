@@ -16,7 +16,7 @@ def get_base_code(rule_type):
         "new-message": "def on_message(my_message):\n    pass",
         "deadline": "def on_deadline(my_message):\n    pass",
         "flag-change": "def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):",
-        "shortcut": "def on_command(my_message, content):\n    pass"
+        "shortcut": "def on_command(my_message, kargs):\n    pass"
     }
 
     return d[rule_type]

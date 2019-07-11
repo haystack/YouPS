@@ -23,10 +23,15 @@
 					<li class="element">
 						<input class="args-name" type="text" placeholder="name" value="{{arg.name}}"/>:
 						<select>
-							<option value="datetime">Datetime</option>
-							<option value="string">String</option>
-								<!-- <option value="mercedes">Mercedes</option>
-								<option value="audi">Audi</option> -->
+							{% with 'datetime string' as list %}
+								{% for i in list.split %}
+									{% if arg.type == i %}
+										<option value="{{i}}" selected>{{i}}</option>
+									{% else %}
+										<option value="{{i}}">{{i}}</option>
+									{% endif %}
+								{% endfor %}
+							{% endwith %}
 						</select>
 						<button class="btn">X</button>	
 					</li>

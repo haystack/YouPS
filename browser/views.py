@@ -168,7 +168,8 @@ def email_button_view(request):
 
 			email_rules = EmailRule.objects.filter(mode__imap_account__email=request.user.email, type__startswith='shortcut')
 
-			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules}
+			today = timezone.now()
+			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
 	except:
 		return {'website': WEBSITE, 'folders': []}
 

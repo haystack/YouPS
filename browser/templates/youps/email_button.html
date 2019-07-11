@@ -60,7 +60,7 @@
 			</select>		
 
 			<div id="button-container">
-                <button class='btn btn-primary' id='btn-watch'>Watch</button>
+                <button class='btn btn-primary btn-lg' id='btn-watch'>Watch</button>
 			</div>
 
 			<div id='watching-msg-container'>
@@ -76,6 +76,7 @@
 					<thead>
 						<tr>
 						<th scope="col">Name</th>
+						<th scope="col">Values</th>
 						<th scope="col">Available rules</th>
 						</tr>
 					</thead>
@@ -83,7 +84,20 @@
 						{% for er in email_rules %}
 							<tr>
 								<td>{{ er.name }}</td>
-								<td><button class='btn btn-info' er-id={{er.id}}>Select</button></td>	
+								<td>
+									{% for arg in er.args.all %}
+										<li class="element" name="{{arg.name}}" >
+											<span>{{arg.name}}:</span>
+											<!-- <input class="args-name" type="text" placeholder="name" value="{{arg.name}}"/>: -->
+											{% if arg.type == "datetime" %}
+												<input type="datetime-local" id="user-datetime" value="{{YEAR}}-{{MONTH}}-{{DAY}}T00:00" min="2010-06-07T00:00" max="2030-06-14T00:00">
+											{% elif arg.type == "string" %}
+												<input class="args-value" placeholder="write your value here"/>
+											{% endif %}
+										</li>
+									{% endfor %}
+								</td>
+								<td><button class='btn btn-info' er-id={{er.id}}>Apply</button></td>
 							</tr>
 						{% endfor %}
 					</tbody>

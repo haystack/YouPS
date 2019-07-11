@@ -340,7 +340,10 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                 if value['type'] == "shortcut":
                     for arg in value['args']:
                         logger.info(arg)
-                        new_arg = EmailRule_Args(name=arg['name'], type=arg['type'], rule=er)
+                        
+                        new_arg = EmailRule_Args(type=arg['type'], rule=er)
+                        if arg['name']:
+                            new_arg.name = arg['name']
                         new_arg.save()
                 
 

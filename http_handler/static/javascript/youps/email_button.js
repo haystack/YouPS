@@ -42,10 +42,27 @@ $(document).ready(function() {
     $( "#rule-container" ).on("click", "button", function(e) {
         // If no message
         // then alert("No message is selected! Please mark the message read/unread to select the message!");
+        if(!btn_watch.is(":hidden")) {
+            alert('No message is selected! Click "Watch" button in order to select a message');
+            return;
+        }
+        
+        if(latest_watched_message) { // TODO fix this
+            alert("No message is selected! Please mark the message read/unread to select a message!");
+            return;
+        }
+
         $(this).attr("er-id");
 
+        kargs = {};
+        $(this).parents("tr").find("li").each(function(index, elem) {
+            kargs[$(elem).attr("name")] = $(elem).find('input').val();
+        })
+
+        console.log(kargs)
+
         // TODO remove this hardcode 
-        fetch_components('datepicker');
+        // fetch_components('datepicker');
 
         // var iframe = document.createElement('iframe');
         // var html = '<body>Foo</body>';

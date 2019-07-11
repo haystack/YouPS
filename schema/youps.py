@@ -272,7 +272,7 @@ class EmailRule_Args(models.Model):
     id = models.AutoField(primary_key=True)
 
     name = models.CharField(default='name', max_length=100)
-    rule = models.ForeignKey('EmailRule', related_name="rule")
+    rule = models.ForeignKey('EmailRule', related_name="args")
     TYPE_CHOICES = (
         ("string", 'string'),
         ("datetime", 'datetime'),
