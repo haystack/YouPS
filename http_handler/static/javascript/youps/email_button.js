@@ -40,14 +40,12 @@ $(document).ready(function() {
 
     // Apply rule on the current message
     $( "#rule-container" ).on("click", "button", function(e) {
-        // If no message
-        // then alert("No message is selected! Please mark the message read/unread to select the message!");
         if(!btn_watch.is(":hidden")) {
             alert('No message is selected! Click "Watch" button in order to select a message');
             return;
         }
         
-        if(latest_watched_message) { // TODO fix this
+        if(!latest_watched_message) { 
             alert("No message is selected! Please mark the message read/unread to select a message!");
             return;
         }
@@ -60,6 +58,10 @@ $(document).ready(function() {
         })
 
         console.log(kargs)
+
+        apply_rule(latest_watched_message, kargs)
+
+        
 
         // TODO remove this hardcode 
         // fetch_components('datepicker');
@@ -109,6 +111,27 @@ $(document).ready(function() {
             if( idle_mark = document.querySelector(".idle-mark"))   
                 idle_mark.style.display = "inline-block";
         }
+    }
+
+    function apply_rule(message, kargs) {
+        var params = {
+            "component": component
+        };
+        
+        $.post('/apply_button_rule', params,
+            function(res) {
+                console.log(res);
+
+                if (res.status) {
+                    $("#option-container").append( res['template'] );
+                }
+                else {
+                    notify(res, false);
+                }
+            }
+        ).fail(function(res) {
+            alert("Please refresh the page!");
+        });
     }
 
     function fetch_components(component) {

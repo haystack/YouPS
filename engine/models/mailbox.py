@@ -340,4 +340,5 @@ class MailBox(object):
             s.sendmail(self._imap_account.email,
                        ', '.join(receip_list), new_message_wrapper.as_string())
         except Exception as e:
-            print (e)
+            logger.exception ("%s %s" % (e, traceback.format_exc()))
+            raise RuntimeError('Failed to send a message: %s' % str(e))

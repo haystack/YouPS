@@ -215,6 +215,20 @@ def login_imap(request):
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
+def apply_button_rule(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+
+		msg_schema_id = request.POST['folder']
+		kargs = request.POST['kargs']
+		
+		res = engine.main.apply_button_rule(user, request.user.email, msg_schema_id, kargs)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception, e:
+		logger.debug(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
 def fetch_execution_log(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)

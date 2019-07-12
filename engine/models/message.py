@@ -6,6 +6,7 @@ import logging
 import re
 import smtplib
 import typing as t  # noqa: F401 ignore unused we use it for typing
+import traceback
 from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from email import encoders
@@ -358,14 +359,14 @@ class Message(object):
         return Folder(self._schema.folder, self._imap_client)
 
     @property
-    def content(self, return_only_text=True):
+    def content(self):
         # type: () -> t.AnyStr
         """Get the content of the message
 
         Returns:
             dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """
-        return message_helpers.get_content_from_message(self, return_only_text)
+        return message_helpers.get_content_from_message(self)
 
     def has_flag(self, flag):
         # type: (t.AnyStr) -> bool
@@ -442,14 +443,14 @@ class Message(object):
                 self._imap_client.move([self._uid], dst_folder)
 
     def forward(self, to=[], cc=[], bcc=[], content=""):
+        to = format_email_address(to)
+        cc = format_email_address(cc)
+        bcc = format_email_address(bcc)
+
+        new_message_wrapper = self._create_message_instance(
+            "Fwd: " + self.subject, to, cc, bcc, content)
+
         if not self._is_simulate:
-            to = format_email_address(to)
-            cc = format_email_address(cc)
-            bcc = format_email_address(bcc)
-
-            new_message_wrapper = self._create_message_instance(
-                "Fwd: " + self.subject, to, cc, bcc, content)
-
             if new_message_wrapper:
                 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
                 mailbox = MailBox(self._schema.imap_account, self._imap_client)
@@ -466,7 +467,7 @@ class Message(object):
         Returns:
             bool: true if the passed in string is in the message content
         """
-        return string in self.content
+        return string in self.content["text"] if self.content["text"] else False
 
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
@@ -646,9 +647,9 @@ class Message(object):
             separator = "On %s, (%s) wrote:" % (
                 datetime.now().ctime(), self._schema.imap_account.email)
             text_content = additional_content + "\n\n" + \
-                separator + "\n\n" + content["text"]
+                separator + "\n\n" + (content["text"] if content["text"] else "")
             html_content = additional_content + "<br><br>" + \
-                separator + "<br><br>" + content["html"]
+                separator + "<br><br>" + (content["html"] if content["html"] else content["text"] or "")
 
             # We must choose the body charset manually
             for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
@@ -696,7 +697,8 @@ class Message(object):
 
             new_message_wrapper.attach(new_message)
         except Exception as e:
-            print (e)
+            logger.exception ("%s %s" % (e, traceback.format_exc()))
+            raise RuntimeError('Failed to deal with a message: %s' % str(e))
             return
         finally:
             # mark the message unread if it is unread

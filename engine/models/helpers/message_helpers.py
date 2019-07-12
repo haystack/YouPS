@@ -80,7 +80,7 @@ def _get_text_from_python_message(part):
 
 # TODO refactor this to do some kind of visitor pattern or something
 # make things open to extension but closed for modification
-def get_content_from_message(message, return_only_text=True):
+def get_content_from_message(message, return_only_text=False):
     # type: (Message) -> None
     with _open_rfc822(message) as rfc_contents:
         text = ""
