@@ -59,14 +59,17 @@ def load_new_editor(request):
 
                             folders = FolderSchema.objects.filter(imap_account=imap[0])
                             c = {'rule': rule, 'folders': folders}
-                            if rule.type == "shortcut":
+                            rule_type = rule.type
+                            if rule_type == "shortcut":
                                 args = EmailRule_Args.objects.filter(rule=rule)
                                 c = {'rule': rule, 'folders': folders, 'args': args}
+                            elif rule_type.startswith("new-message"):
+                                rule_type = "new-message"
                             
-                            # logger.info('youps/%s.html' % rule.type.replace("-", "_"))
-                            template = loader.get_template('youps/components/%s.html' % rule.type.replace("-", "_"))
+                            logger.info('youps/%s.html' % rule_type.replace("-", "_"))
+                            template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
 
-                            e = {'type': rule.type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
+                            e = {'type': rule_type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
 
                             editors.append( e )
                 # create a new rule

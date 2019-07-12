@@ -206,18 +206,18 @@ class Folder(object):
 
     def _search_scheduled_message(self, event_data_list, time_start, time_end):
         message_schemas = MessageSchema.objects.filter(
-            folder=self._schema).filter(date__range=[time_start, time_end])
+            folder=self._schema).filter(base_message__date__range=[time_start, time_end])
 
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:
             logger.info("add schedule %s %s %s" %
-                        (time_start, message_schema.date, time_end))
+                        (time_start, message_schema.base_message.date, time_end))
             event_data_list.append(NewMessageDataScheduled(
                 Message(message_schema, self._imap_client)))
 
     def _search_due_message(self, event_data_list, time_start, time_end):
         message_schemas = MessageSchema.objects.filter(
-            folder=self._schema).filter(deadline__range=[time_start, time_end])
+            folder=self._schema).filter(base_message__deadline__range=[time_start, time_end])
 
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for message_schema in message_schemas:

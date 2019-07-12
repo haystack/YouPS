@@ -511,7 +511,7 @@ class Message(object):
 
         self.reply(more_to, more_cc, more_bcc, content)
 
-    def see_later(self, later_at=60, hide_in='YoUPS see_later'):
+    def see_later(self, later_at=60, hide_in='YouPS see later'):
         if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
             raise TypeError("see_later(): later_at " +
                             later_at + " is not number or datetime")
@@ -802,7 +802,7 @@ class Message(object):
             "folder": self.folder.name,
             "subject": self.subject,
             "flags": [f.encode('utf8', 'replace') for f in self.flags],
-            "date": str(self.date),
+            "date": str(self.date.astimezone(tz('US/Eastern'))), # convert it to users timezone
             "deadline": str(self.deadline),
             "task": self.task,
             "is_read": self.is_read,

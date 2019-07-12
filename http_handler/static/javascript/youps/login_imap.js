@@ -601,7 +601,10 @@ $(document).ready(function() {
         var anchor = $(this).siblings('a');
         $(anchor.attr('href')).remove();
         $(this).parent().remove();
-        $(".nav-tabs li").children('a').first().click();
+
+        if( !$.isEmptyObject(get_modes()) )
+            // Go to first tab if current one is deleted 
+            $(".nav-tabs li").children('a').first().click();
 
         var mode_id = $(this).siblings('a').attr('href').split("_")[1];
         if( !unsaved_tabs.includes(mode_id) )
@@ -986,6 +989,7 @@ $(document).ready(function() {
             var editors = [];
 
             // get mode ID
+            if(!$(this).attr('id').includes("_")) return;
             var id = $(this).attr('id').split("_")[1];
             var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
 
@@ -1393,7 +1397,7 @@ $(document).ready(function() {
             var modes = get_modes();
 
             var params = {
-                'current_mode_id': cur_mode['id'],
+                'current_mode_id': 'id' in cur_mode? cur_mode['id']: null,
                 'modes': JSON.stringify(modes),
                 'email': $("#input-email").val(),
                 'test_run': is_dry_run,
@@ -1405,7 +1409,6 @@ $(document).ready(function() {
                     show_loader(false);
                     console.log(res);
                     
-                    // Auth success
                     if (res.status) {
                         
                         // Flush unsaved tags 
@@ -1418,7 +1421,6 @@ $(document).ready(function() {
                         }
                         else {
                             // append_log(res['imap_log'], false)
-
                             set_running(is_running);   
                         }
 
@@ -1433,6 +1435,7 @@ $(document).ready(function() {
                         }
                     }
                     else {
+                        set_running(false);   
                         notify(res, false);
                     }
                 }

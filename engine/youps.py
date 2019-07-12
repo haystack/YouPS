@@ -351,7 +351,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         
 
         if run_request:
-            imapAccount.current_mode = MailbotMode.objects.filter(id=current_mode_id, imap_account=imapAccount)[0]
+            imapAccount.current_mode = MailbotMode.objects.get(id=current_mode_id, imap_account=imapAccount)
 
             # if the code execute well without any bug, then save the code to DB
             if not res['imap_error']:
@@ -384,6 +384,9 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     except FolderSchema.DoesNotExist:
         logger.exception("failed while doing a user code run")
         logger.debug("Folder is not found, but it should exist!")
+    except MailbotMode.DoesNotExist:
+        logger.exception("No current mode exist")
+        res['code'] = "Currently no mode is selected. Select one of your mode to execute your YouPS."
     except Exception, e:
         # TODO add exception
         logger.exception("failed while doing a user code run")
