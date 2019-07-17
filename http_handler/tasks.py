@@ -4,6 +4,7 @@ from django.contrib.sites.models import Site
 from django.utils import timezone
 from browser.imap import authenticate
 from engine.models.mailbox import MailBox
+from engine.utils import dump_execution_log
 from http_handler.settings import BASE_URL, PROTOCOL
 from schema.youps import ImapAccount, EmailRule
 from smtp_handler.utils import send_email
@@ -198,17 +199,11 @@ def loop_sync_user_inbox():
                     continue
                 try:
                     res = mailbox._run_user_code()
+                    dump_execution_log(imapAccount, res['imap_log'])
                 except Exception():
                     logger.exception("Mailbox run user code failed")
 
-                if res is not None and res.get('imap_log', ''):
-                    log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
-                    log_decoded.update( res['imap_log'] )
-
-                    imapAccount.execution_log = json.dumps(log_decoded)
-                    # imapAccount.execution_log = "%s\n%s" % (
-                    #     res['imap_log'], imapAccount.execution_log)
-                    imapAccount.save()
+                
 
                 # after sync, logout to prevent multi-connection issue
                 imap.logout()

@@ -98,33 +98,6 @@ def login_imap(email, password, host, is_oauth):
 
     return res
 
-def delete_mailbot_mode(user, email, mode_id, push=True):
-    res = {'status' : False}
-
-    try:
-        imapAccount = ImapAccount.objects.get(email=email)
-        mm = MailbotMode.objects.get(uid=mode_id, imap_account=imapAccount)
-
-        if imapAccount.current_mode == mm:
-            imapAccount.current_mode = None
-            imapAccount.is_running = False
-
-        mm.delete()
-
-        res['status'] = True
-
-    except ImapAccount.DoesNotExist:
-        res['code'] = "Error during deleting the mode. Please refresh the page."
-    except MailbotMode.DoesNotExist:
-        res['code'] = "Error during deleting the mode. Please refresh the page."
-    except Exception, e:
-        # TODO add exception
-        print e
-        res['code'] = msg_code['UNKNOWN_ERROR']
-
-    logging.debug(res)
-    return res
-
 def fetch_execution_log(user, email, push=True):
     res = {'status' : False}
 
@@ -143,6 +116,39 @@ def fetch_execution_log(user, email, push=True):
 
     return res
 
+def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
+	res = {'status' : False}
+	
+	try:
+		logger.info("here")
+		imapAccount = ImapAccount.objects.get(email=email)
+		auth_res = authenticate( imapAccount )
+		if not auth_res['status']:
+		    raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+		imap = auth_res['imap']  # noqa: F841 ignore unused
+
+        #  read from DB and convert to the type accordingly 
+		for key, value in kargs.iteritems():
+		    er_arg = EmailRule_Args.objects.get(rule__mode__imap_account=imapAccount, name=key)
+		    if er_arg.type == "datetime":
+		        kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
+
+		mailbox = MailBox(imapAccount, imap, is_simulate=False)
+		er = EmailRule.objects.get(id=er_id)
+		res = interpret_bypass_queue(mailbox, extra_info={"msg-id": msg_schema_id, "code": er.code, "shortcut": kargs, "rule_name": er.name})
+		
+		res['status'] = True
+	
+	except ImapAccount.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except MailbotMode.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except Exception as e:
+	    logger.exception(e)
+	    res['code'] = msg_code['UNKNOWN_ERROR']
+	return res
+    
 def create_mailbot_mode(user, email, push=True):
 	res = {'status' : False}
 	
@@ -192,10 +198,11 @@ def fetch_watch_message(user, email, folder_name):
         imapAccount = ImapAccount.objects.get(email=email)
         bc = ButtonChannel.objects.filter(message__imap_account=imapAccount).filter(message__folder__name=folder_name).latest('timestamp')
         res['folder'] = bc.message.folder.name
-        res['uid'] = bc.message.uid 
+        res['uid'] = bc.message.id 
 
         message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
         res['message'] = message._get_meta_data_friendly() 
+        res['sender'] = message._get_from_friendly()
         res['watch_status'] = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name).exists()
 
         res['status'] = True
@@ -649,6 +656,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                    ))
 			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=each)
 			                bc = ButtonChannel(message=message)
+			                logger.exception(message.base_message.subject)
 			                bc.save()
 
 			            except MessageSchema.DoesNotExist:

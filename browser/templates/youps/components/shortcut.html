@@ -21,7 +21,7 @@
 			<ul id="arg-list-{{rule.id}}">
 				{% for arg in args %}
 					<li class="element">
-						<input class="args-name" type="text" placeholder="name" value="{{arg.name}}"/>:
+						<input class="args-name" type="text" placeholder="name" value="{{arg.name}}" maxlength="100"/>:
 						<select>
 							{% with 'datetime string' as list %}
 								{% for i in list.split %}
@@ -64,6 +64,13 @@
 						e.target.parentNode.remove();
 					}
 				})
+
+				// Text validation of args name
+				$('#arg-list-{{rule.id}}').on("keyup", 'input[type="text"]', function() {
+					var raw_text =  $(this).val();
+					var return_text = raw_text.replace(/[^a-zA-Z0-9_]/g,'');
+					$(this).val(return_text);
+				});
 
 				$("#display").click(function(){
 					$(this).hide();

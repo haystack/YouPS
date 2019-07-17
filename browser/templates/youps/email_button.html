@@ -49,7 +49,8 @@
 			<h3>YouPS button</h3>
 			<hr>
 
-	        <select name="folder">
+			<label for="folder-dropdown">Folder: </label>
+	        <select id="folder-dropdown" name="folder">
                 {% for folder in folders %}
                     {% if folder|lower == "inbox" %}
                         <option selected="selected">{{ folder }}</option>
@@ -64,7 +65,9 @@
 			</div>
 
 			<div id='watching-msg-container'>
-					
+				<span name="sender"></span>
+				<span name="subject"></span>
+				<span name="date"></span>
 			</div>
 
 			<div id='selected-rule-container'>
@@ -102,17 +105,29 @@
 						{% endfor %}
 					</tbody>
 				</table>
-
-				<div id='option-container'>
-						
-				</div>
 			</div>
+
+			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
 
 			<div id='result-container'>
-
+					<h2>History</h2>
+					<table id="console-table" class="table" style="width:100%">
+						<thead>
+							<tr>
+							  <th>Date</th>
+							  <th>Trigger</th>
+							  <th>Sender</th>
+							  <th>Message</th>
+							  <th>Log</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+					<div class="text-center">
+						<button id="btn-log-load-more" style="display:none" class="btn btn-primary">Load more</button>
+					</div>
 			</div>
-			
-			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
 		</div>
 	</div>
 	<script type="text/javascript">
@@ -134,16 +149,6 @@
 
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
 
-	<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
-	<script type="text/javascript" src="/static/javascript/youps/console/underscore.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/backbone.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/backbone-localStorage.min.js"></script>
-
-	<!-- Some extras for the demo: -->
-	<script type="text/javascript" src="/static/javascript/youps/console/lettering.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/prettify.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/DAT.GUI.min.js"></script>
-
 	<script src="/static/javascript/youps/jquery-ui.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
 
@@ -159,5 +164,6 @@
 	<script src="/static/javascript/youps/jsonpanel.js"></script>
 	<script src="/static/javascript/youps/tests.js"></script>
 
+	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/email_button.js"></script>
 {% endblock %}

@@ -83,6 +83,7 @@ shared_patterns = [
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),
     url(r'^save_shortcut', 'browser.views.save_shortcut'),
                     
+    url(r'^apply_button_rule', 'browser.views.apply_button_rule'),                
     url(r'^create_mailbot_mode', 'browser.views.create_mailbot_mode'),
     url(r'^delete_mailbot_mode', 'browser.views.delete_mailbot_mode'),
     url(r'^fetch_execution_log', 'browser.views.fetch_execution_log'),

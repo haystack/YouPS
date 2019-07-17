@@ -4,6 +4,7 @@ import logging
 import re
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
+import json 
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
@@ -256,6 +257,15 @@ def references_algorithm(start_msg):
     assert isinstance(root.children, list)
 
     # TODO PART 5 and PART 6 RFC 5256
+
+def dump_execution_log(imapAccount, new_log):
+    if new_log is not None:
+        logger.exception(new_log)
+        log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
+        log_decoded.update( new_log )
+
+        imapAccount.execution_log = json.dumps(log_decoded)
+        imapAccount.save()
 
 
 # REGEXES

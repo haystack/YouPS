@@ -22,14 +22,17 @@ $(document).ready(function() {
           });
         };
     }
+    
+    if(is_authenticated) 
+        fetch_log();
 
     btn_watch.click(function (e) {
-        $(this).hide();
+        spin_watch_btn(true);
 
         request_watch_message();
         
         // Call this after some delay so the server has enough time to set up IDLE()
-        setTimeout(fetch_watch_message, 1 * 1000); // 1 second
+        setTimeout(fetch_watch_message, 1 * 1500); // 1 second
     });
 
     $( "select[name='folder']" ).change(function() {
@@ -40,7 +43,7 @@ $(document).ready(function() {
 
     // Apply rule on the current message
     $( "#rule-container" ).on("click", "button", function(e) {
-        if(!btn_watch.is(":hidden")) {
+        if( !btn_watch.hasClass("spinning") ) {
             alert('No message is selected! Click "Watch" button in order to select a message');
             return;
         }
@@ -50,8 +53,8 @@ $(document).ready(function() {
             return;
         }
 
-        $(this).attr("er-id");
-
+        
+        // TODO need to let the system know the type of each attribute
         kargs = {};
         $(this).parents("tr").find("li").each(function(index, elem) {
             kargs[$(elem).attr("name")] = $(elem).find('input').val();
@@ -59,7 +62,7 @@ $(document).ready(function() {
 
         console.log(kargs)
 
-        apply_rule(latest_watched_message, kargs)
+        apply_rule($(this).attr("er-id"), latest_watched_message, kargs)
 
         
 
@@ -113,9 +116,25 @@ $(document).ready(function() {
         }
     }
 
-    function apply_rule(message, kargs) {
+    function spin_watch_btn(is_watching) {
+        if(is_watching) {
+            // Disable and show spinning bar
+            btn_watch.attr("disabled", true);
+            btn_watch.text("Watching");
+            btn_watch.addClass("spinning");
+        } else {
+            watching_msg_container.text("");
+            btn_watch.removeClass("spinning");
+            btn_watch.text("Watch");
+            btn_watch.removeAttr("disabled");
+        }
+    }
+
+    function apply_rule(er_id, message, kargs) {
         var params = {
-            "component": component
+            "er_id": er_id,
+            "msg_id": message,
+            "kargs": JSON.stringify(kargs)
         };
         
         $.post('/apply_button_rule', params,
@@ -123,7 +142,7 @@ $(document).ready(function() {
                 console.log(res);
 
                 if (res.status) {
-                    $("#option-container").append( res['template'] );
+                    notify(res, true);
                 }
                 else {
                     notify(res, false);
@@ -166,19 +185,24 @@ $(document).ready(function() {
 
                 if (res.status) {
                     if ( !res['watch_status'] ) {
-                        btn_watch.show();
+                        spin_watch_btn(false);
                         return;
                     }
 
                     // TODO if the message is from a different folder, noop 
-
+                    // TODO change uid-> message schema id
                     if( latest_watched_message != res['uid'] ) {
-                        watching_msg_container.text( res['message']['subject'] + " (" + res['message']['date'] + ")"  );
+                        watching_msg_container.find("[name='sender']").text( "{0} <{1}>".format(res['sender']['name'], res['sender']['email']) );
+                        watching_msg_container.find("[name='subject']").text( res['message']['subject'] );
+                        watching_msg_container.find("[name='date']").text( res['message']['date'] );
+                        // watching_msg_container.text( res['message']['subject'] + " (" + res['message']['date'] + ")"  );
                     }
                     
                     latest_watched_message = res['uid'];
                 }
-                else if (!res['uid']) {}
+                else if (!res['uid']) {
+                    watching_msg_container.find("span").text("");
+                }
                 else {
                     notify(res, false);
                 }

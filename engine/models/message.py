@@ -178,6 +178,9 @@ class Message(object):
             value = timezone.localtime(value)
             logger.info(value)
 
+        logger.info(self.subject)
+        logger.info(self._is_simulate)
+        
         if not self._is_simulate:
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
@@ -192,7 +195,7 @@ class Message(object):
         """
         return self._schema.base_message.task
 
-    @deadline.setter
+    @task.setter
     def task(self, value):
         # type: (t.AnyStr) -> None
         self._schema.task = value
