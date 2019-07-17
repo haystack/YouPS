@@ -260,7 +260,6 @@ def references_algorithm(start_msg):
 
 def dump_execution_log(imapAccount, new_log):
     if new_log is not None:
-        logger.exception(new_log)
         log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
         log_decoded.update( new_log )
 

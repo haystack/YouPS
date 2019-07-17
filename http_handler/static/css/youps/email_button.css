@@ -5,6 +5,10 @@
 
 #watching-msg-container {
     font-size: 20px;
+    background: white;
+    border-radius: 5px;
+    padding-left: 10px;
+    margin-bottom: 30px;
 }
 #watching-msg-container [name="subject"]{
     font-weight: bold;
@@ -16,7 +20,6 @@
 
 #btn-watch {
     margin-top: 30px;
-    margin-bottom: 10px;
     display: inline-block;
     position: relative;
     transition: padding-right 0.3s ease;
@@ -75,3 +78,7 @@
       margin: -8px 5px 0 0;
     }
   }
+
+#info-msg   {
+    display: none;
+}

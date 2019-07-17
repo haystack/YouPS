@@ -122,11 +122,13 @@ $(document).ready(function() {
             btn_watch.attr("disabled", true);
             btn_watch.text("Watching");
             btn_watch.addClass("spinning");
+            $("#info-msg").show();
         } else {
             watching_msg_container.text("");
             btn_watch.removeClass("spinning");
             btn_watch.text("Watch");
             btn_watch.removeAttr("disabled");
+            $("#info-msg").hide();
         }
     }
 

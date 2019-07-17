@@ -111,19 +111,6 @@ function fetch_log() {
                 }
                 
                 log_backup = res['imap_log'];
-
-                // if status_msg exists, it means a code is running 
-                if( $.trim( res['user_status_msg'] ) != "")
-                    set_running(true)
-                else set_running(false)
-
-                // Update status msg
-                if( user_status_backup != res['user_status_msg']){
-                    $("#user-status-msg").html("");
-                    append_status_msg(res['user_status_msg'], false);
-                }
-                
-                user_status_backup = res['user_status_msg'];
             }
             else {
                 notify(res, false);
