@@ -80,9 +80,10 @@ def interpret_bypass_queue(mailbox, extra_info):
                 res['appended_log'][message_schema.id] = msg_log
 
                 if not mailbox.is_simulate:
-                    msg_log.update( print_execution_log(new_message) )
-                    msg_log["trigger"] = extra_info["rule_name"] or "untitled" if "rule_name" in extra_info else "untitled"
-                    log_to_dump = {msg_log["timestamp"]: msg_log}
+                    msg_log2 = copy.deepcopy(msg_log)
+                    msg_log2.update( print_execution_log(new_message) )
+                    msg_log2["trigger"] = extra_info["rule_name"] or "untitled" if "rule_name" in extra_info else "untitled"
+                    log_to_dump = {msg_log2["timestamp"]: msg_log2}
                     dump_execution_log(mailbox._imap_account, log_to_dump)
 
                 # clear current input buffer

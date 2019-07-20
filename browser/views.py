@@ -175,7 +175,7 @@ def email_button_view(request):
 
 def load_components(request):
 	res = {"status": True, "code": 200}
-
+	
 	try:
 		component = request.POST['component']
 		logger.info(component)

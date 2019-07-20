@@ -120,8 +120,20 @@ class Command(BaseCommand):
                         'expected': 'True'
                     },
                     {
+                        'code': 'print ("cc1@qwer.com" in my_message.cc)',
+                        'expected': 'True'
+                    },
+                    {
                         'code': 'print (len(my_message.cc) == 2)',
                         'expected': 'True'
+                    }, 
+                    {
+                        'code': """my_message.add_flags("test")\n\tprint (my_message.has_flag("test"))""",
+                        'expected': 'True'
+                    }, 
+                    {
+                        'code': """my_message.remove_flags("test")\n\tprint (my_message.has_flag("test"))""",
+                        'expected': 'False'
                     }
                 ]
             ]            
@@ -149,6 +161,7 @@ class Command(BaseCommand):
                             # print(imap_res)
 
                             try:
+                                # print(imap_res['appended_log'][message.id])
                                 result = imap_res['appended_log'][message.id]['log'].rstrip("\n\r")
                                 assert result == test_cases[msg_index][test_per_message_index]['expected']
                             except AssertionError:
@@ -156,7 +169,7 @@ class Command(BaseCommand):
                                     result, test_cases[msg_index][test_per_message_index]['expected']))
                                 continue
 
-                            print ("SUCCESS #%d-%d %s" % (msg_index, test_per_message_index, test_emails[msg_index]['subject']))
+                            print ("SUCCESS #%d-%d %s" % (msg_index, test_per_message_index, message.base_message.subject))
             except Exception, e:
                 print("failed while doing a user code run %s %s " % (e, traceback.format_exc()))
             finally:

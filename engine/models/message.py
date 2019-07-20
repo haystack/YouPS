@@ -138,7 +138,7 @@ class Message(object):
         Returns:
             List(str): List of flags on the message
         """
-        return self._flags if self._is_simulate else self._schema.flags
+        return self._flags
 
     @property
     def in_reply_to(self):
@@ -386,13 +386,17 @@ class Message(object):
 
         This method can also optionally take a single string as a flag.
         """
+        if not isinstance(flags, list):
+            flags = [flags]
+
         if self._is_simulate:
             flags = message_helpers._check_flags(self, flags)
         # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self._is_simulate:
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
 
-        message_helpers._save_flags(self, list(set(self.flags + flags)))
+        self._flags = list(set(self.flags + flags))
+        # message_helpers._save_flags(self, list(set(self.flags + flags)))
 
     def remove_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
@@ -400,13 +404,17 @@ class Message(object):
 
         This method can also optionally take a single string as a flag.
         """
+        if not isinstance(flags, list):
+            flags = [flags]
+            
         if self._is_simulate:
             flags = message_helpers._check_flags(self, flags)
         if not self._is_simulate:
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
 
         # update the local flags
-        message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
+        self._flags = list(set(self.flags) - set(flags))
+        # message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -537,6 +545,7 @@ class Message(object):
 
             import random
 
+            # find message schema (at folder MOVED_TO) of base message then move back to original message schema 
             er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later',
                            code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nif msg:\n    imap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
             er.save()
