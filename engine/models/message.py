@@ -406,7 +406,7 @@ class Message(object):
         """
         if not isinstance(flags, list):
             flags = [flags]
-            
+
         if self._is_simulate:
             flags = message_helpers._check_flags(self, flags)
         if not self._is_simulate:
@@ -523,6 +523,12 @@ class Message(object):
         self.reply(more_to, more_cc, more_bcc, content)
 
     def see_later(self, later_at=60, hide_in='YouPS see later'):
+        """Hide a message to a folder and move it back to a original folder
+
+        Args:
+            later_at (int): when to move this message back to inbox (in minutes)
+            hide_in (string): a name of folder to hide this message temporarily
+        """
         if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
             raise TypeError("see_later(): later_at " +
                             later_at + " is not number or datetime")
@@ -543,13 +549,11 @@ class Message(object):
         if not self._is_simulate:
             self.move(hide_in)
 
-            import random
-
-            # find message schema (at folder MOVED_TO) of base message then move back to original message schema 
-            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later',
-                           code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nif msg:\n    imap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
+            # find message schema (at folder hide_in) of base message then move back to original message schema 
+            code = 'msg_schema = MessageSchema.objects.get(base_message__id=%d, folder__name="%s")\nimap.select_folder("%s")\nmsg=Message(msg_schema, imap)\nmsg.move("%s")' % (self._schema.base_message.id, hide_in, hide_in, current_folder)
+            er = EmailRule(name='see later', type='see-later', code=code)
             er.save()
-
+            
             t = TaskManager(email_rule=er, date=later_at,
                             imap_account=self._schema.imap_account)
             t.save()

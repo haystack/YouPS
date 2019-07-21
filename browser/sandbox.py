@@ -291,14 +291,6 @@ def interpret(mailbox, mode):
                 continue
 
             new_msg = {}
-            # from_field = event_data.message._get_from_friendly()
-
-            # to_field = event_data.message._get_to_friendly()
-
-            # cc_field = event_data.message._get_cc_friendly()
-
-            # # This is to log for users
-            # new_msg = event_data.message._get_meta_data_friendly()
 
             new_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
             new_msg["type"] = "see-later"
@@ -310,6 +302,8 @@ def interpret(mailbox, mode):
             copy_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
 
             try:
+                user_environ['MessageSchema'] = MessageSchema
+                user_environ['Message'] = Message
                 user_environ['imap'] = mailbox._imap_client
         
                 code = task.email_rule.code
