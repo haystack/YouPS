@@ -71,7 +71,8 @@ shared_patterns = [
         include('registration.backends.default.urls')),
 
     # mailbot
-    url(r'^editor', 'browser.views.login_imap_view'),
+    url(r'^editor', 'browser.views.login_imap_view', name="editor"),
+    url(r'^email_auth', 'browser.views.authorize_email', name="email_auth"),
     url(r'^docs', 'browser.views.docs_view'),
     url(r'^about', 'browser.views.about_view'),
     url(r'^calendar', 'browser.views.calendar_view'),
@@ -81,7 +82,7 @@ shared_patterns = [
     url(r'^run_mailbot', 'browser.views.run_mailbot'),
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),
     url(r'^save_shortcut', 'browser.views.save_shortcut'),
-                    
+
     url(r'^create_mailbot_mode', 'browser.views.create_mailbot_mode'),
     url(r'^delete_mailbot_mode', 'browser.views.delete_mailbot_mode'),
     url(r'^fetch_execution_log', 'browser.views.fetch_execution_log'),

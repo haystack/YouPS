@@ -1,0 +1,120 @@
+<!-- This is the template for the email authorization page. The user is
+    redirected here so that they can give YouPS access to their email.
+    TODO(lukemurray): do we need helper text to explain things to the user.
+-->
+
+{% extends website|add:"/base.html" %} {% block content %}
+
+<div class="container">
+  <div class="group-container">
+    <h3>YouPS Email Authorization</h3>
+
+    <!-- show any form errors here -->
+    {% if errors %}
+        <div>
+        {% for error in errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error|escape }}
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+
+    <form action="/email_auth" method="POST">{% csrf_token %}
+        <!-- radios for switching from oauth to plain text -->
+      <label class="radio-inline">
+        <input
+          type="radio"
+          name="use_oauth"
+          id="oauth-radio"
+          value="oauth"
+          checked
+        />
+        Oauth
+      </label>
+      <label class="radio-inline">
+        <input
+          type="radio"
+          name="use_oauth"
+          id="plaintext-radio"
+          value="plaintext"
+        />
+        Plaintext
+      </label>
+      <!-- oauth fields, only shown when oauth radio button is checked -->
+      <fieldset id="oauth-fieldset">
+        <legend>OAuth Login</legend>
+        <a
+          class="btn btn-info oauth"
+          style="color:white;"
+          target="_blank"
+          href="https://accounts.google.com/o/oauth2/auth?client_id=1035128514395-ljeutpptbag8unpv2lgo1k93eiq006f6.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&response_type=code&scope=https%3A%2F%2Fmail.google.com%2F"
+          >Get access code</a
+        >
+        <div class="form-group">
+          <label for="oauth-access-code">Access code</label>
+          <input
+            type="text"
+            class="form-control"
+            id="oauth-access-code"
+            placeholder="Paste your access code"
+            name="oauth-code"
+          />
+        </div>
+      </fieldset>
+      <!-- plain text fields only shown when plain text radio button is checked -->
+      <fieldset id="plaintext-fieldset" hidden>
+        <legend>Password Login</legend>
+        <div class="form-group">
+          <label for="input-password">Access code</label>
+          <input
+            type="password"
+            class="form-control"
+            id="input-password"
+            placeholder="Your email password"
+            name="password"
+          />
+        </div>
+        <div class="form-group">
+          <label for="imap-host">Host</label>
+          <input
+            type="text"
+            class="form-control"
+            id="imap-host"
+            value="imap.gmail.com"
+            name="imap-host"
+          />
+        </div>
+      </fieldset>
+      <input type="submit" value="Grant Access" />
+    </form>
+  </div>
+</div>
+
+<!-- end block content -->
+{% endblock %} {% block customjs %}
+
+<script>
+
+
+  $(document).ready(function() {
+    // custom script to hide or show the oauth or plain text fieldset based
+    // on the radio buttons
+    // listen to radio button change
+    $('input[type=radio][name="use_oauth"]').change(function() {
+      // if oauth is selected hide password and show oauth
+      if (this.value == "oauth") {
+        $("#oauth-fieldset").removeProp("hidden");
+        $("#plaintext-fieldset").attr("hidden", "");
+      }
+      // if password is selected hide oauth and show password
+      else if (this.value == "plaintext") {
+        $("#oauth-fieldset").attr("hidden", "");
+        $("#plaintext-fieldset").removeProp("hidden");
+      }
+    });
+  });
+</script>
+
+<!-- end block custom js -->
+{% endblock %}
