@@ -901,7 +901,7 @@ $(document).ready(function() {
                 var args = [];
                 // Get params
                 if( type == "shortcut" ) {
-                    
+                    debugger;
                     $parent_container.find('.instruction-container ul li').each(function (index, elem) {
                         var args_name = $(elem).find(".args-name").val() || "";
                         var args_type = $(elem).find("select").val();
