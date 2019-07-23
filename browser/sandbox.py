@@ -76,6 +76,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 fakeprint(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
+                logger.exception(msg_log)
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
 
@@ -180,16 +181,6 @@ def interpret(mailbox, mode):
 
         # iterate through event queue
         for event_data in mailbox.event_data_list:
-            # if the the engine is not turned on yet, still leave the log of message arrival
-            # TODO fix this. should be still able to show incoming message when there is mode exists and no rule triggers it
-            if mode is None:
-                msg_log = print_execution_log(event_data.message)
-
-                # logger.info(new_msg)
-                new_log[msg_log["timestamp"]] = msg_log
-
-                continue
-
             # Iterate through email rule at the current mode
             # TODO maybe use this instead of mode.rules
             for rule in EmailRule.objects.filter(mode=mode):
@@ -204,7 +195,7 @@ def interpret(mailbox, mode):
                 valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                 code = rule.code
 
-                logger.debug(code)
+                logger.info(code)
 
                 # add the user's functions to the event handlers
                 # basically at the end of the user's code we need to attach the user's code to
