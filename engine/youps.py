@@ -639,7 +639,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			        # EXISTS command mean: if the size of the mailbox changes (e.g., new messages)
 			        logger.info(result)
 			        imap.idle_done()
-			        result = imap.search('UID %d' % result[0][2][1])
+                    try:
+			            result = imap.search('UID %d' % result[0][2][1])
+                    except Exception as e:
+                        # prevent reacting to msg move/remove 
+                        logger.critical(e)
+                        continue
+                        
 			        logger.info('{0} new unread messages - {1}'.format(
 			            len(result),result
 			            ))
