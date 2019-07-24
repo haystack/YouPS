@@ -7,6 +7,7 @@ import re
 import smtplib
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import traceback
+import json
 from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from email import encoders
@@ -550,9 +551,14 @@ class Message(object):
             self.move(hide_in)
 
             # find message schema (at folder hide_in) of base message then move back to original message schema 
-            code = 'msg_schema = MessageSchema.objects.get(base_message__id=%d, folder__name="%s")\nimap.select_folder("%s")\nmsg=Message(msg_schema, imap)\nmsg.move("%s")' % (self._schema.base_message.id, hide_in, hide_in, current_folder)
-            er = EmailRule(name='see later', type='see-later', code=code)
+            code= {"base_message_id": self._schema.base_message.id,
+                "hide_in": hide_in,
+                "current_folder": current_folder}
+            
+            er = EmailRule(name='see later', type='see-later', code=json.dumps(code))
             er.save()
+
+            
             
             t = TaskManager(email_rule=er, date=later_at,
                             imap_account=self._schema.imap_account)

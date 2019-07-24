@@ -5,6 +5,7 @@ import datetime
 import logging
 import sys
 import traceback
+import json
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from StringIO import StringIO
 
@@ -197,7 +198,7 @@ def interpret(mailbox, mode):
                 valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                 code = rule.code
 
-                logger.info(code)
+                # logger.info(code)
 
                 # add the user's functions to the event handlers
                 # basically at the end of the user's code we need to attach the user's code to
@@ -287,21 +288,22 @@ def interpret(mailbox, mode):
 
             new_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
             new_msg["type"] = "see-later"
-            # new_msg["from_"] = from_field
-            # new_msg["to"] = to_field
-            # new_msg["cc"] = cc_field
 
             copy_msg = copy.deepcopy(new_msg)
             copy_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
 
             try:
-                user_environ['MessageSchema'] = MessageSchema
-                user_environ['Message'] = Message
-                user_environ['imap'] = mailbox._imap_client
-        
-                code = task.email_rule.code
-                logger.critical("%s %s %s" % (task.date, now, code))
-                exec(code, user_environ)
+                if new_msg["type"] == "see-later":
+                    user_environ = json.loads(task.email_rule.code) if len(task.email_rule.code) else {}
+                    
+                    msg_schema = MessageSchema.objects.get(base_message__id=user_environ["base_message_id"], folder__name=user_environ["hide_in"])
+                    mailbox._imap_client.select_folder(user_environ["hide_in"])
+                    msg=Message(msg_schema, mailbox._imap_client)
+                    msg.move(user_environ["current_folder"])
+                else:
+                    # TODO replace with Task schema and make it more extensible
+                    # TODO task; id, type="hide-show", string='{}'
+                    pass
                 is_fired = True
             except Exception as e:
                 logger.critical("Error during task managing %s " % e)
