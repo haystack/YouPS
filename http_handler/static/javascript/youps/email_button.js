@@ -187,6 +187,7 @@ $(document).ready(function() {
 
                 if (res.status) {
                     if ( !res['watch_status'] ) {
+                        latest_watched_message = null;
                         spin_watch_btn(false);
                         return;
                     }

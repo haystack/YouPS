@@ -76,16 +76,16 @@ def interpret_bypass_queue(mailbox, extra_info):
                 fakeprint(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
-                logger.exception(msg_log)
+                logger.debug(msg_log)
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
 
                 if not mailbox.is_simulate:
                     msg_log2 = print_execution_log(new_message)
                     msg_log2.update( copy.deepcopy(msg_log) )
-                    logger.exception(msg_log2)
+                    logger.debug(msg_log2)
                     msg_log2["trigger"] = extra_info["rule_name"] or "untitled" if "rule_name" in extra_info else "untitled"
-                    logger.exception(msg_log2)
+                    logger.debug(msg_log2)
                     log_to_dump = {msg_log2["timestamp"]: msg_log2}
                     dump_execution_log(mailbox._imap_account, log_to_dump)
 
