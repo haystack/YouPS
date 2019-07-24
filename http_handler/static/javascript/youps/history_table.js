@@ -1,5 +1,5 @@
 var _message_data, _contact_data; // This global variable to pass around the row data
-var log_backup = "", user_status_backup = "";
+var log_backup = {}, user_status_backup = "";
 
 function append_log( msg_log, is_error ) {
     if(!msg_log) return;  
@@ -79,11 +79,11 @@ function fetch_log() {
             // Auth success
             if (res.status) {
                 // Update execution log
-                if( log_backup != res['imap_log']){
+                if( Object.keys(log_backup).length != Object.keys(JSON.parse(res['imap_log'])).length){
                     msg_log = JSON.parse(res['imap_log']);
 
                     // if it's a first time loading the log, display only recent 10 messages then enalbe 'load more' btn.
-                    if(log_backup == '') {
+                    if(Object.keys(log_backup).length == 0) {
                         var recent_keys = Object.keys(msg_log).sort(function(a, b) {return a>b;}).slice(-10);
                         append_log( recent_keys.reduce(function(o, k) { o[k] = msg_log[k]; return o; }, {}) );
                         
@@ -96,7 +96,7 @@ function fetch_log() {
                     }
 
                     else {
-                        old_log = JSON.parse(log_backup == '' ? '{}':log_backup)
+                        old_log = log_backup;
 
                         // append new logs from the server
                         var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();
@@ -109,8 +109,7 @@ function fetch_log() {
 
                     
                 }
-                
-                log_backup = res['imap_log'];
+                log_backup = JSON.parse(res['imap_log']);
             }
             else {
                 notify(res, false);

@@ -68,7 +68,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 elif "on_deadline" in code:
                     exec(code + "\non_deadline(new_message)", user_environ)    
 
-            except Exception:
+            except Exception:   
                 # Get error message for users if occurs
                 # print out error messages for user
                 logger.exception("failure simulating user %s code" % mailbox._imap_account.email)
@@ -81,9 +81,11 @@ def interpret_bypass_queue(mailbox, extra_info):
                 res['appended_log'][message_schema.id] = msg_log
 
                 if not mailbox.is_simulate:
-                    msg_log2 = copy.deepcopy(msg_log)
-                    msg_log2.update( print_execution_log(new_message) )
+                    msg_log2 = print_execution_log(new_message)
+                    msg_log2.update( copy.deepcopy(msg_log) )
+                    logger.exception(msg_log2)
                     msg_log2["trigger"] = extra_info["rule_name"] or "untitled" if "rule_name" in extra_info else "untitled"
+                    logger.exception(msg_log2)
                     log_to_dump = {msg_log2["timestamp"]: msg_log2}
                     dump_execution_log(mailbox._imap_account, log_to_dump)
 
