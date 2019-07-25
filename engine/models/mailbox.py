@@ -5,11 +5,13 @@ import logging
 import datetime
 import smtplib
 import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
+from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from smtp_handler.utils import format_email_address, send_email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from engine.models.event_data import NewMessageDataDue
 
 from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
@@ -106,14 +108,21 @@ class MailBox(object):
         """Add task to event_data_list, if there is message arrived in time span [last checked time, span_end]
         """ 
         time_span = 0
-        
-        for folder_schema in email_rule.folders.all():
-            folder = Folder(folder_schema, self._imap_client)
-            time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
-            time_end = now - datetime.timedelta(seconds=time_span)
+        time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
+        time_end = now - datetime.timedelta(seconds=time_span)
 
-            logger.info("deadline range %s %s" % (time_start, time_end))
-            folder._search_due_message(self.event_data_list, time_start, time_end)
+        message_schemas = BaseMessage.objects.filter(deadline__range=[time_start, time_end])
+        from engine.models.message import Message
+
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        for bm_schema in message_schemas:
+            logger.info("add deadline queue %s %s %s" %
+                        (time_start, bm_schema.deadline, time_end))
+            
+            # TODO Maybe we should find a better way to pick a message schema
+            message_schema = bm_schema.messages.all()[0]
+            self.event_data_list.append(NewMessageDataDue(
+                Message(message_schema, self._imap_client)))
 
     def _supports_cond_store(self):
         # type: () -> bool

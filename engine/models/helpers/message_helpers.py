@@ -111,8 +111,8 @@ def get_content_from_message(message, return_only_text=False):
             else:
                 logger.critical(
                     "%s unsupported sub type %s" % (message, sub_type))
-                raise NotImplementedError(
-                    "Unsupported sub type %s" % sub_type)
+                # raise NotImplementedError(
+                #     "Unsupported sub type %s" % sub_type)
 
         # I think this is less confusing than returning an empty string - LM
         text = text if text else None

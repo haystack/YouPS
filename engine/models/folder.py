@@ -215,17 +215,6 @@ class Folder(object):
             event_data_list.append(NewMessageDataScheduled(
                 Message(message_schema, self._imap_client)))
 
-    def _search_due_message(self, event_data_list, time_start, time_end):
-        message_schemas = MessageSchema.objects.filter(
-            folder=self._schema).filter(base_message__deadline__range=[time_start, time_end])
-
-        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
-        for message_schema in message_schemas:
-            logger.info("add deadline queue %s %s %s" %
-                        (time_start, message_schema.deadline, time_end))
-            event_data_list.append(NewMessageDataDue(
-                Message(message_schema, self._imap_client)))
-
     def _should_completely_refresh(self, uid_validity):
         # type: (int) -> bool
         """Determine if the folder should completely refresh it's cache.
