@@ -201,7 +201,7 @@ class Message(object):
     def task(self, value):
         # type: (t.AnyStr) -> None
         self._schema.base_message.task = value
-        self._schema.save()
+        self._schema.base_message.save()
 
     @property
     def subject(self):

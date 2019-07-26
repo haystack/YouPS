@@ -204,9 +204,11 @@ $(document).ready(function() {
                     latest_watched_message = res['uid'];
                 }
                 else if (!res['uid']) {
+                    latest_watched_message = null;
                     watching_msg_container.find("span").text("");
                 }
                 else {
+                    latest_watched_message = null;
                     notify(res, false);
                 }
 
