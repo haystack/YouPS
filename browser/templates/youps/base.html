@@ -50,7 +50,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" id="logo" href="/editor"><img class="icon" src="/static/images/icons/terminal.png">YouPS</a>
+          <a class="navbar-brand" id="logo" href="/button"><img class="icon" src="/static/images/icons/terminal.png">YouPS</a>
 				</div>
 				
 				<div class="navbar-collapse collapse">
@@ -67,7 +67,7 @@
 										</ul>
 									</li>
 								{% else %}
-									<li><a href="/accounts/login/?next=/editor">Login</a></li>
+									<li><a href="/accounts/login/?next={{request.path}}">Login</a></li>
 								{% endif %}
 						</ul>
 				</div>
