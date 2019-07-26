@@ -131,7 +131,7 @@ class BaseMessage(models.Model):
         # type: (t.List[t.AnyStr]) -> None
         self._in_reply_to = json.dumps(value)
 
-    # YoUPS richer attribute
+    # YouPS richer attribute
     progress = models.CharField('progress', max_length=300, blank=True)
     deadline = models.DateTimeField('deadline', null=True, blank=True)
     category = models.CharField('category', max_length=300, blank=True)
@@ -305,7 +305,7 @@ class TaskManager(models.Model):
     id = models.AutoField(primary_key=True)
     email_rule = models.ForeignKey('EmailRule')
 
-    message = models.ForeignKey('MessageSchema', blank=True, null=True)
+    base_message = models.ForeignKey('BaseMessage', blank=True, null=True)
     imap_account = models.ForeignKey(ImapAccount)
     # when it should be performed
     date = models.DateTimeField(null=True, blank=True)

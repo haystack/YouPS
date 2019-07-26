@@ -12,53 +12,60 @@ function append_log( msg_log, is_error ) {
 
         var t = $('#console-table').DataTable();
         $.each(sorted, function(index, timestamp) {     
-            debugger;           
-            Message = msg_log[timestamp];
-            _message_data = Message;
-            // alert(Message["trigger"]);
-
-            var json_panel_id = timestamp.replace(/[ /:,]/g,'');
-            t.row.add( [
-                    timestamp.split(",")[0],
-                    '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
-                    '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
-                    '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                    (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
-            ] ).draw( false );  
-
-            // Delete attributes that are not allowed for users 
-            delete Message["trigger"];
-            delete Message["error"];
-            delete Message["log"];
-            delete Message["timestamp"];
-            delete Message["type"];
-
-            Contact :  Message['from_']
-            $('#jsonpanel-from-' + json_panel_id).jsonpanel({
-                data: {
-                    Contact :  Message['from_']
+            try {
+                Message = msg_log[timestamp];
+                if (Message && !"timestamp" in Message) return;
+                _message_data = Message;
+                // alert(Message["trigger"]);
+    
+                var json_panel_id = timestamp.replace(/[ /:,]/g,'');
+                t.row.add( [
+                        timestamp.split(",")[0],
+                        '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
+                        '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
+                        '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
+                        (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
+                ] ).draw( false );  
+    
+                // Delete attributes that are not allowed for users 
+                delete Message["trigger"];
+                delete Message["error"];
+                delete Message["log"];
+                delete Message["timestamp"];
+                delete Message["type"];
+    
+                Contact :  Message['from_']
+                $('#jsonpanel-from-' + json_panel_id).jsonpanel({
+                    data: {
+                        Contact :  Message['from_']
+                    }
+                });
+    
+                // set contact object preview 
+                $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
+                    '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
+    
+                
+                $('#jsonpanel-' + json_panel_id).jsonpanel({
+                    data: {
+                        Message : Message
+                    }
+                });
+    
+                // set msg object preview 
+                var preview_msg = '{0}: "{1}", '.format("subject", Message['subject']) +  '{0}: "{1}", '.format("folder", Message['folder']);
+                for (var key in Message) {
+                    if (Message.hasOwnProperty(key)) {
+                        preview_msg += '{0}: "{1}", '.format(key, Message[key])
+                    }
                 }
-            });
-
-            // set contact object preview 
-            $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
-                '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
-
+                $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
             
-            $('#jsonpanel-' + json_panel_id).jsonpanel({
-                data: {
-                    Message : Message
-                }
-            });
-
-            // set msg object preview 
-            var preview_msg = '{0}: "{1}", '.format("subject", Message['subject']) +  '{0}: "{1}", '.format("folder", Message['folder']);
-            for (var key in Message) {
-                if (Message.hasOwnProperty(key)) {
-                    preview_msg += '{0}: "{1}", '.format(key, Message[key])
-                }
             }
-            $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
+              catch(err) {
+                console.log(err);
+            }
+            
         });
 
         // recent msg at top

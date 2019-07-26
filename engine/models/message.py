@@ -183,6 +183,7 @@ class Message(object):
         logger.info(self._is_simulate)
         
         if not self._is_simulate:
+            logger.info("here")
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
 
@@ -199,8 +200,8 @@ class Message(object):
     @task.setter
     def task(self, value):
         # type: (t.AnyStr) -> None
-        self._schema.task = value
-        self._schema.save()
+        self._schema.base_message.task = value
+        self._schema.base_message.save()
 
     @property
     def subject(self):

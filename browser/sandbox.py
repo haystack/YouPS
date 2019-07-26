@@ -194,8 +194,8 @@ def interpret(mailbox, mode):
                 assert isinstance(rule, EmailRule)
 
                 # TODO why the reassignment of valid folders
-                valid_folders = rule.folders.all()
-                valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
+                valid_folders = []
+                
                 code = rule.code
 
                 # logger.info(code)
@@ -206,11 +206,13 @@ def interpret(mailbox, mode):
                 # user code strings can be found at http_handler/static/javascript/youps/login_imap.js ~ line 300
                 # our handlers are in mailbox and the user environment
                 if rule.type.startswith("new-message"):
+                    valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                     code = code + "\nhandle_on_message(on_message)"
                 elif rule.type == "flag-change":
                     code = code + "\nhandle_on_flag_added(on_flag_added)"
                     code = code + "\nhandle_on_flag_removed(on_flag_removed)"
                 elif rule.type.startswith("deadline"):
+                    valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account).filter(is_selectable=True)
                     code = code + "\nhandle_on_deadline(on_deadline)"
                 # else:
                 #     continue
@@ -300,6 +302,14 @@ def interpret(mailbox, mode):
                     mailbox._imap_client.select_folder(user_environ["hide_in"])
                     msg=Message(msg_schema, mailbox._imap_client)
                     msg.move(user_environ["current_folder"])
+                elif new_msg["type"] == "remind":
+                    user_environ = json.loads(task.email_rule.code) if len(task.email_rule.code) else {}
+                    
+                    for msg_schema in task.base_message.messages.all():
+                        mailbox._imap_client.select_folder(user_environ["hide_in"])
+                        msg=Message(msg_schema, mailbox._imap_client)
+                        msg.forward(user_environ["note"])
+                        break
                 else:
                     # TODO replace with Task schema and make it more extensible
                     # TODO task; id, type="hide-show", string='{}'
