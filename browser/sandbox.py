@@ -222,6 +222,8 @@ def interpret(mailbox, mode):
                 try:
                     # execute the user's code
                     # exec cant register new function (e.g., on_message_arrival) when there is a user_env
+                    logger.exception(rule.id)
+                    logger.exception(code)
                     exec(code, user_environ)
 
 

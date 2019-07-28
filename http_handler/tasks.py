@@ -102,6 +102,8 @@ def register_inbox():
                            imapAccount.email,
                            "Start writing your automation rule here! %s://%s" % (PROTOCOL, site.domain))
 
+                # Create a default mode & email rule to demo
+
                 logger.info(
                     'Register done for %s', imapAccount.email)
             except ImapAccount.DoesNotExist:

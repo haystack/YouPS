@@ -162,16 +162,19 @@ def calendar_view(request):
 def email_button_view(request):
 	try: 
 		if request.user.email:
-			folders = FolderSchema.objects.filter(imap_account__email=request.user.email).filter(is_selectable=True).values('name')
+			imap_account = ImapAccount.objects.get(email=request.user.email)
+			folders = FolderSchema.objects.filter(imap_account=imap_account).filter(is_selectable=True).values('name')
 						
 			folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
-			email_rules = EmailRule.objects.filter(mode__imap_account__email=request.user.email, type__startswith='shortcut')
+			email_rules = EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut')
 
 			today = timezone.now()
-			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
+			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules, 'imap_authenticated': True, 'is_gmail': imap_account.is_gmail, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
+	except ImapAccount.DoesNotExist:
+		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
 	except:
-		return {'website': WEBSITE, 'folders': []}
+		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
 
 def load_components(request):
 	res = {"status": True, "code": 200}
