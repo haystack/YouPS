@@ -640,7 +640,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			        logger.info(result)
 			        imap.idle_done()
 			        try:
-				        result = imap.search('UID %d' % result[0][2][1])
+                        uid = -1
+                        if "exchange" in imap_account.host: # e.g., mit
+                            uid = result[0][0]
+                        else: # e.g., gmail, gsuite
+                            uid = result[0][2][1]
+                            
+				        result = imap.search('UID %d' % uid)
 			        except Exception as e:
                         # prevent reacting to msg move/remove 
 			            logger.critical(e)

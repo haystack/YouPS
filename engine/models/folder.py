@@ -427,8 +427,7 @@ class Folder(object):
                     internal_date=internal_date,
                     from_m=self._find_or_create_contacts(metadata['from'])[
                         0] if 'from' in metadata else None,
-                    _thread=self._find_or_create_gmail_thread(
-                        message_data['X-GM-THRID']) if is_gmail else None
+                    _thread=None #self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else 
                 )
                 base_message.save()
                 if new_message_ids is not None:
