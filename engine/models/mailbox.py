@@ -120,9 +120,11 @@ class MailBox(object):
                         (time_start, bm_schema.deadline, time_end))
             
             # TODO Maybe we should find a better way to pick a message schema
-            message_schema = bm_schema.messages.all()[0]
-            self.event_data_list.append(NewMessageDataDue(
-                Message(message_schema, self._imap_client)))
+            for message_schema in bm_schema.messages.all():
+                msg = Message(message_schema, self._imap_client)
+                if "\\Deleted" in msg.flags:
+                    continue
+                self.event_data_list.append( NewMessageDataDue(msg) )
 
     def _supports_cond_store(self):
         # type: () -> bool
