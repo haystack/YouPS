@@ -28,7 +28,7 @@ $(document).ready(function() {
 
     btn_watch.click(function (e) {
         spin_watch_btn(true);
-
+        show_loader(true);
         request_watch_message();
         
         // Call this after some delay so the server has enough time to set up IDLE()
@@ -124,7 +124,7 @@ $(document).ready(function() {
             btn_watch.addClass("spinning");
             $("#info-msg").show();
         } else {
-            watching_msg_container.text("");
+            watching_msg_container.find("span").text("");
             btn_watch.removeClass("spinning");
             btn_watch.text("Watch");
             btn_watch.removeAttr("disabled");
@@ -202,6 +202,7 @@ $(document).ready(function() {
                     }
                     
                     latest_watched_message = res['uid'];
+                    show_loader(false);
                 }
                 else if (!res['uid']) {
                     latest_watched_message = null;
