@@ -64,7 +64,7 @@ class Contact(object):
         try:
             return self._schema.aliases.order_by('-count').first().name
         except Exception as e:
-            logger.exception(e)
+            # logger.exception(e)
             return ""
 
     @property
