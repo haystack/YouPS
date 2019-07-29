@@ -453,7 +453,11 @@ class Message(object):
         self._check_folder(dst_folder)
         if not self._is_message_already_in_dst_folder(dst_folder):
             if not self._is_simulate:
-                self._imap_client.move([self._uid], dst_folder)
+                if "MOVE" in (name.upper() for name in self._imap_client.capabilities()) or self._schema.imap_account.is_gmail:
+                    self._imap_client.move([self._uid], dst_folder)
+                else:
+                    self.copy(dst_folder)
+                    self.delete()
 
     def forward(self, to=[], cc=[], bcc=[], content=""):
         to = format_email_address(to)
