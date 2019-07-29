@@ -19,6 +19,7 @@ from engine.utils import dump_execution_log
 from schema.youps import MailbotMode, MessageSchema, TaskManager  # noqa: F401 ignore unused we use it for typing
 from http_handler.settings import TEST_ACCOUNT_EMAIL
 import sandbox_helpers
+from smtp_handler.utils import send_email
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 def interpret_bypass_queue(mailbox, extra_info):
@@ -259,7 +260,12 @@ def interpret(mailbox, mode):
 
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     logger.exception("failure running user %s code" % mailbox._imap_account.email)
-                    copy_msg["log"] = str(e) + traceback.format_tb(exc_tb)[-1]
+                    error_msg = str(e) + traceback.format_tb(exc_tb)[-1]
+                    try:
+                        send_email("failure running user %s code" % mailbox._imap_account.email, "youps.help@youps.csail.mit.edu", "youps.help@gmail.com", error_msg.decode('utf-8'), error_msg.decode('utf-8'))
+                    except Exception:
+                        logger.exception("Can't send error emails to admin :P")
+                    copy_msg["log"] = error_msg
                     copy_msg["error"] = True
                 finally:
                     if is_fired:
