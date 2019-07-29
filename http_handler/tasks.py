@@ -41,7 +41,7 @@ def register_inbox():
     """
 
 
-    lockFile = 'register_inbox.lock'
+    lockFile = 'register_inbox2.lock'
     with open(lockFile, 'w') as f:
         have_lock = get_lock(f)
         if not have_lock:
@@ -117,7 +117,7 @@ def register_inbox():
 
 def loop_sync_user_inbox():
 
-    lockFile = 'loop_sync_user_inbox.lock'
+    lockFile = 'loop_sync_user_inbox2.lock'
     with open(lockFile, 'w') as f:
         have_lock = get_lock(f)
         if not have_lock:
