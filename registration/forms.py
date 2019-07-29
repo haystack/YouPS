@@ -49,7 +49,7 @@ class RegistrationForm(forms.Form):
         
         """
         if 'email' in self.cleaned_data:
-            if DEBUG and self.cleaned_data['email'] not in PRETEST_EMAIL:
+            if False and self.cleaned_data['email'] not in PRETEST_EMAIL:
                 raise forms.ValidationError(_("YouPS is currently only open for pre-testers. We are working hard to release YouPS soon! Sorry!"))
                 
         if 'password1' in self.cleaned_data and 'password2' in self.cleaned_data:
