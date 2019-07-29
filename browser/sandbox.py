@@ -186,6 +186,9 @@ def interpret(mailbox, mode):
         for event_data in mailbox.event_data_list:
             # Iterate through email rule at the current mode
             # TODO maybe use this instead of mode.rules
+            if mode is None:
+                continue
+                
             for rule in EmailRule.objects.filter(mode=mode):
                 is_fired = False
                 copy_msg = {}
@@ -222,6 +225,8 @@ def interpret(mailbox, mode):
                 try:
                     # execute the user's code
                     # exec cant register new function (e.g., on_message_arrival) when there is a user_env
+                    logger.exception(rule.id)
+                    logger.exception(code)
                     exec(code, user_environ)
 
 

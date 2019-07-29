@@ -120,6 +120,12 @@ function fetch_log() {
             }
             else {
                 notify(res, false);
+
+                if('imap_authenticated' in res && !res['imap_authenticated']) {
+                    alert(res["code"]);
+                    window.location.href = "/editor";
+                }
+
             }
 
             setTimeout(fetch_log, 2 * 1000); // 2 second

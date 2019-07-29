@@ -48,7 +48,6 @@
 
 			<h3>YouPS button</h3>
 			<hr>
-
 			<label for="folder-dropdown">Folder: </label>
 	        <select id="folder-dropdown" name="folder">
                 {% for folder in folders %}
@@ -64,6 +63,46 @@
 				<button class='btn btn-primary btn-lg' id='btn-watch'>Watch</button>
 				<p id="info-msg">Open (mark read/unread) a message you want to manipulate!</p>
 			</div>
+			{% if imap_authenticated %}
+				<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
+				<a id="popuplink" href="#inline">Forgot how to use?</a>
+				<div id="inline" style="display:none;text-align:center;">
+				{% if is_gmail %}
+					<img style="display: block" src="/static/gif/gmail_low_640.gif"/>
+				{% else %}
+					<img style="display: block" src="/static/gif/thunderbird_low_640.gif"/>
+				{% endif %}
+				<h4 style="margin-top:20px;">
+					To select a message, open the message at your email client!
+				</h4>
+				<p>Mark read and unread and allow upto 2 seconds until YouPS can detect.</p>
+				<p><a href="javascript:;" onclick="jQuery.fancybox.close();" style="background-color:#333;padding:5px 10px;color:#fff;border-radius:5px;text-decoration:none;">Close</a></p>
+				</div>
+				<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.js"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.js"></script>	
+
+				<script type="text/javascript">
+					function openFancybox() {
+						setTimeout(function () {
+							jQuery('#popuplink').trigger('click');
+						}, 500);
+					};
+
+					$(document).ready(function () {
+						var visited = jQuery.cookie('visited');
+						if (visited == 'yes') {
+							// second page load, cookie active
+						} else {
+							openFancybox(); // first page load, launch fancybox
+						}
+						jQuery.cookie('visited', 'yes', {
+							expires: 1 // the number of days cookie  will be effective
+						});
+						jQuery("#popuplink").fancybox({modal:true, maxWidth: 640, overlay : {closeClick : true}});
+					});
+				</script>
+			{% endif %}
 
 			<div id='watching-msg-container'>
 				<span name="sender"></span>

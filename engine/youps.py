@@ -50,7 +50,10 @@ def login_imap(email, password, host, is_oauth):
             imap.oauth2_login(email, access_token)
 
         else:
-            imap.login(email, password)
+            if "csail" in email:
+                imap.login(email.split("@")[0], password)
+            else:
+                imap.login(email, password)
 
             # encrypt password then save
             aes = AES.new(IMAP_SECRET, AES.MODE_CBC, 'This is an IV456')
@@ -92,6 +95,7 @@ def login_imap(email, password, host, is_oauth):
 
     except IMAPClient.Error, e:
         res['code'] = e
+        logger.exception(e)
     except Exception, e:
         logger.exception("Error while login %s %s " % (e, traceback.format_exc()))
         res['code'] = msg_code['UNKNOWN_ERROR']
@@ -108,7 +112,8 @@ def fetch_execution_log(user, email, push=True):
         res['status'] = True
 
     except ImapAccount.DoesNotExist:
-        res['code'] = "Error during authentication. Please refresh"
+        res['code'] = "Please log in to your email account first"
+        res['imap_authenticated'] = False
     except Exception, e:
         # TODO add exception
         print e
@@ -558,6 +563,8 @@ def handle_imap_idle(user, email, folder='INBOX'):
 				return
 				
 			imap = res['imap']
+			if "exchange" in imap_account.host or "csail" in imap_account.host:
+			    imap.use_uid = False
 		except Exception:
 			# If connection attempt to IMAP server fails, retry
 			etype, evalue = sys.exc_info()[:2]
@@ -640,7 +647,14 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			        logger.info(result)
 			        imap.idle_done()
 			        try:
-				        result = imap.search('UID %d' % result[0][2][1])
+			            uid = -1
+			            if "exchange" in imap_account.host or "csail" in imap_account.host: # e.g., mit
+			                result = [result[0][0]]
+			            else: # e.g., gmail, gsuite
+			                uid = result[0][2][1]
+			                result = imap.search('UID %d' % uid)
+
+			            logger.info(result)
 			        except Exception as e:
                         # prevent reacting to msg move/remove 
 			            logger.critical(e)
@@ -651,7 +665,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			            ))
 			        for each in result:
 			            _header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'
-			            fetch = imap.fetch(each, [_header_descriptor])
+			            fetch = imap.fetch(each, [_header_descriptor, "UID"])
 			            # mail = email.message_from_string(
 			            # 	fetch[each][_header_descriptor]
 			            # 	)
@@ -660,13 +674,19 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                logger.info('processing email {0} - {1}'.format(
 			                    each, fetch[each]
 			                    ))
-			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=each)
+			                uid = -1
+			                if "exchange" in imap_account.host or "csail" in imap_account.host:
+			                    uid = fetch[each]["UID"]
+			                else:
+			                    uid = each
+			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=uid)
 			                bc = ButtonChannel(message=message)
 			                logger.exception(message.base_message.subject)
 			                bc.save()
 
 			            except MessageSchema.DoesNotExist:
 			                logger.error("Catch new messages but can't find the message %s " % fetch[each])
+			                raise
 			            except Exception:
 			                logger.error(
 			                    'failed to process email {0}'.format(each))

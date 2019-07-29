@@ -18,7 +18,7 @@ from django.template import loader
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
-from http_handler.settings import WEBSITE, PRETEST_EMAIL
+from http_handler.settings import WEBSITE, PRETEST_EMAIL, DEBUG
 
 class RegistrationForm(forms.Form):
     """
@@ -49,7 +49,7 @@ class RegistrationForm(forms.Form):
         
         """
         if 'email' in self.cleaned_data:
-            if self.cleaned_data['email'] not in PRETEST_EMAIL:
+            if DEBUG and self.cleaned_data['email'] not in PRETEST_EMAIL:
                 raise forms.ValidationError(_("YouPS is currently only open for pre-testers. We are working hard to release YouPS soon! Sorry!"))
                 
         if 'password1' in self.cleaned_data and 'password2' in self.cleaned_data:

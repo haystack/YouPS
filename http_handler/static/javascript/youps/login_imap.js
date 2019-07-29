@@ -1120,6 +1120,8 @@ $(document).ready(function() {
         // When user first try to login to their imap. 
         btn_login.click(function() {
                 show_loader(true);
+                $("#loading-wall").show();
+                $("#loading-wall span").show();
 
                 var params = {
                     'host': $("#input-host").val(),
@@ -1154,10 +1156,10 @@ $(document).ready(function() {
 
                             // then ask user to wait until YoUPS intialize their inbox
                             show_loader(true);
-                            $("#loading-wall").show();
-                            $("#loading-wall span").show();
+                            
                         }
                         else {
+                            $("#loading-wall").hide();
                             notify(res, false);
                         }
                     }
