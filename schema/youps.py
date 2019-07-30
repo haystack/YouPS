@@ -49,6 +49,15 @@ class ImapAccount(models.Model):
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 
+class LogSchema(models.Model):
+    # the primary key
+    id = models.AutoField(primary_key=True)
+    imap_account = models.ForeignKey(ImapAccount)
+
+    content = models.TextField()
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 
 class FolderSchema(models.Model):
     # the primary key

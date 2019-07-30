@@ -9,7 +9,7 @@ import json
 if t.TYPE_CHECKING:
     from engine.models.message import Message
     from engine.models.folder import Folder
-    from schema.youps import ImapAccount, MessageSchema, FolderSchema, BaseMessage  # noqa: F401 ignore unused we use it for typing
+    from schema.youps import ImapAccount, MessageSchema, FolderSchema, BaseMessage, LogSchema  # noqa: F401 ignore unused we use it for typing
     from imapclient import IMAPClient
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -263,9 +263,10 @@ def dump_execution_log(imapAccount, new_log):
         log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
         log_decoded.update( new_log )
 
-        imapAccount.execution_log = json.dumps(log_decoded)
-        imapAccount.save()
-
+        ImapAccount.objects.filter(id=imapAccount.id).update(execution_log=json.dumps(log_decoded))
+        l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log))
+        l.save()
+        
 
 # REGEXES
 # Match carriage return new lines followed by whitespace. For example "\r\n   \t\t"

@@ -15,7 +15,7 @@ from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel)
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -102,12 +102,19 @@ def login_imap(email, password, host, is_oauth):
 
     return res
 
-def fetch_execution_log(user, email, push=True):
+def fetch_execution_log(user, email, recent_10=True, push=True):
     res = {'status' : False}
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        res['imap_log'] = imapAccount.execution_log
+        if recent_10:
+            logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
+            d = {}
+            for l in logs:
+                d[str(l.timestamp)] = json.loads(l.content)
+            res['imap_log'] = json.dumps(d)
+        else:   # return all 
+            res['imap_log'] = ""
         res['user_status_msg'] = imapAccount.status_msg
         res['status'] = True
 
@@ -639,6 +646,8 @@ def handle_imap_idle(user, email, folder='INBOX'):
 
 			    bc_folder = ButtonChannel( watching_folder=watching_folder )
 			    bc_folder.save()
+
+                bc_folder = ButtonChannel.objects.filter(id=bc_folder.id)
 			    
 			    # After all unread emails are cleared on initial login, start
 			    # monitoring the folder for new email arrivals and process 
@@ -692,18 +701,15 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                logger.info(message.base_message.subject)
 			                bc.save()
 
-                            bc_folder.code = ButtonChannel.OK
-                            bc_folder.save()
+                            bc_folder.update(code=ButtonChannel.OK)
 			            except MessageSchema.DoesNotExist:
 			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
-                            bc_folder.code = ButtonChannel.MSG_NOT_FOUND
-                            bc_folder.save()
-
+                            bc_folder.update(code=ButtonChannel.MSG_NOT_FOUND)
 			            except Exception:
 			                logger.error(
 			                    'failed to process email {0}'.format(each))
-			                bc_folder.code = ButtonChannel.UNKNOWN
-                            bc_folder.save()
+
+                            bc_folder.update(code=ButtonChannel.UNKNOWN)
 
 			    else:   # After time-out && no operation 
 			        imap.idle_done()
