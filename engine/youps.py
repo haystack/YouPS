@@ -686,12 +686,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 
 			            except MessageSchema.DoesNotExist:
 			                logger.error("Catch new messages but can't find the message %s " % fetch[each])
+                            # TODO give feedback to users
 			                raise
 			            except Exception:
 			                logger.error(
 			                    'failed to process email {0}'.format(each))
+                            # TODO give feedback to users
 			                raise
-			                continue
 			    else:   # After time-out && no operation 
 			        imap.idle_done()
 			        imap.noop()

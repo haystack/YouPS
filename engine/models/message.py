@@ -18,7 +18,7 @@ from itertools import ifilter, islice, chain
 
 from django.utils import timezone
 from imapclient import \
-    IMAPClient  # noqa: F401 ignore unused we use it for typing
+    IMAPClient, exceptions  # noqa: F401 ignore unused we use it for typing
 from pytz import timezone as tz
 
 from engine.models.contact import Contact
@@ -453,11 +453,12 @@ class Message(object):
         self._check_folder(dst_folder)
         if not self._is_message_already_in_dst_folder(dst_folder):
             if not self._is_simulate:
-                if "MOVE" in (name.upper() for name in self._imap_client.capabilities()) or self._schema.imap_account.is_gmail:
+                try:
                     self._imap_client.move([self._uid], dst_folder)
-                else:
+                except exceptions.CapabilityError:
                     self.copy(dst_folder)
                     self.delete()
+                    self._imap_client.expunge()
 
     def forward(self, to=[], cc=[], bcc=[], content=""):
         to = format_email_address(to)
