@@ -34,10 +34,6 @@ scripts/imap_interact.ini
 .history
 \.env
 
-loop_sync_user_inbox\.lock
-
-register_inbox\.lock
-
-loop_scheduled_task\.lock
+*.lock
 
 \.pytest_cache/
