@@ -197,19 +197,27 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
 
 
 def fetch_watch_message(user, email, folder_name):
-    res = {'status' : False}
+    res = {'status' : False, 'log': ""}
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        bc = ButtonChannel.objects.filter(message__imap_account=imapAccount).filter(message__folder__name=folder_name).latest('timestamp')
-        res['folder'] = bc.message.folder.name
-        res['uid'] = bc.message.id 
+        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name)
+        res['watch_status'] = folder_idle.exists()
 
-        message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
-        res['message'] = message._get_meta_data_friendly() 
-        res['sender'] = message._get_from_friendly()
-        res['watch_status'] = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name).exists()
+        if res['watch_status']:
+            if folder_idle[0].code == ButtonChannel.OK:
+                bc = ButtonChannel.objects.filter(message__imap_account=imapAccount).filter(message__folder__name=folder_name).latest('timestamp')
+                res['folder'] = bc.message.folder.name
+                res['uid'] = bc.message.id 
+                
 
+                message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
+                res['message'] = message._get_meta_data_friendly() 
+                res['sender'] = message._get_from_friendly()
+            else:
+                # if something went wrong only return the log
+                res["log"] = folder_idle[0].get_code_display()
+        
         res['status'] = True
 
     except ImapAccount.DoesNotExist:
@@ -629,8 +637,8 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
 			    bc.delete()
 
-			    bc = ButtonChannel( watching_folder=watching_folder )
-			    bc.save()
+			    bc_folder = ButtonChannel( watching_folder=watching_folder )
+			    bc_folder.save()
 			    
 			    # After all unread emails are cleared on initial login, start
 			    # monitoring the folder for new email arrivals and process 
@@ -681,17 +689,22 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                    uid = each
 			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=uid)
 			                bc = ButtonChannel(message=message)
-			                logger.exception(message.base_message.subject)
+			                logger.info(message.base_message.subject)
 			                bc.save()
 
+                            bc_folder.code = ButtonChannel.OK
+                            bc_folder.save()
 			            except MessageSchema.DoesNotExist:
-			                logger.error("Catch new messages but can't find the message %s " % fetch[each])
-			                raise
+			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
+                            bc_folder.code = ButtonChannel.MSG_NOT_FOUND
+                            bc_folder.save()
+
 			            except Exception:
 			                logger.error(
 			                    'failed to process email {0}'.format(each))
-			                raise
-			                continue
+			                bc_folder.code = ButtonChannel.UNKNOWN
+                            bc_folder.save()
+
 			    else:   # After time-out && no operation 
 			        imap.idle_done()
 			        imap.noop()

@@ -192,16 +192,21 @@ $(document).ready(function() {
                         return;
                     }
 
+                    if(res["log"]) { // something went wrong
+                        watching_msg_container.find("span").text("");
+                        watching_msg_container.find("[name='subject']").text( res["log"] );
+                    }
                     // TODO if the message is from a different folder, noop 
-                    // TODO change uid-> message schema id
-                    if( latest_watched_message != res['uid'] ) {
+                    // uid: message schema id
+                    else if( latest_watched_message != res['uid'] ) { // If everything successful
                         watching_msg_container.find("[name='sender']").text( "{0} <{1}>".format(res['sender']['name'], res['sender']['email']) );
                         watching_msg_container.find("[name='subject']").text( res['message']['subject'] );
                         watching_msg_container.find("[name='date']").text( res['message']['date'] );
                         // watching_msg_container.text( res['message']['subject'] + " (" + res['message']['date'] + ")"  );
+
+                        latest_watched_message = res['uid'];
                     }
                     
-                    latest_watched_message = res['uid'];
                     show_loader(false);
                 }
                 else if (!res['uid']) {

@@ -317,6 +317,21 @@ class TaskManager(models.Model):
 class ButtonChannel(models.Model):
     id = models.AutoField(primary_key=True)
 
+    OK = 1
+    MSG_NOT_FOUND = 2
+    UNKNOWN = 3
+
+    TYPE_CHOICES = (
+        (OK, ''),
+        (MSG_NOT_FOUND, "The message is no longer existing in this folder."),
+        (UNKNOWN, "YouPS can't handle this message. Sorry!"),
+    )
+
+    code = models.IntegerField(
+        choices=TYPE_CHOICES,
+        default=OK
+    )
+
     message = models.ForeignKey('MessageSchema', blank=True, null=True)
     watching_folder = models.ForeignKey('FolderSchema', blank=True, null=True)  # type: FolderSchema
 
