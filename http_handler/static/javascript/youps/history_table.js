@@ -1,9 +1,10 @@
 var _message_data, _contact_data; // This global variable to pass around the row data
 var log_backup = {}, user_status_backup = "";
+var log_min_id = null, log_max_id = null;
 
 $(document).ready(function() {
     $("#btn-log-load-more").click(function() {
-        fetch_log(false);
+        fetch_log(null, log_min_id - 1);
         $(this).hide();
     });
 })
@@ -83,9 +84,10 @@ function append_log( msg_log, is_error ) {
     // $( "<p>{0}</p>".format(datetime)).prependTo( "#console-output" ).addClass("info");
 }   
 
-function fetch_log(recent_only=true) {
+function fetch_log(from_id=null, to_id=null) {
     var params = {
-        "recent_only": recent_only
+        "from_id": from_id,
+        "to_id": to_id
     };
     
     $.post('/fetch_execution_log', params,
@@ -93,34 +95,23 @@ function fetch_log(recent_only=true) {
             // $('#donotsend-msg').hide();
             // console.log(res);
             
-            // Auth success
+            // success
             if (res.status) {
                 // Update execution log
-                if( Object.keys(log_backup).length != Object.keys(JSON.parse(res['imap_log'])).length){
-                    msg_log = JSON.parse(res['imap_log']);
-
-                    // if it's a first time loading the log, display only recent 10 messages then enalbe 'load more' btn.
-                    if(Object.keys(log_backup).length == 0) {
-                        var recent_keys = Object.keys(msg_log).sort(function(a, b) {return a>b;}).slice(-10);
-                        append_log( recent_keys.reduce(function(o, k) { o[k] = msg_log[k]; return o; }, {}) );
-                        
-                    }
-
-                    else {
-                        old_log = log_backup;
-
-                        // append new logs from the server
-                        var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();
-                        
-                        append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);
-                    }
-                        //replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
-                    // msg_log = JSON.parse(res['imap_log'].replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
-                    
-
-                    log_backup = JSON.parse(res['imap_log']);
-                }
+                msg_log = JSON.parse(res['imap_log']);
                 
+                // append new logs from the server
+                var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(log_backup)).get();      
+                console.log(new_msg_key);                  
+                append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);
+                
+                // update min and max of log IDs
+                if (res["log_min_id"] != -1)   
+                    log_min_id = (!log_min_id || res["log_min_id"] < log_min_id) ? res["log_min_id"] : log_min_id;
+                if (res["log_max_id"] != -1)   
+                    log_max_id = (!log_max_id || res["log_max_id"] > log_max_id) ? res["log_max_id"] : log_max_id;
+                    
+                log_backup = msg_log;
             }
             else {
                 notify(res, false);
@@ -132,7 +123,9 @@ function fetch_log(recent_only=true) {
 
             }
 
-            setTimeout(fetch_log, 2 * 1000); // 2 second
+            setTimeout(function() {
+                fetch_log(log_max_id+1, null);
+            }, 2000) // 2 second
         }
     ).fail(function(res) {
         alert("Please refresh the page!");

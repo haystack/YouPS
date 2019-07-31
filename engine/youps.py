@@ -103,21 +103,34 @@ def login_imap(email, password, host, is_oauth):
 
     return res
 
-def fetch_execution_log(user, email, recent_10=True, push=True):
+def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
     res = {'status' : False}
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
         d = {}
-        if recent_10:
+        if from_id is None and to_id is None:
             logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
     
+        elif from_id is None:
+            logs = LogSchema.objects.filter(id__lte=to_id).filter(imap_account=imapAccount)
+
+        elif to_id is None:
+            logs = LogSchema.objects.filter(id__gte=from_id).filter(imap_account=imapAccount)
+        
         else:   # return all 
-            logs = LogSchema.objects.filter(imap_account=imapAccount)
+            logs = LogSchema.objects.filter(id__range=[from_id, to_id]).filter(imap_account=imapAccount)
 
         for l in logs:
             # logger.exception(l.content)
             d.update( json.loads(l.content) )
+
+        res["log_min_id"] = -1
+        res["log_max_id"] = -1
+        if logs.exists():
+            ids = list(logs.values_list('id', flat=True))
+            res["log_min_id"] = ids[-1] # queryset is descending 
+            res["log_max_id"] = ids[0]
 
         res['imap_log'] = json.dumps(d)
         res['user_status_msg'] = imapAccount.status_msg
