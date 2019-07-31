@@ -6,7 +6,7 @@ from browser.imap import authenticate
 from engine.models.mailbox import MailBox
 from engine.utils import dump_execution_log
 from http_handler.settings import BASE_URL, PROTOCOL
-from schema.youps import ImapAccount, EmailRule
+from schema.youps import ImapAccount, EmailRule, LogSchema
 from smtp_handler.utils import send_email
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import fcntl

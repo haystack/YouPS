@@ -43,6 +43,7 @@ $(document).ready(function() {
 
     // Apply rule on the current message
     $( "#rule-container" ).on("click", "button", function(e) {
+        show_loader(true);
         if( !btn_watch.hasClass("spinning") ) {
             alert('No message is selected! Click "Watch" button in order to select a message');
             return;
@@ -149,6 +150,8 @@ $(document).ready(function() {
                 else {
                     notify(res, false);
                 }
+
+                show_loader(false);
             }
         ).fail(function(res) {
             alert("Please refresh the page!");

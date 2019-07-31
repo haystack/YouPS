@@ -5,11 +5,12 @@ import re
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
 import json 
+from schema.youps import LogSchema
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
     from engine.models.folder import Folder
-    from schema.youps import ImapAccount, MessageSchema, FolderSchema, BaseMessage, LogSchema  # noqa: F401 ignore unused we use it for typing
+    from schema.youps import ImapAccount, MessageSchema, FolderSchema, BaseMessage  # noqa: F401 ignore unused we use it for typing
     from imapclient import IMAPClient
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -259,11 +260,11 @@ def references_algorithm(start_msg):
     # TODO PART 5 and PART 6 RFC 5256
 
 def dump_execution_log(imapAccount, new_log):
-    if new_log is not None:
-        log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
-        log_decoded.update( new_log )
-
-        ImapAccount.objects.filter(id=imapAccount.id).update(execution_log=json.dumps(log_decoded))
+    if new_log != {}:
+        # log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
+        # log_decoded.update( new_log )
+        logger.exception(new_log)
+        # ImapAccount.objects.filter(id=imapAccount.id).update(execution_log=json.dumps(log_decoded))
         l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log))
         l.save()
         

@@ -5,6 +5,7 @@ import random
 import string
 import traceback
 import datetime
+import json
 
 from Crypto.Cipher import AES
 from imapclient import IMAPClient
@@ -107,14 +108,18 @@ def fetch_execution_log(user, email, recent_10=True, push=True):
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
+        d = {}
         if recent_10:
             logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
-            d = {}
-            for l in logs:
-                d[str(l.timestamp)] = json.loads(l.content)
-            res['imap_log'] = json.dumps(d)
+    
         else:   # return all 
-            res['imap_log'] = ""
+            logs = LogSchema.objects.filter(imap_account=imapAccount)
+
+        for l in logs:
+            # logger.exception(l.content)
+            d.update( json.loads(l.content) )
+
+        res['imap_log'] = json.dumps(d)
         res['user_status_msg'] = imapAccount.status_msg
         res['status'] = True
 
@@ -123,7 +128,7 @@ def fetch_execution_log(user, email, recent_10=True, push=True):
         res['imap_authenticated'] = False
     except Exception, e:
         # TODO add exception
-        print e
+        logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     return res
@@ -647,7 +652,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			    bc_folder = ButtonChannel( watching_folder=watching_folder )
 			    bc_folder.save()
 
-                bc_folder = ButtonChannel.objects.filter(id=bc_folder.id)
+			    bc_folder = ButtonChannel.objects.filter(id=bc_folder.id)
 			    
 			    # After all unread emails are cleared on initial login, start
 			    # monitoring the folder for new email arrivals and process 
@@ -701,15 +706,15 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                logger.info(message.base_message.subject)
 			                bc.save()
 
-                            bc_folder.update(code=ButtonChannel.OK)
+			                bc_folder.update(code=ButtonChannel.OK)
 			            except MessageSchema.DoesNotExist:
 			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
-                            bc_folder.update(code=ButtonChannel.MSG_NOT_FOUND)
+			                bc_folder.update(code=ButtonChannel.MSG_NOT_FOUND)
 			            except Exception:
 			                logger.error(
 			                    'failed to process email {0}'.format(each))
 
-                            bc_folder.update(code=ButtonChannel.UNKNOWN)
+			                bc_folder.update(code=ButtonChannel.UNKNOWN)
 
 			    else:   # After time-out && no operation 
 			        imap.idle_done()

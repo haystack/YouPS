@@ -1,6 +1,14 @@
 var _message_data, _contact_data; // This global variable to pass around the row data
 var log_backup = {}, user_status_backup = "";
 
+$(document).ready(function() {
+    $("#btn-log-load-more").click(function() {
+        fetch_log(false);
+        $(this).hide();
+    });
+})
+
+
 function append_log( msg_log, is_error ) {
     if(!msg_log) return;  
         var sorted = [];
@@ -75,8 +83,10 @@ function append_log( msg_log, is_error ) {
     // $( "<p>{0}</p>".format(datetime)).prependTo( "#console-output" ).addClass("info");
 }   
 
-function fetch_log() {
-    var params = {};
+function fetch_log(recent_only=true) {
+    var params = {
+        "recent_only": recent_only
+    };
     
     $.post('/fetch_execution_log', params,
         function(res) {
@@ -94,12 +104,6 @@ function fetch_log() {
                         var recent_keys = Object.keys(msg_log).sort(function(a, b) {return a>b;}).slice(-10);
                         append_log( recent_keys.reduce(function(o, k) { o[k] = msg_log[k]; return o; }, {}) );
                         
-                        var initial_msg_log = msg_log;
-                        $("#btn-log-load-more").show().click(function() {
-                            var rest_key = $(Object.keys(initial_msg_log)).not(recent_keys).get();
-                            append_log(rest_key.reduce((a, c) => ({ ...a, [c]: initial_msg_log[c] }), {}), false);
-                            $(this).hide();
-                        });
                     }
 
                     else {
@@ -123,7 +127,7 @@ function fetch_log() {
 
                 if('imap_authenticated' in res && !res['imap_authenticated']) {
                     alert(res["code"]);
-                    window.location.href = "/editor";
+                    window.location.href = "/editor"
                 }
 
             }
