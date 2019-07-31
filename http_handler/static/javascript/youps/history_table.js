@@ -118,9 +118,9 @@ function fetch_log(recent_only=true) {
                     // msg_log = JSON.parse(res['imap_log'].replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
                     
 
-                    
+                    log_backup = JSON.parse(res['imap_log']);
                 }
-                log_backup = JSON.parse(res['imap_log']);
+                
             }
             else {
                 notify(res, false);

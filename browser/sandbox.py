@@ -274,7 +274,7 @@ def interpret(mailbox, mode):
                         copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
 
                         copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
-
+                        
                         new_log[copy_msg["timestamp"]] = copy_msg
 
                     # flush buffer
@@ -288,6 +288,7 @@ def interpret(mailbox, mode):
 
                 mailbox.new_message_handler.removeAllHandles()
                 mailbox.added_flag_handler.removeAllHandles()
+                mailbox.deadline_handler.removeAllHandles()
 
         # Task manager
         for task in TaskManager.objects.filter(imap_account=mailbox._imap_account):

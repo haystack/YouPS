@@ -261,10 +261,7 @@ def references_algorithm(start_msg):
 
 def dump_execution_log(imapAccount, new_log):
     if new_log != {}:
-        # log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
-        # log_decoded.update( new_log )
-        logger.exception(new_log)
-        # ImapAccount.objects.filter(id=imapAccount.id).update(execution_log=json.dumps(log_decoded))
+        logger.debug(new_log)
         l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log))
         l.save()
         
