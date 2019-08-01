@@ -235,9 +235,10 @@ def apply_button_rule(request):
 def fetch_execution_log(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-		recent_only = True if request.POST['recent_only'] == "true" else False
+		from_id = None if not request.POST['from_id'] else request.POST['from_id']
+		to_id = None if not request.POST['to_id'] else request.POST['to_id']
 
-		res = engine.main.fetch_execution_log(user, request.user.email, recent_only)
+		res = engine.main.fetch_execution_log(user, request.user.email, from_id, to_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
 		logger.exception(e)
