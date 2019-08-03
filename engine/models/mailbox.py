@@ -53,6 +53,60 @@ class MailBox(object):
 
         return "mailbox: %s" % (self._imap_account.email)
 
+    def _log_message_ids(self):
+        from engine.models.message import Message
+        from pprint import pformat
+        import sqlite3
+        conn = sqlite3.connect('/home/ubuntu/production/mailx/logs/message_data.db')
+        c = conn.cursor()
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS "data" (
+            "id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+            "email"	INTEGER NOT NULL,
+            "folder"	TEXT NOT NULL,
+            "uid"	INTEGER NOT NULL,
+            "data"	TEXT NOT NULL
+        );
+        ''')
+        conn.commit()
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS "synced" (
+            "id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+            "email"	INTEGER NOT NULL
+        );
+        ''')
+        conn.commit()
+
+        emails = [email[0] for email in c.execute("SELECT email FROM synced")]
+        if self._imap_account.email in emails:
+            logger.info("_log_message_ids(): already logged %s", self._imap_account.email)
+            return
+
+        logger.info("_log_message_ids(): logging message data for  %s", self._imap_account.email)
+        for folder in self._list_selectable_folders():
+            response = self._imap_client.select_folder(folder.name)
+            min_mail_id = folder._get_min_mail_id()
+            uid_criteria = '%d:*' % (min_mail_id + 1)
+            is_gmail = self._imap_account.is_gmail
+            descriptors = Message._get_descriptors(is_gmail)
+            fetch_data = self._imap_client.fetch(uid_criteria, descriptors)
+            # iterate over the fetched data
+            for uid in fetch_data:
+                # dictionary of general data about the message
+                message_data = fetch_data[uid]
+                message_string = pformat(message_data, indent=2, width=80)
+                # Insert a row of data
+                c.execute("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", (self._imap_account.email, folder.name, uid, message_string))
+                # Save (commit) the changes
+                conn.commit()
+
+        c.execute("INSERT into synced (email) VALUES (?)", (self._imap_account.email,))
+        conn.commit()
+
+        # We can also close the connection if we are done with it.
+        # Just be sure any changes have been committed or they will be lost.
+        conn.close()
+
     def _sync(self):
         # type: () -> bool 
         """Synchronize the mailbox with the imap server.
