@@ -69,6 +69,8 @@ def register_inbox():
 
                         # create the mailbox
                         mailbox = MailBox(imapAccount, imap)
+                        # TODO(lukemurray): remove this
+                        mailbox._log_message_ids()
                         # sync the mailbox with imap
                         done = mailbox._sync()
                         if done:
