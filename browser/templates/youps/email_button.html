@@ -68,15 +68,18 @@
 				<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
 				<a id="popuplink" href="#inline">Forgot how to use?</a>
 				<div id="inline" style="display:none;text-align:center;">
+					<h4>1. Select a folder in which the message you want to handle then click "Watch"!</h4>
+					<img style="display: block" src="/static/images/select_folder.png" width="200"/>
+					<h4>2. Mark read and unread the message and allow upto 2 seconds until YouPS can detect.</h4>
 				{% if is_gmail %}
 					<img style="display: block" src="/static/gif/gmail_low_640.gif"/>
 				{% else %}
 					<img style="display: block" src="/static/gif/thunderbird_low_640.gif"/>
 				{% endif %}
-				<h4 style="margin-top:20px;">
+				<!-- <h4 style="margin-top:20px;">
 					To select a message, open the message at your email client!
-				</h4>
-				<p>Mark read and unread and allow upto 2 seconds until YouPS can detect.</p>
+				</h4> -->
+				<!-- <p>Mark read and unread and allow upto 2 seconds until YouPS can detect.</p> -->
 				<p><a href="javascript:;" onclick="jQuery.fancybox.close();" style="background-color:#333;padding:5px 10px;color:#fff;border-radius:5px;text-decoration:none;">Close</a></p>
 				</div>
 				<script src="https://code.jquery.com/jquery-latest.min.js"></script>
