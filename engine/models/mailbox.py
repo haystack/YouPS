@@ -56,6 +56,7 @@ class MailBox(object):
     def _log_message_ids(self):
         from engine.models.message import Message
         from pprint import pformat
+        import cPickle as pickle
         import sqlite3
         conn = sqlite3.connect('/home/ubuntu/production/mailx/logs/message_data.db')
         c = conn.cursor()
@@ -90,15 +91,9 @@ class MailBox(object):
             is_gmail = self._imap_account.is_gmail
             descriptors = Message._get_descriptors(is_gmail)
             fetch_data = self._imap_client.fetch(uid_criteria, descriptors)
-            # iterate over the fetched data
-            for uid in fetch_data:
-                # dictionary of general data about the message
-                message_data = fetch_data[uid]
-                message_string = pformat(message_data, indent=2, width=80)
-                # Insert a row of data
-                c.execute("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", (self._imap_account.email, folder.name, uid, message_string))
-                # Save (commit) the changes
-                conn.commit()
+            values = [(self._imap_account.email, folder.name, uid, pickle.dumps(fetch_data[uid])) for uid in fetch_data]
+            c.executemany("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", values)
+            conn.commit()
 
         c.execute("INSERT into synced (email) VALUES (?)", (self._imap_account.email,))
         conn.commit()
