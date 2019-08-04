@@ -54,6 +54,55 @@ class MailBox(object):
 
         return "mailbox: %s" % (self._imap_account.email)
 
+    def _log_message_ids(self):
+        from engine.models.message import Message
+        from pprint import pformat
+        import cPickle as pickle
+        import sqlite3
+        conn = sqlite3.connect('/home/ubuntu/production/mailx/logs/message_data.db')
+        c = conn.cursor()
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS "data" (
+            "id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+            "email"	INTEGER NOT NULL,
+            "folder"	TEXT NOT NULL,
+            "uid"	INTEGER NOT NULL,
+            "data"	TEXT NOT NULL
+        );
+        ''')
+        conn.commit()
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS "synced" (
+            "id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+            "email"	INTEGER NOT NULL
+        );
+        ''')
+        conn.commit()
+
+        emails = [email[0] for email in c.execute("SELECT email FROM synced")]
+        if self._imap_account.email in emails:
+            logger.info("_log_message_ids(): already logged %s", self._imap_account.email)
+            return
+
+        logger.info("_log_message_ids(): logging message data for  %s", self._imap_account.email)
+        for folder in self._list_selectable_folders():
+            response = self._imap_client.select_folder(folder.name)
+            min_mail_id = folder._get_min_mail_id()
+            uid_criteria = '%d:*' % (min_mail_id + 1)
+            is_gmail = self._imap_account.is_gmail
+            descriptors = Message._get_descriptors(is_gmail)
+            fetch_data = self._imap_client.fetch(uid_criteria, descriptors)
+            values = [(self._imap_account.email, folder.name, uid, pickle.dumps(fetch_data[uid])) for uid in fetch_data]
+            c.executemany("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", values)
+            conn.commit()
+
+        c.execute("INSERT into synced (email) VALUES (?)", (self._imap_account.email,))
+        conn.commit()
+
+        # We can also close the connection if we are done with it.
+        # Just be sure any changes have been committed or they will be lost.
+        conn.close()
+
     def _sync(self):
         # type: () -> bool 
         """Synchronize the mailbox with the imap server.
