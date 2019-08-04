@@ -161,8 +161,14 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
         #  read from DB and convert to the type accordingly 
 		for key, value in kargs.iteritems():
 		    er_arg = EmailRule_Args.objects.get(rule__mode__imap_account=imapAccount, name=key)
+
+            # parse datetime 
 		    if er_arg.type == "datetime":
-		        kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
+		        try: 
+		            kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
+		        except Exception:
+		            res['code'] = key
+		            raise TypeError
 
 		mailbox = MailBox(imapAccount, imap, is_simulate=False)
 		er = EmailRule.objects.get(id=er_id)
@@ -174,6 +180,8 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 	    res['code'] = "Error during deleting the mode. Please refresh the page."
 	except MailbotMode.DoesNotExist:
 	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except TypeError:
+	    res['code'] = "Datetime %s is in wrong format!" % res['code']
 	except Exception as e:
 	    logger.exception(e)
 	    res['code'] = msg_code['UNKNOWN_ERROR']
