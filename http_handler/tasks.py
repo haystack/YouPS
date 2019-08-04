@@ -188,7 +188,6 @@ def loop_sync_user_inbox():
                     for email_rule in email_rules:
                         # Truncate millisec since mysql doesn't suport msec. 
                         now = timezone.now().replace(microsecond=0) + datetime.timedelta(seconds=1)
-
                         mailbox._get_due_messages(email_rule, now)
 
                         # mark timestamp to prevent running on certain message multiple times 

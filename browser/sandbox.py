@@ -236,17 +236,17 @@ def interpret(mailbox, mode):
                         event_class_name = type(event_data).__name__
                         if (event_class_name == "MessageArrivalData" and rule.type =="new-message") or \
                                 (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
-                            event_data.fire_event(mailbox.new_message_handler)
                             is_fired = True
+                            event_data.fire_event(mailbox.new_message_handler)                            
                         if (event_class_name == "NewFlagsData" and rule.type == "flag-change"):
+                            is_fired = True
                             event_data.fire_event(mailbox.added_flag_handler)
-                            is_fired = True
                         if (event_class_name == "RemovedFlagsData" and rule.type == "flag-change"):
+                            is_fired = True
                             event_data.fire_event(mailbox.removed_flag_handler)
-                            is_fired = True
                         if (event_class_name == "NewMessageDataDue" and rule.type.startswith("deadline")):
-                            event_data.fire_event(mailbox.deadline_handler)
                             is_fired = True
+                            event_data.fire_event(mailbox.deadline_handler)                            
 
                         if is_fired:
                             logger.info("firing %s %s" % (rule.name, event_data.message.subject))

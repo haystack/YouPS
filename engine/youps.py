@@ -158,9 +158,10 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 
 		imap = auth_res['imap']  # noqa: F841 ignore unused
 
+		er = EmailRule.objects.get(id=er_id)
         #  read from DB and convert to the type accordingly 
 		for key, value in kargs.iteritems():
-		    er_arg = EmailRule_Args.objects.get(rule__mode__imap_account=imapAccount, name=key)
+		    er_arg = EmailRule_Args.objects.get(rule=er, name=key)
 
             # parse datetime 
 		    if er_arg.type == "datetime":
@@ -171,7 +172,6 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 		            raise TypeError
 
 		mailbox = MailBox(imapAccount, imap, is_simulate=False)
-		er = EmailRule.objects.get(id=er_id)
 		res = interpret_bypass_queue(mailbox, extra_info={"msg-id": msg_schema_id, "code": er.code, "shortcut": kargs, "rule_name": er.name})
 		
 		res['status'] = True
@@ -234,7 +234,7 @@ def fetch_watch_message(user, email, folder_name):
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name)
+        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name).order_by("-id")
         res['watch_status'] = folder_idle.exists()
 
         if res['watch_status']:
@@ -673,8 +673,6 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			    bc_folder = ButtonChannel( watching_folder=watching_folder )
 			    bc_folder.save()
 
-			    bc_folder = ButtonChannel.objects.filter(id=bc_folder.id)
-			    
 			    # After all unread emails are cleared on initial login, start
 			    # monitoring the folder for new email arrivals and process 
 			    # accordingly. Use the IDLE check combined with occassional NOOP
@@ -692,7 +690,15 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			        try:
 			            uid = -1
 			            if "exchange" in imap_account.host or "csail" in imap_account.host: # e.g., mit
-			                result = [result[0][0]]
+			                flag = False
+			                logger.info(result[0])
+			                for r in result:
+			                    if r[1] ==  "FETCH":
+			                        flag = True
+			                        result = [r[0]]
+
+			                if not flag:
+			                    continue
 			            else: # e.g., gmail, gsuite
 			                uid = result[0][2][1]
 			                result = imap.search('UID %d' % uid)
@@ -707,13 +713,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			            len(result),result
 			            ))
 			        for each in result:
-			            _header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'
-			            fetch = imap.fetch(each, [_header_descriptor, "UID"])
+			            _header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'			            
 			            # mail = email.message_from_string(
 			            # 	fetch[each][_header_descriptor]
 			            # 	)
 			            try:
-			                # process_email(mail, download, log)
+			                fetch = imap.fetch(each, [_header_descriptor, "UID"])
+
 			                logger.info('processing email {0} - {1}'.format(
 			                    each, fetch[each]
 			                    ))
@@ -730,12 +736,12 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                bc_folder.update(code=ButtonChannel.OK)
 			            except MessageSchema.DoesNotExist:
 			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
-			                bc_folder.update(code=ButtonChannel.MSG_NOT_FOUND)
-			            except Exception:
+			                ButtonChannel.objects.filter(id=bc_folder.id).update(code=ButtonChannel.MSG_NOT_FOUND)
+			            except Exception as e:
 			                logger.error(
 			                    'failed to process email {0}'.format(each))
 
-			                bc_folder.update(code=ButtonChannel.UNKNOWN)
+			                ButtonChannel.objects.filter(id=bc_folder.id).update(code=ButtonChannel.UNKNOWN)
 
 			    else:   # After time-out && no operation 
 			        imap.idle_done()

@@ -4,6 +4,7 @@ from event import Event
 import logging
 import datetime
 import smtplib
+import traceback
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
@@ -333,12 +334,23 @@ class MailBox(object):
                 s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
 
             else:
-                s = smtplib.SMTP(
-                    self._imap_account.host.replace("imap", "smtp"), 587)
+                try:
+                    smtp_host = ""
+                    login_id = self._imap_account.email
+                    if "imap.exchange.mit.edu" == self._imap_account.host:
+                        smtp_host = "outgoing.mit.edu"
+                        login_id = login_id.split("@")[0]
+                    else:
+                        smtp_host = self._imap_account.host.replace("imap", "smtp")
+
+                    s = smtplib.SMTP(smtp_host, 587)
+                except Exception:
+                    raise NameError
                 s.ehlo()
                 s.starttls()
-                s.ehlo
-                s.login(self._imap_account.email, decrypt_plain_password(
+                s.ehlo()
+
+                s.login(login_id, decrypt_plain_password(
                     self._imap_account.password))
 
             receip_list = []
@@ -350,6 +362,8 @@ class MailBox(object):
             # TODO check if it sent to cc-ers
             s.sendmail(self._imap_account.email,
                        ', '.join(receip_list), new_message_wrapper.as_string())
+        except NameError:
+            raise RuntimeError("Error occur during sending your message: it has been reported to admins")
         except Exception as e:
             logger.exception ("%s %s" % (e, traceback.format_exc()))
             raise RuntimeError('Failed to send a message: %s' % str(e))
