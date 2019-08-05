@@ -6,8 +6,10 @@ from email.utils import parsedate_tz, mktime_tz
 from email._parseaddr import AddressList
 from datetime import datetime
 from regexes import CFWS, COMMENT
-from pytz import timezone
 import re
+
+from django.utils import timezone
+import pytz
 
 re_cfws = re.compile(CFWS)
 re_comment = re.compile(COMMENT)
@@ -17,6 +19,14 @@ log = logging.getLogger('parser')
 debug = log.debug
 info = log.info
 error = log.error
+
+
+def _make_date_tz_aware(date):
+    # type: (datetime.datetime) -> datetime.datetime
+    if date is not None:
+        if not timezone.is_aware(date):
+            date = timezone.make_aware(date, pytz.timezone('US/Eastern'))
+    return date
 
 
 def _strip_ws_and_comments(val):
@@ -90,9 +100,7 @@ def header_parse_date(date):
     date = parsedate_tz(date)
     if date is not None:
         date = datetime.fromtimestamp(mktime_tz(date))
-        # if date is naive then reinforce timezone
-        if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
-            date = timezone('US/Eastern').localize(date)
+        date = _make_date_tz_aware(date)
     return date
 
 

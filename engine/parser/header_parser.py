@@ -17,7 +17,9 @@ from rfc2822_parser import (header_parse_bcc, header_parse_cc,
                             header_parse_date, header_parse_from,
                             header_parse_in_reply_to, header_parse_message_id,
                             header_parse_references, header_parse_reply_to,
-                            header_parse_subject, header_parse_to)
+                            header_parse_subject, header_parse_to,
+                            _make_date_tz_aware)
+
 
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -27,7 +29,7 @@ HEADER_KEY = 'BODY[HEADER.FIELDS (DATE MESSAGE-ID SUBJECT FROM TO CC BCC REPLY-T
 
 def parse_internal_date(internal_date):
     # type: (datetime.datetime) -> datetime.datetime
-    return internal_date
+    return _make_date_tz_aware(internal_date)
 
 
 def parse_flags(flags):

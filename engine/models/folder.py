@@ -378,6 +378,7 @@ class Folder(object):
                 internal_date = message_data.get('INTERNALDATE', '')
                 assert internal_date is not None
                 date = metadata.get('date', '') or internal_date
+                from_ = self._find_or_create_contacts(metadata.get('from', []))
                 base_message = BaseMessage(
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
@@ -386,7 +387,7 @@ class Folder(object):
                     date=date,
                     subject=metadata.get('subject', ''),
                     internal_date=internal_date,
-                    from_m=self._find_or_create_contacts(metadata.get('from', [])) or None,
+                    from_m=from_[0] if from_ else None,
                     _thread=None  # self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else
                 )
                 base_message.save()
