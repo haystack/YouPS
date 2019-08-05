@@ -3,29 +3,21 @@ from __future__ import division, print_function, unicode_literals
 import heapq
 import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
-import re
 from datetime import datetime
-from email.header import decode_header
-from email.utils import parseaddr, getaddresses
-from string import whitespace
-from itertools import chain
+from engine.parser.header_parser import parse_msg_data
 
-import chardet
 from django.db.models import Max
 from imapclient import \
     IMAPClient  # noqa: F401 ignore unused we use it for typing
 from imapclient.response_types import \
     Address  # noqa: F401 ignore unused we use it for typing
-from pytz import timezone
 
-from dateutil import parser
 from engine.models.event_data import (AbstractEventData, MessageArrivalData,
                                       MessageMovedData, NewFlagsData,
-                                      NewMessageDataDue,
                                       NewMessageDataScheduled,
                                       RemovedFlagsData)
 from engine.models.message import Message
-from engine.utils import normalize_msg_id, folding_ws_regex, encoded_word_string_regex, header_comment_regex
+
 from schema.youps import (  # noqa: F401 ignore unused we use it for typing
     BaseMessage, ContactSchema, ContactAlias, FolderSchema, ImapAccount,
     MessageSchema, ThreadSchema)
@@ -208,7 +200,8 @@ class Folder(object):
         message_schemas = MessageSchema.objects.filter(
             folder=self._schema).filter(base_message__date__range=[time_start, time_end])
 
-        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now),
+        # then add them to the queue
         for message_schema in message_schemas:
             logger.info("add schedule %s %s %s" %
                         (time_start, message_schema.base_message.date, time_end))
@@ -257,7 +250,7 @@ class Folder(object):
 
         # get all the flags for the old messages
         uid_criteria = '%d:%d' % (min_mail_id, self._last_seen_uid)
-        descriptors = Message._get_flag_descriptors( self._imap_account.is_gmail)
+        descriptors = Message._get_flag_descriptors(self._imap_account.is_gmail)
         fetch_data = self._imap_client.fetch(uid_criteria, descriptors)  # type: t.Dict[int, t.Dict[str, t.Any]]
 
         # update flags in the cache
@@ -278,6 +271,7 @@ class Folder(object):
                 continue
 
             self._cleanup_message_data(message_data)
+            message_data = parse_msg_data(message_data)
 
             old_flags = set(message_schema.flags)
             new_flags = set(message_data['FLAGS'])
@@ -323,42 +317,12 @@ class Folder(object):
                 return False
         return True
 
-    def _parse_header_date(self, str_date):
-        # type: (t.Union[str, datetime]) -> datetime
-        # TODO coonvert all this parsing to https://docs.python.org/2/library/email.utils.html#email.utils.parsedate_tz
-        try:
-            try:
-                date = parser.parse(str_date) if not isinstance(
-                    str_date, datetime) else str_date
-            except Exception:
-                date = parser.parse(str_date, fuzzy=True) if not isinstance(
-                    str_date, datetime) else str_date
-            # if date is naive then reinforce timezone
-            if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
-                date = timezone('US/Eastern').localize(date)
-            return date
-        except Exception:
-            logger.exception("failed in parsing date: %s: %s" %
-                             (type(str_date), str_date))
-        return None
-
-    def _cleanup_metadata(self, metadata):
-        metadata['message-id'] = normalize_msg_id(metadata['message-id'])[0]
-        if metadata.has_key('in-reply-to'):
-            metadata['in-reply-to'] = normalize_msg_id(metadata['in-reply-to']) 
-        else:
-            metadata['in-reply-to'] = []
-        if metadata.has_key('references'):
-            metadata['references'] = normalize_msg_id(metadata['references']) 
-        else:
-            metadata['references'] = []
-
     def _cleanup_message_data(self, message_data):
         message_data['FLAGS'] = list(message_data['FLAGS'])
         if self._imap_account.is_gmail:
             # basically treat FLAGS and GMAIL-LABELS as the same thing but don't duplicate
             combined_flags = set(message_data['FLAGS'] + list(message_data['X-GM-LABELS']))
-            message_data['FLAGS'] = list(combined_flags) 
+            message_data['FLAGS'] = list(combined_flags)
 
     def _save_new_messages(self, last_seen_uid, event_data_list=None, new_message_ids=None, urgent=False):
         # type: (int, t.List[AbstractEventData]) -> None
@@ -366,8 +330,8 @@ class Folder(object):
 
         Args:
             last_seen_uid (int): the max uid we have stored, should be 0 if there are no messages stored.
-            urgent (bool): if True, save only one email. This is used to save a message and bypass syncing loop. 
-                e.g. when users try to manipulate this message but when it is not registered yet 
+            urgent (bool): if True, save only one email. This is used to save a message and bypass syncing loop.
+                e.g. when users try to manipulate this message but when it is not registered yet
         """
 
         # get the descriptors for the message
@@ -392,42 +356,39 @@ class Folder(object):
             # dictionary of general data about the message
             message_data = fetch_data[uid]
 
-
             # make sure all the fields we're interested in are in the message_data
             ok = self._check_fields_in_fetch(
                 ['SEQ'] + Message._get_descriptors(is_gmail, True), message_data)
             if not ok:
                 continue
 
-            # dictionary of header key value pairs
-            metadata = self._parse_email_header(
-                message_data[Message._header_fields_key])
+            self._cleanup_message_data(message_data)
+            message_data = parse_msg_data(message_data)
+            metadata = message_data[Message._header_fields_key]
 
             # TODO currently have a bug with parsing, if encoding fails we return None
-            if metadata is None or metadata.get('message-id') is None:
+            if metadata.get('message-id') is None:
+                logger.critical("%s::%s::%s missing message-id", self._imap_account.email, self.name, uid)
                 continue
-
-            self._cleanup_message_data(message_data)
-            self._cleanup_metadata(metadata)
 
             try:
                 base_message = BaseMessage.objects.get(
                     imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage
             except BaseMessage.DoesNotExist:
-                internal_date = self._parse_header_date(message_data.get('INTERNALDATE', ''))
+                internal_date = message_data.get('INTERNALDATE', '')
                 assert internal_date is not None
-                date = self._parse_header_date(metadata.get('date', '')) or internal_date
+                date = metadata.get('date', '') or internal_date
                 base_message = BaseMessage(
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
-                    in_reply_to=metadata['in-reply-to'],
-                    references=metadata['references'],
+                    in_reply_to=metadata.get('in-reply-to', []),
+                    references=metadata.get('references', []),
                     date=date,
                     subject=metadata.get('subject', ''),
                     internal_date=internal_date,
                     from_m=self._find_or_create_contacts(metadata['from'])[
                         0] if 'from' in metadata else None,
-                    _thread=None #self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else 
+                    _thread=None  # self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else
                 )
                 base_message.save()
                 if new_message_ids is not None:
@@ -499,68 +460,6 @@ class Folder(object):
             thread_schema.save()
             return thread_schema
 
-    # TODO header keys can show up more than once we should check if we support that
-    def _parse_email_header(self, header):
-        # type: (str) -> t.Dict[str, str]
-        """Parse a potentially multiline email header into a dict of key value pairs.
-
-        Returns:
-            t.Dict[str, str]: Dictionary of key value pairs found in the header
-        """
-        # the fields that will be returned
-        fields = []
-
-        try:
-            header.split('\r\n')
-        except Exception:
-            encoding = chardet.detect(header)['encoding']
-            header = header.decode(encoding, errors='replace')
-            logger.exception('failed to split header, encoding: {enc}, header:\n{h}'.format(
-                enc=encoding, h=header))
-            return None
-
-        # replace instance of folding white space with nothing
-        header = folding_ws_regex.sub('', header)
-        for field in header.split('\r\n'):
-            # header can have multiple encoded parts
-            # we can remove this in python3 but its a bug in python2
-            parts = chain.from_iterable(decode_header(f) for f in filter(None, encoded_word_string_regex.split(field)))
-            combined_parts = u""
-            for part in parts:
-                text, encoding = part[0], part[1]
-                if encoding:
-                    text = text.decode(encoding, errors='ignore')
-                    if encoding != 'utf-8' and encoding != 'utf8':
-                        logger.debug(
-                            'parse_subject non utf8 encoding: %s' % encoding)
-                        # TODO not sure if we want everything in utf8 we need some native speakers to test this
-                        # text = text.encode('utf8')
-                else:
-                    text = unicode(text, encoding='utf8')
-                combined_parts += text
-
-            # ignore whitespace fields
-            if not combined_parts:
-                continue
-
-            fields.append(combined_parts)
-        fields = {k.lower().strip(): v.strip() for (k, v) in [f.split(':', 1) for f in fields]}
-        
-        # TODO move this somewhere else
-        # remove comments from message ids, check rfc5322 when 
-        # adding fields to determine if comments need to be removed
-        for k in fields:
-            # these fields contain message ids
-            if k not in ['message-id', 'in-reply-to', 'references']:
-                continue
-            v = fields[k]
-            # nested comments cannot be queried with regex
-            # this hack removes them from the inside out
-            while header_comment_regex.search(v):
-                v = header_comment_regex.sub('', v)
-            fields[k] = v
-        return fields
-
     def _find_or_create_contacts(self, addresses):
         # type: (t.List[Address]) -> t.List[ContactSchema]
         """Convert a list of addresses into a list of contact schemas.
@@ -571,7 +470,7 @@ class Folder(object):
         assert addresses is not None
         contact_schemas = []
 
-        for address in getaddresses([addresses]):
+        for address in addresses:
             name, email = address
             # this can happen when i send emails to myself - LM not sure why
             if not email or "@" not in email:
