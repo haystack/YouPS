@@ -24,8 +24,9 @@ error = log.error
 def _make_date_tz_aware(date):
     # type: (datetime.datetime) -> datetime.datetime
     if date is not None:
-        if not timezone.is_aware(date):
-            date = timezone.make_aware(date, pytz.timezone('US/Eastern'))
+        if date.tzinfo is None or date.tzinfo.utcoffset(date) is None:
+            date = pytz.timezone('US/Eastern').localize(date)
+            date = timezone.localtime(date)
     return date
 
 
