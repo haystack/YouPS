@@ -23,7 +23,7 @@ from pytz import timezone as tz
 
 from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
-                          ImapAccount, MessageSchema, TaskManager)
+                          ImapAccount, BaseMessage, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
 from engine.utils import IsNotGmailException
 from engine.models.helpers import message_helpers
@@ -272,6 +272,15 @@ class Message(object):
         """
         # TODO we will automatically remove the RECENT flag unless we make our imapclient ReadOnly
         return '\\Recent' in self.flags
+
+    def is_replied(self):
+        # type: () -> bool
+        """Get if the message is replied
+
+        Returns:
+            bool: True if the message is replied
+        """
+        return BaseMessage.objects.filter(imap_account=self._imap_account).filter(_in_reply_to__contains=self._message_id).exists()
 
     @property
     def to(self):
