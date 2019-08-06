@@ -127,7 +127,7 @@ class Folder(object):
 
         if self._imap_account.email == "lauralyn@mit.edu":
             mail_ids = self._imap_client.search(
-                'SINCE 1-Aug-{year}'.format(year=datetime.now().year))
+                'SINCE 20-Jul-{year}'.format(year=datetime.now().year))
         else:
             mail_ids = self._imap_client.search(
                 'SINCE 1-Jan-{year}'.format(year=datetime.now().year))

@@ -234,22 +234,24 @@ def fetch_watch_message(user, email, folder_name):
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name).order_by("-id")
+        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name)
         res['watch_status'] = folder_idle.exists()
 
         if res['watch_status']:
-            if folder_idle[0].code == ButtonChannel.OK:
-                bc = ButtonChannel.objects.filter(message__imap_account=imapAccount).filter(message__folder__name=folder_name).latest('timestamp')
+            res['folder_id'] = folder_idle.order_by("-id")[0].id
+            bc = ButtonChannel.objects.filter(imap_account=imapAccount).latest('timestamp')
+
+            if bc and bc.code == ButtonChannel.OK:
                 res['folder'] = bc.message.folder.name
                 res['uid'] = bc.message.id 
                 
-
                 message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
                 res['message'] = message._get_meta_data_friendly() 
                 res['sender'] = message._get_from_friendly()
             else:
                 # if something went wrong only return the log
-                res["log"] = folder_idle[0].get_code_display()
+                logger.info(bc.code)
+                res["log"] = bc.get_code_display()
         
         res['status'] = True
 
@@ -705,7 +707,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 
 			            logger.info(result)
 			        except Exception as e:
-                        # prevent reacting to msg move/remove 
+			            # prevent reacting to msg move/remove 
 			            logger.critical(e)
 			            continue
                         
@@ -729,19 +731,23 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                else:
 			                    uid = each
 			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=uid)
-			                bc = ButtonChannel(message=message)
 			                logger.info(message.base_message.subject)
+			                bc = ButtonChannel(message=message, imap_account=imap_account, code=ButtonChannel.OK)
 			                bc.save()
 
-			                bc_folder.update(code=ButtonChannel.OK)
 			            except MessageSchema.DoesNotExist:
 			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
-			                ButtonChannel.objects.filter(id=bc_folder.id).update(code=ButtonChannel.MSG_NOT_FOUND)
+			                # TODO this creates a new instance of buttonchannel
+
+			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.MSG_NOT_FOUND)
+			                bc.save()
 			            except Exception as e:
+			                logger.error(str(e))
 			                logger.error(
 			                    'failed to process email {0}'.format(each))
 
-			                ButtonChannel.objects.filter(id=bc_folder.id).update(code=ButtonChannel.UNKNOWN)
+			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.UNKNOWN)
+			                bc.save()
 
 			    else:   # After time-out && no operation 
 			        imap.idle_done()

@@ -332,7 +332,7 @@ class ButtonChannel(models.Model):
 
     TYPE_CHOICES = (
         (OK, ''),
-        (MSG_NOT_FOUND, "The message is no longer existing in this folder."),
+        (MSG_NOT_FOUND, "The message is no longer existing in this folder or YouPS can't handle this message"),
         (UNKNOWN, "YouPS can't handle this message. Sorry!"),
     )
 
@@ -341,6 +341,7 @@ class ButtonChannel(models.Model):
         default=OK
     )
 
+    imap_account = models.ForeignKey('ImapAccount', blank=True, null=True)
     message = models.ForeignKey('MessageSchema', blank=True, null=True)
     watching_folder = models.ForeignKey('FolderSchema', blank=True, null=True)  # type: FolderSchema
 
