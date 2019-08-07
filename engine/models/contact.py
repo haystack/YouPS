@@ -109,6 +109,33 @@ class Contact(object):
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.from_messages.all()]
 
+    def messages_from_date(self, from_date=None, to_date=None):
+        """Get the Messages which are from this contact
+
+        Returns:
+            t.List[Message]: The messages where this contact is listed in the from field
+        """
+        from engine.models.message import Message
+
+        message_schemas = []
+        if from_date is None and to_date is None:
+            return self.messages_from
+    
+        elif from_date is None:
+            message_schemas = MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__from_m=self._schema) \
+                .filter(base_message__date__lte=to_date)
+
+        elif to_date is None:
+            message_schemas = MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__from_m=self._schema) \
+                .filter(base_message__date__gte=from_date)
+        
+        else:   # return all 
+            message_schemas = MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__from_m=self._schema) \
+                .filter(base_message__date__range=[from_date, to_date])
+            
+        logger.debug(message_schemas.values('id'))
+        return [Message(message_schema, self._imap_client) for message_schema in message_schemas]
+
     @property
     def messages_bcc(self):
         # type: () -> t.List[Message]
@@ -138,11 +165,10 @@ class Contact(object):
         Returns:
             t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field
         """
-        from browser.models.message import Message
+        from engine.models.message import Message
 
-        message_schemas = MessageSchema.objects.filter(Q(from_m=self._schema) | Q(to=self._schema) | Q(cc=self._schema) | Q(bcc=self._schema)).order_by("-date")[:N]
+        message_schemas = MessageSchema.objects.filter(imap_account=self._schema.imap_account).filter(Q(base_message__from_m=self._schema) | Q(base_message__to=self._schema) | Q(base_message__cc=self._schema) | Q(base_message__bcc=self._schema)).order_by("-base_message__date")[:N]
         logger.debug(message_schemas.values('id'))
         # TODO fetch from imap 
         # self._imap_client.search('OR FROM "%s" (OR TO "%s" (OR CC "%s" BCC "%s"))' % (self.email, self.email, self.email, self.email))
         return [Message(message_schema, self._imap_client) for message_schema in message_schemas]
-

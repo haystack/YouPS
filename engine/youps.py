@@ -109,7 +109,7 @@ def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
     try:
         imapAccount = ImapAccount.objects.get(email=email)
         d = {}
-        if from_id is None and to_id is None:
+        if from_id is None and to_id is None: # return all 
             logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
     
         elif from_id is None:
@@ -118,7 +118,7 @@ def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
         elif to_id is None:
             logs = LogSchema.objects.filter(id__gte=from_id).filter(imap_account=imapAccount)
         
-        else:   # return all 
+        else:   
             logs = LogSchema.objects.filter(id__range=[from_id, to_id]).filter(imap_account=imapAccount)
 
         for l in logs:
