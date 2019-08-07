@@ -333,7 +333,7 @@ class ButtonChannel(models.Model):
     TYPE_CHOICES = (
         (OK, ''),
         (MSG_NOT_FOUND, "The message is no longer existing in this folder or YouPS can't handle this message"),
-        (UNKNOWN, "YouPS can't handle this message. Sorry!"),
+        (UNKNOWN, "Looking.. Would you mind marking read/unread the message again?"),
     )
 
     code = models.IntegerField(
