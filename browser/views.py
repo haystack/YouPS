@@ -158,6 +158,10 @@ def about_view(request):
 def calendar_view(request):
 	return {'website': WEBSITE}
 
+@render_to(WEBSITE+"/privacy.html")
+def privacy_view(request):
+	return {'website': WEBSITE}
+
 @render_to(WEBSITE+"/email_button.html")
 def email_button_view(request):
 	try: 

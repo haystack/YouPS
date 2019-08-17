@@ -76,6 +76,7 @@ shared_patterns = [
     url(r'^about', 'browser.views.about_view'),
     url(r'^calendar', 'browser.views.calendar_view'),
     url(r'^button', 'browser.views.email_button_view'),
+    url(r'^privacy', 'browser.views.privacy_view'),
     url(r'^login_imap', 'browser.views.login_imap'),
     url(r'^load_new_editor', 'browser.views.load_new_editor'),
     url(r'^remove_rule', 'browser.views.remove_rule'),

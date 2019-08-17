@@ -1,0 +1,126 @@
+{% extends website|add:"/base.html" %}
+{% block customcss %}
+<link rel="stylesheet" href="/static/css/youps/libs/codemirror.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+<!-- <link rel="stylesheet" href="/static/css/youps/libs/fontawesome-all.min.css"> -->
+<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> -->
+<!-- Interactive console styles -->
+<!-- <link rel="stylesheet" href="/static/css/youps/libs/sandbox.css" /> -->
+<link rel="stylesheet" href="https://get.mavo.io/mavo.css">
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/youps/libs/prism.css">
+<link rel="stylesheet" href="/static/css/youps/libs/jquery.switchButton.css" />
+<link rel="stylesheet" href="/static/css/youps/libs/show-hint.css" />
+<link rel="stylesheet" type="text/css" href="/static/css/youps/libs/qunit.css">
+<link rel="stylesheet" href="/static/css/youps/libs/jsonpanel.css">
+<link rel="stylesheet" href="/static/css/youps/history_table.css">
+<link rel="stylesheet" href="/static/css/youps/style.css">
+<link rel="stylesheet" href="/static/css/youps/email_button.css">
+{% endblock %}
+
+{% block content %}
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-139042591-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-139042591-1');
+</script>
+	
+	<div class="sk-circle">
+			<div class="sk-circle1 sk-child"></div>
+			<div class="sk-circle2 sk-child"></div>
+			<div class="sk-circle3 sk-child"></div>
+			<div class="sk-circle4 sk-child"></div>
+			<div class="sk-circle5 sk-child"></div>
+			<div class="sk-circle6 sk-child"></div>
+			<div class="sk-circle7 sk-child"></div>
+			<div class="sk-circle8 sk-child"></div>
+			<div class="sk-circle9 sk-child"></div>
+			<div class="sk-circle10 sk-child"></div>
+			<div class="sk-circle11 sk-child"></div>
+			<div class="sk-circle12 sk-child"></div>
+	</div>
+	<div class="container">
+		<div class="group-container">
+			<p hidden id="website-name">{{website}}</p>
+
+			<h3>Application Privacy Policy</h3>
+            <hr>
+            
+            You are asked to participate in a research study conducted by Soyun Park and Prof. David Karger, from the Department of Electrical Engineering and Computer Science at the Massachusetts Institute of Technology (M.I.T.). You were selected as a possible participant in this study because you are over 18 years of age, and you use email. You should read the information below, and ask questions about anything you do not understand, before deciding whether or not to participate.
+            
+            <br><br>
+            •	PARTICIPATION AND WITHDRAWAL
+            
+            Your participation in this study is completely voluntary and you are free to choose whether to be in it or not. If you choose to be in this study, you may subsequently withdraw from it at any time without penalty or consequences of any kind. The investigator may withdraw you from this research if circumstances arise which warrant doing so. 
+            <br>
+            •	PURPOSE OF THE STUDY
+            
+            This study is designed to understand how you manage your inbox and to test a new method of organizing email inbox.
+            <br>
+            •	POTENTIAL RISKS AND DISCOMFORTS
+            
+            We do not anticipate any unusual risks or discomforts to you, either physical or psychological, as a result of participating in this study.
+            
+            <br>
+            •	POTENTIAL BENEFITS 
+            
+            You will learn how to use our tool to manage email inbox efficiently. Email users will benefit from features provided by us.
+            <br>            
+            •	CONFIDENTIALITY
+            
+            Any information that is obtained in connection with this study and that can be identified with you will remain confidential and will be disclosed only with your permission or as required by law. 
+            
+            All audio and video recordings and email rules that you produce in the study will be stored securely and only accessed by the researchers of this study. In addition, we won’t access nor store your email contents. 
+            
+            Portions of your data, such as quotes from your interview, or snippets of your summary output may appear in a journal or conference paper. No identifiable information about you, such as your face, name, address, or any other information will be included in those publications. 
+            
+            Information collected from this experiment will be stored in secure computer systems to which only the researchers have access. The data will be stored for a maximum of three years, and then destroyed.
+            <br>
+            •	RIGHTS OF RESEARCH SUBJECTS
+            
+            You are not waiving any legal claims, rights or remedies because of your participation in this research study.  If you feel you have been treated unfairly, or you have questions regarding your rights as a research subject, you may contact the Chairman of the Committee on the Use of Humans as Experimental Subjects, M.I.T., Room E25-143B, 77 Massachusetts Ave, Cambridge, MA 02139, phone 1-617-253 6787.            
+            
+		</div>
+	</div>
+	<script type="text/javascript">
+		var is_authenticated = {{ user.is_authenticated|yesno:"true,false" }};
+	</script>
+
+
+	<!-- <a href="/groups/{{group_info.name}}">Back to group info page</a> -->
+{% endblock %}
+
+{% block customjs %}
+	<script type="text/javascript" src="/static/javascript/notify.js"></script>
+
+	<script type="text/javascript" src="/static/javascript/youps/fontawesome-all.min.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/codemirror.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/addon/edit/matchbrackets.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/python.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/addon/hint/show-hint.js"></script>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
+
+	<script src="/static/javascript/youps/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
+
+	<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
+	<script src="https://get.mavo.io/mavo.js"></script>
+	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
+	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
+
+	<!-- JSON Formatter -->
+	<script src="/static/javascript/youps/qunit.js"></script>
+    <script src="/static/javascript/youps/blanket.min.js"></script>
+	<script src="/static/javascript/youps/Autolinker.js"></script>
+	<script src="/static/javascript/youps/jsonpanel.js"></script>
+	<script src="/static/javascript/youps/tests.js"></script>
+
+	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/email_button.js"></script>
+{% endblock %}
