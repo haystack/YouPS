@@ -82,8 +82,6 @@ def authenticate(imap_account):
         # imap_account.password = ""
         imap_account.access_token = ""
 
-        # turn off the email engine
-        # imap_account.is_running = False
         imap_account.save()
 
     return res

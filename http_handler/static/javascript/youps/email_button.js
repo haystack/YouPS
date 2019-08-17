@@ -29,7 +29,7 @@ $(document).ready(function() {
     btn_watch.click(function (e) {
         spin_watch_btn(true);
         request_watch_message();
-        
+    
         // Call this after some delay so the server has enough time to set up IDLE()
         setTimeout(fetch_watch_message, 1 * 1500); // 1 second
     });
