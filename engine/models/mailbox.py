@@ -115,6 +115,11 @@ class MailBox(object):
         for folder in self._list_selectable_folders():
             # response contains folder level information such as
             # uid validity, uid next, and highest mod seq
+            if self._imap_account.email == "lauralyn@mit.edu":
+                if folder.name in ["Calendar", "Contacts"]:
+                    continue
+                logger.debug("Laula; about to select_folder %s" % (folder.name))
+
             response = self._imap_client.select_folder(folder.name)
 
             # our algorithm doesn't work without these

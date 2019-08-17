@@ -125,12 +125,9 @@ class Folder(object):
         # to return all mail just comment out the following line
         # return 1
 
-        if self._imap_account.email == "lauralyn@mit.edu":
-            mail_ids = self._imap_client.search(
-                'SINCE 20-Jul-{year}'.format(year=datetime.now().year))
-        else:
-            mail_ids = self._imap_client.search(
-                'SINCE 1-Jan-{year}'.format(year=datetime.now().year))
+        mail_ids = self._imap_client.search(
+            'SINCE 1-Jan-{year}'.format(year=datetime.now().year))
+            
         if mail_ids:
             return min(mail_ids)
         else:  # if there is no email in this year, save at least 5 latest messages.
