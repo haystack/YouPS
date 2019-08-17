@@ -58,6 +58,7 @@ class MailBox(object):
         from engine.models.message import Message
         from pprint import pformat
         import cPickle as pickle
+
         import sqlite3
         conn = sqlite3.connect('/home/ubuntu/production/mailx/logs/message_data.db')
         c = conn.cursor()
@@ -96,13 +97,14 @@ class MailBox(object):
             c.executemany("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", values)
             conn.commit()
 
+
         c.execute("INSERT into synced (email) VALUES (?)", (self._imap_account.email,))
         conn.commit()
 
         # We can also close the connection if we are done with it.
         # Just be sure any changes have been committed or they will be lost.
         conn.close()
-
+        
     def _sync(self):
         # type: () -> bool 
         """Synchronize the mailbox with the imap server.

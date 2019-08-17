@@ -158,6 +158,7 @@ def loop_sync_user_inbox():
                 try:
                     mailbox = MailBox(imapAccount, imap)
                     # TODO(lukemurray): remove this
+
                     mailbox._log_message_ids()
                     # sync the mailbox with imap
                     mailbox._sync()
