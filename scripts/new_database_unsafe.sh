@@ -4,10 +4,10 @@
 set -e
 
 # stop the cron jobs
-pidfile="/home/ubuntu/production/mailx/loop_sync_user_inbox.lock"
+pidfile="/home/ubuntu/production/mailx/loop_sync_user_inbox2.lock"
 exec 200>$pidfile
 flock 200 || exit 1
-pidfile="/home/ubuntu/production/mailx/register_inbox.lock"
+pidfile="/home/ubuntu/production/mailx/register_inbox2.lock"
 exec 201>$pidfile
 flock 201 || exit 1
 
@@ -75,6 +75,11 @@ python manage.py migrate schema && \
 
     ALTER TABLE
         schema_imapaccount
+        CONVERT TO CHARACTER SET utf8mb4
+        COLLATE utf8mb4_unicode_ci;
+
+    ALTER TABLE
+        schema_logschema
         CONVERT TO CHARACTER SET utf8mb4
         COLLATE utf8mb4_unicode_ci;
 

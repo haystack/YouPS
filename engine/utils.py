@@ -4,6 +4,8 @@ import logging
 import re
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
+import json 
+from schema.youps import LogSchema
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
@@ -257,6 +259,12 @@ def references_algorithm(start_msg):
 
     # TODO PART 5 and PART 6 RFC 5256
 
+def dump_execution_log(imapAccount, new_log):
+    if new_log != {}:
+        logger.debug(new_log)
+        l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log))
+        l.save()
+        
 
 # REGEXES
 # Match carriage return new lines followed by whitespace. For example "\r\n   \t\t"

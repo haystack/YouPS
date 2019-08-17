@@ -1,0 +1,214 @@
+{% extends website|add:"/base.html" %}
+{% block customcss %}
+<link rel="stylesheet" href="/static/css/youps/libs/codemirror.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+<!-- <link rel="stylesheet" href="/static/css/youps/libs/fontawesome-all.min.css"> -->
+<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> -->
+<!-- Interactive console styles -->
+<!-- <link rel="stylesheet" href="/static/css/youps/libs/sandbox.css" /> -->
+<link rel="stylesheet" href="https://get.mavo.io/mavo.css">
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/youps/libs/prism.css">
+<link rel="stylesheet" href="/static/css/youps/libs/jquery.switchButton.css" />
+<link rel="stylesheet" href="/static/css/youps/libs/show-hint.css" />
+<link rel="stylesheet" type="text/css" href="/static/css/youps/libs/qunit.css">
+<link rel="stylesheet" href="/static/css/youps/libs/jsonpanel.css">
+<link rel="stylesheet" href="/static/css/youps/history_table.css">
+<link rel="stylesheet" href="/static/css/youps/style.css">
+<link rel="stylesheet" href="/static/css/youps/email_button.css">
+{% endblock %}
+
+{% block content %}
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-139042591-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-139042591-1');
+</script>
+	
+	<div class="sk-circle">
+			<div class="sk-circle1 sk-child"></div>
+			<div class="sk-circle2 sk-child"></div>
+			<div class="sk-circle3 sk-child"></div>
+			<div class="sk-circle4 sk-child"></div>
+			<div class="sk-circle5 sk-child"></div>
+			<div class="sk-circle6 sk-child"></div>
+			<div class="sk-circle7 sk-child"></div>
+			<div class="sk-circle8 sk-child"></div>
+			<div class="sk-circle9 sk-child"></div>
+			<div class="sk-circle10 sk-child"></div>
+			<div class="sk-circle11 sk-child"></div>
+			<div class="sk-circle12 sk-child"></div>
+	</div>
+	<div class="container">
+		<div class="group-container">
+			<p hidden id="website-name">{{website}}</p>
+
+			<h3>YouPS button</h3>
+			<hr>
+			<label for="folder-dropdown">Folder: </label>
+	        <select id="folder-dropdown" name="folder">
+                {% for folder in folders %}
+                    {% if folder|lower == "inbox" %}
+                        <option selected="selected">{{ folder }}</option>
+                    {% else %}
+                        <option>{{ folder }}</option>
+                    {% endif %}
+                {% endfor %}
+			</select>		
+
+			<div id="button-container">
+				<button class='btn btn-primary btn-lg' id='btn-watch'>Watch</button>
+				<p id="info-msg">Open (mark read/unread) a message you want to manipulate!</p>
+			</div>
+			{% if imap_authenticated %}
+				<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
+				<a id="popuplink" href="#inline">Forgot how to use?</a>
+				<div id="inline" style="display:none;text-align:center;">
+					<h4>1. Select a folder in which the message you want to handle then click "Watch"!</h4>
+					<img style="display: block" src="/static/images/select_folder.png" width="200"/>
+					<h4>2. Mark read and unread the message and allow upto 2 seconds until YouPS can detect.</h4>
+				{% if is_gmail %}
+					<img style="display: block" src="/static/gif/gmail_low_640.gif"/>
+				{% else %}
+					<img style="display: block" src="/static/gif/thunderbird_low_640.gif"/>
+				{% endif %}
+				<!-- <h4 style="margin-top:20px;">
+					To select a message, open the message at your email client!
+				</h4> -->
+				<!-- <p>Mark read and unread and allow upto 2 seconds until YouPS can detect.</p> -->
+				<p><a href="javascript:;" onclick="jQuery.fancybox.close();" style="background-color:#333;padding:5px 10px;color:#fff;border-radius:5px;text-decoration:none;">Close</a></p>
+				</div>
+				<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.js"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.js"></script>	
+
+				<script type="text/javascript">
+					function openFancybox() {
+						setTimeout(function () {
+							jQuery('#popuplink').trigger('click');
+						}, 500);
+					};
+
+					$(document).ready(function () {
+						var visited = jQuery.cookie('visited');
+						if (visited == 'yes') {
+							// second page load, cookie active
+						} else {
+							openFancybox(); // first page load, launch fancybox
+						}
+						jQuery.cookie('visited', 'yes', {
+							expires: 1 // the number of days cookie  will be effective
+						});
+						jQuery("#popuplink").fancybox({modal:true, maxWidth: 640, overlay : {closeClick : true}});
+					});
+				</script>
+			{% endif %}
+
+			<div id='watching-msg-container'>
+				<span name="sender"></span>
+				<span name="subject"></span>
+				<span name="date"></span>
+			</div>
+
+			<div id='selected-rule-container'>
+				
+			</div>
+
+			<div id='rule-container'>
+				<table class="table table-striped">
+					<thead>
+						<tr>
+						<th scope="col">Name</th>
+						<th scope="col">Values</th>
+						<th scope="col">Available rules</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for er in email_rules %}
+							<tr>
+								<td>{{ er.name }}</td>
+								<td>
+									{% for arg in er.args.all %}
+										<li class="element" name="{{arg.name}}" >
+											<span>{{arg.name}}:</span>
+											<!-- <input class="args-name" type="text" placeholder="name" value="{{arg.name}}"/>: -->
+											{% if arg.type == "datetime" %}
+												<input type="datetime-local" id="user-datetime" value="{{YEAR}}-{{MONTH}}-{{DAY}}T00:00" min="2019-01-01T00:00" max="2030-06-14T00:00">
+											{% elif arg.type == "string" %}
+												<input class="args-value" placeholder="write your value here"/>
+											{% endif %}
+										</li>
+									{% endfor %}
+								</td>
+								<td><button class='btn btn-info' er-id={{er.id}}>Apply</button></td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
+			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
+
+			<div id='result-container'>
+					<h2>History</h2>
+					<table id="console-table" class="table" style="width:100%">
+						<thead>
+							<tr>
+							  <th>Date</th>
+							  <th>Trigger</th>
+							  <th>Sender</th>
+							  <th>Message</th>
+							  <th>Log</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+					<div class="text-center">
+						<button id="btn-log-load-more" class="btn btn-primary">Load more</button>
+					</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		var is_authenticated = {{ user.is_authenticated|yesno:"true,false" }};
+	</script>
+
+
+	<!-- <a href="/groups/{{group_info.name}}">Back to group info page</a> -->
+{% endblock %}
+
+{% block customjs %}
+	<script type="text/javascript" src="/static/javascript/notify.js"></script>
+
+	<script type="text/javascript" src="/static/javascript/youps/fontawesome-all.min.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/codemirror.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/addon/edit/matchbrackets.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/python.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/addon/hint/show-hint.js"></script>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
+
+	<script src="/static/javascript/youps/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
+
+	<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
+	<script src="https://get.mavo.io/mavo.js"></script>
+	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
+	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
+
+	<!-- JSON Formatter -->
+	<script src="/static/javascript/youps/qunit.js"></script>
+    <script src="/static/javascript/youps/blanket.min.js"></script>
+	<script src="/static/javascript/youps/Autolinker.js"></script>
+	<script src="/static/javascript/youps/jsonpanel.js"></script>
+	<script src="/static/javascript/youps/tests.js"></script>
+
+	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
+	<script type="text/javascript" src="/static/javascript/youps/email_button.js"></script>
+{% endblock %}

@@ -118,7 +118,7 @@ def mailbot(arrived_message, address=None, host=None):
 
             shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
             if not imapAccount.current_mode or not shortcuts.exists():
-                body = "Your YoUPS hasn't turned on or don't have email shortcuts yet! Define your shortcuts here %s://%s" % (PROTOCOL, site.domain)
+                body = "Your YouPS hasn't turned on or don't have email shortcuts yet! Define your shortcuts here %s://%s" % (PROTOCOL, site.domain)
 
                 mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
                 relay.deliver(mail)

@@ -49,6 +49,15 @@ class ImapAccount(models.Model):
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 
+class LogSchema(models.Model):
+    # the primary key
+    id = models.AutoField(primary_key=True)
+    imap_account = models.ForeignKey(ImapAccount)
+
+    content = models.TextField()
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 
 class FolderSchema(models.Model):
     # the primary key
@@ -131,13 +140,13 @@ class BaseMessage(models.Model):
         # type: (t.List[t.AnyStr]) -> None
         self._in_reply_to = json.dumps(value)
 
-    # YoUPS richer attribute
+    # YouPS richer attribute
     progress = models.CharField('progress', max_length=300, blank=True)
     deadline = models.DateTimeField('deadline', null=True, blank=True)
     category = models.CharField('category', max_length=300, blank=True)
     topic = models.CharField('topic', max_length=300, blank=True)
     priority = models.CharField('priority', max_length=300, blank=True)
-    task = models.CharField('task', max_length=300, blank=True)
+    task = models.TextField('task', blank=True)
 
     class Meta:
         db_table = "youps_base_message"
@@ -268,15 +277,22 @@ class EmailRule(models.Model):
     class Meta:
         unique_together = ("id", "mode")
 
+class EmailRule_Args(models.Model):
+    id = models.AutoField(primary_key=True)
 
-# # This model is to have many-to-many relation of EmailRule and Folder
-# class EmailRule_Folder(models.Model):
-#     rule = models.ForeignKey('EmailRule')
-#     folder = models.ForeignKey('FolderSchema')
-
-#     class Meta:
-#         db_table = "youps_emailrule_folder"
-#         unique_together = ("rule", "folder")
+    name = models.CharField(default='name', max_length=100)
+    rule = models.ForeignKey('EmailRule', related_name="args")
+    TYPE_CHOICES = (
+        ("string", 'string'),
+        ("datetime", 'datetime'),
+        ("contact", 'ContactSchema'),
+        ("message", 'MessageSchema'),
+    )
+    type = models.CharField(
+        max_length=8,
+        choices=TYPE_CHOICES,
+        default="string"
+    )
 
 class Message_Thread(models.Model):
     id = models.AutoField(primary_key=True)
@@ -298,10 +314,38 @@ class TaskManager(models.Model):
     id = models.AutoField(primary_key=True)
     email_rule = models.ForeignKey('EmailRule')
 
-    message = models.ForeignKey('MessageSchema', blank=True, null=True)
+    base_message = models.ForeignKey('BaseMessage', blank=True, null=True)
     imap_account = models.ForeignKey(ImapAccount)
     # when it should be performed
     date = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "youps_taskmanager"
+
+# TODO later be replaced with websocket or django channel
+class ButtonChannel(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    OK = 1
+    MSG_NOT_FOUND = 2
+    UNKNOWN = 3
+
+    TYPE_CHOICES = (
+        (OK, ''),
+        (MSG_NOT_FOUND, "The message is no longer existing in this folder or YouPS can't handle this message"),
+        (UNKNOWN, "Looking.. Would you mind marking read/unread the message again?"),
+    )
+
+    code = models.IntegerField(
+        choices=TYPE_CHOICES,
+        default=OK
+    )
+
+    imap_account = models.ForeignKey('ImapAccount', blank=True, null=True)
+    message = models.ForeignKey('MessageSchema', blank=True, null=True)
+    watching_folder = models.ForeignKey('FolderSchema', blank=True, null=True)  # type: FolderSchema
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "youps_buttonchannel"

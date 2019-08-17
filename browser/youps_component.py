@@ -5,7 +5,7 @@ import json
 import logging
 from engine.constants import msg_code
 
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args)
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -16,7 +16,7 @@ def get_base_code(rule_type):
         "new-message": "def on_message(my_message):\n    pass",
         "deadline": "def on_deadline(my_message):\n    pass",
         "flag-change": "def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):",
-        "shortcut": "def on_command(my_message, content):\n    pass"
+        "shortcut": "def on_command(my_message, kargs):\n    pass"
     }
 
     return d[rule_type]
@@ -59,12 +59,17 @@ def load_new_editor(request):
 
                             folders = FolderSchema.objects.filter(imap_account=imap[0])
                             c = {'rule': rule, 'folders': folders}
-                            # logger.info('youps/%s.html' % rule.type.replace("-", "_"))
-                            template = loader.get_template('youps/%s.html' % rule.type.replace("-", "_"))
+                            rule_type = rule.type
+                            if rule_type == "shortcut":
+                                args = EmailRule_Args.objects.filter(rule=rule)
+                                c = {'rule': rule, 'folders': folders, 'args': args}
+                            elif rule_type.startswith("new-message"):
+                                rule_type = "new-message"
+                            
+                            logger.info('youps/%s.html' % rule_type.replace("-", "_"))
+                            template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
 
-                           
-
-                            e = {'type': rule.type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
+                            e = {'type': rule_type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
 
                             editors.append( e )
                 # create a new rule
@@ -74,7 +79,13 @@ def load_new_editor(request):
 
                     user_inbox = FolderSchema.objects.get(imap_account=imap[0], name__iexact="inbox")
 
-                    new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+                    try:
+                        new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+                    except MailbotMode.DoesNotExist:
+                        new_mm = MailbotMode(imap_account=imap[0])
+                        new_mm.save()
+
+                        new_er = EmailRule(type=rule_type, mode=new_mm, code=get_base_code(rule_type))
                     new_er.save()
                     new_er.folders.add(user_inbox)
 
@@ -82,7 +93,7 @@ def load_new_editor(request):
                     folders = FolderSchema.objects.filter(imap_account=imap[0])
                     c = {'rule': new_er, 'folders': folders}
                     # logger.info('youps/%s.html' % rule_type.replace("-", "_"))
-                    template = loader.get_template('youps/%s.html' % rule_type.replace("-", "_"))
+                    template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
 
                     e = {'template': template.render(Context(c))}
 

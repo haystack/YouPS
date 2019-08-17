@@ -80,7 +80,7 @@ def _get_text_from_python_message(part):
 
 # TODO refactor this to do some kind of visitor pattern or something
 # make things open to extension but closed for modification
-def get_content_from_message(message, return_only_text=True):
+def get_content_from_message(message, return_only_text=False):
     # type: (Message) -> None
     with _open_rfc822(message) as rfc_contents:
         text = ""
@@ -111,8 +111,8 @@ def get_content_from_message(message, return_only_text=True):
             else:
                 logger.critical(
                     "%s unsupported sub type %s" % (message, sub_type))
-                raise NotImplementedError(
-                    "Unsupported sub type %s" % sub_type)
+                # raise NotImplementedError(
+                #     "Unsupported sub type %s" % sub_type)
 
         # I think this is less confusing than returning an empty string - LM
         text = text if text else None
@@ -132,13 +132,16 @@ def _flag_change_helper(message, uids, flags, gmail_label_func, imap_flag_func):
     import pprint
     flags = _check_flags(message, flags)
     if message._imap_account.is_gmail:
-        gmail_labels = filter(is_gmail_label, flags)
-        returned_labels = gmail_label_func(uids, gmail_labels)
-        logger.debug("flag change returned labels {flags}".format(
-            flags=pprint.pformat(returned_labels)))
+        # gmail_labels = filter(is_gmail_label, flags)
+        # returned_labels = gmail_label_func(uids, gmail_labels)
+        # logger.debug("flag change returned labels {flags}".format(
+        #     flags=pprint.pformat(returned_labels)))
+        
+        # Wouldn't Gmail users would want to use gmail labels which is visible in their interface?
         not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
-        returned_flags = imap_flag_func(uids, not_gmail_labels)
-        logger.debug("flag change returned flags {flags}".format(
+        logger.exception(not_gmail_labels)
+        returned_flags = gmail_label_func(uids, not_gmail_labels)
+        logger.exception("flag change returned flags {flags}".format(
             flags=pprint.pformat(returned_flags)))
     else:
         returned_flags = imap_flag_func(uids, flags)

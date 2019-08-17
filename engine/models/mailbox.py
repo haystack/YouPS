@@ -4,12 +4,15 @@ from event import Event
 import logging
 import datetime
 import smtplib
+import traceback
 import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import ImapAccount, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
+from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from smtp_handler.utils import format_email_address, send_email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from engine.models.event_data import NewMessageDataDue
 
 from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
@@ -54,6 +57,8 @@ class MailBox(object):
     def _log_message_ids(self):
         from engine.models.message import Message
         from pprint import pformat
+        import cPickle as pickle
+
         import sqlite3
         conn = sqlite3.connect('/home/ubuntu/production/mailx/logs/message_data.db')
         c = conn.cursor()
@@ -88,15 +93,10 @@ class MailBox(object):
             is_gmail = self._imap_account.is_gmail
             descriptors = Message._get_descriptors(is_gmail)
             fetch_data = self._imap_client.fetch(uid_criteria, descriptors)
-            # iterate over the fetched data
-            for uid in fetch_data:
-                # dictionary of general data about the message
-                message_data = fetch_data[uid]
-                message_string = pformat(message_data, indent=2, width=80)
-                # Insert a row of data
-                c.execute("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", (self._imap_account.email, folder.name, uid, message_string))
-                # Save (commit) the changes
-                conn.commit()
+            values = [(self._imap_account.email, folder.name, uid, pickle.dumps(fetch_data[uid])) for uid in fetch_data]
+            c.executemany("INSERT INTO data (email, folder, uid, data)  VALUES (?, ?, ?, ?)", values)
+            conn.commit()
+
 
         c.execute("INSERT into synced (email) VALUES (?)", (self._imap_account.email,))
         conn.commit()
@@ -104,9 +104,7 @@ class MailBox(object):
         # We can also close the connection if we are done with it.
         # Just be sure any changes have been committed or they will be lost.
         conn.close()
-
-
-
+        
     def _sync(self):
         # type: () -> bool 
         """Synchronize the mailbox with the imap server.
@@ -119,6 +117,11 @@ class MailBox(object):
         for folder in self._list_selectable_folders():
             # response contains folder level information such as
             # uid validity, uid next, and highest mod seq
+            if self._imap_account.email == "lauralyn@mit.edu":
+                if folder.name in ["Calendar", "Contacts"]:
+                    continue
+                logger.debug("Laula; about to select_folder %s" % (folder.name))
+
             response = self._imap_client.select_folder(folder.name)
 
             # our algorithm doesn't work without these
@@ -162,14 +165,23 @@ class MailBox(object):
         """Add task to event_data_list, if there is message arrived in time span [last checked time, span_end]
         """ 
         time_span = 0
-        
-        for folder_schema in email_rule.folders.all():
-            folder = Folder(folder_schema, self._imap_client)
-            time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
-            time_end = now - datetime.timedelta(seconds=time_span)
+        time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
+        time_end = now - datetime.timedelta(seconds=time_span)
 
-            logger.info("deadline range %s %s" % (time_start, time_end))
-            folder._search_due_message(self.event_data_list, time_start, time_end)
+        message_schemas = BaseMessage.objects.filter(deadline__range=[time_start, time_end])
+        from engine.models.message import Message
+
+        # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
+        for bm_schema in message_schemas:
+            logger.info("add deadline queue %s %s %s" %
+                        (time_start, bm_schema.deadline, time_end))
+            
+            # TODO Maybe we should find a better way to pick a message schema
+            for message_schema in bm_schema.messages.all():
+                msg = Message(message_schema, self._imap_client)
+                if "\\Deleted" in msg.flags:
+                    continue
+                self.event_data_list.append( NewMessageDataDue(msg) )
 
     def _supports_cond_store(self):
         # type: () -> bool
@@ -378,12 +390,23 @@ class MailBox(object):
                 s.docmd('AUTH', 'XOAUTH2 ' + auth_string)
 
             else:
-                s = smtplib.SMTP(
-                    self._imap_account.host.replace("imap", "smtp"), 587)
+                try:
+                    smtp_host = ""
+                    login_id = self._imap_account.email
+                    if "imap.exchange.mit.edu" == self._imap_account.host:
+                        smtp_host = "outgoing.mit.edu"
+                        login_id = login_id.split("@")[0]
+                    else:
+                        smtp_host = self._imap_account.host.replace("imap", "smtp")
+
+                    s = smtplib.SMTP(smtp_host, 587)
+                except Exception:
+                    raise NameError
                 s.ehlo()
                 s.starttls()
-                s.ehlo
-                s.login(self._imap_account.email, decrypt_plain_password(
+                s.ehlo()
+
+                s.login(login_id, decrypt_plain_password(
                     self._imap_account.password))
 
             receip_list = []
@@ -395,5 +418,8 @@ class MailBox(object):
             # TODO check if it sent to cc-ers
             s.sendmail(self._imap_account.email,
                        ', '.join(receip_list), new_message_wrapper.as_string())
+        except NameError:
+            raise RuntimeError("Error occur during sending your message: it has been reported to admins")
         except Exception as e:
-            print (e)
+            logger.exception ("%s %s" % (e, traceback.format_exc()))
+            raise RuntimeError('Failed to send a message: %s' % str(e))

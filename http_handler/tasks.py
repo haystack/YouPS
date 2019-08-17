@@ -4,8 +4,9 @@ from django.contrib.sites.models import Site
 from django.utils import timezone
 from browser.imap import authenticate
 from engine.models.mailbox import MailBox
+from engine.utils import dump_execution_log
 from http_handler.settings import BASE_URL, PROTOCOL
-from schema.youps import ImapAccount, EmailRule
+from schema.youps import ImapAccount, EmailRule, LogSchema
 from smtp_handler.utils import send_email
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import fcntl
@@ -40,7 +41,7 @@ def register_inbox():
     """
 
 
-    lockFile = 'register_inbox.lock'
+    lockFile = 'register_inbox2.lock'
     with open(lockFile, 'w') as f:
         have_lock = get_lock(f)
         if not have_lock:
@@ -68,6 +69,8 @@ def register_inbox():
 
                         # create the mailbox
                         mailbox = MailBox(imapAccount, imap)
+                        # TODO(lukemurray): remove this
+                        mailbox._log_message_ids()
                         # sync the mailbox with imap
                         done = mailbox._sync()
                         if done:
@@ -96,10 +99,13 @@ def register_inbox():
                 imapAccount.save()
 
                 site = Site.objects.get_current()
-                send_email("Your YoUPS account is ready!",
-                           "no-reply@" + BASE_URL,
-                           imapAccount.email,
-                           "Start writing your automation rule here! %s://%s" % (PROTOCOL, site.domain))
+                # TODO(lukemurray): bring this back
+                # send_email("Your YouPS account is ready!",
+                #            "no-reply@" + BASE_URL,
+                #            imapAccount.email,
+                #            "Start writing your automation rule here! %s://%s" % (PROTOCOL, site.domain))
+
+                # Create a default mode & email rule to demo
 
                 logger.info(
                     'Register done for %s', imapAccount.email)
@@ -116,7 +122,7 @@ def register_inbox():
 
 def loop_sync_user_inbox():
 
-    lockFile = 'loop_sync_user_inbox.lock'
+    lockFile = 'loop_sync_user_inbox2.lock'
     with open(lockFile, 'w') as f:
         have_lock = get_lock(f)
         if not have_lock:
@@ -151,7 +157,8 @@ def loop_sync_user_inbox():
                 # create the mailbox
                 try:
                     mailbox = MailBox(imapAccount, imap)
-                    # TODO(lukemurray): remove log message ids
+                    # TODO(lukemurray): remove this
+
                     mailbox._log_message_ids()
                     # sync the mailbox with imap
                     mailbox._sync()
@@ -187,7 +194,6 @@ def loop_sync_user_inbox():
                     for email_rule in email_rules:
                         # Truncate millisec since mysql doesn't suport msec. 
                         now = timezone.now().replace(microsecond=0) + datetime.timedelta(seconds=1)
-
                         mailbox._get_due_messages(email_rule, now)
 
                         # mark timestamp to prevent running on certain message multiple times 
@@ -200,17 +206,11 @@ def loop_sync_user_inbox():
                     continue
                 try:
                     res = mailbox._run_user_code()
+                    dump_execution_log(imapAccount, res['imap_log'])
                 except Exception():
                     logger.exception("Mailbox run user code failed")
 
-                if res is not None and res.get('imap_log', ''):
-                    log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
-                    log_decoded.update( res['imap_log'] )
-
-                    imapAccount.execution_log = json.dumps(log_decoded)
-                    # imapAccount.execution_log = "%s\n%s" % (
-                    #     res['imap_log'], imapAccount.execution_log)
-                    imapAccount.save()
+                
 
                 # after sync, logout to prevent multi-connection issue
                 imap.logout()

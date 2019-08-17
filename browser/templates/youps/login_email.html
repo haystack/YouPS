@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/static/css/youps/libs/show-hint.css" />
 <link rel="stylesheet" type="text/css" href="/static/css/youps/libs/qunit.css">
 <link rel="stylesheet" href="/static/css/youps/libs/jsonpanel.css">
+<link rel="stylesheet" href="/static/css/youps/history_table.css">
 <link rel="stylesheet" href="/static/css/youps/style.css">
 {% endblock %}
 
@@ -286,118 +287,16 @@
 							{% else %}
 								<ul class="nav nav-tabs" role="tablist">
 									<li class="active" >
-										<a href="#tab_0" data-toggle="tab">
-											<span class="tab-title" mode-id=0>
-												Default
+										<a href="#welcome" data-toggle="tab">
+											<span class="tab-title">
+												Hello world!
 											</span>
-											<i class="fas fa-pencil-alt"></i>
-										</a><span class="close">x</span></li>
+										</a></li>
 									<li><a href="#" class="add-tab">+ Add Mode</a></li>
 								</ul>
 								<div class="tab-content">
-									<div class="tab-pane active" id="tab_0">
-										<div class='editable-container' type='new-message'>
-										</div>
-
-										<div class='editable-container' type='repeat'>
-										</div>
-
-										<div class='editable-container' type='flag-change'>
-										</div>
-
-										<div class='editable-container' type='deadline'>
-										</div>
-
-										<div class='editable-container' type='shortcut'>
-										</div>
-
-										<!-- editor add buttons -->
-										<div class="btn-new-editor" type="new-message">
-												<div class="panel panel-success">
-													<div class="flex_container">
-														<div class="flex_item_left">
-															<i class="fas fa-3x fa-plus-circle"></i>
-														</div>
-
-														<div class="panel-heading flex_item_right panel-collapsed">
-															<h3 class="panel-title">
-																	<span class="fa-layers fa-fw fa-2x">
-																		<i class="far fa-envelope"></i>
-																		<span class="fa-layers-counter" style="background:Tomato">NEW</span>
-																	</span>
-																	Create message arrival handler <span class=""></span>
-															</h3>
-														</div>
-													</div>
-												</div>
-											</div>
-											<div class="btn-new-editor" type="repeat">
-													<div class="panel panel-warning">
-														<div class="flex_container">
-															<div class="flex_item_left">
-																<i class="fas fa-3x fa-plus-circle"></i>
-															</div>
-
-															<div class="panel-heading flex_item_right panel-collapsed">
-																<h3 class="panel-title">
-																	<i class="far fa-2x fa-clock"></i> Update every <span class=""></span>
-																</h3>
-
-															</div>
-														</div>
-														<!-- Panel body -->
-												</div>
-											</div>
-											<div class="btn-new-editor" type="flag-change">
-													<div class="panel panel-warning">
-														<div class="flex_container">
-															<div class="flex_item_left">
-																<i class="fas fa-3x fa-plus-circle"></i>
-															</div>
-
-															<div class="panel-heading flex_item_right panel-collapsed">
-																<h3 class="panel-title">
-																	<i class="far fa-2x fa-flag"></i> Create a flag change event handler <span class=""></span>
-																</h3>
-
-															</div>
-														</div>
-												</div>
-											</div>
-
-											<div class="btn-new-editor" type="deadline">
-												<div class="panel panel-default">
-													<div class="flex_container">
-														<div class="flex_item_left"> 
-															<i class="fas fa-3x fa-plus-circle"></i> 
-														</div>
-														
-														<div class="panel-heading flex_item_right panel-collapsed">
-															<h3 class="panel-title">
-																<i class="fas fa-2x fa-clock"></i> Create a deadline event handler <span class=""></span>
-															</h3>
-															
-														</div>
-													</div>	
-												</div>
-											</div>
-
-											<div class="btn-new-editor" type="shortcut">
-												<div class="panel panel-primary">
-													<div class="flex_container">
-														<div class="flex_item_left"> 
-															<i class="fas fa-3x fa-plus-circle"></i> 
-														</div>
-														
-														<div class="panel-heading flex_item_right panel-collapsed">
-															<h3 class="panel-title">
-																<i class="fas fa-2x fa-terminal"></i> Create a shortcut handler <span class=""></span>
-															</h3>
-															
-														</div>
-													</div>	
-												</div>
-											</div>
+									<div class="tab-pane active" id="welcome">
+										<p>Welcome to YouPS!</p>
 									</div>
 								</div>
 							{% endif %}
@@ -427,7 +326,7 @@
 							</tbody>
 						</table>
 						<div class="text-center">
-							<button id="btn-log-load-more" style="display:none" class="btn btn-primary">Load more</button>
+							<button id="btn-log-load-more" class="btn btn-primary">Load more</button>
 						</div>
 						<div id="console-output">
 							<p class="info">Output of your sandbox will be sent to your inbox. {% if not is_running %}Turn on your sandbox to apply your rule.{% endif %}</p>
@@ -562,16 +461,6 @@ print get_sender()
 
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
 
-	<!-- Underscore, Backbone, backbone-localStorage, jQuery -->
-	<script type="text/javascript" src="/static/javascript/youps/console/underscore.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/backbone.min.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/backbone-localStorage.min.js"></script>
-
-	<!-- Some extras for the demo: -->
-	<script type="text/javascript" src="/static/javascript/youps/console/lettering.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/prettify.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/console/DAT.GUI.min.js"></script>
-
 	<script src="/static/javascript/youps/jquery-ui.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
 
@@ -587,9 +476,8 @@ print get_sender()
 	<script src="/static/javascript/youps/jsonpanel.js"></script>
 	<script src="/static/javascript/youps/tests.js"></script>
 
+	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/login_imap.js"></script>
-
-
 
     <script>
 

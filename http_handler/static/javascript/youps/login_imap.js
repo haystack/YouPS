@@ -12,7 +12,6 @@ $(document).ready(function() {
         btn_code_sumbit = $("#btn-code-submit"),
         btn_shortcut_save = $("#btn-shortcut-save");
 
-    var log_backup = "", user_status_backup = "";
     var import_str = "import spacy"
 
     // Format string
@@ -27,81 +26,6 @@ $(document).ready(function() {
           });
         };
     }
-
-    function append_log( msg_log, is_error ) {
-        if(!msg_log) return;
-
-            // value = value.split("#!@log");
-            var sorted = [];
-            for(var key in msg_log) {
-                sorted[sorted.length] = key;
-            }
-            sorted.sort();
-            // sorted.reverse(); // 
-
-            var t = $('#console-table').DataTable();
-            $.each(sorted, function(index, timestamp) {                
-                Message = msg_log[timestamp];
-                _message_data = Message;
-                // alert(Message["trigger"]);
-
-                var json_panel_id = timestamp.replace(/[ /:,]/g,'');
-                t.row.add( [
-                        timestamp.split(",")[0],
-                        '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
-                        '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
-                        '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                        (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
-                ] ).draw( false );  
-
-                // Delete attributes that are not allowed for users 
-                delete Message["trigger"];
-                delete Message["error"];
-                delete Message["log"];
-                delete Message["timestamp"];
-                delete Message["type"];
-
-                Contact :  Message['from_']
-                $('#jsonpanel-from-' + json_panel_id).jsonpanel({
-                    data: {
-                        Contact :  Message['from_']
-                    }
-                });
-
-                // set contact object preview 
-                $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
-                    '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
-
-                
-                $('#jsonpanel-' + json_panel_id).jsonpanel({
-                    data: {
-                        Message : Message
-                    }
-                });
-
-                // set msg object preview 
-                var preview_msg = '{0}: "{1}", '.format("subject", Message['subject']) +  '{0}: "{1}", '.format("folder", Message['folder']);
-                for (var key in Message) {
-                    if (Message.hasOwnProperty(key)) {
-                        preview_msg += '{0}: "{1}", '.format(key, Message[key])
-                    }
-                }
-                $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
-
-            // $("#console-table").DataTable().row( $tableRow ).invalidate().draw();
-            //     if(is_error) 
-            //         $( "<p>" + datetime + log.replace(/\n/g , "<br>") + "</p>" ).appendTo( "#console-output" ).addClass("error");
-
-            //     else $( log_table  ).prependTo( "#console-output" )
-            //         .addClass("info");
-            });
-
-            // recent msg at top
-            $("#console-table").DataTable().order([0, 'des']).draw();   
-
-        // var datetime = format_date();
-        // $( "<p>{0}</p>".format(datetime)).prependTo( "#console-output" ).addClass("info");
-    }   
     
     function append_status_msg( msg, is_error ) {
         if(!msg) return;
@@ -408,7 +332,7 @@ $(document).ready(function() {
     // Disable all the buttons for a while until it is sure that the user is authenticated
     $(".btn").prop("disabled",true);
     
-    var test_mode_msg = {true: "You are currently at test mode. YoUPS will simulate your rule but not actually run the rule.", 
+    var test_mode_msg = {true: "You are currently at test mode. YouPS will simulate your rule but not actually run the rule.", 
         false: "YoUPS will apply your rules to your incoming emails. "};
 
     $("#mode-msg").text( test_mode_msg[is_test] );
@@ -455,51 +379,6 @@ $(document).ready(function() {
         //     { "data": "task" }
         // ],
         "order": [[1, 'asc']]
-    } );
-
-    var table = $('#console-table').DataTable( {
-        "bPaginate": false,
-        "bLengthChange": false,
-        "bFilter": true,
-        "bInfo": false,
-        "bAutoWidth": false,
-        "columnDefs": [
-            { "type": "html-input", "targets": [2, 3] }
-        ],
-        "columns": [
-            { "width": "40px" },
-            { "orderable": false },
-            { "width": "200px", "orderable": false },
-            { "width": "400px", "orderable": false },
-            { "orderable": false }
-        ],
-        "order": [[1, 'asc']],
-        "drawCallback": function( settings ) {
-            
-        }
-    } );
-
-    var _message_data, _contact_data; // This global variable to pass around the row data
-    $.fn.dataTableExt.ofnSearch['html-input'] = function(el) {
-        // Fire after a row is drew
-        return JSON.stringify(_message_data);
-    };
-    
-    // Add event listener for opening and closing details
-    $('.console-table tbody').on('click', 'td.details-control', function () {
-        var tr = $(this).closest('tr');
-        var row = table.row( tr );
-
-        if ( row.child.isShown() ) {
-            // This row is already open - close it
-            row.child.hide();
-            tr.removeClass('shown');
-        }
-        else {
-            // Open this row
-            row.child( format(row.data()) ).show();
-            tr.addClass('shown');
-        }
     } );
 
     // Create the sandbox:
@@ -601,7 +480,10 @@ $(document).ready(function() {
         var anchor = $(this).siblings('a');
         $(anchor.attr('href')).remove();
         $(this).parent().remove();
-        $(".nav-tabs li").children('a').first().click();
+
+        if( !$.isEmptyObject(get_modes()) )
+            // Go to first tab if current one is deleted 
+            $(".nav-tabs li").children('a').first().click();
 
         var mode_id = $(this).siblings('a').attr('href').split("_")[1];
         if( !unsaved_tabs.includes(mode_id) )
@@ -986,6 +868,7 @@ $(document).ready(function() {
             var editors = [];
 
             // get mode ID
+            if(!$(this).attr('id').includes("_")) return;
             var id = $(this).attr('id').split("_")[1];
             var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
 
@@ -1015,7 +898,20 @@ $(document).ready(function() {
                     selected_folders.push($(this).attr('value'));
                 });
 
-                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders}); 
+                var args = [];
+                // Get params
+                if( type == "shortcut" ) {
+                    debugger;
+                    $parent_container.find('.instruction-container ul li').each(function (index, elem) {
+                        var args_name = $(elem).find(".args-name").val() || "";
+                        var args_type = $(elem).find("select").val();
+
+                        args.push({"name": args_name, "type": args_type})
+                    })
+                    debugger;
+                }
+
+                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders, "args": args}); 
             })
 
             modes[id] = {
@@ -1061,74 +957,6 @@ $(document).ready(function() {
             if( idle_mark = document.querySelector(".idle-mark"))   
                 idle_mark.style.display = "inline-block";
         }
-    }
-
-    function fetch_log() {
-        var params = {};
-        
-        $.post('/fetch_execution_log', params,
-            function(res) {
-                // $('#donotsend-msg').hide();
-                // console.log(res);
-                
-                // Auth success
-                if (res.status) {
-                    // Update execution log
-                    if( log_backup != res['imap_log']){
-                        msg_log = JSON.parse(res['imap_log']);
-
-                        // if it's a first time loading the log, display only recent 10 messages then enalbe 'load more' btn.
-                        if(log_backup == '') {
-                            var recent_keys = Object.keys(msg_log).sort(function(a, b) {return a>b;}).slice(-10);
-                            append_log( recent_keys.reduce(function(o, k) { o[k] = msg_log[k]; return o; }, {}) );
-                            
-                            var initial_msg_log = msg_log;
-                            $("#btn-log-load-more").show().click(function() {
-                                var rest_key = $(Object.keys(initial_msg_log)).not(recent_keys).get();
-                                append_log(rest_key.reduce((a, c) => ({ ...a, [c]: initial_msg_log[c] }), {}), false);
-                                $(this).hide();
-                            });
-                        }
-
-                        else {
-                            old_log = JSON.parse(log_backup == '' ? '{}':log_backup)
-
-                            // append new logs from the server
-                            var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(old_log)).get();
-                            
-                            append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);
-                        }
-                            //replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
-                        // msg_log = JSON.parse(res['imap_log'].replace(/: True/g, ': true').replace(/: False/g, ': false').replace(/\'/g, '"').replace(/\</g, '&lt;').replace(/\>/g, '&gt;'));
-                        
-
-                        
-                    }
-                    
-                    log_backup = res['imap_log'];
-
-                    // if status_msg exists, it means a code is running 
-                    if( $.trim( res['user_status_msg'] ) != "")
-                        set_running(true)
-                    else set_running(false)
-
-                    // Update status msg
-                    if( user_status_backup != res['user_status_msg']){
-                        $("#user-status-msg").html("");
-                        append_status_msg(res['user_status_msg'], false);
-                    }
-                    
-                    user_status_backup = res['user_status_msg'];
-                }
-                else {
-                    notify(res, false);
-                }
-            }
-        ).fail(function(res) {
-            alert("Please refresh the page!");
-        });
-        
-        setTimeout(fetch_log, 2 * 1000); // 2 second
     }
   
     function load_rule(load_exist, rule_type=null, $container=null) {
@@ -1266,6 +1094,24 @@ $(document).ready(function() {
     );
 }
 
+    function watch_current_message() {
+        var params = {};
+        
+        $.post('/watch_current_message', params,
+            function(res) {
+                console.log(res);
+                
+                if (res.status) {
+                }
+                else {
+                    notify(res, false);
+                }
+            }
+        ).fail(function(res) {
+            alert("Please refresh the page!");
+        });
+    }
+
     function validateEmail(email) {
         var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(String(email).toLowerCase());
@@ -1274,6 +1120,8 @@ $(document).ready(function() {
         // When user first try to login to their imap. 
         btn_login.click(function() {
                 show_loader(true);
+                $("#loading-wall").show();
+                $("#loading-wall span").show();
 
                 var params = {
                     'host': $("#input-host").val(),
@@ -1308,10 +1156,10 @@ $(document).ready(function() {
 
                             // then ask user to wait until YoUPS intialize their inbox
                             show_loader(true);
-                            $("#loading-wall").show();
-                            $("#loading-wall span").show();
+                            
                         }
                         else {
+                            $("#loading-wall").hide();
                             notify(res, false);
                         }
                     }
@@ -1362,7 +1210,7 @@ $(document).ready(function() {
             var modes = get_modes();
 
             var params = {
-                'current_mode_id': cur_mode['id'],
+                'current_mode_id': 'id' in cur_mode? cur_mode['id']: null,
                 'modes': JSON.stringify(modes),
                 'email': $("#input-email").val(),
                 'test_run': is_dry_run,
@@ -1374,7 +1222,6 @@ $(document).ready(function() {
                     show_loader(false);
                     console.log(res);
                     
-                    // Auth success
                     if (res.status) {
                         
                         // Flush unsaved tags 
@@ -1387,7 +1234,6 @@ $(document).ready(function() {
                         }
                         else {
                             // append_log(res['imap_log'], false)
-
                             set_running(is_running);   
                         }
 
@@ -1402,6 +1248,7 @@ $(document).ready(function() {
                         }
                     }
                     else {
+                        set_running(false);   
                         notify(res, false);
                     }
                 }

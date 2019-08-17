@@ -1,19 +1,22 @@
+import sys
 import base64
 import logging
 import random
 import string
 import traceback
 import datetime
+import json
 
 from Crypto.Cipher import AES
 from imapclient import IMAPClient
 
+from django.utils import timezone
 from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
 from http_handler.settings import IMAP_SECRET
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule)
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -48,7 +51,10 @@ def login_imap(email, password, host, is_oauth):
             imap.oauth2_login(email, access_token)
 
         else:
-            imap.login(email, password)
+            if "csail" in email:
+                imap.login(email.split("@")[0], password)
+            else:
+                imap.login(email, password)
 
             # encrypt password then save
             aes = AES.new(IMAP_SECRET, AES.MODE_CBC, 'This is an IV456')
@@ -90,72 +96,191 @@ def login_imap(email, password, host, is_oauth):
 
     except IMAPClient.Error, e:
         res['code'] = e
+        logger.exception(e)
     except Exception, e:
         logger.exception("Error while login %s %s " % (e, traceback.format_exc()))
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     return res
 
-def fetch_execution_log(user, email, push=True):
+def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
     res = {'status' : False}
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        res['imap_log'] = imapAccount.execution_log
+        d = {}
+        if from_id is None and to_id is None: # return all 
+            logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
+    
+        elif from_id is None:
+            logs = LogSchema.objects.filter(id__lte=to_id).filter(imap_account=imapAccount)
+
+        elif to_id is None:
+            logs = LogSchema.objects.filter(id__gte=from_id).filter(imap_account=imapAccount)
+        
+        else:   
+            logs = LogSchema.objects.filter(id__range=[from_id, to_id]).filter(imap_account=imapAccount)
+
+        for l in logs:
+            # logger.exception(l.content)
+            d.update( json.loads(l.content) )
+
+        res["log_min_id"] = -1
+        res["log_max_id"] = -1
+        if logs.exists():
+            ids = list(logs.values_list('id', flat=True))
+            res["log_min_id"] = ids[-1] # queryset is descending 
+            res["log_max_id"] = ids[0]
+
+        res['imap_log'] = json.dumps(d)
         res['user_status_msg'] = imapAccount.status_msg
         res['status'] = True
 
     except ImapAccount.DoesNotExist:
-        res['code'] = "Error during authentication. Please refresh"
+        res['code'] = "Please log in to your email account first"
+        res['imap_authenticated'] = False
     except Exception, e:
         # TODO add exception
-        print e
+        logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
-    logging.debug(res)
     return res
 
+def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
+	res = {'status' : False}
+	
+	try:
+		logger.info("here")
+		imapAccount = ImapAccount.objects.get(email=email)
+		auth_res = authenticate( imapAccount )
+		if not auth_res['status']:
+		    raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+		imap = auth_res['imap']  # noqa: F841 ignore unused
+
+		er = EmailRule.objects.get(id=er_id)
+        #  read from DB and convert to the type accordingly 
+		for key, value in kargs.iteritems():
+		    er_arg = EmailRule_Args.objects.get(rule=er, name=key)
+
+            # parse datetime 
+		    if er_arg.type == "datetime":
+		        try: 
+		            kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
+		        except Exception:
+		            res['code'] = key
+		            raise TypeError
+
+		mailbox = MailBox(imapAccount, imap, is_simulate=False)
+		res = interpret_bypass_queue(mailbox, extra_info={"msg-id": msg_schema_id, "code": er.code, "shortcut": kargs, "rule_name": er.name})
+		
+		res['status'] = True
+	
+	except ImapAccount.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except MailbotMode.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except TypeError:
+	    res['code'] = "Datetime %s is in wrong format!" % res['code']
+	except Exception as e:
+	    logger.exception(e)
+	    res['code'] = msg_code['UNKNOWN_ERROR']
+	return res
+    
 def create_mailbot_mode(user, email, push=True):
-    res = {'status' : False}
-
-    try:
-        imapAccount = ImapAccount.objects.get(email=email)
-        mm = MailbotMode(imap_account=imapAccount)
-        mm.save()
-        
-        res["mode-id"] = mm.id
-        res['status'] = True
-
-    except ImapAccount.DoesNotExist:
-        res['code'] = "Error during deleting the mode. Please refresh the page."
-    except MailbotMode.DoesNotExist:
-        res['code'] = "Error during deleting the mode. Please refresh the page."
-    except Exception, e:
-        logger.exception(res)
-        res['code'] = msg_code['UNKNOWN_ERROR']
-    return res
+	res = {'status' : False}
+	
+	try:
+	    imapAccount = ImapAccount.objects.get(email=email)
+	    mm = MailbotMode(imap_account=imapAccount)
+	    mm.save()
+	
+	    res["mode-id"] = mm.id
+	    res['status'] = True
+	
+	except ImapAccount.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except MailbotMode.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+	except Exception, e:
+	    logger.exception(res)
+	    res['code'] = msg_code['UNKNOWN_ERROR']
+	return res
 
 def delete_mailbot_mode(user, email, mode_id, push=True):
     res = {'status' : False}
-
+    
     try:
         imapAccount = ImapAccount.objects.get(email=email)
         mm = MailbotMode.objects.get(id=mode_id, imap_account=imapAccount)
-
         if imapAccount.current_mode == mm:
             imapAccount.current_mode = None
             imapAccount.is_running = False
-
         mm.delete()
-
         res['status'] = True
-
     except ImapAccount.DoesNotExist:
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except MailbotMode.DoesNotExist:
         res['code'] = "Error during deleting the mode. Please refresh the page."
     except Exception, e:
         logger.exception(res)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+    
+    return res
+
+
+def fetch_watch_message(user, email, folder_name):
+    res = {'status' : False, 'log': ""}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name)
+        res['watch_status'] = folder_idle.exists()
+
+        if res['watch_status']:
+            res['folder_id'] = folder_idle.order_by("-id")[0].id
+            bc = ButtonChannel.objects.filter(imap_account=imapAccount).latest('timestamp')
+
+            if bc and bc.code == ButtonChannel.OK:
+                res['folder'] = bc.message.folder.name
+                res['uid'] = bc.message.id 
+                
+                message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
+                res['message'] = message._get_meta_data_friendly() 
+                res['sender'] = message._get_from_friendly()
+            else:
+                # if something went wrong only return the log
+                logger.info(bc.code)
+                res["log"] = bc.get_code_display()
+        
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+    except ButtonChannel.DoesNotExist:
+        res['uid'] = 0
+    except Exception as e:
+        logger.exception(e)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
+    return res
+
+def fetch_available_email_rule(user, email):
+    res = {'status' : False}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+
+        # list available rules 
+        # Send name of emailrule and its args 
+        ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type__startswith='new-message')
+
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+    except Exception as e:
+        logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
     return res
 
@@ -220,7 +345,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         imapAccount.is_running = run_request
 
         # TODO these don't work anymore
-        # uid = fetch_latest_email_id(imapAccount, imap)
+        # uid = fetch_latest_email_id(imapAccount, imap)'
         # imapAccount.newest_msg_id = uid
 
         # remove all user's tasks of this user to keep tasks up-to-date
@@ -230,7 +355,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         for mode_index, mode in modes.iteritems():
             mode_name = mode['name'].encode('utf-8')
             mode_name = mode_name.split("<br>")[0] if mode_name else "mode"
-            logger.info(mode)
+            logger.info(mode_name)
             
             mailbotMode = MailbotMode.objects.filter(id=mode['id'], imap_account=imapAccount)
             if mailbotMode.exists():
@@ -245,20 +370,20 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             # TODO  dont remove it
             er = EmailRule.objects.filter(mode=mailbotMode)
             logger.debug("deleting er editor run request")
+            args = EmailRule_Args.objects.filter(rule=er)
+            args.delete()
             er.delete()
 
             for value in mode['editors']:
                 name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
-                logger.info("saving editor %s run request" % name)
+                logger.info(value)
                 
                 er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
-                logger.info("user %s test run " % imapAccount.email)
-
-                # # Save selected folder for the mode
+                # Save selected folder for the mode
                 for f in folders:
                     folder = FolderSchema.objects.get(imap_account=imapAccount, name=f)
                     logger.info("saving folder to the editor %s run request" % folder.name)
@@ -266,11 +391,22 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 er.save()
 
+                # Save shortcut email args
+                if value['type'] == "shortcut":
+                    for arg in value['args']:
+                        logger.info(arg)
+                        
+                        new_arg = EmailRule_Args(type=arg['type'], rule=er)
+                        if arg['name']:
+                            new_arg.name = arg['name']
+                        new_arg.save()
+                
+
             logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         
 
         if run_request:
-            imapAccount.current_mode = MailbotMode.objects.filter(id=current_mode_id, imap_account=imapAccount)[0]
+            imapAccount.current_mode = MailbotMode.objects.get(id=current_mode_id, imap_account=imapAccount)
 
             # if the code execute well without any bug, then save the code to DB
             if not res['imap_error']:
@@ -303,6 +439,9 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     except FolderSchema.DoesNotExist:
         logger.exception("failed while doing a user code run")
         logger.debug("Folder is not found, but it should exist!")
+    except MailbotMode.DoesNotExist:
+        logger.exception("No current mode exist")
+        res['code'] = "Currently no mode is selected. Select one of your mode to execute your YouPS."
     except Exception, e:
         # TODO add exception
         logger.exception("failed while doing a user code run")
@@ -446,3 +585,187 @@ def save_shortcut(user, email, shortcuts, push=True):
 
     logging.debug(res)
     return res
+
+def handle_imap_idle(user, email, folder='INBOX'):
+    imap_account = ImapAccount.objects.get(email=email)
+
+    watching_folder = FolderSchema.objects.get(imap_account=imap_account, name=folder)
+
+    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
+    if bc.exists() and timezone.now() - bc.latest('timestamp').timestamp < timezone.timedelta(seconds=3*60):    # there is something running so noop
+        return
+
+    while True:
+		# <--- Start of IMAP server connection loop
+		
+		# Attempt connection to IMAP server
+		logger.info('connecting to IMAP server - %s' % email)
+		try:
+			res = authenticate(imap_account)
+			if not res['status']:
+				return
+				
+			imap = res['imap']
+			if "exchange" in imap_account.host or "csail" in imap_account.host:
+			    imap.use_uid = False
+		except Exception:
+			# If connection attempt to IMAP server fails, retry
+			etype, evalue = sys.exc_info()[:2]
+			estr = traceback.format_exception_only(etype, evalue)
+			logstr = 'failed to connect to IMAP server - '
+			for each in estr:
+				logstr += '{0}; '.format(each.strip('\n'))
+			logger.error(logstr)
+			sleep(10)
+			continue
+		logger.info('server connection established')
+
+		# Select IMAP folder to monitor
+		logger.info('selecting IMAP folder - {0}'.format(folder))
+		try:
+			result = imap.select_folder(folder)
+			logger.info('folder selected')
+		except Exception:
+			# Halt script when folder selection fails
+			etype, evalue = sys.exc_info()[:2]
+			estr = traceback.format_exception_only(etype, evalue)
+			logstr = 'failed to select IMAP folder - '
+			for each in estr:
+				logstr += '{0}; '.format(each.strip('\n'))
+			logger.critical(logstr)
+			break
+		
+		# latest_seen_UID = None
+		# # Retrieve and process all unread messages. Should errors occur due
+		# # to loss of connection, attempt restablishing connection 
+		# try:
+		# 	result = imap.search('UNSEEN')
+		# 	latest_seen_UID = max(result)
+		# except Exception:
+		# 	continue
+		# log.info('{0} unread messages seen - {1}'.format(
+		# 	len(result), result
+		# 	))
+		
+		# for each in result:
+			# try:
+			# 	# result = imap.fetch(each, ['RFC822'])
+			# except Exception:
+			# 	log.error('failed to fetch email - {0}'.format(each))
+			# 	continue
+			# mail = email.message_from_string(result[each]['RFC822'])
+			# try:
+			# 	# process_email(mail, download, log)
+			# 	log.info('processing email {0} - {1}'.format(
+			# 		each, mail['subject']
+			# 		))
+			# except Exception:
+			# 	log.error('failed to process email {0}'.format(each))
+			# 	raise
+			# 	continue
+
+		try: 		
+			while True:
+			    # <--- Start of mail monitoring loop
+
+                # Create a new entry for watching this folder 
+			    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
+			    bc.delete()
+
+			    bc_folder = ButtonChannel( watching_folder=watching_folder )
+			    bc_folder.save()
+
+			    # After all unread emails are cleared on initial login, start
+			    # monitoring the folder for new email arrivals and process 
+			    # accordingly. Use the IDLE check combined with occassional NOOP
+			    # to refresh. Should errors occur in this loop (due to loss of
+			    # connection), return control to IMAP server connection loop to
+			    # attempt restablishing connection instead of halting script.
+			    imap.idle()
+			    result = imap.idle_check(3*60)  # timeout
+
+			    # either mark as unread/read or new message
+			    if result:
+			        # EXISTS command mean: if the size of the mailbox changes (e.g., new messages)
+			        logger.info(result)
+			        imap.idle_done()
+			        try:
+			            uid = -1
+			            if "exchange" in imap_account.host or "csail" in imap_account.host: # e.g., mit
+			                flag = False
+			                logger.info(result[0])
+			                for r in result:
+			                    if r[1] ==  "FETCH":
+			                        flag = True
+			                        result = [r[0]]
+
+			                if not flag:
+			                    continue
+			            else: # e.g., gmail, gsuite
+			                uid = result[0][2][1]
+			                result = imap.search('UID %d' % uid)
+
+			            logger.info(result)
+			        except Exception as e:
+			            # prevent reacting to msg move/remove 
+			            logger.critical(e)
+			            continue
+                        
+			        logger.info('{0} new unread messages - {1}'.format(
+			            len(result),result
+			            ))
+			        for each in result:
+			            _header_descriptor = 'BODY.PEEK[HEADER.FIELDS (SUBJECT)]'			            
+			            # mail = email.message_from_string(
+			            # 	fetch[each][_header_descriptor]
+			            # 	)
+			            try:
+			                fetch = imap.fetch(each, [_header_descriptor, "UID"])
+
+			                logger.info('processing email {0} - {1}'.format(
+			                    each, fetch[each]
+			                    ))
+			                uid = -1
+			                if "exchange" in imap_account.host or "csail" in imap_account.host:
+			                    uid = fetch[each]["UID"]
+			                else:
+			                    uid = each
+			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=uid)
+			                logger.info(message.base_message.subject)
+			                bc = ButtonChannel(message=message, imap_account=imap_account, code=ButtonChannel.OK)
+			                bc.save()
+
+			            except MessageSchema.DoesNotExist:
+			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
+			                # TODO this creates a new instance of buttonchannel
+
+			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.MSG_NOT_FOUND)
+			                bc.save()
+			            except Exception as e:
+			                logger.error(str(e))
+			                logger.error(
+			                    'failed to process email {0}'.format(each))
+
+			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.UNKNOWN)
+			                bc.save()
+
+			    else:   # After time-out && no operation 
+			        imap.idle_done()
+			        imap.noop()
+			        logger.info('no new messages seen')      
+
+			        return
+
+			    # End of mail monitoring loop --->           
+		except Exception as e:
+		    logger.exception("Error while  %s" % str(e))
+		finally:
+		    # Remove the entry with this folder and terminate the request 
+		    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)
+		    bc.delete()
+
+		    imap.logout()
+
+		    return
+
+            

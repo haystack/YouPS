@@ -6,6 +6,8 @@ import logging
 import re
 import smtplib
 import typing as t  # noqa: F401 ignore unused we use it for typing
+import traceback
+import json
 from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from email import encoders
@@ -16,12 +18,12 @@ from itertools import ifilter, islice, chain
 
 from django.utils import timezone
 from imapclient import \
-    IMAPClient  # noqa: F401 ignore unused we use it for typing
+    IMAPClient, exceptions  # noqa: F401 ignore unused we use it for typing
 from pytz import timezone as tz
 
 from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
-                          ImapAccount, MessageSchema, TaskManager)
+                          ImapAccount, BaseMessage, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
 from engine.utils import IsNotGmailException
 from engine.models.helpers import message_helpers
@@ -137,7 +139,7 @@ class Message(object):
         Returns:
             List(str): List of flags on the message
         """
-        return self._flags if self._is_simulate else self._schema.flags
+        return self._flags
 
     @property
     def in_reply_to(self):
@@ -161,11 +163,11 @@ class Message(object):
 
     @property
     def deadline(self):
-        # type: () -> t.AnyStr
+        # type: () -> datetime.datetime
         """Get the user-defined deadline of the message
 
         Returns:
-            str: The deadline
+            datetime: The deadline
         """
         return self._schema.base_message.deadline
 
@@ -177,9 +179,29 @@ class Message(object):
             value = timezone.localtime(value)
             logger.info(value)
 
+        logger.info(self.subject)
+        logger.info(self._is_simulate)
+        
         if not self._is_simulate:
+            logger.info("here")
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
+
+    @property
+    def task(self):
+        # type: () -> t.AnyStr
+        """Get the user-defined task of the message
+
+        Returns:
+            str: The tasks
+        """
+        return self._schema.base_message.task
+
+    @task.setter
+    def task(self, value):
+        # type: (t.AnyStr) -> None
+        self._schema.base_message.task = value
+        self._schema.base_message.save()
 
     @property
     def subject(self):
@@ -250,6 +272,15 @@ class Message(object):
         """
         # TODO we will automatically remove the RECENT flag unless we make our imapclient ReadOnly
         return '\\Recent' in self.flags
+
+    def is_replied(self):
+        # type: () -> bool
+        """Get if the message is replied
+
+        Returns:
+            bool: True if the message is replied
+        """
+        return BaseMessage.objects.filter(imap_account=self._imap_account).filter(_in_reply_to__contains=self._message_id).exists()
 
     @property
     def to(self):
@@ -342,14 +373,14 @@ class Message(object):
         return Folder(self._schema.folder, self._imap_client)
 
     @property
-    def content(self, return_only_text=True):
+    def content(self):
         # type: () -> t.AnyStr
         """Get the content of the message
 
         Returns:
             dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """
-        return message_helpers.get_content_from_message(self, return_only_text)
+        return message_helpers.get_content_from_message(self)
 
     def has_flag(self, flag):
         # type: (t.AnyStr) -> bool
@@ -366,13 +397,17 @@ class Message(object):
 
         This method can also optionally take a single string as a flag.
         """
+        if not isinstance(flags, list):
+            flags = [flags]
+
         if self._is_simulate:
             flags = message_helpers._check_flags(self, flags)
         # add known flags to the correct place. i.e. \\Seen flag is not a gmail label
         if not self._is_simulate:
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
 
-        message_helpers._save_flags(self, list(set(self.flags + flags)))
+        self._flags = list(set(self.flags + flags))
+        # message_helpers._save_flags(self, list(set(self.flags + flags)))
 
     def remove_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
@@ -380,13 +415,17 @@ class Message(object):
 
         This method can also optionally take a single string as a flag.
         """
+        if not isinstance(flags, list):
+            flags = [flags]
+
         if self._is_simulate:
             flags = message_helpers._check_flags(self, flags)
         if not self._is_simulate:
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
 
         # update the local flags
-        message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
+        self._flags = list(set(self.flags) - set(flags))
+        # message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -423,17 +462,22 @@ class Message(object):
         self._check_folder(dst_folder)
         if not self._is_message_already_in_dst_folder(dst_folder):
             if not self._is_simulate:
-                self._imap_client.move([self._uid], dst_folder)
+                try:
+                    self._imap_client.move([self._uid], dst_folder)
+                except exceptions.CapabilityError:
+                    self.copy(dst_folder)
+                    self.delete()
+                    self._imap_client.expunge()
 
     def forward(self, to=[], cc=[], bcc=[], content=""):
+        to = format_email_address(to)
+        cc = format_email_address(cc)
+        bcc = format_email_address(bcc)
+
+        new_message_wrapper = self._create_message_instance(
+            "Fwd: " + self.subject, to, cc, bcc, content)
+
         if not self._is_simulate:
-            to = format_email_address(to)
-            cc = format_email_address(cc)
-            bcc = format_email_address(bcc)
-
-            new_message_wrapper = self._create_message_instance(
-                "Fwd: " + self.subject, to, cc, bcc, content)
-
             if new_message_wrapper:
                 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
                 mailbox = MailBox(self._schema.imap_account, self._imap_client)
@@ -450,7 +494,7 @@ class Message(object):
         Returns:
             bool: true if the passed in string is in the message content
         """
-        return string in self.content
+        return string in self.content["text"] if self.content["text"] else False
 
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
@@ -494,7 +538,13 @@ class Message(object):
 
         self.reply(more_to, more_cc, more_bcc, content)
 
-    def see_later(self, later_at=60, hide_in='YoUPS see_later'):
+    def see_later(self, later_at=60, hide_in='YouPS see later'):
+        """Hide a message to a folder and move it back to a original folder
+
+        Args:
+            later_at (int): when to move this message back to inbox (in minutes)
+            hide_in (string): a name of folder to hide this message temporarily
+        """
         if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
             raise TypeError("see_later(): later_at " +
                             later_at + " is not number or datetime")
@@ -515,12 +565,16 @@ class Message(object):
         if not self._is_simulate:
             self.move(hide_in)
 
-            import random
-
-            er = EmailRule(uid=random.randint(1, 100000), name='see later', type='see-later',
-                           code='imap.select_folder("%s")\nmsg=imap.search(["HEADER", "Message-ID", "%s"])\nif msg:\n    imap.move(msg, "%s")' % (hide_in, self._message_id, current_folder))
+            # find message schema (at folder hide_in) of base message then move back to original message schema 
+            code= {"base_message_id": self._schema.base_message.id,
+                "hide_in": hide_in,
+                "current_folder": current_folder}
+            
+            er = EmailRule(name='see later', type='see-later', code=json.dumps(code))
             er.save()
 
+            
+            
             t = TaskManager(email_rule=er, date=later_at,
                             imap_account=self._schema.imap_account)
             t.save()
@@ -630,9 +684,9 @@ class Message(object):
             separator = "On %s, (%s) wrote:" % (
                 datetime.now().ctime(), self._schema.imap_account.email)
             text_content = additional_content + "\n\n" + \
-                separator + "\n\n" + content["text"]
+                separator + "\n\n" + (content["text"] if content["text"] else "")
             html_content = additional_content + "<br><br>" + \
-                separator + "<br><br>" + content["html"]
+                separator + "<br><br>" + (content["html"] if content["html"] else content["text"] or "")
 
             # We must choose the body charset manually
             for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
@@ -680,7 +734,8 @@ class Message(object):
 
             new_message_wrapper.attach(new_message)
         except Exception as e:
-            print (e)
+            logger.exception ("%s %s" % (e, traceback.format_exc()))
+            raise RuntimeError('Failed to deal with a message: %s' % str(e))
             return
         finally:
             # mark the message unread if it is unread
@@ -784,11 +839,10 @@ class Message(object):
             "folder": self.folder.name,
             "subject": self.subject,
             "flags": [f.encode('utf8', 'replace') for f in self.flags],
-            "date": str(self.date),
+            "date": str(self.date.astimezone(tz('US/Eastern'))), # convert it to users timezone
             "deadline": str(self.deadline),
+            "task": self.task,
             "is_read": self.is_read,
-            "is_deleted": self.is_deleted,
-            "is_recent": self.is_recent,
             "error": False
         }
 

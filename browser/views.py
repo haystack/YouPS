@@ -17,6 +17,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.template.context import RequestContext
 from django.utils.encoding import *
+from django.template import Context, Template, loader
+from django.utils import timezone
 
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
@@ -155,6 +157,48 @@ def about_view(request):
 @render_to(WEBSITE+"/calendar.html")
 def calendar_view(request):
 	return {'website': WEBSITE}
+
+@render_to(WEBSITE+"/email_button.html")
+def email_button_view(request):
+	try: 
+		if request.user.email:
+			imap_account = ImapAccount.objects.get(email=request.user.email)
+			folders = FolderSchema.objects.filter(imap_account=imap_account).filter(is_selectable=True).values('name')
+						
+			folders = [f['name'].encode('utf8', 'replace') for f in folders]
+
+			email_rules = EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut')
+
+			today = timezone.now()
+			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules, 'imap_authenticated': True, 'is_gmail': imap_account.is_gmail, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
+	except ImapAccount.DoesNotExist:
+		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
+	except:
+		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
+
+def load_components(request):
+	res = {"status": True, "code": 200}
+	
+	try:
+		component = request.POST['component']
+		logger.info(component)
+		# basemsg_uid = request.POST['FILL HERE']
+		
+		template = loader.get_template('youps/components/%s.html' % component)
+		c = {}
+		if component == 'datepicker':
+			# if base msg has deadline
+			# set as the deadline
+			# else today date
+			today = timezone.now()
+			
+			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00')}
+        	res['template'] = template.render( Context(c) )
+
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception as e:
+		logger.info(e)
+		return HttpResponse(request_error, content_type="application/json")
 		
 @login_required
 def login_imap(request):
@@ -174,15 +218,43 @@ def login_imap(request):
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
+def apply_button_rule(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+
+		msg_schema_id = request.POST['msg_id']
+		er_id = request.POST['er_id']
+		kargs = json.loads(request.POST.get('kargs'))
+		res = engine.main.apply_button_rule(user, request.user.email, er_id, msg_schema_id, kargs)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception, e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
 def fetch_execution_log(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-		
-		res = engine.main.fetch_execution_log(user, request.user.email)
+		from_id = None if not request.POST['from_id'] else request.POST['from_id']
+		to_id = None if not request.POST['to_id'] else request.POST['to_id']
+
+		res = engine.main.fetch_execution_log(user, request.user.email, from_id, to_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
-		print e
-		logging.debug(e)
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def fetch_watch_message(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		
+		folder_name = request.POST['folder']
+
+		res = engine.main.fetch_watch_message(user, request.user.email, folder_name)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception as e:
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
@@ -278,6 +350,19 @@ def delete_mailbot_mode(request):
 		mode_id = request.POST['id']
 
 		res = engine.main.delete_mailbot_mode(user, request.user.email, mode_id)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception, e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def handle_imap_idle(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		folder = request.POST['folder']
+
+		engine.main.handle_imap_idle(user, request.user.email, folder)
+		res = {}
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
 		logger.exception(e)
