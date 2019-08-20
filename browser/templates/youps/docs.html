@@ -183,18 +183,18 @@
 	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
 	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
 
-    <script src="https://get.mavo.io/mavo.js"></script>
+    <script src="/static/javascript/youps/mavo.min.js"></script>
 
     <script>
         document.addEventListener("mv-load", function(){
             sidebar_init();
             init_syntax();
 
-            // $('.group-container a[href]').click(function(e){
-            //     $("html, body").animate({
-            //         scrollTop: $(section).offset().top -50
-            //     });
-            // });
+            $('.group-container a[href]').click(function(e){
+                $("html, body").animate({
+                    scrollTop: $(section).offset().top -50
+                });
+            });
         });
     </script>
 {% endblock %}
