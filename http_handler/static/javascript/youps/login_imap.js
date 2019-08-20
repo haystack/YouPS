@@ -469,7 +469,7 @@ $(document).ready(function() {
 
 
     // change mode by dropdown click
-    $("body").on("click", ".dropdown li a", function() {
+    $("body").on("click", "#mode-selection-dropdown li a", function() {
         $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
         $(this).parents(".dropdown").find('.btn').attr('mode-id', $(this).attr('mode-id'));
         $(this).parents(".dropdown").find('.btn').val($(this).data('value'));

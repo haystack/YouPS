@@ -15,6 +15,7 @@ from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
+from engine.utils import turn_on_youps
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
@@ -215,7 +216,7 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
         mm = MailbotMode.objects.get(id=mode_id, imap_account=imapAccount)
         if imapAccount.current_mode == mm:
             imapAccount.current_mode = None
-            imapAccount.is_running = False
+            turn_on_youps(imapAccount, False, "by delete_mailbot_mode")
         mm.delete()
         res['status'] = True
     except ImapAccount.DoesNotExist:
@@ -342,7 +343,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         imap = auth_res['imap']  # noqa: F841 ignore unused
 
         imapAccount.is_test = is_test
-        imapAccount.is_running = run_request
+        turn_on_youps(imapAccount, run_request, "By user's request")
 
         # TODO these don't work anymore
         # uid = fetch_latest_email_id(imapAccount, imap)'

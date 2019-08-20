@@ -264,7 +264,14 @@ def dump_execution_log(imapAccount, new_log):
         logger.debug(new_log)
         l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log))
         l.save()
-        
+
+def turn_on_youps(imapAccount, turn_on, verbose):
+    if turn_on:
+        logger.info("Turning on account %s / %s" % (imapAccount.email, verbose))
+    else:
+        logger.info("Turning OFF account %s / %s " % (imapAccount.email, verbose))
+
+    imapAccount.is_running = turn_on        
 
 # REGEXES
 # Match carriage return new lines followed by whitespace. For example "\r\n   \t\t"
