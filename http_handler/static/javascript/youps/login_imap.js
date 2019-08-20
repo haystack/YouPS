@@ -233,7 +233,7 @@ $(document).ready(function() {
             entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
         });
 
-        CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor) {
+        CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor, options) {
             var cur = editor.getCursor();
             var curLine = editor.getLine(cur.line);
             var start = cur.ch;
@@ -243,7 +243,10 @@ $(document).ready(function() {
             while (start && /[\w]/.test(curLine.charAt(start - 1))) --start;
             var curWord = start !== end && curLine.slice(start, end);
             var regex = new RegExp('^' + curWord, 'i');
-
+            
+            console.log(entity_method)
+            console.log(global_method)
+            debugger;
             var suggestion = curLine.includes(".") ? 
                 entity_method.filter(function(item) {
                     return item.match(regex);
