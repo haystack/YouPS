@@ -1,10 +1,14 @@
 from django.template import Context, Template, loader
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 
 import json
 import logging
 from engine.constants import msg_code
 
+import engine.main
+from schema.models import UserProfile
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args)
 
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -77,8 +81,6 @@ def load_new_editor(request):
                     rule_type = request.POST['type']
                     mode_id = request.POST['mode']
 
-                    user_inbox = FolderSchema.objects.get(imap_account=imap[0], name__iexact="inbox")
-
                     try:
                         new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
                     except MailbotMode.DoesNotExist:
@@ -87,7 +89,13 @@ def load_new_editor(request):
 
                         new_er = EmailRule(type=rule_type, mode=new_mm, code=get_base_code(rule_type))
                     new_er.save()
+
+                    user_inbox = FolderSchema.objects.get(imap_account=imap[0], name__iexact="inbox")
                     new_er.folders.add(user_inbox)
+
+                    test_folder = FolderSchema.objects.filter(imap_account=imap[0], name="_YouPS exercise")
+                    if test_folder.exists():
+                        new_er.folders.add(test_folder[0])
 
                     logger.info(new_er.folders.exists())
                     folders = FolderSchema.objects.filter(imap_account=imap[0])
@@ -104,3 +112,28 @@ def load_new_editor(request):
 
 
     return HttpResponse(json.dumps({"editors": editors, "status": True, "code": 200}), content_type="application/json")
+
+
+@login_required
+def create_mailbot_mode(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+
+		event_type = ["new_message", "flag_change", "deadline", "shortcut"]
+		c= {}
+		for component in event_type:
+			template = loader.get_template('youps/components/%s-add.html' % component)
+			c[component] = template.render(Context({}))
+
+		res = engine.main.create_mailbot_mode(user, request.user.email)
+		c["mode_id"] = res["mode-id"]
+		logger.debug(c)
+
+		template = loader.get_template('youps/components/mode.html')
+		new_mode = template.render(Context(c))
+		res['new_mode'] = new_mode
+
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception, e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")

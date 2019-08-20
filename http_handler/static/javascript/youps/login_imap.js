@@ -143,192 +143,6 @@ $(document).ready(function() {
         $root_elem.find('.debugger-container tr[line-number{0}]'.format(line_number)).removeClass('hover-selected');
     })
 
-    function get_panel_elem(type, editable) {
-        var func_name = "";
-
-        var instruction_for_shortcut = `<div class='instruction-container'><span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span></div>`;
-
-        var editor_elem = `<div class="panel-body" style="display:none;">` +
-        (type=="shortcut"? instruction_for_shortcut: '<div class="folder-container"></div>') + 
-        `<div class="editor-container">` +
-            (type=="new-message"? `<div class='trigger'>
-                <form class="form-inline">
-                    <div class="form-group">
-                        <span>When a message arrvies, run the following rules </span>
-                    </div>
-                    <div class="form-group">
-                        <input class="form-check-input" type="radio" name="new-message-timespan" value="now" checked>
-                        <label class="form-check-label" for="inlineRadio1">immediately</label>
-                        <input class="form-check-input" type="radio" name="new-message-timespan" value="before">
-                        <input style='width:50px;' type="text" class="form-control" placeholder="30">
-                        <select id="company" class="form-control">
-                            <option>min</option>
-                            <option>hr</option>
-                            <option>day</option>
-                        </select> 													
-                    </div>
-                    <div class="form-group">
-                        <span>later</span>
-                    </div>
-                </form></div>`:"") +
-            `<textarea class="editor mode-editor">{0}\n{1}</textarea>
-        </div>`.format(import_str, func_name + "\n    pass") +
-        (type=="new-message"? `<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
-            <button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i> Reload results</button>
-            
-            <h2>Test suites</h2>
-            <h4>Recent messages from your selected folders to test your rules</h4>
-            <table class="example-suites" class="row-border" style="width:100%">
-            </table>
-        </div>`: ""), 
-    pull_down_arrow = `<span class="pull-right">
-        <button class='btn-default btn-incoming-save'>Save</button>
-        <i class="fas fa-chevron-up" style="display:none;"></i><i class="fas fa-chevron-down"></i>
-    </span>`;
-
-        
-        var elem_content;
-        if(type == "new-message") {
-            elem_content =  `{0}{1}<div {2} class="panel panel-success">
-                <div class="flex_container">
-                    <div class="flex_item_left"> 
-                        <i class="fas fa-3x fa-{3}"></i>
-                    </div>
-                    
-                    <div class="panel-heading flex_item_right panel-collapsed">
-                        <h3 class="panel-title">
-                            {4}
-                        </h3>
-                        {5}
-                    </div>
-                </div>
-                <!-- Panel body -->
-                {6}
-            </div>`.format("", "", "",
-                "plus-circle",
-                `<span style='float:left;' class="fa-layers fa-fw fa-2x"> 
-                    <i class="far fa-envelope"></i>
-                    <span class="fa-layers-counter" style="background:Tomato">NEW</span>
-                </span>` + `Create message arrival handler <span class=""></span>`, 
-                "", "");
-        } else if (type == "flag-change"){
-            elem_content = `{0}{1}<div {2} class="panel panel-warning">
-                <div class="flex_container">
-                    <div class="flex_item_left"> 
-                        <i class="fas fa-3x fa-{3}"></i>
-                    </div>
-                    
-                    <div class="panel-heading flex_item_right panel-collapsed">
-                        <h3 class="panel-title">
-                            {4}
-                        </h3>
-                        {5}
-                    </div>
-                </div>
-                <!-- Panel body -->
-                {6}
-            </div>
-        </div>`.format("", "", "", "plus-circle",
-                '<i style="float:left;" class="far fa-2x fa-flag"></i>' + `Create a flag change event handler <span class=""></span>`, 
-                "", "");
-        } else if (type == "deadline"){
-            elem_content = `{0}{1}<div {2} class="panel panel-default">
-                <div class="flex_container">
-                    <div class="flex_item_left"> 
-                        <i class="fas fa-3x fa-{3}"></i>
-                    </div>
-                    
-                    <div class="panel-heading flex_item_right panel-collapsed">
-                        <h3 class="panel-title">
-                            {4}
-                        </h3>
-                        {5}
-                    </div>
-                </div>
-                <!-- Panel body -->
-                {6}
-            </div>
-        </div>`.format("", "", "", "plus-circle",
-                `<i style="float:left;" class="far fa-2x fa-clock"></i>` + `Create a deadline event handler <span class=""></span>`, 
-                "", "");
-        } else if (type == "shortcut"){
-            elem_content = `{0}{1}<div {2} class="panel panel-primary">
-                <div class="flex_container">
-                    <div class="flex_item_left"> 
-                        <i class="fas fa-3x fa-{3}"></i>
-                    </div>
-                    
-                    <div class="panel-heading flex_item_right panel-collapsed">
-                        <h3 class="panel-title">
-                            {4}
-                        </h3>
-                        {5}
-                    </div>
-                </div>
-                <!-- Panel body -->
-                {6}
-            </div>
-        </div>`.format("", "", "", "plus-circle",
-                `<i style="float:left;" class="fas fa-2x fa-terminal"></i>` + `Create a shortcut handler <span class=""></span>`, 
-                "", "");
-        } else if (type == "repeat") {
-            elem_content = `{0}{1}<div {2} class="panel panel-warning">
-                <div class="flex_container">
-                    <div class="flex_item_left"> 
-                        <i class="fas fa-3x fa-{3}"></i> 
-                    </div>
-                    
-                    <div class="panel-heading flex_item_right panel-collapsed">
-                        <h3 class="panel-title">
-                            <i class="far fa-2x fa-clock" style="float:left"></i>  
-                            <span style="float:left;margin: 10px;">Update every </span>
-                            <span class="preview-folder"></span>
-                        </h3>
-                        {5}
-                    </div>
-                </div>
-                <!-- Panel body -->
-                {4}
-            </div>
-        </div>`.format("", "", "", "plus-circle", "", "");
-        }
-
-        if (!editable) 
-            return '<div class="btn-new-editor" type="{0}">'.format(type) + elem_content + '</div>';
-        return elem_content;
-    }
-
-    function guess_host( email_addr ) {
-        $("#link-less-secure").attr('href', "");
-        $("#rdo-oauth").attr('disabled', "");
-        
-        if( validateEmail(email_addr) ) {
-            $("#password-container").show();
-            toggle_login_mode();
-
-            if( email_addr.includes("gmail")) {
-                $("#input-host").val("imap.gmail.com");
-                $("#link-less-secure").attr('href', "https://myaccount.google.com/lesssecureapps");
-                $("#rdo-oauth").removeAttr('disabled');
-
-                $(".oauth").show();
-            }
-            else {
-                $(".oauth").remove();
-
-                $("#rdo-plain").not(':checked').prop("checked", true);
-                
-                if ( email_addr.includes("yahoo")) $("#input-host").val("imap.mail.yahoo.com");
-                else if ( email_addr.includes("csail")) $("#input-host").val("imap.csail.mit.edu");
-                else if ( email_addr.includes("mit")) $("#input-host").val("imap.exchange.mit.edu");
-                else $("#input-host").val("");
-
-                $(".oauth").hide();
-            }
-        }
-        else $("#password-container").hide();
-    }
-
     // Disable all the buttons for a while until it is sure that the user is authenticated
     $(".btn").prop("disabled",true);
     
@@ -697,6 +511,37 @@ $(document).ready(function() {
         }
     })
 
+    function guess_host( email_addr ) {
+        $("#link-less-secure").attr('href', "");
+        $("#rdo-oauth").attr('disabled', "");
+        
+        if( validateEmail(email_addr) ) {
+            $("#password-container").show();
+            toggle_login_mode();
+
+            if( email_addr.includes("gmail")) {
+                $("#input-host").val("imap.gmail.com");
+                $("#link-less-secure").attr('href', "https://myaccount.google.com/lesssecureapps");
+                $("#rdo-oauth").removeAttr('disabled');
+
+                $(".oauth").show();
+            }
+            else {
+                $(".oauth").remove();
+
+                $("#rdo-plain").not(':checked').prop("checked", true);
+                
+                if ( email_addr.includes("yahoo")) $("#input-host").val("imap.mail.yahoo.com");
+                else if ( email_addr.includes("csail")) $("#input-host").val("imap.csail.mit.edu");
+                else if ( email_addr.includes("mit")) $("#input-host").val("imap.exchange.mit.edu");
+                else $("#input-host").val("");
+
+                $(".oauth").hide();
+            }
+        }
+        else $("#password-container").hide();
+    }
+
     // $("#password-container").hide();
     guess_host($("#user-full-email").text());
     toggle_login_mode();
@@ -776,32 +621,25 @@ $(document).ready(function() {
                     var id = res["mode-id"]
 
                     // Add tab
-                    $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>In meeting <span>({0})</span></span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
+                    $(nav_bar).closest('li').before('<li><a href="#tab_{0}"><span class="tab-title" mode-id={0}>My email mode <span>({0})</span></span><i class="fas fa-pencil-alt"></i></a> <span class="close"> x </span></li>'.format(id));
 
-                    // Insert tab pane first
-                    var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
-                        <div class='editable-container' type='new-message'></div>
-                        <div class='editable-container' type='repeat'></div>
-                        <div class='editable-container' type='flag-change'></div>
-                        <div class='editable-container' type='deadline'></div>
-                        <div class='editable-container' type='shortcut'></div>
-                    </div>`.format(id);
-                    $('.tab-content').append( tab_pane_content );
+                    // // Insert tab pane first
+                    // var tab_pane_content = `<div class='tab-pane' id='tab_{0}'> 
+                    //     <div class='editable-container' type='new-message'></div>
+                    //     <div class='editable-container' type='repeat'></div>
+                    //     <div class='editable-container' type='flag-change'></div>
+                    //     <div class='editable-container' type='deadline'></div>
+                    //     <div class='editable-container' type='shortcut'></div>
+                    // </div>`.format(id);
+                    // $('.tab-content').append( tab_pane_content );
+
+                    // Add elements in the tab pane
+                    $('.tab-content').append(res['new_mode']);
 
                     // Move to the newly added tab to load style properly
                     $('.nav-tabs li:nth-child(' + ($('.nav-tabs li').length-1) + ') a').click();
 
-                    // Add elements in the tab pane
-                    $('.tab-content').find('.tab-pane').last().append(
-                        `<!-- add a new message editor button -->
-                        {0}
-                        <!-- add a new flag-change editor button -->
-                        {1}
-                        <!-- add a deadline editor button -->
-                        {2}
-                        <!-- add a shortcut editor button -->
-                        {3}`
-                        .format(get_panel_elem("new-message", false), get_panel_elem("flag-change", false), get_panel_elem("deadline", false), get_panel_elem("shortcut", false)));
+                    
                         
                 }
                 else {

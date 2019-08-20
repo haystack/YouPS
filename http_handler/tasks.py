@@ -90,6 +90,27 @@ def register_inbox():
                         logger.exception("Failure while initially syncing")
                         raise
 
+                logger.info("After sync, set up an exercise folder for the new user")
+                try:
+                        
+                    imap.create_folder("_YouPS exercise")
+
+                    msg1 = mailbox._create_message_wrapper("Welcome to YouPS!", imapAccount.email, content="This is the test email from YouPS", content_html="This is the test email from YouPS")
+                    msg1["From"] = "hello-youps@csail.mit.edu"
+                    imap.append("_YouPS exercise", str(msg1))
+
+                    msg1 = mailbox._create_message_wrapper("[Example email] Follow up", imapAccount.email + ", mycoworker@mail.com", cc="mycoworker2@mail.com", content="Hello! I just wanted to follow up regarding our last meeting! Let me know how you think!", content_html="Hello! I just wanted to follow up regarding our last meeting! Let me know how you think!")
+                    msg1["From"] = "hello-youps@csail.mit.edu"
+                    imap.append("_YouPS exercise", str(msg1))
+
+                    msg1 = mailbox._create_message_wrapper("[Example email] Blah blah", imapAccount.email + ", friend@mail.com", cc="friend1@mail.com", content="Howdy y'all!", content_html="Howdy y'all!")
+                    msg1["From"] = "hello-youps@csail.mit.edu"
+                    imap.append("_YouPS exercise", str(msg1))
+
+                except Exception as e:
+                    logger.exception(e)
+
+
                 logger.info("Mailbox sync done: %s" % (imapAccount.email))
 
                 # after sync, logout to prevent multi-connection issue
