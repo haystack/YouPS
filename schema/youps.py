@@ -253,9 +253,6 @@ class MailbotMode(models.Model):
     name = models.CharField('mode_name', max_length=100)
     imap_account = models.ForeignKey('ImapAccount')
 
-    class Meta:
-        unique_together = ("id", "imap_account")
-
 
 class EmailRule(models.Model):
     id = models.AutoField(primary_key=True)

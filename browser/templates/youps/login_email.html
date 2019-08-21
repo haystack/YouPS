@@ -147,7 +147,8 @@
 					  <div class="card">
 						<div class="card-header">
 							<div id="status">
-								<div class="dropdown" style="display: inline;">
+								<!-- Mode selection dropdown -->
+								<div id="mode-selection-dropdown" class="dropdown" style="display: inline;">
 									<label style="font-size: medium;">Current mode: </label>
 									<button class="btn btn-default dropdown-toggle" type="button" id="current_mode_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" mode-id="0">Default <span class="caret"></span></button>
 									<ul class="dropdown-menu" aria-labelledby="current_mode_dropdown">
@@ -289,14 +290,21 @@
 									<li class="active" >
 										<a href="#welcome" data-toggle="tab">
 											<span class="tab-title">
-												Hello world!
+												Hello YouPS!
 											</span>
 										</a></li>
 									<li><a href="#" class="add-tab">+ Add Mode</a></li>
 								</ul>
 								<div class="tab-content">
 									<div class="tab-pane active" id="welcome">
-										<p>Welcome to YouPS!</p>
+										<h4>Welcome to YouPS!</h4>
+										<span>YouPS is a sandbox environment where you can develop and program your own inbox! YouPs is following OOP (Object-oriented programming) convention and has three entities -- <a href='/docs/#message'><code>Message</code></a>, <a href='/docs/#contact'><code>Contact</code></a> and <a href='/docs/#Calendar'><code>Calendar</code></a>. 
+											Each entity represents individual message, contact (email address) and your e-calendar. 
+											<br>
+											Furthermore, YouPS supports various email modes so you can define different email behavior! 
+											Create your first YouPS email mode by adding an tab above! <br><br>
+											Check out popular uses cases <a href='/about'>here</a> and happy inbox-coding!
+										</span>
 									</div>
 								</div>
 							{% endif %}
@@ -388,7 +396,7 @@ print get_sender()
 						  </div> -->
 			  </div>
 
-			  <div id="apis-container" style="display:none;" mv-app="api" mv-storage="https://github.com/soyapark/murmur">
+			  <div id="apis-container" style="display:none;" mv-app="api" mv-storage="https://github.com/haystack/YouPS">
 					<div property="folder" >
 						<div class='add-sidebar header' id="method"> <h3> Global Methods <a href="#folder-attr">¶</a></h3>   </div>
 						<div id="[name]" class='add-sidebar sub-header' property="attribute" mv-multiple>
@@ -465,7 +473,7 @@ print get_sender()
 	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
 
 	<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
-	<script src="https://get.mavo.io/mavo.js"></script>
+	<script src="/static/javascript/youps/mavo.min.js"></script>
 	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
 	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
 

@@ -5,9 +5,8 @@ from boto.s3.connection import S3Connection
 from html2text import html2text
 from lamson.mail import MailResponse
 
-
-from django.conf import global_settings
 from django.contrib.auth.decorators import login_required
+from django.conf import global_settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.context_processors import csrf
 from django.core.files.base import ContentFile
@@ -29,7 +28,7 @@ from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
 from smtp_handler.utils import *
 import logging
 
-from browser.youps_component import load_new_editor
+from browser.youps_component import load_new_editor, create_mailbot_mode
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -333,17 +332,6 @@ def save_shortcut(request):
 	except Exception, e:
 		print e
 		logging.debug(e)
-		return HttpResponse(request_error, content_type="application/json")
-		
-@login_required
-def create_mailbot_mode(request):
-	try:
-		user = get_object_or_404(UserProfile, email=request.user.email)
-
-		res = engine.main.create_mailbot_mode(user, request.user.email)
-		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
