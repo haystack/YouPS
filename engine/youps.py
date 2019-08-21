@@ -215,8 +215,9 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
         imapAccount = ImapAccount.objects.get(email=email)
         mm = MailbotMode.objects.get(id=mode_id, imap_account=imapAccount)
         if imapAccount.current_mode == mm:
-            imapAccount.current_mode = None
             turn_on_youps(imapAccount, False, "by delete_mailbot_mode")
+            imapAccount.current_mode = None
+            imapAccount.save()
         mm.delete()
         res['status'] = True
     except ImapAccount.DoesNotExist:

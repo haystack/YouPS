@@ -25,6 +25,36 @@ def get_base_code(rule_type):
 
     return d[rule_type]
 
+def create_new_editor(imap_account, rule_type, mode_id):
+    editors = []
+
+    try:
+        new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+    except MailbotMode.DoesNotExist:
+        new_mm = MailbotMode(imap_account=imap_account)
+        new_mm.save()
+
+        new_er = EmailRule(type=rule_type, mode=new_mm, code=get_base_code(rule_type))
+    new_er.save()
+
+    user_inbox = FolderSchema.objects.get(imap_account=imap_account, name__iexact="inbox")
+    new_er.folders.add(user_inbox)
+
+    test_folder = FolderSchema.objects.filter(imap_account=imap_account, name="_YouPS exercise")
+    if test_folder.exists():
+        new_er.folders.add(test_folder[0])
+
+    logger.info(new_er.folders.exists())
+    folders = FolderSchema.objects.filter(imap_account=imap_account)
+    c = {'rule': new_er, 'folders': folders}
+    # logger.info('youps/%s.html' % rule_type.replace("-", "_"))
+    template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
+
+    e = {'template': template.render(Context(c))}
+
+    editors.append( e )
+
+    return editors
 
 def load_new_editor(request):
     email_rule_folder = []
@@ -81,31 +111,7 @@ def load_new_editor(request):
                     rule_type = request.POST['type']
                     mode_id = request.POST['mode']
 
-                    try:
-                        new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
-                    except MailbotMode.DoesNotExist:
-                        new_mm = MailbotMode(imap_account=imap[0])
-                        new_mm.save()
-
-                        new_er = EmailRule(type=rule_type, mode=new_mm, code=get_base_code(rule_type))
-                    new_er.save()
-
-                    user_inbox = FolderSchema.objects.get(imap_account=imap[0], name__iexact="inbox")
-                    new_er.folders.add(user_inbox)
-
-                    test_folder = FolderSchema.objects.filter(imap_account=imap[0], name="_YouPS exercise")
-                    if test_folder.exists():
-                        new_er.folders.add(test_folder[0])
-
-                    logger.info(new_er.folders.exists())
-                    folders = FolderSchema.objects.filter(imap_account=imap[0])
-                    c = {'rule': new_er, 'folders': folders}
-                    # logger.info('youps/%s.html' % rule_type.replace("-", "_"))
-                    template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
-
-                    e = {'template': template.render(Context(c))}
-
-                    editors.append( e )
+                    editors = create_new_editor(imap[0], rule_type, mode_id)
     except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")

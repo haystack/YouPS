@@ -271,7 +271,8 @@ def turn_on_youps(imapAccount, turn_on, verbose):
     else:
         logger.info("Turning OFF account %s / %s " % (imapAccount.email, verbose))
 
-    imapAccount.is_running = turn_on        
+    imapAccount.is_running = turn_on 
+    imapAccount.save()
 
 # REGEXES
 # Match carriage return new lines followed by whitespace. For example "\r\n   \t\t"
