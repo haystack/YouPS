@@ -134,6 +134,9 @@ function fetch_log(from_id=null, to_id=null) {
 
 $(document).ready(function() {
     var table = $('#console-table').DataTable( {
+        "language": {
+            "emptyTable": "There hasn't been no action at YouPS account yet! Turn on your YouPS to get on action!"
+        },
         "bPaginate": false,
         "bLengthChange": false,
         "bFilter": true,
