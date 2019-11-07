@@ -21,6 +21,7 @@ from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema,
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
+button_logger = logging.getLogger('button') # type: logging.Logger
 
 def login_imap(email, password, host, is_oauth):
     """This function is called only once per each user when they first attempt to login to YoUPS.
@@ -601,7 +602,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 		# <--- Start of IMAP server connection loop
 		
 		# Attempt connection to IMAP server
-		logger.info('connecting to IMAP server - %s' % email)
+		button_logger.info('connecting to IMAP server - %s' % email)
 		try:
 			res = authenticate(imap_account)
 			if not res['status']:
@@ -617,16 +618,16 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			logstr = 'failed to connect to IMAP server - '
 			for each in estr:
 				logstr += '{0}; '.format(each.strip('\n'))
-			logger.error(logstr)
+			button_logger.error(logstr)
 			sleep(10)
 			continue
-		logger.info('server connection established')
+		button_logger.info('server connection established')
 
 		# Select IMAP folder to monitor
-		logger.info('selecting IMAP folder - {0}'.format(folder))
+		button_logger.info('selecting IMAP folder - {0}'.format(folder))
 		try:
 			result = imap.select_folder(folder)
-			logger.info('folder selected')
+			button_logger.info('folder selected')
 		except Exception:
 			# Halt script when folder selection fails
 			etype, evalue = sys.exc_info()[:2]
@@ -634,7 +635,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			logstr = 'failed to select IMAP folder - '
 			for each in estr:
 				logstr += '{0}; '.format(each.strip('\n'))
-			logger.critical(logstr)
+			button_logger.critical(logstr)
 			break
 		
 		# latest_seen_UID = None
@@ -689,13 +690,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			    # either mark as unread/read or new message
 			    if result:
 			        # EXISTS command mean: if the size of the mailbox changes (e.g., new messages)
-			        logger.info(result)
+			        button_logger.info(result)
 			        imap.idle_done()
 			        try:
 			            uid = -1
 			            if "exchange" in imap_account.host or "csail" in imap_account.host: # e.g., mit
 			                flag = False
-			                logger.info(result[0])
+			                button_logger.info(result[0])
 			                for r in result:
 			                    if r[1] ==  "FETCH":
 			                        flag = True
@@ -707,13 +708,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                uid = result[0][2][1]
 			                result = imap.search('UID %d' % uid)
 
-			            logger.info(result)
+			            button_logger.info(result)
 			        except Exception as e:
 			            # prevent reacting to msg move/remove 
-			            logger.critical(e)
+			            button_logger.critical(e)
 			            continue
                         
-			        logger.info('{0} new unread messages - {1}'.format(
+			        button_logger.info('{0} new unread messages - {1}'.format(
 			            len(result),result
 			            ))
 			        for each in result:
@@ -724,7 +725,7 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			            try:
 			                fetch = imap.fetch(each, [_header_descriptor, "UID"])
 
-			                logger.info('processing email {0} - {1}'.format(
+			                button_logger.info('processing email {0} - {1}'.format(
 			                    each, fetch[each]
 			                    ))
 			                uid = -1
@@ -733,19 +734,19 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                else:
 			                    uid = each
 			                message = MessageSchema.objects.get(imap_account=imap_account, folder__name=folder, uid=uid)
-			                logger.info(message.base_message.subject)
+			                button_logger.info(message.base_message.subject)
 			                bc = ButtonChannel(message=message, imap_account=imap_account, code=ButtonChannel.OK)
 			                bc.save()
 
 			            except MessageSchema.DoesNotExist:
-			                logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
+			                button_logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
 			                # TODO this creates a new instance of buttonchannel
 
 			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.MSG_NOT_FOUND)
 			                bc.save()
 			            except Exception as e:
-			                logger.error(str(e))
-			                logger.error(
+			                button_logger.error(str(e))
+			                button_logger.error(
 			                    'failed to process email {0}'.format(each))
 
 			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.UNKNOWN)
@@ -754,13 +755,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			    else:   # After time-out && no operation 
 			        imap.idle_done()
 			        imap.noop()
-			        logger.info('no new messages seen')      
+			        button_logger.info('no new messages seen')      
 
 			        return
 
 			    # End of mail monitoring loop --->           
 		except Exception as e:
-		    logger.exception("Error while  %s" % str(e))
+		    button_logger.exception("Error while  %s" % str(e))
 		finally:
 		    # Remove the entry with this folder and terminate the request 
 		    bc = ButtonChannel.objects.filter(watching_folder=watching_folder)

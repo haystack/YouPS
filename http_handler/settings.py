@@ -308,6 +308,12 @@ LOGGING = {
             'filename': '/home/ubuntu/production/mailx/logs/youps.log',
             'formatter': 'custom.debug'
         },
+        'custom.button': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': '/home/ubuntu/production/mailx/logs/button.log',
+            'formatter': 'custom.debug'
+        },
         # this handler logs to the console
         'custom.console': {
             'level': 'DEBUG',
@@ -319,6 +325,11 @@ LOGGING = {
     'loggers': {
         'youps': {
             'handlers': ['custom.file'],
+            'level': 'DEBUG',
+            'propagate': True
+        },
+        'button': {
+            'handlers': ['custom.button'],
             'level': 'DEBUG',
             'propagate': True
         },
