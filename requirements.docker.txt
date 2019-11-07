@@ -32,7 +32,7 @@ pycrypto==2.6.1
 pydns==2.3.6
 pyspf==2.0.11
 python-gflags==3.1.0
-python-gnupg==0.4.0
+python-gnupg==0.4.4
 pytz==2016.7
 requests==2.18.4
 South==1.0.1
