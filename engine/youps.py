@@ -21,7 +21,7 @@ from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema,
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
-button_logger = logging.getLogger('button') # type: logging.Logger
+button_logger = logging.getLogger('youps.button') # type: logging.Logger
 
 def login_imap(email, password, host, is_oauth):
     """This function is called only once per each user when they first attempt to login to YoUPS.
