@@ -249,3 +249,6 @@ def loop_sync_user_inbox():
             except Exception as e:
                 logger.exception(
                     "User inbox syncing fails %s. Stop syncing %s" % (imapAccount_email, e))
+
+def button_sync():
+    pass

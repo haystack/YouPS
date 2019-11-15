@@ -143,9 +143,6 @@ $(document).ready(function() {
         $root_elem.find('.debugger-container tr[line-number{0}]'.format(line_number)).removeClass('hover-selected');
     })
 
-    // Disable all the buttons for a while until it is sure that the user is authenticated
-    $(".btn").prop("disabled",true);
-    
     var test_mode_msg = {true: "You are currently at test mode. YouPS will simulate your rule but not actually run the rule.", 
         false: "YoUPS will apply your rules to your incoming emails. "};
 
@@ -546,7 +543,7 @@ $(document).ready(function() {
     }
 
     // $("#password-container").hide();
-    guess_host($("#user-full-email").text());
+    guess_host(user_email);
     toggle_login_mode();
 
     if(is_imap_authenticated) {
@@ -565,6 +562,11 @@ $(document).ready(function() {
         off_label: '',
         checked: is_test
     });
+
+    $("#btn-google-access").click(function() {
+        window.open('https://accounts.google.com/signin/oauth/oauthchooseaccount?client_id=1035128514395-ljeutpptbag8unpv2lgo1k93eiq006f6.apps.googleusercontent.com&as=q8bvin2OQ732zM87bJJfrw&approval_state=!ChRUVmJGT2pFX3FPLWhTekkyVUxzTxIfdzN0WEg3NGtxc0FTVUU3MWpGWk5XazNUZHVzQjV4WQ∙AJDr988AAAAAXdAyc5cNwjol51ZM1VvA3-UjjsVTzY4H&oauthriskyscope=1&xsrfsig=ChkAeAh8T7l2B9NfkhrBBuQcYcBdnbTMuWOfEg5hcHByb3ZhbF9zdGF0ZRILZGVzdGluYXRpb24SBXNvYWN1Eg9vYXV0aHJpc2t5c2NvcGU&flowName=GeneralOAuthFlow&Email='
+            + user_email);
+    })
 
     btn_code_sumbit.click(function() {   
         is_success = run_code( $('#test-mode[type=checkbox]').is(":checked"), !$(this).hasClass('active') );
