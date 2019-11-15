@@ -341,6 +341,7 @@ class ButtonChannel(models.Model):
     imap_account = models.ForeignKey('ImapAccount', blank=True, null=True)
     message = models.ForeignKey('MessageSchema', blank=True, null=True)
     watching_folder = models.ForeignKey('FolderSchema', blank=True, null=True)  # type: FolderSchema
+    log = models.TextField(default='')
 
     timestamp = models.DateTimeField(auto_now_add=True)
 

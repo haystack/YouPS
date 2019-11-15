@@ -21,7 +21,7 @@ from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema,
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
 
 logger = logging.getLogger('youps')  # type: logging.Logger
-button_logger = logging.getLogger('youps.button') # type: logging.Logger
+button_logger = logging.getLogger('button') # type: logging.Logger
 
 def login_imap(email, password, host, is_oauth):
     """This function is called only once per each user when they first attempt to login to YoUPS.
@@ -254,7 +254,7 @@ def fetch_watch_message(user, email, folder_name):
             else:
                 # if something went wrong only return the log
                 logger.info(bc.code)
-                res["log"] = bc.get_code_display()
+                res["log"] = "%s - %s" % (bc.get_code_display(), bc.log)
         
         res['status'] = True
 
@@ -742,14 +742,14 @@ def handle_imap_idle(user, email, folder='INBOX'):
 			                button_logger.error("Catch new messages but can't find the message %s " % fetch[each]) 
 			                # TODO this creates a new instance of buttonchannel
 
-			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.MSG_NOT_FOUND)
+			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.MSG_NOT_FOUND, log="Catch new messages but can't find the message %s " % fetch[each])
 			                bc.save()
 			            except Exception as e:
 			                button_logger.error(str(e))
 			                button_logger.error(
 			                    'failed to process email {0}'.format(each))
 
-			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.UNKNOWN)
+			                bc = ButtonChannel(imap_account=imap_account, code=ButtonChannel.UNKNOWN, log=str(e))
 			                bc.save()
 
 			    else:   # After time-out && no operation 

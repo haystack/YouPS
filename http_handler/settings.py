@@ -328,7 +328,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True
         },
-        'youps.button': {
+        'button': {
             'handlers': ['custom.button'],
             'level': 'DEBUG',
             'propagate': True
