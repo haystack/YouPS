@@ -31,7 +31,7 @@ logger = logging.getLogger('button')  # type: logging.Logger
 @route("(address)@(host)", address=".+", host=".+")
 def mailbot(arrived_message, address=None, host=None):
 
-    logger.info("Email to mailbot@%s" % HOST)
+    logger.info("Email to mailbot@")
 
     name, addr = parseaddr(arrived_message['from'].lower())
     site = None
