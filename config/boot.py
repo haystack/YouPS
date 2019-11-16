@@ -1,7 +1,7 @@
 from config import settings
-from lamson.routing import Router
-from lamson.server import Relay, SMTPReceiver
-from lamson import view, queue
+from salmon import queue, view
+from salmon.routing import Router
+from salmon.server import LMTPReceiver, Relay
 import logging
 import logging.config
 import jinja2
@@ -13,7 +13,7 @@ settings.relay = Relay(host=settings.relay_config['host'],
                        port=settings.relay_config['port'], debug=1)
 
 # where to listen for incoming messages
-settings.receiver = SMTPReceiver(settings.receiver_config['host'],
+settings.receiver = LMTPReceiver(settings.receiver_config['host'],
                                  settings.receiver_config['port'])
 
 Router.defaults(**settings.router_defaults)
