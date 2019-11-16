@@ -26,3 +26,4 @@ pytz==2016.7
 requests==2.18.4
 south==1.0.1
 typing==3.6.6
+salmon

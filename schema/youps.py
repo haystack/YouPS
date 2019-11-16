@@ -274,6 +274,9 @@ class EmailRule(models.Model):
     class Meta:
         unique_together = ("id", "mode")
 
+    def get_forward_addr(self):
+        return ''.join(e for e in self.name if e.isalnum())
+
 class EmailRule_Args(models.Model):
     id = models.AutoField(primary_key=True)
 
@@ -290,6 +293,8 @@ class EmailRule_Args(models.Model):
         choices=TYPE_CHOICES,
         default="string"
     )
+    
+    default = models.TextField(default='')
 
 class Message_Thread(models.Model):
     id = models.AutoField(primary_key=True)
