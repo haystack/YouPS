@@ -34,7 +34,7 @@ pyspf==2.0.11
 python-gflags==3.1.0
 python-gnupg==0.4.0
 pytz==2016.7
-requests==2.18.4
+requests==2.20.0
 South==1.0.1
 typing==3.6.4
 spacy==2.1.3
