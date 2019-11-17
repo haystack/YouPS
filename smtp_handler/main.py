@@ -27,7 +27,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-logger = logging.getLogger('button')  # type: logging.Logger
+# logger = logging.getLogger('button')  # type: logging.Logger
+logger = logging.getLogger("routing")
+
 
 @route("(address)@(host)", address=".+")
 def START(message, address=None, host=None):
@@ -65,7 +67,7 @@ def START(message, address=None, host=None):
             body_part.append(part1)
             body_part.append(part2)
 
-            new_message = create_response(arrived_message, arrived_message["message-id"], body_part, host)
+            new_message = create_response(arrived_message, addr,arrived_message["message-id"], body_part, host)
             relay.deliver(new_message)
             return
             
@@ -189,7 +191,7 @@ def START(message, address=None, host=None):
                 part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                 body_part.append(part1)
 
-            new_message = create_response(arrived_message, original_message_schema.message_id, body_part, host)
+            new_message = create_response(arrived_message, addr, original_message_schema.message_id, body_part, host)
 
             try:
                 new_msg = {}
@@ -230,7 +232,7 @@ def START(message, address=None, host=None):
         body_part.append(part1)
         body_part.append(part2)
 
-        mail = create_response(arrived_message, arrived_message["message-id"], body_part, host)
+        mail = create_response(arrived_message, addr, arrived_message["message-id"], body_part, host)
         relay.deliver(mail)
     except Exception, e:
         logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
@@ -242,11 +244,12 @@ def START(message, address=None, host=None):
             # Log out after after conduct required action
             imap.logout()
 
-def create_response(arrived_message, in_reply_to=None, body_part=[], host="youps.csail.mit.edu"):
+def create_response(arrived_message, to, in_reply_to=None, body_part=[], host="youps.csail.mit.edu"):
     new_message = MIMEMultipart('alternative')
     new_message["Subject"] = "Re: " + arrived_message["subject"]
     new_message["From"] = WEBSITE+"@" + host
     new_message["In-Reply-To"] = in_reply_to if in_reply_to else arrived_message["message-id"]
+    new_message["To"] = to
 
     for b in body_part:
         new_message.attach(b)
