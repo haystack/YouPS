@@ -24,4 +24,3 @@ Router.UNDELIVERABLE_QUEUE=queue.Queue("run/undeliverable")
 view.LOADER = jinja2.Environment(
     loader=jinja2.PackageLoader(settings.template_config['dir'], 
                                 settings.template_config['module']))
-

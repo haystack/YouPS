@@ -1,5 +1,5 @@
 # This file contains python variables that configure Lamson for email processing.
-import sys, os
+import sys
 import logging
 
 
@@ -19,6 +19,9 @@ router_defaults = {'host': '.+'}
 template_config = {'dir': 'smtp_handler', 'module': 'templates'}
 
 # hook django
+import os
+import django 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "http_handler.settings")
 
+django.setup()
 # the config/boot.py will turn these values into variables set in settings

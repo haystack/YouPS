@@ -14,7 +14,7 @@ from browser.util import get_groups_links_from_roles
 import engine
 from gmail_setup.api import create_gmail_filter
 from http_handler.settings import BASE_URL, WEBSITE
-from schema.models import CredentialsModel, FlowModel, Group
+from schema.models import CredentialsModel, FlowModel
 
 from annoying.decorators import render_to
 from apiclient.discovery import build

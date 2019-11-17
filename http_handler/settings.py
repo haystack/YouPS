@@ -244,18 +244,25 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 
+    'registration',
+    'schema',
     # our apps
     'http_handler',
-    'schema',
+    # 'http_handler.router',
+    
     'browser',
-    'smtp_handler',
     'gmail_setup',
+    # 'zzz',
+    'smtp_handler',
+    
+    
 
     # third party apps
-    'registration',
-    # 'south',
+    
     'django_mobile',
     'storages',
+
+    
 )
 
 # A sample logging configuration. The only tangible logging

@@ -12,7 +12,7 @@ django-extensions==2.0.6
 django-gravatar==0.1.0
 django-lamson==0.1.0b0
 django-mobile==0.4.0
-django-registration==1.0
+django-registration==2.0
 django-storages==1.4.1
 dkimpy==0.6.1
 dnspython==1.15.0

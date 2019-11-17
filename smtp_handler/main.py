@@ -1,5 +1,6 @@
-import logging, time, base64, traceback, json
-from salmon.routing import route
+import logging, time, base64, traceback, json, os
+from salmon.routing import route, stateless
+from salmon.mail import MailResponse
 from config.settings import relay
 from http_handler.settings import WEBSITE
 from django.contrib.sites.models import Site
@@ -7,7 +8,7 @@ from http_handler.settings import PROTOCOL
 
 from email.utils import *
 from email import message_from_string, header, message
-from engine.main import *
+# from engine.main import *
 from engine.s3_storage import upload_message
 from utils import *
 from django.db.utils import OperationalError
@@ -17,8 +18,8 @@ import django.db
 from browser.imap import *
 from browser.sandbox import interpret_bypass_queue
 from imapclient import IMAPClient
-from schema.models import ImapAccount
-from schema.youps import MessageSchema, EmailRule, FolderSchema  # noqa: F401 ignore unused we use it for typing
+
+from schema.youps import ImapAccount, MessageSchema, EmailRule, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from engine.models.mailbox import MailBox
 from engine.models.message import Message
 from engine.models.folder import Folder
@@ -28,13 +29,15 @@ from email.mime.text import MIMEText
 
 logger = logging.getLogger('button')  # type: logging.Logger
 
-@route("(address)@(host)", address=".+", host=".+")
+@route("(address)@(host)", address=".+")
+@stateless
 def mailbot(arrived_message, address=None, host=None):
 
     logger.info("Email to mailbot@")
 
     name, addr = parseaddr(arrived_message['from'].lower())
-    site = None
+    site = Site.objects.get_current()
+    auth_res = None
     # restart the db connection
     django.db.close_connection()
     
@@ -73,8 +76,6 @@ def mailbot(arrived_message, address=None, host=None):
         imap = auth_res['imap']
 
         mailbox = MailBox(imapAccount, imap)
-
-        site = Site.objects.get_current()
 
         # local shortcut
         if arrived_message["In-Reply-To"]:

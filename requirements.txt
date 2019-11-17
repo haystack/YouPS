@@ -5,7 +5,7 @@ django-annoying==0.8.0
 django-compressor==1.4
 django-gravatar==0.1.0
 django-mobile==0.4.0
-django-registration==1.0
+django-registration==2.0
 django-storages==1.4.1
 dkimpy==0.6.1
 dnspython==1.15.0
@@ -26,4 +26,3 @@ pytz==2016.7
 requests==2.18.4
 south==1.0.1
 typing==3.6.6
-salmon

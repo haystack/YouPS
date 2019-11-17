@@ -9,7 +9,7 @@ from lamson.server import Relay
 from config.settings import relay_config
 from lamson_subclass import MurmurMailResponse
 from schema.youps import ImapAccount
-from schema.models import Post, UserProfile, WhiteOrBlacklist, MemberGroup, ForwardingList, ThreadHash
+from schema.models import UserProfile
 from http_handler.settings import BASE_URL, DEFAULT_FROM_EMAIL, WEBSITE
 from datetime import datetime, timedelta
 from email.utils import parseaddr
