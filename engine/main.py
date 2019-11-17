@@ -7,7 +7,7 @@ from django.utils.timezone import utc
 from django.db.models import Q
 from email.utils import parseaddr
 from html2text import html2text
-from lamson.mail import MailResponse
+from salmon.mail import MailResponse
 from pytz import utc
 
 from browser.util import *

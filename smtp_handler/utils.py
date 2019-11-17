@@ -5,7 +5,7 @@ import hashlib
 import random
 import dkim
 import pytz
-from lamson.server import Relay
+from salmon.server import Relay
 from config.settings import relay_config
 from lamson_subclass import MurmurMailResponse
 from schema.youps import ImapAccount

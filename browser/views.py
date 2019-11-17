@@ -3,7 +3,7 @@ import base64, json, logging,traceback
 from annoying.decorators import render_to
 from boto.s3.connection import S3Connection
 from html2text import html2text
-from lamson.mail import MailResponse
+from salmon.mail import MailResponse
 
 from django.contrib.auth.decorators import login_required
 from django.conf import global_settings
