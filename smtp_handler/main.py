@@ -242,7 +242,7 @@ def START(message, address=None, host=None):
             # Log out after after conduct required action
             imap.logout()
 
-def create_response(arrived_message, in_reply_to=None, body_part, host):
+def create_response(arrived_message, in_reply_to=None, body_part=[], host="youps.csail.mit.edu"):
     new_message = MIMEMultipart('alternative')
     new_message["Subject"] = "Re: " + arrived_message["subject"]
     new_message["From"] = WEBSITE+"@" + host
