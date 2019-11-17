@@ -30,10 +30,11 @@ from email.mime.text import MIMEText
 logger = logging.getLogger('button')  # type: logging.Logger
 
 @route("(address)@(host)", address=".+")
-@stateless
-def mailbot(arrived_message, address=None, host=None):
+def START(message, address=None, host=None):
 
     logger.info("Email to mailbot@")
+
+    arrived_message = message
 
     name, addr = parseaddr(arrived_message['from'].lower())
     site = Site.objects.get_current()
@@ -64,7 +65,7 @@ def mailbot(arrived_message, address=None, host=None):
             body_part.append(part1)
             body_part.append(part2)
 
-            new_message = create_response(arrived_message, arrived_message["message-id"], body_part)
+            new_message = create_response(arrived_message, arrived_message["message-id"], body_part, host)
             relay.deliver(new_message)
             return
             
@@ -188,7 +189,7 @@ def mailbot(arrived_message, address=None, host=None):
                 part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
                 body_part.append(part1)
 
-            new_message = create_response(arrived_message, original_message_schema.message_id, body_part)
+            new_message = create_response(arrived_message, original_message_schema.message_id, body_part, host)
 
             try:
                 new_msg = {}
@@ -218,9 +219,18 @@ def mailbot(arrived_message, address=None, host=None):
             # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
 
     except ImapAccount.DoesNotExist:
-        subject = "YoUPS shortcuts Error"
-        error_msg = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
-        mail = MailResponse(From = WEBSITE+"@" + host, To = arrived_message['From'], Subject = subject, Body = error_msg)
+        body_part = []
+        body = {}
+        body["text"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
+        body["html"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at <a href="%s://%s">%s://%s</a>' % (addr, PROTOCOL, site.domain, PROTOCOL, site.domain)
+        
+        part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
+        part2 = MIMEText(body["html"].encode('utf-8'), 'html')
+
+        body_part.append(part1)
+        body_part.append(part2)
+
+        mail = create_response(arrived_message, arrived_message["message-id"], body_part, host)
         relay.deliver(mail)
     except Exception, e:
         logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
@@ -232,11 +242,11 @@ def mailbot(arrived_message, address=None, host=None):
             # Log out after after conduct required action
             imap.logout()
 
-def create_response(arrived_message, in_reply_to, body_part):
+def create_response(arrived_message, in_reply_to=None, body_part, host):
     new_message = MIMEMultipart('alternative')
     new_message["Subject"] = "Re: " + arrived_message["subject"]
     new_message["From"] = WEBSITE+"@" + host
-    new_message["In-Reply-To"] = in_reply_to
+    new_message["In-Reply-To"] = in_reply_to if in_reply_to else arrived_message["message-id"]
 
     for b in body_part:
         new_message.attach(b)
