@@ -27,8 +27,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-# logger = logging.getLogger('button')  # type: logging.Logger
-logger = logging.getLogger("routing")
+logger = logging.getLogger("routing") # type: logging.Logger
 
 
 @route("(address)@(host)", address=".+")
