@@ -40,3 +40,4 @@ httplib2
 icalendar
 ics
 salmon-mail
+Jinja2
