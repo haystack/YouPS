@@ -50,7 +50,7 @@ def START(message, address=None, host=None):
         er_to_execute = None
         ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type='shortcut')
         for er in ers:
-            if er.get_forward_addr() == address:
+            if er.get_forward_addr().lower() == address.lower():
                 er_to_execute = er
                 break
 
@@ -58,15 +58,11 @@ def START(message, address=None, host=None):
             body_part = []
 
             body = {}
-            body["text"] = "You email to %s@%s but this shortcut does not exist. Check your shortcut window to see which shortcuts are available: %s://%s" % (address, host, PROTOCOL, site.domain)
-            body["html"] = "You email to %s@%s but this shortcut does not exist. Check your shortcut window to see which shortcuts are available: <a href='%s://%s'>%s://%s</a>" % (address, host, PROTOCOL, site.domain, PROTOCOL, site.domain)
-            part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
-            part2 = MIMEText(body["html"].encode('utf-8'), 'html')
+            options = get_available_shortcut_link_text(imapAccount, site.domain) 
+            body["text"] = "You email to %s@%s but this shortcut does not exist. \n\n %s \n\n Link to YouPS: %s://%s" % (address, host, options["text"], PROTOCOL, site.domain)
+            body["html"] = "You email to %s@%s but this shortcut does not exist. <br><br> %s <br><br> Link to YouPS: <a href='%s://%s'>%s://%s</a>" % (address, host, options["html"], PROTOCOL, site.domain, PROTOCOL, site.domain)
 
-            body_part.append(part1)
-            body_part.append(part2)
-
-            new_message = create_response(arrived_message, addr,arrived_message["message-id"], body_part, host)
+            new_message = create_response(arrived_message, addr,arrived_message["message-id"], body, host)
             relay.deliver(new_message)
             return
             
@@ -123,101 +119,88 @@ def START(message, address=None, host=None):
                     except FolderSchema.DoesNotExist, MessageSchema.DoesNotExist:
                         raise ValueError("Email does not exist. The message is deleted or YouPS can't detect the message.")
 
+            entire_message = message_from_string(str(arrived_message))
+            entire_body = get_body(entire_message)
+
+            code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
+            gmail_header = "---------- Forwarded message ---------"
+            if gmail_header in code_body:
+                code_body = code_body.split(gmail_header)[0].strip()
+            logging.debug(code_body)
+
+            shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
+            if not imapAccount.current_mode or not shortcuts.exists():
+                body = "Your YouPS hasn't turned on or don't have email shortcuts yet! Define your shortcuts here %s://%s" % (PROTOCOL, site.domain)
+
+                mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
+                relay.deliver(mail)
+
+            else:
+                
+                res, body = run_shortcut(shortcuts, mailbox, original_message_schema, code_body)
+
+                # Go to sent folder and delete the sent function from user  
+                if imapAccount.is_gmail:
+                    imap.select_folder('[Gmail]/Sent Mail')
+                else:
+                    import imapclient
+                    sent = imap.find_special_folder(imapclient.SENT)
+                    if sent is not None:
+                        imap.select_folder(sent)
+                this_message = imap.search(["HEADER", "In-Reply-To", original_message_schema.message_id])
+                imap.delete_messages(this_message)
+
+                # new_message.set_payload(content.encode('utf-8')) 
+                if "text" in body and "html" in body:
+                    body["text"] = "Your command: %s%sResult: %s" % (code_body, "\n\n", body["text"])
+                    body["html"] = "Your command: %s%sResult: %s" % (code_body, "<br><br>", body["html"])
+                else: 
+                    body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
+
+                new_message = create_response(arrived_message, addr, original_message_schema.message_id, body, host)
+
+                try:
+                    new_msg = {}
+                    from_field = original_message._get_from_friendly()
+
+                    to_field = original_message._get_to_friendly()
+
+                    cc_field = original_message._get_cc_friendly()
+
+                    new_msg["timestamp"] = str(datetime.now().strftime("%m/%d %H:%M:%S,%f"))
+                    new_msg["type"] = "new_message"
+                    new_msg["from_"] = from_field
+                    new_msg["to"] = to_field
+                    new_msg["cc"] = cc_field
+                    new_msg["trigger"] = "shortcut"
+                    new_msg["log"] = body["text"]
+                    new_msg.update(original_message._get_meta_data_friendly())
+                    log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
+                    log_decoded[new_msg["timestamp"]] = new_msg
+
+                    imapAccount.execution_log = json.dumps(log_decoded)
+                    imapAccount.save()
+                except Exception:
+                    logger.critical("error adding logs")
+
+                imap.append(original_message_schema.folder.name, str(new_message))
+                # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
+        
+        
+
         # global shortcut
         else:
-            pass
+            logger.info("global shortcut")
 
+            # get any message
+            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount).last()
+            res, body = run_shortcut([er_to_execute], mailbox, original_message_schema, "")
 
-        entire_message = message_from_string(str(arrived_message))
-        entire_body = get_body(entire_message)
+            logger.info(res)
+            logger.info(body)
 
-        code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
-        gmail_header = "---------- Forwarded message ---------"
-        if gmail_header in code_body:
-            code_body = code_body.split(gmail_header)[0].strip()
-        logging.debug(code_body)
-
-        shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
-        if not imapAccount.current_mode or not shortcuts.exists():
-            body = "Your YouPS hasn't turned on or don't have email shortcuts yet! Define your shortcuts here %s://%s" % (PROTOCOL, site.domain)
-
-            mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
-            relay.deliver(mail)
-
-        else:
-            
-            body = {"text": "", "html": ""}
-            for shortcut in shortcuts:
-                res = interpret_bypass_queue(mailbox, None, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
-                logging.debug(res)
-
-                for key, value in res['appended_log'].iteritems():
-                    if not value['error']:
-                        body["text"] = 'Your mail shortcut is successfully applied! \n'
-                        body["html"] = 'Your mail shortcut is successfully applied! <br>'
-                    else:
-                        body["text"] = 'Something went wrong! \n'
-                        body["html"] = 'Something went wrong! <br>'
-                    
-                    body["text"] = body["text"] + value['log']
-                    body["html"] = body["html"] + value['log']
-            
-                logger.debug(body)
-
-            # Go to sent folder and delete the sent function from user  
-            if imapAccount.is_gmail:
-                imap.select_folder('[Gmail]/Sent Mail')
-            else:
-                import imapclient
-                sent = imap.find_special_folder(imapclient.SENT)
-                if sent is not None:
-                    imap.select_folder(sent)
-            this_message = imap.search(["HEADER", "In-Reply-To", original_message_schema.message_id])
-            imap.delete_messages(this_message)
-
-            body_part = []
-            # new_message.set_payload(content.encode('utf-8')) 
-            if "text" in body and "html" in body:
-                body["text"] = "Your command: %s%sResult: %s" % (code_body, "\n\n", body["text"])
-                body["html"] = "Your command: %s%sResult: %s" % (code_body, "<br><br>", body["html"])
-                part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
-                part2 = MIMEText(body["html"].encode('utf-8'), 'html')
-
-                body_part.append(part1)
-                body_part.append(part2)
-            else: 
-                body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
-                part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
-                body_part.append(part1)
-
-            new_message = create_response(arrived_message, addr, original_message_schema.message_id, body_part, host)
-
-            try:
-                new_msg = {}
-                from_field = original_message._get_from_friendly()
-
-                to_field = original_message._get_to_friendly()
-
-                cc_field = original_message._get_cc_friendly()
-
-                new_msg["timestamp"] = str(datetime.now().strftime("%m/%d %H:%M:%S,%f"))
-                new_msg["type"] = "new_message"
-                new_msg["from_"] = from_field
-                new_msg["to"] = to_field
-                new_msg["cc"] = cc_field
-                new_msg["trigger"] = "shortcut"
-                new_msg["log"] = body["text"]
-                new_msg.update(original_message._get_meta_data_friendly())
-                log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
-                log_decoded[new_msg["timestamp"]] = new_msg
-
-                imapAccount.execution_log = json.dumps(log_decoded)
-                imapAccount.save()
-            except Exception:
-                logger.critical("error adding logs")
-
-            imap.append(original_message_schema.folder.name, str(new_message))
-            # instead of sending email, just replace the forwarded email to arrive on the inbox quietly
+            new_message = create_response(arrived_message, addr,arrived_message["message-id"], body, host)
+            relay.deliver(new_message)
 
     except ImapAccount.DoesNotExist:
         body_part = []
@@ -225,13 +208,7 @@ def START(message, address=None, host=None):
         body["text"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
         body["html"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at <a href="%s://%s">%s://%s</a>' % (addr, PROTOCOL, site.domain, PROTOCOL, site.domain)
         
-        part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
-        part2 = MIMEText(body["html"].encode('utf-8'), 'html')
-
-        body_part.append(part1)
-        body_part.append(part2)
-
-        mail = create_response(arrived_message, addr, arrived_message["message-id"], body_part, host)
+        mail = create_response(arrived_message, addr, arrived_message["message-id"], body, host)
         relay.deliver(mail)
     except Exception, e:
         logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
@@ -243,19 +220,62 @@ def START(message, address=None, host=None):
             # Log out after after conduct required action
             imap.logout()
 
-def create_response(arrived_message, to, in_reply_to=None, body_part=[], host="youps.csail.mit.edu"):
+def create_response(arrived_message, to, in_reply_to=None, body={"text":"", "body":""}, host="youps.csail.mit.edu"):
     new_message = MIMEMultipart('alternative')
     new_message["Subject"] = "Re: " + arrived_message["subject"]
     new_message["From"] = WEBSITE+"@" + host
     new_message["In-Reply-To"] = in_reply_to if in_reply_to else arrived_message["message-id"]
     new_message["To"] = to
 
-    for b in body_part:
-        new_message.attach(b)
+    part1 = MIMEText(body["text"].encode('utf-8'), 'plain')
+    part2 = MIMEText(body["html"].encode('utf-8'), 'html')
+
+    new_message.attach(part1)
+    new_message.attach(part2)
 
     return new_message
 
+def get_available_shortcut_link_text(imapAccount, domain_name):
+    shortcuts = EmailRule.objects.filter(mode__imap_account=imapAccount, type='shortcut')
 
+    if not shortcuts.exists():
+        return {"text": "You don't have any shortcut available.", "html": "You don't have any shortcut available."}
+        
+    body = {"text": "Your shortcut list\n\n", "html": "Your shortcut list<br><br>"}
+
+    for shortcut in shortcuts:
+        shortcut_addr = "%s@%s" % (shortcut.get_forward_addr(), domain_name)
+     
+        body["text"] += "* %s: %s\n" % (shortcut.name, shortcut_addr)
+        body["html"] += "* %s: <a href='mailto:%s?subject=Put contacts into recipients list'>%s</a><br>" % (shortcut.name, shortcut_addr, shortcut_addr)
+
+
+    return body
+
+
+def run_shortcut(shortcuts, mailbox, original_message_schema, code_body):
+    body = {"text": "", "html": ""}
+    res = None
+    for shortcut in shortcuts:
+        extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body}
+
+        res = interpret_bypass_queue(mailbox, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
+        logger.debug(res)
+
+        for key, value in res['appended_log'].iteritems():
+            if not value['error']:
+                body["text"] = 'Your mail shortcut is successfully applied! \n'
+                body["html"] = 'Your mail shortcut is successfully applied! <br>'
+            else:
+                body["text"] = 'Something went wrong! \n'
+                body["html"] = 'Something went wrong! <br>'
+                        
+            body["text"] = body["text"] + value['log']
+            body["html"] = body["html"] + value['log']
+                
+            logger.debug(body)
+
+    return res, body
 
 @route("(address)@(host)", address="help", host=".+")
 def help(message, address=None, host=None):
