@@ -10,7 +10,7 @@ from email.utils import *
 from email import message_from_string, header, message
 # from engine.main import *
 from engine.s3_storage import upload_message
-from utils import *
+from utils import parseaddr
 from django.db.utils import OperationalError
 from datetime import datetime
 import pytz
@@ -78,7 +78,7 @@ def START(message, address=None, host=None):
         # local shortcut
         if arrived_message["In-Reply-To"]:
             # Get the original message
-            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
+            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, base_message__message_id=arrived_message["In-Reply-To"])
             
             if original_message_schema.exists():
                 original_message_schema = original_message_schema[0]
@@ -196,6 +196,8 @@ def START(message, address=None, host=None):
             original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount).last()
             res, body = run_shortcut([er_to_execute], mailbox, original_message_schema, "")
 
+            # parseaddr(arrived_message['subject'])
+        
             logger.info(res)
             logger.info(body)
 
@@ -247,7 +249,7 @@ def get_available_shortcut_link_text(imapAccount, domain_name):
         shortcut_addr = "%s@%s" % (shortcut.get_forward_addr(), domain_name)
      
         body["text"] += "* %s: %s\n" % (shortcut.name, shortcut_addr)
-        body["html"] += "* %s: <a href='mailto:%s?subject=Put contacts into recipients list'>%s</a><br>" % (shortcut.name, shortcut_addr, shortcut_addr)
+        body["html"] += "* %s: <a href='mailto:%s?subject=YouPS shortcut&body=contact address: <HERE>'>%s</a><br>" % (shortcut.name, shortcut_addr, shortcut_addr)
 
 
     return body
