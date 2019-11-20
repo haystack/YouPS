@@ -275,7 +275,8 @@ class EmailRule(models.Model):
         unique_together = ("id", "mode")
 
     def get_forward_addr(self):
-        return ''.join(e for e in self.name if e.isalnum())
+        s = self.name.replace(" ", "_")
+        return ''.join(e for e in s if (e.isalnum() or e=="_"))
 
 class EmailRule_Args(models.Model):
     id = models.AutoField(primary_key=True)

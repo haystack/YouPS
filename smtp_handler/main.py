@@ -110,7 +110,7 @@ def START(message, address=None, host=None):
                         if original_message_id:
                             folder._save_new_messages(original_message_id[0], urgent=True)
 
-                            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, message_id=arrived_message["In-Reply-To"])
+                            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, base_message__message_id=arrived_message["In-Reply-To"])
                             if not original_message_schema.exists():
                                 raise
                             imap.select_folder(original_message_schema.folder.name)           
