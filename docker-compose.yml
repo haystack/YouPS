@@ -11,7 +11,7 @@ services:
   web:
     build: .
     container_name: youps_web
-    command: bash -c "salmon start --force; cron && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "salmon start --force & cron; python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/home/ubuntu/production/mailx
     ports:
