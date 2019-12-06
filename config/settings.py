@@ -1,13 +1,12 @@
 # This file contains python variables that configure Lamson for email processing.
 import sys
 import logging
-
+import os
 
 # You may add additional parameters such as `username' and `password' if your
 # relay server requires authentication, `starttls' (boolean) or `ssl' (boolean)
 # for secure connections.
-relay_config = {'host': 'localhost', 'port': 8825 }
-
+relay_config = {'host': os.getenv('RELAY_HOST', 'localhost'), 'port': 8825 }
 
 receiver_config = {'host': 'localhost', 'port': 8823}
 

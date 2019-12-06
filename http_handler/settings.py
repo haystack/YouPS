@@ -19,10 +19,10 @@ def _get_env():
 
     if env[-1] == '\n':
         env = env[:-1]
-    
+
     f.close()
     return env
-ENV = _get_env() 
+ENV = _get_env()
 
 def _get_debug():
     f = open(_DEBUG_FILE_PATH)
@@ -30,13 +30,13 @@ def _get_debug():
 
     if debug[-1] == '\n':
         debug = debug[:-1]
-    
+
     f.close()
     if debug == 'true':
         return True
     else:
         return False
-    
+
 DEBUG = _get_debug()
 
 def _get_website():
@@ -45,7 +45,7 @@ def _get_website():
 
     if website[-1] == '\n':
         website = website[:-1]
-    
+
     f.close()
     return website
 
@@ -57,15 +57,15 @@ def _get_protocol():
 
     if protocol[-1] == '\n':
         protocol = protocol[:-1]
-    
+
     f.close()
-    return protocol    
-    
+    return protocol
+
 PROTOCOL = _get_protocol()
 CLIENT_ID = ''
 CLIENT_SECRET = ''
 IMAP_SECRET = ''
-PRETEST_EMAIL = [] 
+PRETEST_EMAIL = []
 
 try:
     execfile(SITE_ROOT + '/../private.py')
@@ -93,7 +93,7 @@ EMAIL_HOST = 'localhost'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_PORT = 25
 EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''    
+EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 DEFAULT_EMAIL = 'no-reply@' + BASE_URL
 DEFAULT_FROM_EMAIL = DEFAULT_EMAIL
@@ -208,10 +208,10 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+
     'django_mobile.middleware.MobileDetectionMiddleware',
     'django_mobile.middleware.SetFlavourMiddleware',
-    
+
 )
 
 ROOT_URLCONF = 'http_handler.urls'
@@ -249,20 +249,16 @@ INSTALLED_APPS = (
     # our apps
     'http_handler',
     # 'http_handler.router',
-    
+
     'browser',
     'gmail_setup',
     # 'zzz',
     'smtp_handler',
-    
-    
 
     # third party apps
-    
     'django_mobile',
     'storages',
 
-    
 )
 
 # A sample logging configuration. The only tangible logging
@@ -352,7 +348,7 @@ LOGGING = {
         },
         # switch the handler comments below if you want to see DB queries in logs
         'django.db.backends': {
-            'handlers': None, 
+            'handlers': None,
             # 'handlers': ['custom.file'],
             'propagate': False,
             'level': 'DEBUG'
