@@ -10,7 +10,7 @@ from email.utils import *
 from email import message_from_string, header, message
 # from engine.main import *
 from engine.s3_storage import upload_message
-from utils import parseaddr
+from utils import parseaddr, get_body
 from django.db.utils import OperationalError
 from datetime import datetime
 import pytz
@@ -322,6 +322,9 @@ def send_account_info(message, address=None, host=None):
     logging.debug(message['Subject'])
     logging.debug(message['To'])
     logging.debug(message['From'])
+    email_message = message_from_string(str(message))
+    msg_text = get_body(email_message)
+    logging.info(msg_text)
 
     if message['From'].encode('utf-8') == NO_REPLY and (activation_str in subj_string or reset_str in subj_string):
         
