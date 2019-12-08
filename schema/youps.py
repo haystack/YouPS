@@ -38,14 +38,7 @@ class ImapAccount(models.Model):
     is_running = models.BooleanField(default=False)
     status_msg = models.TextField(default="")
 
-    arrive_action = models.CharField(
-        'access_token', max_length=1000, blank=True)
-    custom_action = models.CharField(
-        'custom_action', max_length=1000, blank=True)
-    timer_action = models.CharField(
-        'timer_action', max_length=1000, blank=True)
-    repeat_action = models.CharField(
-        'repeat_action', max_length=1000, blank=True)
+    # delta_cursor = models.CharField(max_length=200, blank=True, null=True)
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 
@@ -82,6 +75,13 @@ class FolderSchema(models.Model):
     class Meta:
         db_table = "youps_folder"
         unique_together = ("name", "imap_account")
+
+class HighestModSeq_history(models.Model):
+    """To keep track of old mod_seq to see changes (especially ) in the folder.
+    """
+    folder = models.ForeignKey(FolderSchema)
+    highest_mod_seq = models.IntegerField(default=-1)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
 
 class BaseMessage(models.Model):

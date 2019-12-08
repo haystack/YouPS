@@ -31,11 +31,9 @@ def parse_internal_date(internal_date):
     # type: (datetime.datetime) -> datetime.datetime
     return _make_date_tz_aware(internal_date)
 
-
 def parse_flags(flags):
     # type: (t.Tuple[str]) -> t.List[str]
-    return list(flags)
-
+    return list(six.ensure_text(f) for f in flags)
 
 def parse_seq(seq):
     # type: (int) -> int

@@ -29,9 +29,6 @@ $(document).ready(function() {
     btn_watch.click(function (e) {
         spin_watch_btn(true);
         request_watch_message();
-    
-        // Call this after some delay so the server has enough time to set up IDLE()
-        setTimeout(fetch_watch_message, 1 * 1500); // 1 second
     });
 
     $( "select[name='folder']" ).change(function() {
@@ -178,9 +175,10 @@ $(document).ready(function() {
         });
     }
 
-    function fetch_watch_message() {
+    function fetch_watch_message(cursor) {
         var params = {
-            "folder": $("select[name='folder']").find("option:selected").text()
+            "folder": $("select[name='folder']").find("option:selected").text(),
+            "cursor": cursor
         };
         
         $.post('/fetch_watch_message', params,
@@ -220,7 +218,7 @@ $(document).ready(function() {
                     notify(res, false);
                 }
 
-                setTimeout(fetch_watch_message, 1 * 1000); // 1 second
+                setTimeout(fetch_watch_message, 1 * 1000, cursor); // 1 second
             }
         ).fail(function(res) {
             alert("Please refresh the page!");
@@ -234,7 +232,8 @@ $(document).ready(function() {
 
         $.post('/watch_current_message', params,
             function(res) {
-                // This function doesn't return
+                // Call this after some delay so the server has enough time to set up IDLE()
+                setTimeout(fetch_watch_message, 1 * 1000, res['cursor']); // 1 second
             }
         ).fail(function(res) {
             alert("Please refresh the page!");

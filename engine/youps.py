@@ -6,6 +6,8 @@ import string
 import traceback
 import datetime
 import json
+import requests
+from time import sleep
 
 from Crypto.Cipher import AES
 from imapclient import IMAPClient
@@ -232,29 +234,79 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
     return res
 
 
-def fetch_watch_message(user, email, folder_name):
+def fetch_watch_message(user, email, cursor):
     res = {'status' : False, 'log': ""}
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
-        folder_idle = ButtonChannel.objects.filter(watching_folder__imap_account=imapAccount).filter(watching_folder__name=folder_name)
-        res['watch_status'] = folder_idle.exists()
+        res['watch_status'] = True
 
         if res['watch_status']:
-            res['folder_id'] = folder_idle.order_by("-id")[0].id
-            bc = ButtonChannel.objects.filter(imap_account=imapAccount).latest('timestamp')
+            imap = None
 
-            if bc and bc.code == ButtonChannel.OK:
-                res['folder'] = bc.message.folder.name
-                res['uid'] = bc.message.id 
+            try:
+                auth_res = authenticate( imapAccount )
+                if not auth_res['status']:
+                    raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+                imap = auth_res['imap']  # noqa: F841 ignore unused
+            except Exception, e:
+                logger.exception("failed while logging into imap")
+                res['code'] = "Fail to access your IMAP account"
+                return
+
+            mailbox = MailBox(imapAccount, imap, is_simulate=False)
+            msgs = None
+            cnt = 0 
+            while True:
                 
-                message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
-                res['message'] = message._get_meta_data_friendly() 
-                res['sender'] = message._get_from_friendly()
-            else:
-                # if something went wrong only return the log
-                logger.info(bc.code)
-                res["log"] = "%s - %s" % (bc.get_code_display(), bc.log)
+                for folder in mailbox._list_selectable_folders():
+                    response = imap.select_folder(folder.name)
+
+                    highest_mod_seq = response.get('HIGHESTMODSEQ')
+                    # logger.info(highest_mod_seq)
+                    if folder._highest_mod_seq <= 0 and highest_mod_seq is not None:
+                        continue
+
+                    logger.info("refresh flags")
+
+                    msgs = folder._refresh_flag_changes(highest_mod_seq)
+
+                    if msgs:
+                        for r in msgs:
+                            logger.info(r.base_message.subject)
+                            message = Message(r, imap_client="")   # since we are only extracting metadata, no need to use imap_client
+                            res['message'] = message._get_meta_data_friendly() 
+                            res['sender'] = message._get_from_friendly()
+                        res['status'] = True
+                        return res
+
+                # r=requests.get(url, headers=headers)
+
+                # if r.json()['deltas']:
+                #     break
+                # # logger.info("finding delta..")
+                if cnt == 0:
+                    break
+                cnt = cnt +1
+                sleep(0.01)
+
+            # for d in r.json()['deltas']:
+            #     if d['object'] == "message" or d['object'] == "thread":
+            #         logger.info(d['attributes']['subject'])
+            #         res["log"] = d['attributes']['subject']
+
+            # if bc and bc.code == ButtonChannel.OK:
+            #     res['folder'] = bc.message.folder.name
+            #     res['uid'] = bc.message.id 
+                
+            #     message = Message(bc.message, imap_client="")   # since we are only extracting metadata, no need to use imap_client
+            #     res['message'] = message._get_meta_data_friendly() 
+            #     res['sender'] = message._get_from_friendly()
+            # else:
+            #     # if something went wrong only return the log
+            #     logger.info(bc.code)
+            #     res["log"] = "%s - %s" % (bc.get_code_display(), bc.log)
         
         res['status'] = True
 
@@ -285,6 +337,29 @@ def fetch_available_email_rule(user, email):
     except Exception as e:
         logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
+    return res
+
+def get_deltas_cursors(user, email):
+    res = {'status' : False, 'log': "", "cursor": ""}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        res['watch_status'] = True
+        url = 'https://api.nylas.com/delta/latest_cursor'
+        user_access_token = 'A58oRnVjQdByR8eOytTKgWuRY94bjK'
+        headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
+        r=requests.post(url, headers=headers)
+
+        res['cursor'] = r.json()['cursor']
+
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+    except Exception as e:
+        logger.exception(e)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
     return res
 
 def remove_rule(user, email, rule_id):
@@ -590,6 +665,7 @@ def save_shortcut(user, email, shortcuts, push=True):
     return res
 
 def handle_imap_idle(user, email, folder='INBOX'):
+    return
     imap_account = ImapAccount.objects.get(email=email)
 
     watching_folder = FolderSchema.objects.get(imap_account=imap_account, name=folder)
@@ -772,3 +848,13 @@ def handle_imap_idle(user, email, folder='INBOX'):
 		    return
 
             
+# def fetch_flag():
+#     responses = conn.select_folder(self.name)
+#     highest_mod_seq = responses.get(b'HIGHESTMODSEQ') if self.c.supports_condstore() else None
+#     if b'NOMODSEQ' in responses:
+#         highest_mod_seq = self.highest_mod_seq = None
+#     if self.uid_validity is None or self.uid_validity != uid_validity:
+#         self.clear_cache()
+#         self.initial_s2c_sync(conn, uid_next)
+#     else:
+#         self.normal_s2c_sync(conn, uid_next, highest_mod_seq)

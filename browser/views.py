@@ -19,6 +19,8 @@ from django.utils.encoding import *
 from django.template import Context, Template, loader
 from django.utils import timezone
 
+from nylas import APIClient
+
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
 from engine.constants import msg_code
@@ -46,7 +48,6 @@ def lamson_status(request):
 		response_text = "lamson running"
 	response = HttpResponse(response_text)
 	return response
-	
 
 def logout(request):
 	request.session.flush()
@@ -145,6 +146,23 @@ def login_imap_view(request):
 		logger.exception(e)
 		return {'user': request.user, 'website': WEBSITE}
 
+# Nylas login callback
+def login_imap_callback(request):
+	res = {'website': WEBSITE}
+	
+	# logger.info(request)
+	code = request.GET['code']
+
+	APP_ID = "e2qdjgra07ea3p3idcv1bea1z"
+	APP_SECRET = "dprso40e0tjqk989fab76hqq"
+	# Exchange the authorization code for an access token
+	client = APIClient(APP_ID, APP_SECRET)
+	logger.info(code)
+	access_token = client.token_for_code(code)
+	logger.info(access_token)
+
+	return HttpResponseRedirect('/editor')
+
 @render_to(WEBSITE+"/docs.html")
 def docs_view(request):
 	return {'website': WEBSITE}
@@ -206,6 +224,7 @@ def load_components(request):
 @login_required
 def login_imap(request):
 	try:
+		# TODO nylas https://docs.nylas.com/reference#oauth - oauth/tokenize and receive code
 		user = get_object_or_404(UserProfile, email=request.user.email)
 
 		# email = request.POST['email']
@@ -252,9 +271,9 @@ def fetch_watch_message(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		
-		folder_name = request.POST['folder']
+		cursor = request.POST['cursor']
 
-		res = engine.main.fetch_watch_message(user, request.user.email, folder_name)
+		res = engine.main.fetch_watch_message(user, request.user.email, cursor)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.exception(e)
@@ -351,10 +370,9 @@ def delete_mailbot_mode(request):
 def handle_imap_idle(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-		folder = request.POST['folder']
 
-		engine.main.handle_imap_idle(user, request.user.email, folder)
-		res = {}
+		res = engine.main.get_deltas_cursors(user, request.user.email)
+		logger.info(res)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
 		logger.exception(e)
