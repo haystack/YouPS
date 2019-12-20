@@ -49,3 +49,11 @@ The server requires some setup to be run from scratch.
 python manage.py makemigrations schema && \
 python manage.py migrate schema
 ```
+
+## Testing
+
+We have a number of unit tests in a file `youps_test.py`. 
+
+```sh
+python manage.py youps_test
+```
