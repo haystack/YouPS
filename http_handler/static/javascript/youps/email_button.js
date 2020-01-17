@@ -8,7 +8,7 @@ var trackOutboundLink = function(inCategory) {
 $(document).ready(function() {
     var btn_watch= $("#btn-watch"),
         watching_msg_container = $("#watching-msg-container"),
-        latest_watched_message = null;
+        watched_message = [];
 
     // Format string
     if (!String.prototype.format) {
@@ -175,10 +175,10 @@ $(document).ready(function() {
         });
     }
 
-    function fetch_watch_message(cursor) {
+    function fetch_watch_message(er_id) {
         var params = {
-            "folder": $("select[name='folder']").find("option:selected").text(),
-            "cursor": cursor
+            "watched_message": watched_message,
+            "er_id": er_id
         };
         
         $.post('/fetch_watch_message', params,
@@ -198,13 +198,15 @@ $(document).ready(function() {
                     }
                     // TODO if the message is from a different folder, noop 
                     // uid: message schema id
-                    else if( latest_watched_message != res['uid'] ) { // If everything successful
-                        watching_msg_container.find("[name='sender']").text( "{0} <{1}>".format(res['sender']['name'], res['sender']['email']) );
-                        watching_msg_container.find("[name='subject']").text( res['message']['subject'] );
-                        watching_msg_container.find("[name='date']").text( res['message']['date'] );
-                        // watching_msg_container.text( res['message']['subject'] + " (" + res['message']['date'] + ")"  );
-
-                        latest_watched_message = res['uid'];
+                    else  { // If everything successful
+                        if ("message" in res) {
+                            var message = res["message"];
+                            if( watched_message.indexOf( res['message_schemaid'] ) == -1 ) {
+                                $("#table-watch-msg").append( res['message_row'] );
+                                
+                                watched_message.push( res['message_schemaid'] );
+                            }
+                        }
                     }
                     
                     show_loader(false);

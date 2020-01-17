@@ -175,11 +175,6 @@ def START(message, address=None, host=None):
                     new_msg["trigger"] = "shortcut"
                     new_msg["log"] = body["text"]
                     new_msg.update(original_message._get_meta_data_friendly())
-                    log_decoded = json.loads(imapAccount.execution_log) if len(imapAccount.execution_log) else {}
-                    log_decoded[new_msg["timestamp"]] = new_msg
-
-                    imapAccount.execution_log = json.dumps(log_decoded)
-                    imapAccount.save()
                 except Exception:
                     logger.critical("error adding logs")
 

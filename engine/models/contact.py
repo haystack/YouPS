@@ -18,7 +18,7 @@ class Contact(object):
         self._imap_client = imap_client  # type: IMAPClient
 
     def __str__(self):
-        return self.email
+        return "%s, %s" % (self.name, self.email)
 
     def __repr__(self):
         return "Contact object: %s" % self.email

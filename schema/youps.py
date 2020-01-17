@@ -29,15 +29,11 @@ class ImapAccount(models.Model):
     host = models.CharField('host', max_length=100)
 
     current_mode = models.ForeignKey('MailbotMode', null=True, blank=True)
-    shortcuts = models.TextField(default="")
 
-    # code = models.TextField(null=True, blank=True)
-    # TODO should we store execution logs forever? maybe this should be a foreign key
-    execution_log = models.TextField(default="")
     is_test = models.BooleanField(default=True)
     is_running = models.BooleanField(default=False)
     status_msg = models.TextField(default="")
-
+    sync_paused = models.BooleanField(default=False)
     # delta_cursor = models.CharField(max_length=200, blank=True, null=True)
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)

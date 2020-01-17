@@ -86,6 +86,7 @@ shared_patterns = [
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),
     url(r'^save_shortcut', 'browser.views.save_shortcut'),
 
+    url(r'^email_rule_meta', 'browser.views.get_email_rule_meta'),
     
                     
     url(r'^apply_button_rule', 'browser.views.apply_button_rule'),                

@@ -68,9 +68,9 @@ IMAP_SECRET = ''
 PRETEST_EMAIL = []
 
 try:
-    execfile(SITE_ROOT + '/../private.py')
+    exec(open(SITE_ROOT + '/../private.py').read())
 except IOError:
-    print "Unable to open configuration file!"
+    print ("Unable to open configuration file!")
 
 if ENV == 'prod':
     if WEBSITE == 'murmur':
@@ -206,7 +206,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-# Uncomment the next line for simple clickjacking protection:
+    # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'django_mobile.middleware.MobileDetectionMiddleware',

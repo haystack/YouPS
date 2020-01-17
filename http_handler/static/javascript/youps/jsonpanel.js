@@ -1,3 +1,4 @@
+var editable_keys = ["task", "organization", "geolocation"];
 (function($){
   var Pair = function(key, val){
     this.key = key;
@@ -17,7 +18,9 @@
   };
 
   Pair.prototype.createTagInnerMarkup = function(){
-    return this.getKeyMarkup() + ': <span class="val ' + this.getValType() + '">' + this.getValInnerMarkup() + '</span>';
+    if (editable_keys.indexOf(this.key) != -1) v = '<input type="text" value="'+ this.val +'">';
+    else v = this.getValInnerMarkup();
+    return this.getKeyMarkup() + ': <span class="val ' + this.getValType() + '">' + v + '</span>';
   };
 
   Pair.prototype.getClass = function(){

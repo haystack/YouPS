@@ -249,7 +249,7 @@ def interpret(mailbox, mode):
                             event_data.fire_event(mailbox.deadline_handler)                            
 
                         if is_fired:
-                            logger.info("firing %s %s" % (rule.name, event_data.message.subject))
+                            logger.debug("firing %s %s" % (rule.name, event_data.message.subject))
 
                 except Exception as e:
                     # Get error message for users if occurs
@@ -270,7 +270,7 @@ def interpret(mailbox, mode):
                 finally:
                     if is_fired:
                         copy_msg.update(print_execution_log(event_data.message))
-                        logger.info("handling fired %s %s" % (rule.name, event_data.message.subject))
+                        logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
                         copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
 
                         copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")

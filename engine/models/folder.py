@@ -198,6 +198,7 @@ class Folder(object):
         logger.debug("%s finished normal refresh" % (self))
 
     def _refresh_flag_changes(self, highest_mod_seq):
+        # type: (int) -> t.List[MessageSchema]
         query_fields = ['FLAGS']
         if self._imap_account.is_gmail:
             query_fields = query_fields + ['X-GM-THRID', 'X-GM-LABELS']
@@ -246,6 +247,7 @@ class Folder(object):
             for uid in res:
                 for key, attribute in ((b'FLAGS', 'flags'), (b'X-GM-LABELS', 'gm_labels')):
                     if key in res[uid]:
+                        # TODO this line broke when the message is not saved in db due to errors e.g., encoding issue
                         cached_flags = set(getattr(messages[uid], attribute, []))
                         server_flags = set(parse_flags(res[uid][key]))
                         deleted_flags = cached_flags - server_flags

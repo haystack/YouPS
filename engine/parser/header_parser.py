@@ -33,7 +33,7 @@ def parse_internal_date(internal_date):
 
 def parse_flags(flags):
     # type: (t.Tuple[str]) -> t.List[str]
-    return list(six.ensure_text(f) for f in flags)
+    return list(flags)
 
 def parse_seq(seq):
     # type: (int) -> int
@@ -96,6 +96,7 @@ def parse_msg_data(msg_data):
     for key in msg_data:
         try:
             output[key] = parsers[key](msg_data[key])
+            # 'date': datetime.datetime(2019, 12, 12, 21, 1, 1, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>), 'to': [(u'SoyaPark', u'soya@mit.edu')], 'message-id': u'e87c0f60-3471-ba02-b8f0-4a5c83121e8b@mit.edu', 'from': [(u'SoyaPark', u'soya@mit.edu')], 'subject': u'teqwe'}
         except KeyError:
             logger.exception('implement parser for key %s', key)
             raise

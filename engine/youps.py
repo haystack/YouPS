@@ -5,6 +5,7 @@ import random
 import string
 import traceback
 import datetime
+import dateutil.parser
 import json
 import requests
 from time import sleep
@@ -83,7 +84,7 @@ def login_imap(email, password, host, is_oauth):
             imapAccount = imapAccount[0]
             imapAccount.password = base64.b64encode(password)
             res['imap_code'] = ""  # TODO PLEASE REMOVE THIS WOW
-            res['imap_log'] = imapAccount.execution_log
+            res['imap_log'] = ""
 
 
         if is_oauth:
@@ -113,16 +114,16 @@ def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
     try:
         imapAccount = ImapAccount.objects.get(email=email)
         d = {}
-        if from_id is None and to_id is None: # return all 
+        if from_id is None and to_id is None: # return first 10 
             logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
-    
+                
         elif from_id is None:
             logs = LogSchema.objects.filter(id__lte=to_id).filter(imap_account=imapAccount)
 
         elif to_id is None:
             logs = LogSchema.objects.filter(id__gte=from_id).filter(imap_account=imapAccount)
         
-        else:   
+        else:    
             logs = LogSchema.objects.filter(id__range=[from_id, to_id]).filter(imap_account=imapAccount)
 
         for l in logs:
@@ -177,7 +178,7 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 
 		mailbox = MailBox(imapAccount, imap, is_simulate=False)
 		res = interpret_bypass_queue(mailbox, extra_info={"msg-id": msg_schema_id, "code": er.code, "shortcut": kargs, "rule_name": er.name})
-		
+		logger.info(res)
 		res['status'] = True
 	
 	except ImapAccount.DoesNotExist:
@@ -234,38 +235,44 @@ def delete_mailbot_mode(user, email, mode_id, push=True):
     return res
 
 
-def fetch_watch_message(user, email, cursor):
-    res = {'status' : False, 'log': ""}
+def fetch_watch_message(user, email, watched_message):
+    res = {'status' : False, 'log': "", 'messages': {}}
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
         res['watch_status'] = True
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+        return
+    
+    try: 
+        imap = None
 
+        auth_res = authenticate( imapAccount )
+        if not auth_res['status']:
+            raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+        imap = auth_res['imap']  # noqa: F841 ignore unused
+    except Exception, e:
+        logger.exception("failed while logging into imap")
+        res['code'] = "Fail to access your IMAP account"
+        return
+
+    try:
         if res['watch_status']:
-            imap = None
-
-            try:
-                auth_res = authenticate( imapAccount )
-                if not auth_res['status']:
-                    raise ValueError('Something went wrong during authentication. Refresh and try again!')
-
-                imap = auth_res['imap']  # noqa: F841 ignore unused
-            except Exception, e:
-                logger.exception("failed while logging into imap")
-                res['code'] = "Fail to access your IMAP account"
-                return
-
+            imapAccount.sync_paused = True
             mailbox = MailBox(imapAccount, imap, is_simulate=False)
             msgs = None
             cnt = 0 
             while True:
-                
                 for folder in mailbox._list_selectable_folders():
                     response = imap.select_folder(folder.name)
 
                     highest_mod_seq = response.get('HIGHESTMODSEQ')
-                    # logger.info(highest_mod_seq)
-                    if folder._highest_mod_seq <= 0 and highest_mod_seq is not None:
+                    logger.debug(highest_mod_seq)
+
+                    # this mailbox is using highest mod_seq and there is no update  
+                    if highest_mod_seq is not None and folder._highest_mod_seq <= 0:
                         continue
 
                     logger.info("refresh flags")
@@ -274,19 +281,37 @@ def fetch_watch_message(user, email, cursor):
 
                     if msgs:
                         for r in msgs:
+
+                            # if this message is already caught, skip to next to find another new msgs
+                            if r in watched_message:
+                                continue
                             logger.info(r.base_message.subject)
                             message = Message(r, imap_client="")   # since we are only extracting metadata, no need to use imap_client
-                            res['message'] = message._get_meta_data_friendly() 
+                            res['message_schemaid'] = r.base_message.id
+                            res['message'] = message._get_meta_data_friendly()
                             res['sender'] = message._get_from_friendly()
-                        res['status'] = True
-                        return res
+                            
+                            try:
+                                message_arrival_time = dateutil.parser.parse(res["message"]["date"])
+                                # if the message arrives today, send only hour and minute
+                                if message_arrival_time.date() == datetime.datetime.today().date():
+                                    res["message"]["date"] = "%d:%02d" % (message_arrival_time.hour, message_arrival_time.minute)
+                            except:
+                                logger.exception("parsing arrival date fail; skipping parsing")
+
+                            res['context'] = {'sender': res['sender']["name"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": res['message_schemaid']}
+
+                            # if there is update, send it to the client immediatly 
+                            if 'message' in res:
+                                res['status'] = True
+                                return res
 
                 # r=requests.get(url, headers=headers)
 
                 # if r.json()['deltas']:
                 #     break
                 # # logger.info("finding delta..")
-                if cnt == 0:
+                if cnt == 10:
                     break
                 cnt = cnt +1
                 sleep(0.01)
@@ -310,13 +335,15 @@ def fetch_watch_message(user, email, cursor):
         
         res['status'] = True
 
-    except ImapAccount.DoesNotExist:
-        res['code'] = "Error during authentication. Please refresh"
     except ButtonChannel.DoesNotExist:
         res['uid'] = 0
     except Exception as e:
         logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
+    finally:
+        logger.info("Finish watching cycle")
+        imapAccount.sync_paused = False
+        imap.logout()
 
     return res
 

@@ -26,7 +26,7 @@ import engine.main
 from engine.constants import msg_code
 from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from registration.forms import RegistrationForm
-from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
+from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule, EmailRule_Args
 from smtp_handler.utils import *
 import logging
 
@@ -97,7 +97,6 @@ def login_imap_view(request):
 	modes = []
 	current_mode = None
 	shortcuts = ''
-	shortcuts_exist = False
 	is_initialized = False 
 	folders = []
 	email_rule_folder = []
@@ -120,10 +119,6 @@ def login_imap_view(request):
 					logger.info(modes.values())
 					mode_exist = modes.exists()
 
-					shortcuts = imap[0].shortcuts
-					if len(shortcuts) > 0:
-						shortcuts_exist = True
-
 					if is_initialized:
 						# send their folder list
 						folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
@@ -140,8 +135,7 @@ def login_imap_view(request):
 
 		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
 			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
-			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
-			'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
+			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 'shortcuts': shortcuts}
 	except Exception as e:
 		logger.exception(e)
 		return {'user': request.user, 'website': WEBSITE}
@@ -197,29 +191,70 @@ def email_button_view(request):
 	except:
 		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
 
+@login_required
+def get_email_rule_meta(request):
+	res = {'status' : False}
+
+	try: 
+		logger.exception(request.user.email)
+		if request.user.email:
+			imap_account = ImapAccount.objects.get(email=request.user.email)
+
+			# serializing
+			email_rules = []
+			for obj in EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut'):
+				email_rules.append( {"name": obj.name, "id": obj.id, "params": [{"name": era["name"], "type": era["type"]} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
+			logger.exception(email_rules)
+
+
+			res['rules'] = email_rules
+			logger.exception(res)
+			logger.exception(json.dumps(res))
+			return HttpResponse(json.dumps(res), content_type="application/json")
+	except ImapAccount.DoesNotExist:
+		return {'website': WEBSITE, 'imap_authenticated': False}
+	except Exception as e:
+		logger.exception(e)
+		return {'website': WEBSITE, 'imap_authenticated': False}
+
+def _load_component(component, context=None):
+
+	try:
+		template = loader.get_template('youps/components/%s.html' % component)
+		c = {}
+		logger.info(component)
+		if component == 'datetime':
+			# TODO if base msg has deadline
+			# set as the deadline
+			# else today date
+			today = timezone.now()
+			
+			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00'), "name": context["name"]} 		
+		elif component == "email_expandable_row":
+			c = {'params': context['params'], 'sender': context['sender'], "subject": context['subject'], "date": context['date'], "message_id": context['message_id']}
+			logger.info(c)
+		return template.render( Context(c) )
+
+	except Exception as e:
+		logger.info(e)
+		raise e
+	
+
 def load_components(request):
 	res = {"status": True, "code": 200}
-	
+
 	try:
 		component = request.POST['component']
 		logger.info(component)
 		# basemsg_uid = request.POST['FILL HERE']
 		
-		template = loader.get_template('youps/components/%s.html' % component)
-		c = {}
-		if component == 'datepicker':
-			# if base msg has deadline
-			# set as the deadline
-			# else today date
-			today = timezone.now()
-			
-			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00')}
-        	res['template'] = template.render( Context(c) )
+		res['template'] = _load_component(component, res['context'])
 
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.info(e)
 		return HttpResponse(request_error, content_type="application/json")
+
 		
 @login_required
 def login_imap(request):
@@ -235,15 +270,14 @@ def login_imap(request):
 		res = engine.main.login_imap(user.email, password, host, is_oauth)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception, e:
-		print e
-		logging.debug(e)
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
 def apply_button_rule(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-
+		 
 		msg_schema_id = request.POST['msg_id']
 		er_id = request.POST['er_id']
 		kargs = json.loads(request.POST.get('kargs'))
@@ -271,10 +305,27 @@ def fetch_watch_message(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		
-		cursor = request.POST['cursor']
+		watched_message = request.POST.getlist('watched_message[]')
+		er_id = request.POST['er_id']
 
-		res = engine.main.fetch_watch_message(user, request.user.email, cursor)
+		res = engine.main.fetch_watch_message(user, request.user.email, watched_message)
+
+		# TODO load params of email rules 
+		er_args = EmailRule_Args.objects.filter(rule__id=er_id)
+		res['context']['params'] = ""
+		for ea in er_args:
+			if ea.type == "string":
+				res['context']['params'] += ea.name + ": <input type='text'>"
+			else:
+				res['context']['params'] += ea.name + ": " + _load_component(ea.type, {"name": ea.name}) 
+
+		res['context']['params'] = "<td colspan='5' style='padding-left: 15px;'>" + res['context']['params'] + "</td>"
+		res['message_row'] = _load_component("email_expandable_row", res['context'])
+
 		return HttpResponse(json.dumps(res), content_type="application/json")
+	except EmailRule.DoesNotExist:
+		logger.exception("where did er go??")
+		return HttpResponse(request_error, content_type="application/json")
 	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")

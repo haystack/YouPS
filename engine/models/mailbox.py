@@ -122,6 +122,9 @@ class MailBox(object):
                     continue
                 logger.debug("Laula; about to select_folder %s" % (folder.name))
 
+            if self._imap_account.sync_paused:
+                continue
+
             response = self._imap_client.select_folder(folder.name)
 
             # our algorithm doesn't work without these

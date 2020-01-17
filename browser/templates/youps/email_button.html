@@ -2,6 +2,8 @@
 {% block customcss %}
 <link rel="stylesheet" href="/static/css/youps/libs/codemirror.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+<!-- <link rel="stylesheet" href="/static/css/third-party/jquery.dataTables.min.css"> -->
+
 <!-- <link rel="stylesheet" href="/static/css/youps/libs/fontawesome-all.min.css"> -->
 <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> -->
 <!-- Interactive console styles -->
@@ -48,23 +50,9 @@
 		<div class="group-container">
 			<p hidden id="website-name">{{website}}</p>
 
-			<h3>YouPS button</h3>
-			<hr>
-			<label for="folder-dropdown">Folder: </label>
-	        <select id="folder-dropdown" name="folder">
-                {% for folder in folders %}
-                    {% if folder|lower == "inbox" %}
-                        <option selected="selected">{{ folder }}</option>
-                    {% else %}
-                        <option>{{ folder }}</option>
-                    {% endif %}
-                {% endfor %}
-			</select>		
+			<h2>YouPS button</h2>
+			<br>
 
-			<div id="button-container">
-				<button class='btn btn-primary btn-lg' id='btn-watch'>Watch</button>
-				<p id="info-msg">Open (mark read/unread) a message you want to manipulate!</p>
-			</div>
 			{% if imap_authenticated %}
 				<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
 				<a id="popuplink" href="#inline">Forgot how to use?</a>
@@ -109,50 +97,28 @@
 				</script>
 			{% endif %}
 
-			<div id='watching-msg-container'>
-				<span name="sender"></span>
-				<span name="subject"></span>
-				<span name="date"></span>
+			<h2>Step 1. Which action you want to run?</h2>
+			<div id='rule-container'>
+
 			</div>
+	
+			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
+			<br>
+
+			<h2>Step 2. To which message?</h2>
+			<div id="button-container">
+				<span class='label label-primary spinning' id='btn-watch'>Watch</span><span>: Open (mark read/unread) a message you want to manipulate!</span>
+			</div>
+			<div id='message-param-container'>
+				
+			</div>
+
+			
+
 
 			<div id='selected-rule-container'>
 				
 			</div>
-
-			<div id='rule-container'>
-				<table class="table table-striped">
-					<thead>
-						<tr>
-						<th scope="col">Name</th>
-						<th scope="col">Values</th>
-						<th scope="col">Available rules</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for er in email_rules %}
-							<tr>
-								<td>{{ er.name }}</td>
-								<td>
-									{% for arg in er.args.all %}
-										<li class="element" name="{{arg.name}}" >
-											<span>{{arg.name}}:</span>
-											<!-- <input class="args-name" type="text" placeholder="name" value="{{arg.name}}"/>: -->
-											{% if arg.type == "datetime" %}
-												<input type="datetime-local" id="user-datetime" value="{{YEAR}}-{{MONTH}}-{{DAY}}T00:00" min="2019-01-01T00:00" max="2030-06-14T00:00">
-											{% elif arg.type == "string" %}
-												<input class="args-value" placeholder="write your value here"/>
-											{% endif %}
-										</li>
-									{% endfor %}
-								</td>
-								<td><button class='btn btn-info' er-id={{er.id}}>Apply</button></td>
-							</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			</div>
-
-			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
 
 			<div id='result-container'>
 					<h2>History</h2>
@@ -192,23 +158,29 @@
 	<script type="text/javascript" src="/static/javascript/youps/python.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/addon/hint/show-hint.js"></script>
 
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
+	<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script> -->
 
 	<script src="/static/javascript/youps/jquery-ui.min.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
 
+	<script src="https://unpkg.com/react@16/umd/react.development.js"></script>  
+	<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>  
+	<script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
 	<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
 	<script src="https://get.mavo.io/mavo.js"></script>
-	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
-	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
-
 	<!-- JSON Formatter -->
 	<script src="/static/javascript/youps/qunit.js"></script>
     <script src="/static/javascript/youps/blanket.min.js"></script>
 	<script src="/static/javascript/youps/Autolinker.js"></script>
 	<script src="/static/javascript/youps/jsonpanel.js"></script>
 	<script src="/static/javascript/youps/tests.js"></script>
+	
 
 	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
-	<script type="text/javascript" src="/static/javascript/youps/email_button.js"></script>
+	<!-- <script type="text/javascript" src="/static/javascript/youps/email_button.js"></script> -->
+
+	<script type="text/babel" src="/static/javascript/youps/ButtonService.js"></script>
+	<script type="text/babel" src="/static/javascript/youps/app.js"></script>
 {% endblock %}
