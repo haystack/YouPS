@@ -1,10 +1,8 @@
 const  buttonService  =  new ButtonService();
 var watched_message = [];
-function fetch_watch_message(er_id) {
-  console.log(er_id);
+function fetch_watch_message() {
   var params = {
-      "watched_message": watched_message,
-      "er_id": er_id
+      "watched_message": watched_message
   };
   
   $.post('/fetch_watch_message', params,
@@ -44,86 +42,11 @@ function fetch_watch_message(er_id) {
               notify(res, false);
           }
 
-          setTimeout(fetch_watch_message, 1 * 1000, er_id); // 1 second
+          setTimeout(fetch_watch_message, 1 * 1000); // 1 second
       }
   ).fail(function(res) {
       alert("Please refresh the page!");
   });
-}
-
-class MessageParameter extends React.Component {
-  constructor(props) {
-    super(props);
-
-    console.log(this.props.selected_rule_id);
-    
-    this.state  = {
-      params: [] // "name": ~~, "type": ~~ 
-    };
-
-    $("#button-container").show();
-  }
-
-  applyRule(e) {
-    // Get selected messages
-    var messages = $("#message-parameter-table .in");
-    var self = this;
-    $.each(messages, function(k, message) {
-      // TODO need to let the system know the type of each attribute
-      var kargs = {};
-      $(this).find("input").each(function(index, elem) {
-          kargs[$(elem).attr("name")] = $(elem).val();
-      })
-
-      var params = {
-        "er_id": self.props.selected_rule_id,
-        "msg_id": $(this).attr("message-index"),
-        "kargs": JSON.stringify(kargs)
-      };
-
-      console.log(params)
-      
-      $.post('/apply_button_rule', params,
-          function(res) {
-              console.log(res);
-  
-              if (res.status) {
-                  notify(res, true);
-              }
-              else {
-                  notify(res, false);
-              }
-  
-              show_loader(false);
-          }
-      ).fail(function(res) {
-          alert("Please refresh the page!");
-      });
-    })
-  }
-
-  componentDidMount() {
-    // Call watching message 
-    fetch_watch_message(this.props.selected_rule_id);
-  }
-
-  render() {
-    return (
-      <div>
-        <table class="table table-striped" id="message-parameter-table">
-          <thead>
-            <tr>
-              <td>Sender</td>
-              <td>Message</td>
-              <td>Date</td>
-              <td>Select</td>
-            </tr>
-          </thead>
-        </table>
-        <button type="button" class="btn btn-primary btn-lg" id="btn_apply" onClick={(e)=>  this.applyRule(e) }>Apply</button>
-      </div>
-    );//  {this.props.params.map( param  => <td>{param.name}</td>)} 
-  }
 }
 
 class RuleSelector extends React.Component {
@@ -135,6 +58,39 @@ class RuleSelector extends React.Component {
         params: [],
         nextPageURL:  ''
     };
+  }
+
+  applyRule(e, er_id) {
+    // Get selected messages
+    var kargs = {};
+    $(e.target).parent().parent().find('input').each(function(index, elem) {
+        kargs[$(elem).attr("name")] = $(elem).val();
+    })
+
+    var params = {
+      "er_id": er_id,
+      "msg_id": parseInt($("#watched-message-container").attr("message-index")),
+      "kargs": JSON.stringify(kargs)
+    };
+
+    console.log(params)
+    
+    $.post('/apply_button_rule', params,
+        function(res) {
+            console.log(res);
+
+            if (res.status) {
+                notify(res, true);
+            }
+            else {
+                notify(res, false);
+            }
+
+            show_loader(false);
+        }
+    ).fail(function(res) {
+        alert("Please refresh the page!");
+    });
   }
 
   handleSelect(e, er_id) {
@@ -172,11 +128,13 @@ class RuleSelector extends React.Component {
         <tbody>
               {this.state.rules.map( er  =>
                 <tr>
-                  <td>{ er.name }</td>
+                  <td>{ er.name } &lt;or you can email here&gt; </td>
                   <td>
-                    or you can email here
+                    <ul>
+                      {er.params.map( param  => <li>{ param.name }: <span dangerouslySetInnerHTML={{__html: param.html}}></span></li>)}
+                    </ul>
                   </td>
-                  <td><button class='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.handleSelect(e, er.id) }>Select</button></td>
+                  <td><button className='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.applyRule(e, er.id) }>Apply</button></td>
                 </tr>
               )}
         </tbody>
@@ -191,6 +149,8 @@ function show_loader( is_show ) {
 }
 
 $(document).ready(function() {
+  fetch_watch_message();
+
   ReactDOM.render(
     <RuleSelector/>,
     document.getElementById('rule-container')

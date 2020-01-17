@@ -203,7 +203,7 @@ def get_email_rule_meta(request):
 			# serializing
 			email_rules = []
 			for obj in EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut'):
-				email_rules.append( {"name": obj.name, "id": obj.id, "params": [{"name": era["name"], "type": era["type"]} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
+				email_rules.append( {"name": obj.name, "id": obj.id, "params": [{"name": era["name"], "type": era["type"], "html": _load_component(era["type"], {"name": era["name"]})} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
 			logger.exception(email_rules)
 
 
@@ -231,7 +231,7 @@ def _load_component(component, context=None):
 			
 			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00'), "name": context["name"]} 		
 		elif component == "email_expandable_row":
-			c = {'params': context['params'], 'sender': context['sender'], "subject": context['subject'], "date": context['date'], "message_id": context['message_id']}
+			c = {'sender': context['sender'], "subject": context['subject'], "date": context['date'], "message_id": context['message_id']}
 			logger.info(c)
 		return template.render( Context(c) )
 
@@ -269,7 +269,7 @@ def login_imap(request):
 
 		res = engine.main.login_imap(user.email, password, host, is_oauth)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -283,7 +283,7 @@ def apply_button_rule(request):
 		kargs = json.loads(request.POST.get('kargs'))
 		res = engine.main.apply_button_rule(user, request.user.email, er_id, msg_schema_id, kargs)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -296,7 +296,7 @@ def fetch_execution_log(request):
 
 		res = engine.main.fetch_execution_log(user, request.user.email, from_id, to_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -306,20 +306,9 @@ def fetch_watch_message(request):
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		
 		watched_message = request.POST.getlist('watched_message[]')
-		er_id = request.POST['er_id']
 
 		res = engine.main.fetch_watch_message(user, request.user.email, watched_message)
 
-		# TODO load params of email rules 
-		er_args = EmailRule_Args.objects.filter(rule__id=er_id)
-		res['context']['params'] = ""
-		for ea in er_args:
-			if ea.type == "string":
-				res['context']['params'] += ea.name + ": <input type='text'>"
-			else:
-				res['context']['params'] += ea.name + ": " + _load_component(ea.type, {"name": ea.name}) 
-
-		res['context']['params'] = "<td colspan='5' style='padding-left: 15px;'>" + res['context']['params'] + "</td>"
 		res['message_row'] = _load_component("email_expandable_row", res['context'])
 
 		return HttpResponse(json.dumps(res), content_type="application/json")
@@ -340,8 +329,7 @@ def folder_recent_messages(request):
 
 		# res = engine.main.folder_recent_messages(user, user.email, folder_name, N)
 		return HttpResponse(None, content_type="application/json")
-	except Exception, e:
-		print e
+	except Exception as e:
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -353,8 +341,7 @@ def remove_rule(request):
 		rule_id = request.POST['rule-id']
 		res = engine.main.remove_rule(user, request.user.email, rule_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
+	except Exception as e:
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -369,8 +356,7 @@ def run_mailbot(request):
 		run_request = True if request.POST['run_request'] == "true" else False
 		res = engine.main.run_mailbot(user, request.user.email, current_mode_id, modes, is_test, run_request)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
+	except Exception as e:
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -386,7 +372,7 @@ def run_simulate_on_messages(request):
 		
 		res = engine.main.run_simulate_on_messages(user, request.user.email, folder_name, N, code)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception("Error simulating login %s %s " % (e, traceback.format_exc()))
 		return HttpResponse(request_error, content_type="application/json")
 		
@@ -399,9 +385,8 @@ def save_shortcut(request):
 		
 		res = engine.main.save_shortcut(user, request.user.email, shortcuts)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
-		logging.debug(e)
+	except Exception as e:
+		logger.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
@@ -413,7 +398,7 @@ def delete_mailbot_mode(request):
 
 		res = engine.main.delete_mailbot_mode(user, request.user.email, mode_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -425,7 +410,7 @@ def handle_imap_idle(request):
 		res = engine.main.get_deltas_cursors(user, request.user.email)
 		logger.info(res)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 

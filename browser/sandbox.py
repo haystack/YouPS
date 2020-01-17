@@ -38,7 +38,7 @@ def interpret_bypass_queue(mailbox, extra_info):
 
         code = extra_info['code']
         message_schemas = MessageSchema.objects.filter(id=extra_info['msg-id'])
-        
+        logger.info(message_schemas)
         # define the variables accessible to the user
         user_environ = sandbox_helpers.get_default_user_environment(mailbox, fakeprint)
 
@@ -78,7 +78,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 fakeprint(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
-                logger.debug(msg_log)
+                logger.info(msg_log)
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
 

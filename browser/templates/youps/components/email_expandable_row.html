@@ -1,12 +1,11 @@
 <tbody>
-    <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{ message_id }}" aria-expanded="false" aria-controls="group-of-rows-{{ message_id }}">
+    <tr message-index={{message_id}} id="watched-message-container" class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{ message_id }}" aria-expanded="false" aria-controls="group-of-rows-{{ message_id }}">
         <td>{{ sender }}</td>
         <td>{{ subject }}</td>  
         <td>{{ date }}</td>
-        <td><button class="btn btn-info select-btn">Select</button></td>
     </tr>
 </tbody>
-<tbody message-index={{message_id}} id="group-of-rows-{{ message_id }}" class="collapse message-collapse" message-id={{message_id}}>
+<tbody id="group-of-rows-{{ message_id }}" class="collapse message-collapse" message-id={{message_id}}>
 	<tr>
         {% autoescape off %}
             {{ params }}

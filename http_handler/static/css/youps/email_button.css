@@ -17,10 +17,6 @@
     font-style: italic;
 }
 
-#button-container {
-  display: none;
-}
-
 #btn-watch {
     font-size: 17px;
     display: inline-block;

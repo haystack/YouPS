@@ -7,7 +7,7 @@ import dkim
 import pytz
 from salmon.server import Relay
 from config.settings import relay_config
-from lamson_subclass import MurmurMailResponse
+from smtp_handler.lamson_subclass import MurmurMailResponse
 from schema.youps import ImapAccount
 from schema.models import UserProfile
 from http_handler.settings import BASE_URL, DEFAULT_FROM_EMAIL, WEBSITE
@@ -16,7 +16,6 @@ from email.utils import parseaddr
 from hashlib import sha1
 from html2text import html2text
 from markdown2 import markdown
-import new
 import pickle
 import chardet
 import logging
@@ -326,7 +325,6 @@ def get_body(email_message):
             elif subtype == 'html':
                 res['html'] += remove_html_ps(body)
 
-    print res
 
     return res
 
@@ -758,11 +756,6 @@ def codeobject_dumps(co):
             co.co_code, co.co_consts, co.co_names, co.co_varnames,
             co.co_filename, co.co_name, co.co_firstlineno, co.co_lnotab]
     return pickle.dumps(co_tup)
-
-def codeobject_loads(s):
-    """loads a code object pickled with co_dumps() return a code object ready for exec()"""
-    r = pickle.loads(s)
-    return new.code(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11])
 
 def is_gmail(imap_account=None):
     # type: (ImapAccount) -> bool
