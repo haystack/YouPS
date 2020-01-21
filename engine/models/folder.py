@@ -189,10 +189,13 @@ class Folder(object):
         if uid_next != self._uid_next:
             # get all the descriptors for the new messages
             self._save_new_messages(self._last_seen_uid, event_data_list, new_message_ids)
+            if self._last_seen_uid != 0:
+                logger.info("Update flags information")
+                self._update_cached_message_flags(highest_mod_seq, event_data_list)
 
         # if the last seen uid is zero we haven't seen any messages
-        if self._last_seen_uid != 0:
-            self._update_cached_message_flags(highest_mod_seq, event_data_list)
+        # if self._last_seen_uid != 0:
+        #     self._update_cached_message_flags(highest_mod_seq, event_data_list)
 
         self._update_last_seen_uid()
         logger.debug("%s finished normal refresh" % (self))

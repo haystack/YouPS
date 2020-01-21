@@ -62,35 +62,37 @@ class RuleSelector extends React.Component {
 
   applyRule(e, er_id) {
     // Get selected messages
-    var kargs = {};
-    $(e.target).parent().parent().find('input').each(function(index, elem) {
-        kargs[$(elem).attr("name")] = $(elem).val();
+    $.each($("input[name='watched_message']:checked"), function(k, v) {
+      var kargs = {};
+      $(e.target).parent().parent().find('input').each(function(index, elem) {
+          kargs[$(elem).attr("name")] = $(elem).val();
+      })
+  
+      var params = {
+        "er_id": er_id,
+        "msg_id": parseInt($(v).parents('tr').attr("message-index")),
+        "kargs": JSON.stringify(kargs)
+      };
+  
+      console.log(params)
+      
+      $.post('/apply_button_rule', params,
+          function(res) {
+              console.log(res);
+  
+              if (res.status) {
+                  notify(res, true);
+              }
+              else {
+                  notify(res, false);
+              }
+  
+              show_loader(false);
+          }
+      ).fail(function(res) {
+          alert("Please refresh the page!");
+      });
     })
-
-    var params = {
-      "er_id": er_id,
-      "msg_id": parseInt($("#watched-message-container").attr("message-index")),
-      "kargs": JSON.stringify(kargs)
-    };
-
-    console.log(params)
-    
-    $.post('/apply_button_rule', params,
-        function(res) {
-            console.log(res);
-
-            if (res.status) {
-                notify(res, true);
-            }
-            else {
-                notify(res, false);
-            }
-
-            show_loader(false);
-        }
-    ).fail(function(res) {
-        alert("Please refresh the page!");
-    });
   }
 
   handleSelect(e, er_id) {

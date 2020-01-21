@@ -6,7 +6,7 @@ var trackOutboundLink = function(inCategory) {
 
 $(document).ready(function() {
 
-    var user_name = $.trim($('#user_email').text()),
+    var user_email = $.trim($('#user_email').text()),
         btn_login = $("#btn-login"),
         btn_test_run = $("#btn-test-run"),
         btn_code_sumbit = $("#btn-code-submit"),

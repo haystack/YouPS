@@ -285,7 +285,9 @@ def fetch_watch_message(user, email, watched_message):
                         for r in msgs:
 
                             # if this message is already caught, skip to next to find another new msgs
-                            if r in watched_message:
+                            logger.debug(r.id)
+                            logger.debug(watched_message)
+                            if str(r.id) in watched_message:
                                 continue
                             logger.info(r.base_message.subject)
                             message = Message(r, imap_client="")   # since we are only extracting metadata, no need to use imap_client
