@@ -38,7 +38,7 @@ def _strip_ws_and_comments(val):
         val = val_cp
     while re_comment.findall(val):
         val = re_comment.sub('', val)
-    log.info(val)
+
     return val
 
 
