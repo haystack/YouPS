@@ -223,7 +223,9 @@ def _load_component(component, context=None):
 		template = loader.get_template('youps/components/%s.html' % component)
 		c = {}
 		logger.info(component)
-		if component == 'datetime':
+		if component == 'string':
+			c = {"name": context["name"] if context else ""}
+		elif component == 'datetime':
 			# TODO if base msg has deadline
 			# set as the deadline
 			# else today date
