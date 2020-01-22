@@ -121,6 +121,8 @@ class RuleSelector extends React.Component {
     buttonService.getRules().then(results => {
       console.log(results)
       this.setState({ rules: results.rules});
+
+      show_loader(false);
     });
   }
 
