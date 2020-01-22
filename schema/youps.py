@@ -291,7 +291,7 @@ class EmailRule_Args(models.Model):
         default="string"
     )
     
-    default = models.TextField(default='')
+    default = models.TextField(default='') # default value of the argument
 
 class Message_Thread(models.Model):
     id = models.AutoField(primary_key=True)
