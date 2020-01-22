@@ -132,7 +132,7 @@ class RuleSelector extends React.Component {
         <tbody>
               {this.state.rules.map( er  =>
                 <tr>
-                  <td>{ er.name } &lt;or you can email here&gt; </td>
+                  <td>{ er.name } &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; </td>
                   <td>
                     <ul>
                       {er.params.map( param  => <li>{ param.name }: <span dangerouslySetInnerHTML={{__html: param.html}}></span></li>)}
