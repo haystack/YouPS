@@ -122,6 +122,9 @@ class MailBox(object):
                     continue
                 logger.debug("Laula; about to select_folder %s" % (folder.name))
 
+            if self._imap_account.sync_paused:
+                continue
+
             response = self._imap_client.select_folder(folder.name)
 
             # our algorithm doesn't work without these
@@ -131,6 +134,8 @@ class MailBox(object):
 
             uid_next, uid_validity = response['UIDNEXT'], response['UIDVALIDITY']
             highest_mod_seq = response.get('HIGHESTMODSEQ')
+            if highest_mod_seq:
+                logger.debug("highest_mod_seq %d" % highest_mod_seq)
 
             # check if we are doing a total refresh or just a normal refresh
             # total refresh occurs the first time we see a folder and

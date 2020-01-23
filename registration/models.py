@@ -13,7 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from http_handler.settings import WEBSITE, PROTOCOL
 
-logger = logging.getLogger('youps')  # type: logging.Logger
+logger = logging.getLogger('button')  # type: logging.Logger
 
 try:
     from django.utils.timezone import now as datetime_now
@@ -296,11 +296,13 @@ class RegistrationProfile(models.Model):
                     'domain': site.domain}
         subject = render_to_string('registration/activation_email_subject.txt',
                                    ctx_dict)
+
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
         
         message = render_to_string('registration/activation_email.txt',
                                    ctx_dict)
+        logger.debug("%s://%s%s" % (PROTOCOL, site.domain, self.activation_key))
         
         self.get_user().email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
     

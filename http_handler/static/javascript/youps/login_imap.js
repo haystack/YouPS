@@ -6,7 +6,7 @@ var trackOutboundLink = function(inCategory) {
 
 $(document).ready(function() {
 
-    var user_name = $.trim($('#user_email').text()),
+    var user_email = $.trim($('#user_email').text()),
         btn_login = $("#btn-login"),
         btn_test_run = $("#btn-test-run"),
         btn_code_sumbit = $("#btn-code-submit"),
@@ -564,7 +564,9 @@ $(document).ready(function() {
     });
 
     $("#btn-google-access").click(function() {
-        window.open('https://accounts.google.com/signin/oauth/oauthchooseaccount?client_id=1035128514395-ljeutpptbag8unpv2lgo1k93eiq006f6.apps.googleusercontent.com&as=q8bvin2OQ732zM87bJJfrw&approval_state=!ChRUVmJGT2pFX3FPLWhTekkyVUxzTxIfdzN0WEg3NGtxc0FTVUU3MWpGWk5XazNUZHVzQjV4WQ∙AJDr988AAAAAXdAyc5cNwjol51ZM1VvA3-UjjsVTzY4H&oauthriskyscope=1&xsrfsig=ChkAeAh8T7l2B9NfkhrBBuQcYcBdnbTMuWOfEg5hcHByb3ZhbF9zdGF0ZRILZGVzdGluYXRpb24SBXNvYWN1Eg9vYXV0aHJpc2t5c2NvcGU&flowName=GeneralOAuthFlow&Email='
+
+        
+        window.open('https://accounts.google.com/o/oauth2/auth?client_id=1035128514395-ljeutpptbag8unpv2lgo1k93eiq006f6.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&response_type=code&scope=https%3A%2F%2Fmail.google.com%2F&login_hint='
             + user_email);
     })
 

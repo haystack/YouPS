@@ -4,7 +4,7 @@ import heapq
 import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from datetime import datetime
-from engine.parser.header_parser import parse_msg_data
+from engine.parser.header_parser import parse_msg_data, parse_flags
 
 from django.db.models import Max
 from imapclient import \
@@ -189,13 +189,80 @@ class Folder(object):
         if uid_next != self._uid_next:
             # get all the descriptors for the new messages
             self._save_new_messages(self._last_seen_uid, event_data_list, new_message_ids)
+            if self._last_seen_uid != 0:
+                logger.info("Update flags information")
+                self._update_cached_message_flags(highest_mod_seq, event_data_list)
 
         # if the last seen uid is zero we haven't seen any messages
-        if self._last_seen_uid != 0:
-            self._update_cached_message_flags(highest_mod_seq, event_data_list)
+        # if self._last_seen_uid != 0:
+        #     self._update_cached_message_flags(highest_mod_seq, event_data_list)
 
         self._update_last_seen_uid()
         logger.debug("%s finished normal refresh" % (self))
+
+    def _refresh_flag_changes(self, highest_mod_seq):
+        # type: (int) -> t.List[MessageSchema]
+        query_fields = ['FLAGS']
+        if self._imap_account.is_gmail:
+            query_fields = query_fields + ['X-GM-THRID', 'X-GM-LABELS']
+
+        messages_with_flag_changes = []
+        # for old messages check flags and determine if any messages were deleted
+        # but only if we have to
+        if highest_mod_seq is None:
+            query_fields = ['FLAGS']
+            if self._imap_account.is_gmail:
+                query_fields = query_fields + ['X-GM-LABELS']
+            chunk = 100
+            curr_uid = 1
+            
+            for i in range(curr_uid, self._schema.last_seen_uid + 1, chunk):
+                end_range = min(self._schema.last_seen_uid, i + chunk)
+                messages = {m.uid: m for m in MessageSchema.objects.filter(folder=self._schema, uid__range=[i, end_range])}
+                # logger.info(messages.keys())
+                res = self._imap_client.fetch("{}:{}".format(i, end_range), query_fields)
+                for uid in messages:
+                    for key, attribute in ((b'FLAGS', 'flags'), (b'X-GM-LABELS', 'gm_labels')):
+                        if key in res[uid]:
+                            cached_flags = set(getattr(messages[uid], attribute, []))
+                            server_flags = set(parse_flags(res[uid][key]))
+                            deleted_flags = cached_flags - server_flags
+                            new_flags = server_flags - cached_flags
+                            if deleted_flags or new_flags:
+                                logger.info('detect flags %s: deleted %s. new %s',
+                                            messages[uid], deleted_flags, new_flags)
+
+                                messages_with_flag_changes.append(messages[uid])
+
+            return messages_with_flag_changes
+
+
+        # here we can use condstore to be faster
+        elif self._schema.highest_mod_seq < highest_mod_seq:
+            query_fields = ['FLAGS']
+            if self._imap_account.is_gmail:
+                query_fields = query_fields + ['X-GM-LABELS']
+            # only fetch messages changed since our cached highest_mod_seq
+            logger.debug("modseq %d " % self._schema.highest_mod_seq)
+            res = self._imap_client.fetch("1:*", query_fields, ['CHANGEDSINCE {}'.format(self._schema.highest_mod_seq)])
+            messages = {m.uid: m for m in MessageSchema.objects.filter(folder=self._schema, uid__in=res.keys()).all()}
+            # for each message compare the flags
+            for uid in res:
+                for key, attribute in ((b'FLAGS', 'flags'), (b'X-GM-LABELS', 'gm_labels')):
+                    if key in res[uid]:
+                        # TODO this line broke when the message is not saved in db due to errors e.g., encoding issue
+                        cached_flags = set(getattr(messages[uid], attribute, []))
+                        server_flags = set(parse_flags(res[uid][key]))
+                        deleted_flags = cached_flags - server_flags
+                        new_flags = server_flags - cached_flags
+                        if deleted_flags or new_flags:
+                            logger.debug('detect flags %s: deleted %s. new %s',
+                                        messages[uid], deleted_flags, new_flags)
+
+                            messages_with_flag_changes.append(messages[uid])
+            return messages_with_flag_changes
+
+        return []
 
     def _search_scheduled_message(self, event_data_list, time_start, time_end):
         message_schemas = MessageSchema.objects.filter(
@@ -305,7 +372,7 @@ class Folder(object):
         if highest_mod_seq is not None:
             self._highest_mod_seq = highest_mod_seq
             logger.debug("%s updated highest mod seq to %d" %
-                         (self, highest_mod_seq))
+                         (self, self._highest_mod_seq))
 
     def _check_fields_in_fetch(self, fields, message_data):
         # type: (t.List[str], t.Dict[str, t.Any]) -> bool

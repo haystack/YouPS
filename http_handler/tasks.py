@@ -153,8 +153,8 @@ def loop_sync_user_inbox():
         imapAccounts = ImapAccount.objects.filter(
             is_initialized=True)  # type: t.List[ImapAccount]
         for imapAccount in imapAccounts:
-            if imapAccount.email not in ["pmarsena@mit.edu", "youps.empty@gmail.com", "shachieg@csail.mit.edu"]:
-                continue
+            # if imapAccount.email not in ["pmarsena@mit.edu", "youps.empty@gmail.com", "shachieg@csail.mit.edu"]:
+            #     continue
             # refresh from database
             imapAccount = ImapAccount.objects.get(id=imapAccount.id)
             if not imapAccount.is_initialized:

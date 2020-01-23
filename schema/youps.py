@@ -29,23 +29,12 @@ class ImapAccount(models.Model):
     host = models.CharField('host', max_length=100)
 
     current_mode = models.ForeignKey('MailbotMode', null=True, blank=True)
-    shortcuts = models.TextField(default="")
 
-    # code = models.TextField(null=True, blank=True)
-    # TODO should we store execution logs forever? maybe this should be a foreign key
-    execution_log = models.TextField(default="")
     is_test = models.BooleanField(default=True)
     is_running = models.BooleanField(default=False)
     status_msg = models.TextField(default="")
-
-    arrive_action = models.CharField(
-        'access_token', max_length=1000, blank=True)
-    custom_action = models.CharField(
-        'custom_action', max_length=1000, blank=True)
-    timer_action = models.CharField(
-        'timer_action', max_length=1000, blank=True)
-    repeat_action = models.CharField(
-        'repeat_action', max_length=1000, blank=True)
+    sync_paused = models.BooleanField(default=False)
+    # delta_cursor = models.CharField(max_length=200, blank=True, null=True)
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 
@@ -82,6 +71,13 @@ class FolderSchema(models.Model):
     class Meta:
         db_table = "youps_folder"
         unique_together = ("name", "imap_account")
+
+class HighestModSeq_history(models.Model):
+    """To keep track of old mod_seq to see changes (especially ) in the folder.
+    """
+    folder = models.ForeignKey(FolderSchema)
+    highest_mod_seq = models.IntegerField(default=-1)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
 
 class BaseMessage(models.Model):
@@ -274,6 +270,10 @@ class EmailRule(models.Model):
     class Meta:
         unique_together = ("id", "mode")
 
+    def get_forward_addr(self):
+        s = self.name.replace(" ", "_")
+        return ''.join(e for e in s if (e.isalnum() or e=="_"))
+
 class EmailRule_Args(models.Model):
     id = models.AutoField(primary_key=True)
 
@@ -290,6 +290,8 @@ class EmailRule_Args(models.Model):
         choices=TYPE_CHOICES,
         default="string"
     )
+    
+    default = models.TextField(default='') # default value of the argument
 
 class Message_Thread(models.Model):
     id = models.AutoField(primary_key=True)

@@ -18,7 +18,7 @@
 }
 
 #btn-watch {
-    margin-top: 30px;
+    font-size: 17px;
     display: inline-block;
     position: relative;
     transition: padding-right 0.3s ease;
@@ -80,4 +80,8 @@
 
 #info-msg   {
     display: none;
+}
+
+.message-collapse input {
+  margin-right: 10px;
 }

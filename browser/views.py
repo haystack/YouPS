@@ -3,7 +3,7 @@ import base64, json, logging,traceback
 from annoying.decorators import render_to
 from boto.s3.connection import S3Connection
 from html2text import html2text
-from lamson.mail import MailResponse
+from salmon.mail import MailResponse
 
 from django.contrib.auth.decorators import login_required
 from django.conf import global_settings
@@ -19,12 +19,14 @@ from django.utils.encoding import *
 from django.template import Context, Template, loader
 from django.utils import timezone
 
+from nylas import APIClient
+
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
 from engine.constants import msg_code
 from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from registration.forms import RegistrationForm
-from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule
+from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule, EmailRule_Args
 from smtp_handler.utils import *
 import logging
 
@@ -46,7 +48,6 @@ def lamson_status(request):
 		response_text = "lamson running"
 	response = HttpResponse(response_text)
 	return response
-	
 
 def logout(request):
 	request.session.flush()
@@ -96,7 +97,6 @@ def login_imap_view(request):
 	modes = []
 	current_mode = None
 	shortcuts = ''
-	shortcuts_exist = False
 	is_initialized = False 
 	folders = []
 	email_rule_folder = []
@@ -119,10 +119,6 @@ def login_imap_view(request):
 					logger.info(modes.values())
 					mode_exist = modes.exists()
 
-					shortcuts = imap[0].shortcuts
-					if len(shortcuts) > 0:
-						shortcuts_exist = True
-
 					if is_initialized:
 						# send their folder list
 						folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
@@ -139,11 +135,27 @@ def login_imap_view(request):
 
 		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
 			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
-			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 
-			'shortcuts_exist': shortcuts_exist, 'shortcuts': shortcuts}
+			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 'shortcuts': shortcuts}
 	except Exception as e:
 		logger.exception(e)
 		return {'user': request.user, 'website': WEBSITE}
+
+# Nylas login callback
+def login_imap_callback(request):
+	res = {'website': WEBSITE}
+	
+	# logger.info(request)
+	code = request.GET['code']
+
+	APP_ID = "e2qdjgra07ea3p3idcv1bea1z"
+	APP_SECRET = "dprso40e0tjqk989fab76hqq"
+	# Exchange the authorization code for an access token
+	client = APIClient(APP_ID, APP_SECRET)
+	logger.info(code)
+	access_token = client.token_for_code(code)
+	logger.info(access_token)
+
+	return HttpResponseRedirect('/editor')
 
 @render_to(WEBSITE+"/docs.html")
 def docs_view(request):
@@ -179,33 +191,77 @@ def email_button_view(request):
 	except:
 		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
 
+@login_required
+def get_email_rule_meta(request):
+	res = {'status' : False}
+
+	try: 
+		logger.exception(request.user.email)
+		if request.user.email:
+			imap_account = ImapAccount.objects.get(email=request.user.email)
+
+			# serializing
+			email_rules = []
+			for obj in EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut'):
+				email_rules.append( {"name": obj.name, "id": obj.id, "params": [{"name": era["name"], "type": era["type"], "html": _load_component(era["type"], {"name": era["name"]})} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
+			logger.exception(email_rules)
+
+
+			res['rules'] = email_rules
+			logger.exception(res)
+			logger.exception(json.dumps(res))
+			return HttpResponse(json.dumps(res), content_type="application/json")
+	except ImapAccount.DoesNotExist:
+		return {'website': WEBSITE, 'imap_authenticated': False}
+	except Exception as e:
+		logger.exception(e)
+		return {'website': WEBSITE, 'imap_authenticated': False}
+
+def _load_component(component, context=None):
+
+	try:
+		template = loader.get_template('youps/components/%s.html' % component)
+		c = {}
+		logger.info(component)
+		if component == 'string':
+			c = {"name": context["name"] if context else ""}
+		elif component == 'datetime':
+			# TODO if base msg has deadline
+			# set as the deadline
+			# else today date
+			today = timezone.now()
+			
+			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00'), "name": context["name"]} 		
+		elif component == "email_expandable_row":
+			c = {'sender': context['sender'], "subject": context['subject'], "date": context['date'], "message_id": context['message_id']}
+			logger.info(c)
+		return template.render( Context(c) )
+
+	except Exception as e:
+		logger.info(e)
+		raise e
+	
+
 def load_components(request):
 	res = {"status": True, "code": 200}
-	
+
 	try:
 		component = request.POST['component']
 		logger.info(component)
 		# basemsg_uid = request.POST['FILL HERE']
 		
-		template = loader.get_template('youps/components/%s.html' % component)
-		c = {}
-		if component == 'datepicker':
-			# if base msg has deadline
-			# set as the deadline
-			# else today date
-			today = timezone.now()
-			
-			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00')}
-        	res['template'] = template.render( Context(c) )
+		res['template'] = _load_component(component, res['context'])
 
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.info(e)
 		return HttpResponse(request_error, content_type="application/json")
+
 		
 @login_required
 def login_imap(request):
 	try:
+		# TODO nylas https://docs.nylas.com/reference#oauth - oauth/tokenize and receive code
 		user = get_object_or_404(UserProfile, email=request.user.email)
 
 		# email = request.POST['email']
@@ -215,22 +271,21 @@ def login_imap(request):
 
 		res = engine.main.login_imap(user.email, password, host, is_oauth)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
-		logging.debug(e)
+	except Exception as e:
+		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
 def apply_button_rule(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-
+		 
 		msg_schema_id = request.POST['msg_id']
 		er_id = request.POST['er_id']
 		kargs = json.loads(request.POST.get('kargs'))
 		res = engine.main.apply_button_rule(user, request.user.email, er_id, msg_schema_id, kargs)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -243,7 +298,7 @@ def fetch_execution_log(request):
 
 		res = engine.main.fetch_execution_log(user, request.user.email, from_id, to_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -252,10 +307,16 @@ def fetch_watch_message(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		
-		folder_name = request.POST['folder']
+		watched_message = request.POST.getlist('watched_message[]')
 
-		res = engine.main.fetch_watch_message(user, request.user.email, folder_name)
+		res = engine.main.fetch_watch_message(user, request.user.email, watched_message)
+
+		res['message_row'] = _load_component("email_expandable_row", res['context'])
+
 		return HttpResponse(json.dumps(res), content_type="application/json")
+	except EmailRule.DoesNotExist:
+		logger.exception("where did er go??")
+		return HttpResponse(request_error, content_type="application/json")
 	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
@@ -270,8 +331,7 @@ def folder_recent_messages(request):
 
 		# res = engine.main.folder_recent_messages(user, user.email, folder_name, N)
 		return HttpResponse(None, content_type="application/json")
-	except Exception, e:
-		print e
+	except Exception as e:
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -283,8 +343,7 @@ def remove_rule(request):
 		rule_id = request.POST['rule-id']
 		res = engine.main.remove_rule(user, request.user.email, rule_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
+	except Exception as e:
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -299,8 +358,7 @@ def run_mailbot(request):
 		run_request = True if request.POST['run_request'] == "true" else False
 		res = engine.main.run_mailbot(user, request.user.email, current_mode_id, modes, is_test, run_request)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
+	except Exception as e:
 		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -316,7 +374,7 @@ def run_simulate_on_messages(request):
 		
 		res = engine.main.run_simulate_on_messages(user, request.user.email, folder_name, N, code)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception("Error simulating login %s %s " % (e, traceback.format_exc()))
 		return HttpResponse(request_error, content_type="application/json")
 		
@@ -329,9 +387,8 @@ def save_shortcut(request):
 		
 		res = engine.main.save_shortcut(user, request.user.email, shortcuts)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
-		print e
-		logging.debug(e)
+	except Exception as e:
+		logger.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
@@ -343,7 +400,7 @@ def delete_mailbot_mode(request):
 
 		res = engine.main.delete_mailbot_mode(user, request.user.email, mode_id)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 
@@ -351,12 +408,11 @@ def delete_mailbot_mode(request):
 def handle_imap_idle(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-		folder = request.POST['folder']
 
-		engine.main.handle_imap_idle(user, request.user.email, folder)
-		res = {}
+		res = engine.main.get_deltas_cursors(user, request.user.email)
+		logger.info(res)
 		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception, e:
+	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
 

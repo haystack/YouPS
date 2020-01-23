@@ -1,0 +1,26 @@
+<tbody>
+    <tr message-index={{message_id}} id="watched-message-container" class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{ message_id }}" aria-expanded="false" aria-controls="group-of-rows-{{ message_id }}">
+        <td><input type='checkbox' name='watched_message' checked></td>
+        <td>{{ sender }}</td>
+        <td>{{ subject }}</td>  
+        <td>{{ date }}</td>
+    </tr>
+</tbody>
+<tbody id="group-of-rows-{{ message_id }}" class="collapse message-collapse" message-id={{message_id}}>
+	<tr>
+        {% autoescape off %}
+            {{ params }}
+        {% endautoescape %}
+		<!-- <td colspan="5">
+            {% for a in attrs %}
+                {% if a.editable %}
+                    {{a.key}}: <input type='text' value='{{a.value}}'/>
+                {% else %}
+                    {{a.key}}: {{a.value}}
+                {% endif %}
+                <br/>
+            {% endfor %}
+            <button class='btn btn-default btn-save-message'>save</button>
+        </td> -->
+	</tr>
+</tbody>

@@ -17,7 +17,7 @@ stop:
 	docker-compose down
 
 # stop the docker image and remove database information
-.PHONY: clean 
+.PHONY: clean
 clean:
 	docker-compose down -v
 
@@ -54,4 +54,4 @@ update-dev:
 	git pull; \
 	sudo lamson restart || sudo lamson start; \
 	./youps_reboot.sh \
-	" 
+	"

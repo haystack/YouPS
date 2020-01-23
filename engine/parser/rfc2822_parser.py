@@ -15,7 +15,7 @@ re_cfws = re.compile(CFWS)
 re_comment = re.compile(COMMENT)
 
 
-log = logging.getLogger('parser')
+log = logging.getLogger('youps')
 debug = log.debug
 info = log.info
 error = log.error
@@ -31,10 +31,14 @@ def _make_date_tz_aware(date):
 
 
 def _strip_ws_and_comments(val):
+    val_cp = (val + '.')[:-1] # deep copy original value
     while re_cfws.findall(val):
         val = re_cfws.sub('', val)
+    if val == re.sub(" ", "", val_cp): # if the above while only takes off ws, then just the keep original
+        val = val_cp
     while re_comment.findall(val):
         val = re_comment.sub('', val)
+
     return val
 
 

@@ -1,5 +1,5 @@
 import logging
-from ics import Calendar, Event
+# from ics import Calendar, Event # Soya comment out
 from icalevents.icalevents import events, download_calendar, find_conflicts
 from dateutil.tz import tzlocal
 from schema.youps import CalendarSchema

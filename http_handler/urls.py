@@ -17,6 +17,8 @@ shared_patterns = [
     url(r'^settings', 'browser.views.settings'),
     url(r'^404', 'browser.views.error'),
 
+    url(r'^login_imap_callback', 'browser.views.login_imap_callback'),
+
     # override the registration default urls - bug with django 1.6
     url(r'^accounts/password/change/$',
         murmur_acct,
@@ -83,6 +85,9 @@ shared_patterns = [
     url(r'^run_mailbot', 'browser.views.run_mailbot'),
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),
     url(r'^save_shortcut', 'browser.views.save_shortcut'),
+
+    url(r'^email_rule_meta', 'browser.views.get_email_rule_meta'),
+    
                     
     url(r'^apply_button_rule', 'browser.views.apply_button_rule'),                
     url(r'^create_mailbot_mode', 'browser.views.create_mailbot_mode'),
