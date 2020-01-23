@@ -272,7 +272,15 @@ class EmailRule(models.Model):
 
     def get_forward_addr(self):
         s = self.name.replace(" ", "_")
-        return ''.join(e for e in s if (e.isalnum() or e=="_"))
+        email_addr = ''.join(e for e in s if (e.isalnum() or e=="_"))
+        era = EmailRule_Args.objects.filter(rule=self)
+        for e in era:
+            if e.type == "datetime":
+                email_addr += "_" + e.name + "_MMDD"
+            else:
+                email_addr += "_" + e.name + "_XXX"
+
+        return email_addr + "@youps.csail.mit.edu"
 
 class EmailRule_Args(models.Model):
     id = models.AutoField(primary_key=True)
