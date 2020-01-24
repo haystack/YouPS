@@ -47,6 +47,8 @@ class LogSchema(models.Model):
 
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    action = models.TextField(blank=True) # log what actions happened in order to undo/redo
+
 
 class FolderSchema(models.Model):
     # the primary key

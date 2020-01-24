@@ -26,7 +26,7 @@ from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for t
                           ImapAccount, BaseMessage, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
 from engine.utils import IsNotGmailException
-from engine.models.helpers import message_helpers
+from engine.models.helpers import message_helpers, CustomProperty, Soyatest
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -99,12 +99,12 @@ class Message(object):
             return self._schema == other._schema
         return False
 
-    @property
+    @CustomProperty
     def _imap_account(self):
         # type: () -> ImapAccount
         return self._schema.imap_account
 
-    @property
+    @CustomProperty
     def _uid(self):
         # type: () -> int
         return self._schema.uid
@@ -115,7 +115,7 @@ class Message(object):
         self._schema.uid = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _msn(self):
         # type: () -> int
         return self._schema.msn
@@ -126,12 +126,12 @@ class Message(object):
         self._schema.msn = value
         self._schema.save()
 
-    @property
+    @CustomProperty
     def _message_id(self):
         # type: () -> int
         return self._schema.base_message.message_id
 
-    @property
+    @CustomProperty
     def flags(self):
         # type: () -> t.List[t.AnyStr]
         """Get the flags on the message
@@ -141,7 +141,7 @@ class Message(object):
         """
         return self._flags
 
-    @property
+    @CustomProperty
     def in_reply_to(self):
         # type: () -> t.List[t.AnyStr]
         """Get the message ids in the in_reply_to field 
@@ -151,7 +151,7 @@ class Message(object):
         """
         return self._schema.base_message.in_reply_to
 
-    @property
+    @CustomProperty
     def references(self):
         # type: () -> t.List[t.AnyStr]
         """Get the message ids in the references field 
@@ -161,7 +161,7 @@ class Message(object):
         """
         return self._schema.base_message.references
 
-    @property
+    @CustomProperty
     def deadline(self):
         # type: () -> datetime.datetime
         """Get the user-defined deadline of the message
@@ -187,7 +187,7 @@ class Message(object):
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
 
-    @property
+    @CustomProperty
     def task(self):
         # type: () -> t.AnyStr
         """Get the user-defined task of the message
@@ -203,7 +203,7 @@ class Message(object):
         self._schema.base_message.task = value
         self._schema.base_message.save()
 
-    @property
+    @CustomProperty
     def subject(self):
         # type: () -> t.AnyStr
         """Get the Subject of the message
@@ -213,7 +213,7 @@ class Message(object):
         """
         return self._schema.base_message.subject
 
-    @property
+    @CustomProperty
     def thread(self):
         # type: () -> t.Optional[Thread]
         from engine.models.thread import Thread
@@ -222,7 +222,7 @@ class Message(object):
         # TODO we should create the thread otherwise
         return None
 
-    @property
+    @CustomProperty
     def date(self):
         # type: () -> datetime
         """Get the date and time that the message was sent
@@ -232,7 +232,7 @@ class Message(object):
         """
         return self._schema.base_message.date
 
-    @property
+    @CustomProperty
     def is_read(self):
         # type: () -> bool
         """Get if the message has been read
@@ -242,7 +242,7 @@ class Message(object):
         """
         return '\\Seen' in self.flags
 
-    @property
+    @CustomProperty
     def is_unread(self):
         # type: () -> bool
         """Get if the message is unread
@@ -252,7 +252,7 @@ class Message(object):
         """
         return not self.is_read
 
-    @property
+    @CustomProperty
     def is_deleted(self):
         # type: () -> bool
         """Get if the message has been deleted
@@ -262,7 +262,7 @@ class Message(object):
         """
         return '\\Deleted' in self.flags
 
-    @property
+    @CustomProperty
     def is_recent(self):
         # type: () -> bool
         """Get if the message is recent
@@ -273,6 +273,7 @@ class Message(object):
         # TODO we will automatically remove the RECENT flag unless we make our imapclient ReadOnly
         return '\\Recent' in self.flags
 
+    @CustomProperty
     def is_replied(self):
         # type: () -> bool
         """Get if the message is replied
@@ -282,7 +283,7 @@ class Message(object):
         """
         return BaseMessage.objects.filter(imap_account=self._imap_account).filter(_in_reply_to__contains=self._message_id).exists()
 
-    @property
+    @CustomProperty
     def to(self):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is addressed to
@@ -293,7 +294,7 @@ class Message(object):
 
         return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.to.all()]
 
-    @property
+    @CustomProperty
     def from_(self):
         # type: () -> Contact
         """Get the Contact the message is addressed from
@@ -303,7 +304,7 @@ class Message(object):
         """
         return Contact(self._schema.base_message.from_m, self._imap_client) if self._schema.base_message.from_m else None
 
-    @property
+    @CustomProperty
     def sender(self):
         # type: () -> Contact
         """Get the Contact the message is addressed from
@@ -315,7 +316,7 @@ class Message(object):
         """
         return self.from_
 
-    @property
+    @CustomProperty
     def reply_to(self):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is replied to
@@ -328,7 +329,7 @@ class Message(object):
         """
         return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.reply_to.all()]
 
-    @property
+    @CustomProperty
     def cc(self):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is cced to
@@ -338,7 +339,7 @@ class Message(object):
         """
         return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.cc.all()]
 
-    @property
+    @CustomProperty
     def bcc(self):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is bcced to
@@ -348,7 +349,7 @@ class Message(object):
         """
         return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.bcc.all()]
 
-    @property
+    @CustomProperty
     def recipients(self):
         # type: () -> t.List[Contact]
         """Shortcut method to get a list of all the recipients of an email.
@@ -361,7 +362,7 @@ class Message(object):
         """
         return list(set(chain(self.to, self.cc, self.bcc)))
 
-    @property
+    @CustomProperty
     def folder(self):
         # type: () -> Folder
         """Get the Folder the message is contained in
@@ -372,8 +373,8 @@ class Message(object):
         from engine.models.folder import Folder
         return Folder(self._schema.folder, self._imap_client)
 
-    @property
-    def content(self):
+    @CustomProperty
+    def content(self, return_only_text=True):
         # type: () -> t.AnyStr
         """Get the content of the message
 
@@ -443,12 +444,14 @@ class Message(object):
         """
         self.add_flags('\\Deleted')
 
+    @CustomProperty
     def mark_read(self):
         # type: () -> None
         """Mark a message as read.
         """
         self.add_flags('\\Seen')
 
+    
     def mark_unread(self):
         # type: () -> None
         """Mark a message as unread
@@ -469,6 +472,7 @@ class Message(object):
                     self.delete()
                     self._imap_client.expunge()
 
+    
     def forward(self, to=[], cc=[], bcc=[], content=""):
         to = format_email_address(to)
         cc = format_email_address(cc)
@@ -483,6 +487,9 @@ class Message(object):
                 mailbox = MailBox(self._schema.imap_account, self._imap_client)
                 mailbox._send_message( new_message_wrapper )
 
+    @Soyatest
+    def qwer(self):
+        pass
 
     def contains(self, string):
         # type: (t.AnyStr) -> bool
@@ -494,7 +501,14 @@ class Message(object):
         Returns:
             bool: true if the passed in string is in the message content
         """
+        if string is None:
+            raise TypeError("contains(): input string should not be None")
+
         return string in self.content["text"] if self.content["text"] else False
+
+    @CustomProperty
+    def attachments(self):
+        return message_helpers.get_attachments(self)
 
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None

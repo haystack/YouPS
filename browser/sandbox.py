@@ -32,6 +32,7 @@ def interpret_bypass_queue(mailbox, extra_info):
 
     # create a string buffer to store stdout
     user_std_out = StringIO()
+    user_property_log = []
     with sandbox_helpers.override_print(user_std_out) as fakeprint:
         if mailbox.is_simulate:
             print ("Simulating: this only simulates your rule behavior and won't affect your messages")
@@ -45,7 +46,7 @@ def interpret_bypass_queue(mailbox, extra_info):
         # Applying diff msgs to a same source code
         # TODO this code is completely broken and fires events based on function names
         for message_schema in message_schemas:
-            msg_log = {"log": "", "error": False}
+            msg_log = {"log": "", "property_log": [], "error": False}
             logger.debug(message_schema.base_message.subject)
 
             # create a read-only message object to prevent changing the message
@@ -55,6 +56,9 @@ def interpret_bypass_queue(mailbox, extra_info):
                 user_environ['new_message'] = new_message
                 mailbox._imap_client.select_folder(message_schema.folder.name)
 
+                # clear the property log at the last possible moment
+                user_property_log = []
+                mailbox._imap_client.user_property_log = user_property_log
                 # execute the user's code
                 if "on_message" in code:
                     exec(code + "\non_message(new_message)", user_environ)    
@@ -78,6 +82,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 fakeprint(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
+                msg_log["property_log"].extend(user_property_log)
                 logger.info(msg_log)
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
@@ -89,7 +94,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                     msg_log2["trigger"] = extra_info["rule_name"] or "untitled" if "rule_name" in extra_info else "untitled"
                     logger.debug(msg_log2)
                     log_to_dump = {msg_log2["timestamp"]: msg_log2}
-                    dump_execution_log(mailbox._imap_account, log_to_dump)
+                    dump_execution_log(mailbox._imap_account, log_to_dump, msg_log["property_log"])
 
                 # clear current input buffer
                 user_std_out.truncate(0)
@@ -134,7 +139,7 @@ def interpret(mailbox, mode):
     from schema.youps import EmailRule, MailbotMode
 
     # set up the default result
-    res = {'status': True, 'imap_error': False, 'imap_log': ""}
+    res = {'status': True, 'imap_error': False, 'imap_log': "", 'property_log': []}
 
     # assert we actually got a mailbox
     assert isinstance(mailbox, MailBox)
@@ -259,6 +264,7 @@ def interpret(mailbox, mode):
                     # else:
 
                     exc_type, exc_obj, exc_tb = sys.exc_info()
+                    logger.exception(sys.exc_info())
                     logger.exception("failure running user %s code" % mailbox._imap_account.email)
                     error_msg = str(e) + traceback.format_tb(exc_tb)[-1]
                     try:

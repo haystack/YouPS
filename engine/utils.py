@@ -109,7 +109,7 @@ def normalize_msg_id(message_id):
         str: standard message_id for comparison with other message ids
     """
     # clean up empty strings
-    message_ids = message_id_split_regex.findall(message_id)
+    message_ids = MESSAGE_ID_SPLIT_RE.findall(message_id)
 
     # TODO better sanity checking from rfc5322
     # sanity check
@@ -259,10 +259,10 @@ def references_algorithm(start_msg):
 
     # TODO PART 5 and PART 6 RFC 5256
 
-def dump_execution_log(imapAccount, new_log):
+def dump_execution_log(imapAccount, new_log, action_log):
     if new_log != {}:
         logger.debug(new_log)
-        l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log))
+        l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log), action=json.dumps(action_log))
         l.save()
 
 def turn_on_youps(imapAccount, turn_on, verbose):
@@ -277,18 +277,20 @@ def turn_on_youps(imapAccount, turn_on, verbose):
 # REGEXES
 # Match carriage return new lines followed by whitespace. For example "\r\n   \t\t"
 # this is used to indicate multi line fields in email headers
-folding_ws_regex = re.compile(r'\r\n[\ \t]+')    
+FOLDING_WS_RE = re.compile(r'\r\n[\ \t]+')    
 
 
 # Match encoded-word strings in the form =?charset?q?Hello_World?=
 # this is used to indicate encoding in email headers
 # the regex used in python2 decode_header is incorrect, this is from the
 # python3 version and can be removed when/if the project moves to python3
-encoded_word_string_regex = re.compile(r'(=\?[^?]*?\?[qQbB]\?.*?\?=)', re.VERBOSE | re.MULTILINE)
+ENCODED_WORD_STRING_RE = re.compile(r'(=\?[^?]*?\?[qQbB]\?.*?\?=)', re.VERBOSE | re.MULTILINE)
 
 # basically find Parentheses containing text surrounded by optional white space
 # TODO might have to rewrite with RFC5322
-header_comment_regex = re.compile(r'\((?:(?:[\ \t]*\r\n){0,1}[\ \t]*[\x01-\x08\x0B\x0C\x0E-\x1F\x21-\x27\x2A-\x5B\x5D-\x7F]|\\[\x01-\x09\x0B\x0C\x0E-\x7F])*(?:[\ \t]*\r\n){0,1}[\ \t]*\)')
+HEADER_COMMENT_RE = re.compile(r'\((?:(?:[\ \t]*\r\n){0,1}[\ \t]*[\x01-\x08\x0B\x0C\x0E-\x1F\x21-\x27\x2A-\x5B\x5D-\x7F]|\\[\x01-\x09\x0B\x0C\x0E-\x7F])*(?:[\ \t]*\r\n){0,1}[\ \t]*\)')
 
 
-message_id_split_regex = re.compile(r'<(.*?)>')
+MESSAGE_ID_SPLIT_RE = re.compile(r'<(.*?)>')
+
+ATTACHMENTS_RE = re.compile(r'(?<="name"\s").+?(?=")')
