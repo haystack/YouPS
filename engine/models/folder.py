@@ -231,11 +231,13 @@ class Folder(object):
                             server_flags = set(parse_flags(res[uid][key]))
                             deleted_flags = cached_flags - server_flags
                             new_flags = server_flags - cached_flags
-                            if deleted_flags or new_flags:
-                                logger.info('detect flags %s: deleted %s. new %s',
-                                            messages[uid], deleted_flags, new_flags)
-
+                            if cached_flags != server_flags:
                                 messages_with_flag_changes.append(messages[uid])
+                            # if deleted_flags or new_flags:
+                            #     logger.info('detect flags %s: deleted %s. new %s',
+                            #                 messages[uid], deleted_flags, new_flags)
+
+                            #     messages_with_flag_changes.append(messages[uid])
 
             return messages_with_flag_changes
 

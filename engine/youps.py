@@ -115,20 +115,24 @@ def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
         imapAccount = ImapAccount.objects.get(email=email)
         d = {}
         if from_id is None and to_id is None: # return first 10 
-            logs = LogSchema.objects.filter(imap_account=imapAccount).order_by("-timestamp")[:10]
+            logs = LogSchema.objects.filter(imap_account=imapAccount, is_canceled=False).order_by("-timestamp")[:10]
                 
         elif from_id is None:
-            logs = LogSchema.objects.filter(id__lte=to_id).filter(imap_account=imapAccount)
+            logs = LogSchema.objects.filter(id__lte=to_id, is_canceled=False).filter(imap_account=imapAccount)
 
         elif to_id is None:
-            logs = LogSchema.objects.filter(id__gte=from_id).filter(imap_account=imapAccount)
+            logs = LogSchema.objects.filter(id__gte=from_id, is_canceled=False).filter(imap_account=imapAccount)
         
         else:    
-            logs = LogSchema.objects.filter(id__range=[from_id, to_id]).filter(imap_account=imapAccount)
+            logs = LogSchema.objects.filter(id__range=[from_id, to_id], is_canceled=False).filter(imap_account=imapAccount)
 
         for l in logs:
             # logger.exception(l.content)
-            d.update( json.loads(l.content) )
+            # TODO get keys in the tmp then add logschema_id
+            tmp = json.loads(l.content)
+            k = tmp.keys()[0]
+            tmp[k]["logschema_id"] = l.id
+            d.update( tmp )
 
         res["log_min_id"] = -1
         res["log_max_id"] = -1
@@ -155,7 +159,6 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 	res = {'status' : False}
 	
 	try:
-		logger.info("here")
 		imapAccount = ImapAccount.objects.get(email=email)
 		auth_res = authenticate( imapAccount )
 		if not auth_res['status']:
@@ -174,21 +177,22 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 		            kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
 		        except Exception:
 		            res['code'] = key
+		            logger.info("qwersdf")
 		            raise TypeError
 
 		mailbox = MailBox(imapAccount, imap, is_simulate=False)
 		res = interpret_bypass_queue(mailbox, extra_info={"msg-id": msg_schema_id, "code": er.code, "shortcut": kargs, "rule_name": er.name})
 		logger.info(kargs) 
 		logger.info(er.code)
-		logger.info(res)
+		# logger.info(res)
 		res['status'] = True
 	
 	except ImapAccount.DoesNotExist:
 	    res['code'] = "Error during deleting the mode. Please refresh the page."
 	except MailbotMode.DoesNotExist:
 	    res['code'] = "Error during deleting the mode. Please refresh the page."
-	except TypeError:
-	    res['code'] = "Datetime %s is in wrong format!" % res['code']
+	except TypeError as e:
+	    res['code'] = "Datetime %s is in wrong format!" % e
 	except Exception as e:
 	    logger.exception(e)
 	    res['code'] = msg_code['UNKNOWN_ERROR']
@@ -290,7 +294,7 @@ def fetch_watch_message(user, email, watched_message):
                             if str(r.id) in watched_message:
                                 continue
                             logger.info(r.base_message.subject)
-                            message = Message(r, imap_client="")   # since we are only extracting metadata, no need to use imap_client
+                            message = Message(r, imap_client=imap)   
                             res['message_schemaid'] = r.id
                             res['message'] = message._get_meta_data_friendly()
                             res['sender'] = message._get_from_friendly()
@@ -685,6 +689,52 @@ def save_shortcut(user, email, shortcuts, push=True):
     except ImapAccount.DoesNotExist:
         res['code'] = "Not logged into IMAP"
     except Exception as e:
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
+    logging.debug(res)
+    return res
+
+def undo(user, email, logschema_id):
+    res = {'status' : False, 'log': ""}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        logschema = LogSchema.objects.get(id=logschema_id)
+
+        actions = json.loads(logschema.action)
+    
+        auth_res = authenticate( imapAccount )
+        if not auth_res['status']:
+            raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+        imap = auth_res['imap']  # noqa: F841 ignore unused
+    
+        # Redo actions reverse to undo
+        for action in reversed(actions):
+            if action["type"] == "send":
+                logger.info("unreversable action")
+                continue
+
+            message_schema = MessageSchema.objects.get(id=action["schema_id"])
+            message = Message(message_schema, imap_client=imap) 
+            setattr(message, action["function_name"], action["args"][0])
+            logger.info("undo %s %s" % (action["function_name"], action["args"][0]))
+
+        logschema.is_canceled = True
+        logschema.save()
+
+        res['status'] = True
+
+    except IMAPClient.Error as e:
+        res['code'] = e
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Not logged into IMAP"
+    except LogSchema.DoesNotExist:
+        res['code'] = "Can't undo the action!"
+    except MessageSchema.DoesNotExist:
+        res['code'] = "This message no longer exists in your inbox"
+    except Exception as e:
+        logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)

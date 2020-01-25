@@ -109,8 +109,8 @@ class CustomProperty(object):
             c=class_name, p=property_name, v=value)
         _set_in_log(obj, False)
 
-        if not property_name.startswith("_"):
-            _log_info(obj, info_string)
+        # if not property_name.startswith("_"):
+        #     _log_info(obj, info_string)
 
         return value
 
@@ -128,8 +128,15 @@ class CustomProperty(object):
         curr_value = self.fget(obj)
         class_name = _get_class_name(obj)
         property_name = _get_method_name(self.fset)
-        info_string = u"set {c}.{p}\t{v} -> {nv}".format(
-            c=class_name, p=property_name, v=curr_value, nv=new_value)
+        info_string = {
+            "type": "set",
+            "class_name": class_name,
+            "function_name": property_name,
+            "args": [curr_value, new_value],
+            "schema_id": obj._schema.id
+        }
+        # u"set {c}.{p}\t{v} -> {nv}".format(
+        #     c=class_name, p=property_name, v=curr_value, nv=new_value)
         self.fset(obj, new_value)
         _set_in_log(obj, False)
 

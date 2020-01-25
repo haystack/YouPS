@@ -61,6 +61,7 @@ class RuleSelector extends React.Component {
   }
 
   applyRule(e, er_id) {
+    show_loader(true);
     // Get selected messages
     $.each($("input[name='watched_message']:checked"), function(k, v) {
       var kargs = {};

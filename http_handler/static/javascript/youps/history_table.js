@@ -10,6 +10,32 @@ $(document).ready(function() {
 })
 
 
+$('#console-table tbody').on('click', '.btn-undo', function () {
+    var logschema_id = $(this).attr("logschema_id");
+    var self = this;
+    var params = {"logschema-id": logschema_id};
+
+    if (confirm("Are you sure you want to cancel this action? \n" + $(this).data("property-log"))) {
+        $.post('/undo', params,
+            function(res) {
+                // success
+                if (res.status) {
+                    $(self).text('Canceled');
+                    $(self).prop("disabled",true);
+
+                    notify(res, true);
+                } else {
+                    notify(res, false);
+                }
+            }
+        ).fail(function(res) {
+            alert("Please refresh the page!");
+        });
+    }
+    
+    
+});
+
 function append_log( msg_log, is_error ) {
     if(!msg_log) return;  
         var sorted = [];
@@ -28,12 +54,23 @@ function append_log( msg_log, is_error ) {
                 // alert(Message["trigger"]);
     
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
+                var property_log= "";
+                $.each(Message["property_log"], function(k, v) {
+                    if(v["type"] == "send")
+                        property_log += "- {0} {1} (can not be canceled)\n".format( v["function_name"], v["args"])
+                    else 
+                        property_log += "- {0} {1} to {2} \n".format( v["type"], v["function_name"], v["args"].length > 1 ? v["args"][1] : "")
+                });
+
+                console.log(property_log)
+
                 t.row.add( [
                         timestamp.split(",")[0],
                         '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                        (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log']
+                        (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log'],
+                        '<button type="button" logschema_id={0} class="btn btn-warning btn-undo" data-property-log="{1}">Undo</button>'.format(Message["logschema_id"], property_log)
                 ] ).draw( false );  
     
                 // Delete attributes that are not allowed for users 
@@ -42,6 +79,7 @@ function append_log( msg_log, is_error ) {
                 delete Message["log"];
                 delete Message["timestamp"];
                 delete Message["type"];
+                delete Message["logschema_id"];
     
                 Contact :  Message['from_']
                 $('#jsonpanel-from-' + json_panel_id).jsonpanel({
@@ -92,9 +130,6 @@ function fetch_log(from_id=null, to_id=null) {
     
     $.post('/fetch_execution_log', params,
         function(res) {
-            // $('#donotsend-msg').hide();
-            // console.log(res);
-            
             // success
             if (res.status) {
                 // Update execution log
@@ -150,6 +185,7 @@ $(document).ready(function() {
             { "orderable": false },
             { "width": "200px", "orderable": false },
             { "width": "400px", "orderable": false },
+            { "orderable": false },
             { "orderable": false }
         ],
         "order": [[1, 'asc']],

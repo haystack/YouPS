@@ -174,7 +174,7 @@ class Message(object):
     @deadline.setter
     def deadline(self, value):
         # type: (datetime.datetime) -> None
-        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+        if isinstance(value, datetime) and (value.tzinfo is None or value.tzinfo.utcoffset(value) is None):
             value = tz('US/Eastern').localize(value)
             value = timezone.localtime(value)
             logger.info(value)
@@ -472,7 +472,7 @@ class Message(object):
                     self.delete()
                     self._imap_client.expunge()
 
-    
+    @Soyatest
     def forward(self, to=[], cc=[], bcc=[], content=""):
         to = format_email_address(to)
         cc = format_email_address(cc)
@@ -486,10 +486,6 @@ class Message(object):
                 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
                 mailbox = MailBox(self._schema.imap_account, self._imap_client)
                 mailbox._send_message( new_message_wrapper )
-
-    @Soyatest
-    def qwer(self):
-        pass
 
     def contains(self, string):
         # type: (t.AnyStr) -> bool

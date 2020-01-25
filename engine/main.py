@@ -21,7 +21,7 @@ from engine.s3_storage import upload_attachments, download_attachments, download
 from schema.models import *
 from smtp_handler.utils import *
 
-from engine.youps import get_deltas_cursors, login_imap, fetch_execution_log, apply_button_rule, create_mailbot_mode, fetch_watch_message, delete_mailbot_mode, remove_rule, run_mailbot, run_simulate_on_messages, save_shortcut, handle_imap_idle
+from engine.youps import get_deltas_cursors, login_imap, fetch_execution_log, apply_button_rule, create_mailbot_mode, fetch_watch_message, delete_mailbot_mode, remove_rule, run_mailbot, run_simulate_on_messages, save_shortcut, undo, handle_imap_idle
 
 def format_date_time(d):
     return datetime.strftime(d, '%Y/%m/%d %H:%M:%S')

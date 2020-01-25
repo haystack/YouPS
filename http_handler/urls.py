@@ -85,6 +85,7 @@ shared_patterns = [
     url(r'^run_mailbot', 'browser.views.run_mailbot'),
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),
     url(r'^save_shortcut', 'browser.views.save_shortcut'),
+    url(r'^undo', 'browser.views.undo'),
 
     url(r'^email_rule_meta', 'browser.views.get_email_rule_meta'),
     

@@ -260,9 +260,10 @@ def references_algorithm(start_msg):
     # TODO PART 5 and PART 6 RFC 5256
 
 def dump_execution_log(imapAccount, new_log, action_log):
+    from django.core.serializers.json import DjangoJSONEncoder
     if new_log != {}:
-        logger.debug(new_log)
-        l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log), action=json.dumps(action_log))
+        logger.info(new_log)
+        l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log,cls=DjangoJSONEncoder), action=json.dumps(action_log,cls=DjangoJSONEncoder))
         l.save()
 
 def turn_on_youps(imapAccount, turn_on, verbose):

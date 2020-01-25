@@ -18,6 +18,7 @@ from django.template.context import RequestContext
 from django.utils.encoding import *
 from django.template import Context, Template, loader
 from django.utils import timezone
+from django.core.serializers.json import DjangoJSONEncoder
 
 from nylas import APIClient
 
@@ -284,7 +285,8 @@ def apply_button_rule(request):
 		er_id = request.POST['er_id']
 		kargs = json.loads(request.POST.get('kargs'))
 		res = engine.main.apply_button_rule(user, request.user.email, er_id, msg_schema_id, kargs)
-		return HttpResponse(json.dumps(res), content_type="application/json")
+		
+		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
 	except Exception as e:
 		logger.exception(e)
 		return HttpResponse(request_error, content_type="application/json")
@@ -389,6 +391,18 @@ def save_shortcut(request):
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.debug(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def undo(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		
+		logschema_id = request.POST['logschema-id']
+		res = engine.main.undo(user, request.user.email, logschema_id)
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except Exception as e:
+		logging.debug(e)
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required

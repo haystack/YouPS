@@ -46,7 +46,7 @@ class LogSchema(models.Model):
     content = models.TextField()
 
     timestamp = models.DateTimeField(auto_now_add=True)
-
+    is_canceled = models.BooleanField(default=False)
     action = models.TextField(blank=True) # log what actions happened in order to undo/redo
 
 
