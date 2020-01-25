@@ -83,7 +83,7 @@ def interpret_bypass_queue(mailbox, extra_info):
             finally:
                 msg_log["log"] += user_std_out.getvalue()
                 msg_log["property_log"].extend(user_property_log)
-                # logger.info(msg_log)
+                logger.info(msg_log)
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
 

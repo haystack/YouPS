@@ -88,7 +88,7 @@ class Message(object):
 
     def __str__(self):
         # type: () -> t.AnyStr
-        return "Message %d" % self._uid
+        return "Message %d" % self.subject
 
     def __repr__(self):
         return repr('Message object "%s"' % str(self.subject))
@@ -506,6 +506,7 @@ class Message(object):
     def attachments(self):
         return message_helpers.get_attachments(self)
 
+    @Soyatest
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message
@@ -513,10 +514,10 @@ class Message(object):
         if not self._is_simulate:
             to_addr = ""
             if isinstance(to, list):
-                to_addr = to.append(self._schema.from_)
-                to = format_email_address(to_addr)
+                to.append(self.from_)
+                to = format_email_address(to)
             else:
-                to = format_email_address([self._schema.from_, to])
+                to = format_email_address([self.from_, to])
 
             cc = format_email_address(cc)
             bcc = format_email_address(bcc)
@@ -524,11 +525,15 @@ class Message(object):
             new_message_wrapper = self._create_message_instance(
                 "Re: " + self.subject, to, cc, bcc, content)
 
+            if len((to + cc + bcc).strip()) == 0:
+                raise Exception("there has to be at least one recipient")
+
             if new_message_wrapper:
                 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
                 mailbox = MailBox(self._schema.imap_account, self._imap_client)
                 mailbox._send_message( new_message_wrapper )
 
+    @Soyatest
     def reply_all(self, more_to=[], more_cc=[], more_bcc=[], content=""):
         if isinstance(more_cc, list):
             if len(self.cc) > 0:

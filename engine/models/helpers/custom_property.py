@@ -58,11 +58,13 @@ def Soyatest(f):
         class_name = _get_class_name(obj)
         _get_logger().info(obj)
         function_name = _get_method_name(f)
+        parsed_args = [str(args[i]) for i in range(len(args))]
+
         info = {
             "type": "send",
             "class_name": class_name,
             "function_name": function_name,
-            "args": args,
+            "args": parsed_args,
             "schema_id": obj._schema.id
         }
         # u"get {c}.{p}\t{v}".format(
