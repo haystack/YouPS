@@ -286,6 +286,8 @@ def fetch_watch_message(user, email, watched_message):
                     msgs = folder._refresh_flag_changes(highest_mod_seq)
 
                     if msgs:
+                        res['contexts'] = []
+                        res['message_schemaids'] = []
                         for r in msgs:
 
                             # if this message is already caught, skip to next to find another new msgs
@@ -295,7 +297,7 @@ def fetch_watch_message(user, email, watched_message):
                                 continue
                             logger.info(r.base_message.subject)
                             message = Message(r, imap_client=imap)   
-                            res['message_schemaid'] = r.id
+                            res['message_schemaids'].append(r.id)
                             res['message'] = message._get_meta_data_friendly()
                             res['sender'] = message._get_from_friendly()
                             
@@ -307,12 +309,12 @@ def fetch_watch_message(user, email, watched_message):
                             except:
                                 logger.exception("parsing arrival date fail; skipping parsing")
 
-                            res['context'] = {'sender': res['sender']["name"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": res['message_schemaid']}
+                            res['contexts'].append( {'sender': res['sender']["name"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
 
-                            # if there is update, send it to the client immediatly 
-                            if 'message' in res:
-                                res['status'] = True
-                                return res
+                        # if there is update, send it to the client immediatly 
+                        if 'message' in res:
+                            res['status'] = True
+                            return res
 
                 # r=requests.get(url, headers=headers)
 

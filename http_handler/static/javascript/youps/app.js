@@ -23,14 +23,13 @@ function fetch_watch_message() {
               // TODO if the message is from a different folder, noop 
               // uid: message schema id
               else  { // If everything successful
-                  if ("message" in res) {
-                      var message = res["message"];
-                      if( watched_message.indexOf( res['message_schemaid'] ) == -1 ) {
-                          $("#message-parameter-table").append( res['message_row'] );
-                          
-                          watched_message.push( res['message_schemaid'] );
-                      }
-                  }
+                  $.each(res['message_rows'], function(i, message) {
+                    if( watched_message.indexOf( res['message_schemaids'][i] ) == -1 ) {
+                      $("#message-parameter-table").append( message );
+                      
+                      watched_message.push( res['message_schemaids'][i] );
+                    }
+                  })
               }
               
               // show_loader(false);
