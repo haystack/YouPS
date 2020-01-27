@@ -1,3 +1,3 @@
-from custom_property import CustomProperty, Soyatest
+from custom_property import CustomProperty, ActionLogging
 
-__all__ = ["CustomProperty", "Soyatest"]
+__all__ = ["CustomProperty", "ActionLogging"]

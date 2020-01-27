@@ -26,7 +26,7 @@ from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for t
                           ImapAccount, BaseMessage, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
 from engine.utils import IsNotGmailException
-from engine.models.helpers import message_helpers, CustomProperty, Soyatest
+from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -472,7 +472,7 @@ class Message(object):
                     self.delete()
                     self._imap_client.expunge()
 
-    @Soyatest
+    @ActionLogging
     def forward(self, to=[], cc=[], bcc=[], content=""):
         to = format_email_address(to)
         cc = format_email_address(cc)
@@ -506,7 +506,7 @@ class Message(object):
     def attachments(self):
         return message_helpers.get_attachments(self)
 
-    @Soyatest
+    @ActionLogging
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message
@@ -533,7 +533,7 @@ class Message(object):
                 mailbox = MailBox(self._schema.imap_account, self._imap_client)
                 mailbox._send_message( new_message_wrapper )
 
-    @Soyatest
+    @ActionLogging
     def reply_all(self, more_to=[], more_cc=[], more_bcc=[], content=""):
         if isinstance(more_cc, list):
             if len(self.cc) > 0:

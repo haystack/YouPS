@@ -53,7 +53,7 @@ def _is_nested(obj):
         return obj._imap_client.nested_log
     return False
 
-def Soyatest(f):
+def ActionLogging(f):
     def inner_func(obj, *args, **kwargs):
         class_name = _get_class_name(obj)
         _get_logger().info(obj)
