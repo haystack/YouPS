@@ -52,7 +52,7 @@ def _open_rfc822(message):
     finally:
         # if the message was read mark it as unread
         if initially_unread:
-            logger.critical("INITIALLLY UNREAD")
+            logger.debug("INITIALLLY UNREAD")
             # TODO see remove_flags_gmail, marking unread doesn't actually work
             message.mark_unread()
 
@@ -83,7 +83,7 @@ def _get_text_from_python_message(part):
 # make things open to extension but closed for modification
 def get_content_from_message(message, return_only_text=False):
     # type: (Message) -> None
-    with _open_rfc822(message) as rfc_contents:
+    with _open_rfc822(message) as rfc_contents: 
         text = ""
         html = ""
         extra = {}

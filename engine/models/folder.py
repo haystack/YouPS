@@ -49,6 +49,19 @@ class Folder(object):
         if isinstance(other, basestring):
             return other == self.name
         return False
+    
+    def messages(self):
+        # type: () -> t.List[Message]
+        """Get the messages associated with the folder
+
+        Returns:
+            t.List[Message]: Get all the messages in the folder
+        """
+
+        if self.name.lower() == "inbox":
+            raise Exception("messages(): not allowed to use it for your default folder to prevent overload")
+        
+        return list(Message(m, self._imap_client) for m in MessageSchema.objects.filter(folder=self._schema))
 
     @CustomProperty
     def _uid_next(self):

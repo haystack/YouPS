@@ -230,7 +230,7 @@ def loop_sync_user_inbox():
                 try:
                     res = mailbox._run_user_code()
                     dump_execution_log(imapAccount, res['imap_log'], res["property_log"])
-                except Exception():
+                except Exception:
                     logger.exception("Mailbox run user code failed")
 
                 

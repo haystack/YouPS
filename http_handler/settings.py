@@ -66,6 +66,8 @@ CLIENT_ID = ''
 CLIENT_SECRET = ''
 IMAP_SECRET = ''
 PRETEST_EMAIL = []
+NYLAS_ID = ""
+NYLAS_SECRET = ""
 
 try:
     exec(open(SITE_ROOT + '/../private.py').read())

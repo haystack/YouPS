@@ -131,6 +131,7 @@ def fetch_execution_log(user, email, from_id=None, to_id=None, push=True):
             # TODO get keys in the tmp then add logschema_id
             tmp = json.loads(l.content)
             k = tmp.keys()[0]
+            tmp[k]["property_log"] = l.action
             tmp[k]["logschema_id"] = l.id
             d.update( tmp )
 

@@ -262,9 +262,9 @@ def references_algorithm(start_msg):
 def dump_execution_log(imapAccount, new_log, action_log):
     from django.core.serializers.json import DjangoJSONEncoder
     if new_log != {}:
-        logger.info(new_log)
         l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log,cls=DjangoJSONEncoder), action=json.dumps(action_log,cls=DjangoJSONEncoder))
         l.save()
+        logger.info(new_log)
 
 def turn_on_youps(imapAccount, turn_on, verbose):
     if turn_on:

@@ -25,7 +25,7 @@ from nylas import APIClient
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
 from engine.constants import msg_code
-from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, NYLAS_ID, NYLAS_SECRET
 from registration.forms import RegistrationForm
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule, EmailRule_Args
 from smtp_handler.utils import *
@@ -146,12 +146,10 @@ def login_imap_callback(request):
 	res = {'website': WEBSITE}
 	
 	# logger.info(request)
-	code = request.GET['code']
+	code = "OAQABAAIAAABeAFzDwllzTYGDLh_qYbH81VUHF"#request.GET['code']
 
-	APP_ID = "e2qdjgra07ea3p3idcv1bea1z"
-	APP_SECRET = "dprso40e0tjqk989fab76hqq"
 	# Exchange the authorization code for an access token
-	client = APIClient(APP_ID, APP_SECRET)
+	client = APIClient(NYLAS_ID, NYLAS_SECRET)
 	logger.info(code)
 	access_token = client.token_for_code(code)
 	logger.info(access_token)

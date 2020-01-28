@@ -49,13 +49,14 @@ function append_log( msg_log, is_error ) {
         $.each(sorted, function(index, timestamp) {     
             try {
                 Message = msg_log[timestamp];
+                
                 if (Message && !"timestamp" in Message) return;
                 _message_data = Message;
                 // alert(Message["trigger"]);
     
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
-                var property_log= "";
-                $.each(Message["property_log"], function(k, v) {
+                var property_log= JSON.parse(Message["property_log"]);
+                $.each(property_log, function(k, v) {
                     if(v["type"] == "send")
                         property_log += "- {0} {1} (can not be canceled)\n".format( v["function_name"], v["args"])
                     else 
@@ -63,6 +64,7 @@ function append_log( msg_log, is_error ) {
                 });
 
                 console.log(property_log)
+                console.log(Message['subject'])
 
                 t.row.add( [
                         timestamp.split(",")[0],

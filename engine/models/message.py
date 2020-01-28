@@ -553,6 +553,18 @@ class Message(object):
 
         self.reply(more_to, more_cc, more_bcc, content)
 
+    def test(self):
+        from engine.models.helpers.message_helpers import _open_rfc822
+        from email_reply_parser import EmailReplyParser
+        # logger.info(EmailReplyParser.read(self.content['text']).fragments)
+        for f in EmailReplyParser.read(self.content['text']).fragments:
+            logger.info(f.headers)
+            logger.info(f.content)
+        
+        # with _open_rfc822(message) as rfc_contents:
+        # with _open_rfc822(self) as email_message:
+        #     logger.info(EmailReplyParser.read(email_message))
+
     def see_later(self, later_at=60, hide_in='YouPS see later'):
         """Hide a message to a folder and move it back to a original folder
 
