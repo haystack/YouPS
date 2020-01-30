@@ -86,8 +86,13 @@ def index(request):
 @login_required
 def settings(request):
 	user = get_object_or_404(UserProfile, email=request.user.email)
-	
-	return {'user': request.user, 'website' : WEBSITE, 'group_page' : True}
+	login_hint = request.user.email.replace("@mit.edu", "@exchange.mit.edu")
+	nylas_logged_in = False
+	ia = ImapAccount.objects.filter(email=request.user.email)
+	if ImapAccount.objects.filter(email=request.user.email).exists():
+		nylas_logged_in = True if ia[0].nylas_access_token else False
+
+	return {'user': request.user, 'nylas_logged_in':nylas_logged_in, 'login_hint': login_hint.replace("@", "%40"), 'email': request.user.email.replace("@", "%40"),'nylas_client_id': NYLAS_ID, 'website' : WEBSITE, 'group_page' : True}
 
 @render_to(WEBSITE+"/login_email.html")
 def login_imap_view(request):
@@ -145,14 +150,19 @@ def login_imap_view(request):
 def login_imap_callback(request):
 	res = {'website': WEBSITE}
 	
-	# logger.info(request)
-	code = "OAQABAAIAAABeAFzDwllzTYGDLh_qYbH81VUHF"#request.GET['code']
+	logger.info(request)
+	state = request.GET['state']
+	code = request.GET['code']
 
 	# Exchange the authorization code for an access token
 	client = APIClient(NYLAS_ID, NYLAS_SECRET)
-	logger.info(code)
+	logger.info(state)
 	access_token = client.token_for_code(code)
 	logger.info(access_token)
+
+	i = ImapAccount.objects.get(email=state)
+	i.nylas_access_token = access_token
+	i.save()
 
 	return HttpResponseRedirect('/editor')
 

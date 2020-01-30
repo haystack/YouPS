@@ -5,6 +5,7 @@ import logging
 import datetime
 import smtplib
 import traceback
+import requests
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
@@ -104,11 +105,33 @@ class MailBox(object):
         # We can also close the connection if we are done with it.
         # Just be sure any changes have been committed or they will be lost.
         conn.close()
+
+    def _check_delta(self):
+        url = 'https://api.nylas.com/delta/latest_cursor'
+        user_access_token = self._imap_account.nylas_access_token
+        headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
+        r=requests.post(url, headers=headers)
+
+        if r.json()['cursor'] != "XXX":#self._imap_account.delta_cursor:
+            return True
+
+        return None
         
     def _sync(self):
         # type: () -> bool 
         """Synchronize the mailbox with the imap server.
         """
+
+        # do sync whenever there is delta detected by Nylas
+        mailbox_cursor = self._check_delta()
+        if not mailbox_cursor:
+            logger.info("No delta detected at %s -- move on to next inbox" % self._imap_account.email)
+
+        # TODO request delta
+
+        # TODO update the cursor
+        #self._imap_account.delta_cursor = res['cursor_end']
+        #self._imap_account.save()
 
         # should do a couple things based on
         # https://stackoverflow.com/questions/9956324/imap-synchronization

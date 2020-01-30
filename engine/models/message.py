@@ -1,4 +1,4 @@
-from __future__ import division, print_function, unicode_literals
+from __future__ import division, print_function, unicode_literals, absolute_import
 
 import email
 import inspect
@@ -27,6 +27,9 @@ from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for t
 from smtp_handler.utils import format_email_address, get_attachments
 from engine.utils import IsNotGmailException
 from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
+
+from http_handler.settings import NYLAS_ID, NYLAS_SECRET
+from nylas import APIClient
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -58,6 +61,8 @@ class Message(object):
 
         # local copy of flags for simulating
         self._flags = self._schema.flags
+
+        self._nylas_message = None
         logger.debug('caller name: %s', inspect.stack()[1][3])
 
     @staticmethod
@@ -213,14 +218,68 @@ class Message(object):
         """
         return self._schema.base_message.subject
 
+    def _get_nylas_message(self):
+        if self._nylas_message is None:
+            logger.exception("here")
+            nylas = APIClient(
+                NYLAS_ID,
+                NYLAS_SECRET,
+                self._imap_account.nylas_access_token
+            )
+            
+            from calendar import timegm
+            import pytz
+            datetime_obj = self.date.replace(tzinfo=pytz.utc).astimezone(self.date.tzinfo)
+            timestamp = timegm(datetime_obj.timetuple())
+            FIVE_MIN = 3 * 60 * 1000
+
+            for m in nylas.messages.where(limit=1, received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, from_=self.from_.email, subject=self.subject.replace("\r\n", ""), view='expanded'):
+                self._nylas_message = m
+                return m
+
+        return self._nylas_message
+
+    @CustomProperty
+    def c(self):
+        nylas = APIClient(
+            NYLAS_ID,
+            NYLAS_SECRET,
+            self._imap_account.nylas_access_token
+        )
+
+        a = []
+        for e in nylas.events.where(limit=10):
+            a.append(e.title)
+
+        return a
+
+    @CustomProperty
+    def snippet(self):
+        return self._get_nylas_message.snippet
+
     @CustomProperty
     def thread(self):
-        # type: () -> t.Optional[Thread]
-        from engine.models.thread import Thread
-        if self._schema.base_message._thread is not None:
-            return Thread(self._schema.base_message._thread, self._imap_client, self._is_simulate, self._schema.folder)
-        # TODO we should create the thread otherwise
-        return None
+        # type: () -> t.List[Message]
+        nylas = APIClient(
+            NYLAS_ID,
+            NYLAS_SECRET,
+            self._imap_account.nylas_access_token
+        )
+
+        # p = re.compile( '([\[\(] *)?(RE?S?|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$', re.IGNORECASE)
+        # t = nylas.threads.where(limit=1,subject=p.sub( '', self.subject).strip(),from_=self.from_.email)[0]
+        
+        message_ids = [m.headers['Message-Id'] for m in nylas.messages.where(thread_id=self._get_nylas_message().thread_id,view='expanded')]
+        logger.info(message_ids)
+
+        messages = []
+        for m_id in message_ids:
+            try:
+                message =  MessageSchema.objects.get(base_message__message_id=m_id.replace("<", "").replace(">",""))
+                messages.append(Message(message, self._imap_client))
+            except Exception:
+                pass
+        return messages
 
     @CustomProperty
     def date(self):

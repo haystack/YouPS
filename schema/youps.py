@@ -34,7 +34,8 @@ class ImapAccount(models.Model):
     is_running = models.BooleanField(default=False)
     status_msg = models.TextField(default="")
     sync_paused = models.BooleanField(default=False)
-    # delta_cursor = models.CharField(max_length=200, blank=True, null=True)
+
+    nylas_access_token = models.CharField('nylas_access_token', max_length=200, blank=True, null=True)
 
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 

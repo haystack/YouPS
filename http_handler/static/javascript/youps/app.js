@@ -25,7 +25,7 @@ function fetch_watch_message() {
               else  { // If everything successful
                   $.each(res['message_rows'], function(i, message) {
                     if( watched_message.indexOf( res['message_schemaids'][i] ) == -1 ) {
-                      $("#message-parameter-table").append( message );
+                      $("#message-parameter-table").prepend( message );
                       
                       watched_message.push( res['message_schemaids'][i] );
                     }
@@ -126,9 +126,13 @@ class RuleSelector extends React.Component {
     });
   }
 
+  
+
   render() {
+    var table_style = {background: "#f9f9f9"};
+
     return (
-      <table class="table table-striped" id="rule-selector-table">
+      <table class="table table-striped table-dark" style={table_style} id="rule-selector-table">
         <tbody>
               {this.state.rules.map( er  =>
                 <tr>
@@ -138,7 +142,7 @@ class RuleSelector extends React.Component {
                       {er.params.map( param  => <li>{ param.name }: <span dangerouslySetInnerHTML={{__html: param.html}}></span></li>)}
                     </ul>
                   </td>
-                  <td><button className='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.applyRule(e, er.id) }>Apply</button></td>
+                  <td><button className='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.applyRule(e, er.id) }>Run</button></td>
                 </tr>
               )}
         </tbody>

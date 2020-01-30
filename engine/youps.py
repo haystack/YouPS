@@ -384,7 +384,7 @@ def get_deltas_cursors(user, email):
         imapAccount = ImapAccount.objects.get(email=email)
         res['watch_status'] = True
         url = 'https://api.nylas.com/delta/latest_cursor'
-        user_access_token = 'A58oRnVjQdByR8eOytTKgWuRY94bjK'
+        user_access_token = 'xx'
         headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
         r=requests.post(url, headers=headers)
 
