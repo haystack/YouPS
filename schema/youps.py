@@ -25,6 +25,7 @@ class ImapAccount(models.Model):
 
     is_gmail = models.BooleanField(default=False)
 
+    username = models.CharField('username', max_length=100, blank=True, null=True)
     password = models.CharField('password', max_length=100, blank=True)
     host = models.CharField('host', max_length=100)
 

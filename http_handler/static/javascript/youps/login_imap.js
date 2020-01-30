@@ -970,6 +970,7 @@ $(document).ready(function() {
 
                 var params = {
                     'host': $("#input-host").val(),
+                    'username': $("#input-username").val(),
                     'password': $('#rdo-oauth').is(":checked") ? $("#input-access-code").val() : $("#input-password").val(),
                     'is_oauth': $('#rdo-oauth').is(":checked")
                 };

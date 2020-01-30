@@ -35,10 +35,13 @@ def authenticate(imap_account):
             imap_client.oauth2_login(imap_account.email, imap_account.access_token)
         else:
             password = decrypt_plain_password(imap_account.password)
-            if "csail" in imap_account.email:
-                imap_client.login(imap_account.email.split("@")[0], password)
+            if imap_account.username:
+                imap_client.login(imap_account.username, password)
             else:
-                imap_client.login(imap_account.email, password)
+                if "csail" in imap_account.email:
+                    imap_client.login(imap_account.email.split("@")[0], password)
+                else:
+                    imap_client.login(imap_account.email, password)
 
         res['imap'] = imap_client
         res['status'] = True

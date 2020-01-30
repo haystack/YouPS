@@ -26,7 +26,7 @@ from engine.models.message import Message  # noqa: F401 ignore unused we use it 
 logger = logging.getLogger('youps')  # type: logging.Logger
 button_logger = logging.getLogger('button') # type: logging.Logger
 
-def login_imap(email, password, host, is_oauth):
+def login_imap(email, username, password, host, is_oauth):
     """This function is called only once per each user when they first attempt to login to YoUPS.
     check if we are able to login to the user's imap using given credientials.
     if we can, encrypt and store credientials on our DB. 
@@ -56,10 +56,7 @@ def login_imap(email, password, host, is_oauth):
             imap.oauth2_login(email, access_token)
 
         else:
-            if "csail" in email:
-                imap.login(email.split("@")[0], password)
-            else:
-                imap.login(email, password)
+            imap.login(username, password)
 
             # encrypt password then save
             aes = AES.new(IMAP_SECRET, AES.MODE_CBC, 'This is an IV456')
@@ -76,7 +73,7 @@ def login_imap(email, password, host, is_oauth):
 
         imapAccount = ImapAccount.objects.filter(email=email)
         if not imapAccount.exists():
-            imapAccount = ImapAccount(email=email, password=base64.b64encode(password), host=host)
+            imapAccount = ImapAccount(email=email, username=username, password=base64.b64encode(password), host=host)
             imapAccount.host = host
 
             # = imapAccount

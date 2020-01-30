@@ -97,6 +97,7 @@ def settings(request):
 @render_to(WEBSITE+"/login_email.html")
 def login_imap_view(request):
 	imap_authenticated = False
+	username= ""
 	is_test = False
 	is_running = False
 	mode_exist = False
@@ -110,9 +111,13 @@ def login_imap_view(request):
 
 	try: 
 		if request.user.id != None:
+			username = request.user.email.split("@")[0] if "csail" in request.user.email else request.user.email
+
 			imap = ImapAccount.objects.filter(email=request.user.email)
 			
 			if imap.exists():
+				
+
 				if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
 					imap_authenticated = True
 					is_test = imap[0].is_test
@@ -139,7 +144,7 @@ def login_imap_view(request):
 							for f in rule.folders.all():
 								email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
 
-		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+		return {'user': request.user, 'username': username,'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
 			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
 			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 'shortcuts': shortcuts}
 	except Exception as e:
@@ -276,9 +281,10 @@ def login_imap(request):
 		# email = request.POST['email']
 		host = request.POST['host']
 		is_oauth = True if request.POST['is_oauth'] == "true" else False
+		username = request.POST['username']
 		password = request.POST['password']
 
-		res = engine.main.login_imap(user.email, password, host, is_oauth)
+		res = engine.main.login_imap(user.email, username, password, host, is_oauth)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.exception(e)
