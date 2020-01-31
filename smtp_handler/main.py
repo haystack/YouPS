@@ -156,11 +156,11 @@ def START(message, address=None, host=None):
                             kargs[arg.name] = address.split(arg.name + "_")[1].split("_")[0]
                             kargs[arg.name].replace("_", "")
                             d = datetime.today()
-                            d.replace(month=int(kargs[arg.name][:2]), day=int(kargs[arg.name][2:4]))
+                            d = d.replace(month=int(kargs[arg.name][:2]), day=int(kargs[arg.name][2:4]))
                             if len(kargs[arg.name]) > 4:
-                                d.replace(hour=int(kargs[arg.name][4:6]))
+                                d = d.replace(hour=int(kargs[arg.name][4:6]))
                             if len(kargs[arg.name]) > 6:
-                                d.replace(minute=int(kargs[arg.name][6:8]))
+                                d = d.replace(minute=int(kargs[arg.name][6:8]))
 
                             d = tz('US/Eastern').localize(d)
                             d = timezone.localtime(d)
