@@ -479,18 +479,24 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
             # Remove old editors to re-save it
             # TODO  dont remove it
-            er = EmailRule.objects.filter(mode=mailbotMode)
+            ers = EmailRule.objects.filter(mode=mailbotMode)
+            mailbox = MailBox(imapAccount, imap, is_simulate=False)
+            for er in ers:
+                # update contact for email triggering
+                # delete old name 
+                mailbox._delete_contact(er.get_forward_addr())
+
             logger.debug("deleting er editor run request")
-            args = EmailRule_Args.objects.filter(rule=er)
+            args = EmailRule_Args.objects.filter(rule=ers)
             args.delete()
-            er.delete()
+            ers.delete()
 
             for value in mode['editors']:
                 name = value['name'].encode('utf-8')
                 code = value['code'].encode('utf-8')
                 folders = value['folders']
                 logger.info(value)
-                
+
                 er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
                 er.save()
 
@@ -502,8 +508,8 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
                 er.save()
 
-                # Save shortcut email args
                 if value['type'] == "shortcut":
+                    # Save shortcut email args
                     for arg in value['args']:
                         logger.info(arg)
                         
@@ -511,7 +517,11 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                         if arg['name']:
                             new_arg.name = arg['name']
                         new_arg.save()
-                
+
+                    # add a new contact
+                    logger.info("add contact %s" % er.get_forward_addr())
+                    mailbox._add_contact("YouPS", er.get_forward_addr())
+                    
 
             logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         

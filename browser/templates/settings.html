@@ -7,7 +7,7 @@
 		<hr />
 		{% if not nylas_logged_in %}
 			<P>
-				<a href="https://api.nylas.com/oauth/authorize?scopes=email.read_only%2Cemail.send&login_hint={{login_hint}}&state={{email}}&redirect_uri=http%3A%2F%2F0.0.0.0%3A8000%2Flogin_imap_callback&response_type=code&client_id={{nylas_client_id}}">Login to an add-on</a>
+				<a href="https://api.nylas.com/oauth/authorize?login_hint={{login_hint}}&state={{email}}&redirect_uri=http%3A%2F%2F0.0.0.0%3A8000%2Flogin_imap_callback&response_type=code&client_id={{nylas_client_id}}">Login to an add-on</a>
 			</P>
 		{% endif %}
 		<P>

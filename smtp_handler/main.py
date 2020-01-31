@@ -4,6 +4,7 @@ from salmon.mail import MailResponse
 from config.settings import relay
 from http_handler.settings import WEBSITE
 from django.contrib.sites.models import Site
+from django.utils import timezone
 from http_handler.settings import PROTOCOL
 
 from email.utils import *
@@ -18,6 +19,7 @@ import django.db
 from browser.imap import *
 from browser.sandbox import interpret_bypass_queue
 from imapclient import IMAPClient
+from pytz import timezone as tz
 
 from schema.youps import ImapAccount, MessageSchema, EmailRule, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from engine.models.mailbox import MailBox
@@ -53,8 +55,6 @@ def START(message, address=None, host=None):
         er_to_execute = None
         ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type='shortcut')
         for er in ers:
-            # TODO how to parse this
-            # parse only name part 
             tmp = er.name.replace(" ", "_")
 
             if er.get_forward_addr().lower()[:len(tmp)] == address.lower()[:len(tmp)]:
@@ -72,9 +72,8 @@ def START(message, address=None, host=None):
             new_message = create_response(arrived_message, addr,arrived_message["message-id"], body, host)
             relay.deliver(new_message)
             return
-            
 
-        logging.debug("mailbot %s" % addr)
+        # if a corresponding er is found, run it  
         auth_res = authenticate( imapAccount )
         if not auth_res['status']:
             raise ValueError('Something went wrong during authentication. Log in again at %s/editor' % host)
@@ -142,9 +141,34 @@ def START(message, address=None, host=None):
                 mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
                 relay.deliver(mail)
 
-            else:
-                
-                res, body = run_shortcut(shortcuts, mailbox, original_message_schema, code_body)
+            else:                
+                # parse args for the shortcut
+                kargs = {'message_content': code_body}
+                args = EmailRule_Args.objects.filter(rule=shortcuts[0])
+                for arg in args:
+                    if arg.type == "datetime":
+                        kargs[arg.name] = address.split(arg.name + "_")[1].split("_")[0]
+                        kargs[arg.name].replace("_", "")
+                        d = datetime.today()
+                        d.replace(month=kargs[arg.name][:2], day=kargs[arg.name][2:4])
+                        if len(kargs[arg.name]) > 4:
+                            d.replace(hour=kargs[arg.name][4:6])
+                        if len(kargs[arg.name]) > 6:
+                            d.replace(minute=kargs[arg.name][6:8])
+
+                        d = tz('US/Eastern').localize(d)
+                        d = timezone.localtime(d)
+
+                        kargs[arg.name] = d
+                    else:
+                        v = address.split(arg.name + "_")[1]
+                        for a in args:
+                            v=v.split(arg.name + "_")[0]
+                        v = v.replace("_", " ")
+
+                        kargs[arg.name] = v
+
+                res, body = run_shortcut(shortcuts[0], mailbox, original_message_schema, kargs)
 
                 # Go to sent folder and delete the sent function from user  
                 if imapAccount.is_gmail:
@@ -248,36 +272,36 @@ def get_available_shortcut_link_text(imapAccount, domain_name):
     body = {"text": "Your shortcut list\n\n", "html": "Your shortcut list<br><br>"}
 
     for shortcut in shortcuts:
-        shortcut_addr = "%s@%s" % (shortcut.get_forward_addr(), domain_name)
+        shortcut_addr = shortcut.get_forward_addr()
      
         body["text"] += "* %s: %s\n" % (shortcut.name, shortcut_addr)
-        body["html"] += "* %s: <a href='mailto:%s?subject=YouPS shortcut&body=contact address: <HERE>'>%s</a><br>" % (shortcut.name, shortcut_addr, shortcut_addr)
+        body["html"] += "* %s: <a href='mailto:%s?subject=YouPS shortcut&body=Run this YouPS!'>%s</a><br>" % (shortcut.name, shortcut_addr, shortcut_addr)
 
 
     return body
 
 
-def run_shortcut(shortcuts, mailbox, original_message_schema, code_body):
+def run_shortcut(shortcut, mailbox, original_message_schema, code_body):
     body = {"text": "", "html": ""}
     res = None
-    for shortcut in shortcuts:
-        extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body}
+    
+    extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body}
 
-        res = interpret_bypass_queue(mailbox, extra_info={"msg-id": original_message_schema.id, "code": shortcut.code, "shortcut": code_body})
-        logger.debug(res)
+    res = interpret_bypass_queue(mailbox, extra_info=extra_info)
+    logger.debug(res)
 
-        for key, value in res['appended_log'].iteritems():
-            if not value['error']:
-                body["text"] = 'Your mail shortcut is successfully applied! \n'
-                body["html"] = 'Your mail shortcut is successfully applied! <br>'
-            else:
-                body["text"] = 'Something went wrong! \n'
-                body["html"] = 'Something went wrong! <br>'
+    for key, value in res['appended_log'].iteritems():
+        if not value['error']:
+            body["text"] = 'Your mail shortcut is successfully applied! \n'
+            body["html"] = 'Your mail shortcut is successfully applied! <br>'
+        else:
+            body["text"] = 'Something went wrong! \n'
+            body["html"] = 'Something went wrong! <br>'
                         
-            body["text"] = body["text"] + value['log']
-            body["html"] = body["html"] + value['log']
+        body["text"] = body["text"] + value['log']
+        body["html"] = body["html"] + value['log']
                 
-            logger.debug(body)
+        logger.debug(body)
 
     return res, body
 
@@ -298,7 +322,7 @@ def help(message, address=None, host=None):
         if ers.exists():
             body += " Please find below a general help on managing your email shortcut.\n\n"
             for er in ers:
-                body += "%s: <a href='mailto:%s'>%s</a>" % (er.name, er.get_forward_addr() +  "@" + host, er.get_forward_addr() +  "@" + host)
+                body += "%s: <a href='mailto:%s'>%s</a>" % (er.name, er.get_forward_addr(), er.get_forward_addr())
         else:
             body += "\nThere is no shortcut defined at the moment. Create your shortcut here: <a href='%s://%s'>%s://%s</a>" % (PROTOCOL, site.domain, PROTOCOL, site.domain)
     

@@ -17,7 +17,8 @@ from engine.models.event_data import NewMessageDataDue
 
 from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
-from http_handler.settings import CLIENT_ID
+from nylas import APIClient
+from http_handler.settings import CLIENT_ID, NYLAS_ID, NYLAS_SECRET
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -105,6 +106,38 @@ class MailBox(object):
         # We can also close the connection if we are done with it.
         # Just be sure any changes have been committed or they will be lost.
         conn.close()
+
+    def _add_contact(self, name, email_address):
+        nylas = APIClient(
+            NYLAS_ID,
+            NYLAS_SECRET,
+            self._imap_account.nylas_access_token
+        )
+
+        c = nylas.contacts.where(email=email_address)
+        if c:
+            for contact in c:
+                c.given_name = name
+                c.save()
+
+        else:
+            contact = nylas.contacts.create()
+            
+            contact.given_name = name
+            contact.emails['personal'] = [email_address]
+            
+            contact.save()
+
+    def _delete_contact(self, email_address):
+        nylas = APIClient(
+            NYLAS_ID,
+            NYLAS_SECRET,
+            self._imap_account.nylas_access_token
+        )
+
+        contacts = nylas.contacts.where(email=email_address)
+        for c in contacts:
+            nylas.contacts.delete(c.id)
 
     def _check_delta(self):
         url = 'https://api.nylas.com/delta/latest_cursor'
