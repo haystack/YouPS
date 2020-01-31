@@ -38,10 +38,13 @@ def START(message, address=None, host=None):
     arrived_message = message
 
     name, addr = parseaddr(arrived_message['from'].lower())
+    if addr == "mailer-daemon@murmur-1604.csail.mit.edu":
+        return
+
     site = Site.objects.get_current()
     auth_res = None
     # restart the db connection
-    django.db.close_connection()
+    django.db.close_old_connections()
     
     try:
         addr = addr.strip()
@@ -50,7 +53,11 @@ def START(message, address=None, host=None):
         er_to_execute = None
         ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type='shortcut')
         for er in ers:
-            if er.get_forward_addr().lower() == address.lower():
+            # TODO how to parse this
+            # parse only name part 
+            tmp = er.name.replace(" ", "_")
+
+            if er.get_forward_addr().lower()[:len(tmp)] == address.lower()[:len(tmp)]:
                 er_to_execute = er
                 break
 
