@@ -178,22 +178,22 @@ def START(message, address=None, host=None):
                 res, body = run_shortcut(shortcuts[0], mailbox, original_message_schema, kargs)
 
                 # Go to sent folder and delete the sent function from user  
-                if imapAccount.is_gmail:
-                    imap.select_folder('[Gmail]/Sent Mail')
-                else:
-                    import imapclient
-                    sent = imap.find_special_folder(imapclient.SENT)
-                    if sent is not None:
-                        imap.select_folder(sent)
-                this_message = imap.search(["HEADER", "In-Reply-To", original_message_schema.message_id])
-                imap.delete_messages(this_message)
+                # if imapAccount.is_gmail:
+                #     imap.select_folder('[Gmail]/Sent Mail')
+                # else:
+                #     import imapclient
+                #     sent = imap.find_special_folder(imapclient.SENT)
+                #     if sent is not None:
+                #         imap.select_folder(sent)
+                # this_message = imap.search(["HEADER", "In-Reply-To", original_message_schema.message_id])
+                # imap.delete_messages(this_message)
 
                 # new_message.set_payload(content.encode('utf-8')) 
                 if "text" in body and "html" in body:
-                    body["text"] = "Your command: %s%sResult: %s" % (code_body, "\n\n", body["text"])
-                    body["html"] = "Your command: %s%sResult: %s" % (code_body, "<br><br>", body["html"])
+                    body["text"] = "Result: %s" % (body["text"])
+                    body["html"] = "Result: %s" % (body["html"])
                 else: 
-                    body["text"] = "Your command:%s%sResult:%s" % (code_body, "\n\n", body["text"])
+                    body["text"] = "Result:%s" % (body["text"])
 
                 new_message = create_response(arrived_message, addr, original_message_schema.message_id, body, host)
 
