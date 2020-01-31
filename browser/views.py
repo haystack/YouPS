@@ -25,7 +25,8 @@ from nylas import APIClient
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
 from engine.constants import msg_code
-from http_handler.settings import WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, NYLAS_ID, NYLAS_SECRET
+import urllib
+from http_handler.settings import PROTOCOL, BASE_URL, WEBSITE, AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, NYLAS_ID, NYLAS_SECRET
 from registration.forms import RegistrationForm
 from schema.youps import ImapAccount, MailbotMode, FolderSchema, EmailRule, EmailRule_Args
 from smtp_handler.utils import *
@@ -92,7 +93,8 @@ def settings(request):
 	if ImapAccount.objects.filter(email=request.user.email).exists():
 		nylas_logged_in = True if ia[0].nylas_access_token else False
 
-	return {'user': request.user, 'nylas_logged_in':nylas_logged_in, 'login_hint': login_hint.replace("@", "%40"), 'email': request.user.email.replace("@", "%40"),'nylas_client_id': NYLAS_ID, 'website' : WEBSITE, 'group_page' : True}
+
+	return {'user': request.user, 'redirect_uri': urllib.quote_plus("%s://%s/login_imap_callback" % (PROTOCOL, BASE_URL)) , 'nylas_logged_in':nylas_logged_in, 'login_hint': login_hint.replace("@", "%40"), 'email': request.user.email.replace("@", "%40"),'nylas_client_id': NYLAS_ID, 'website' : WEBSITE, 'group_page' : True}
 
 @render_to(WEBSITE+"/login_email.html")
 def login_imap_view(request):

@@ -190,10 +190,10 @@ def START(message, address=None, host=None):
 
                 # new_message.set_payload(content.encode('utf-8')) 
                 if "text" in body and "html" in body:
-                    body["text"] = "%s\n\nResult: %s" % (body["text"], res['log'][res['log'].keys()[0]])
-                    body["html"] = "%s<br><br>Result: %s" % (body["html"], res['log'][res['log'].keys()[0]])
+                    body["text"] = "Result: %s" % (body["text"])
+                    body["html"] = "Result: %s" % (body["html"])
                 else: 
-                    body["text"] = "%s\n\nResult: %s" % (body["text"], res['log'][res['log'].keys()[0]])
+                    body["text"] = "Result:%s" % (body["text"])
 
                 new_message = create_response(arrived_message, addr, original_message_schema.base_message.message_id, body, host)
 
