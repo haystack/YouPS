@@ -93,7 +93,6 @@ def settings(request):
 	if ImapAccount.objects.filter(email=request.user.email).exists():
 		nylas_logged_in = True if ia[0].nylas_access_token else False
 
-
 	return {'user': request.user, 'redirect_uri': urllib.quote_plus("%s://%s/login_imap_callback" % (PROTOCOL, BASE_URL)) , 'nylas_logged_in':nylas_logged_in, 'login_hint': login_hint.replace("@", "%40"), 'email': request.user.email.replace("@", "%40"),'nylas_client_id': NYLAS_ID, 'website' : WEBSITE, 'group_page' : True}
 
 @render_to(WEBSITE+"/login_email.html")

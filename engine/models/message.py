@@ -93,7 +93,7 @@ class Message(object):
 
     def __str__(self):
         # type: () -> t.AnyStr
-        return "Message %d" % self.subject
+        return "Message %s" % self.subject
 
     def __repr__(self):
         return repr('Message object "%s"' % str(self.subject))

@@ -56,6 +56,7 @@ def START(message, address=None, host=None):
         ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type='shortcut')
         for er in ers:
             tmp = er.name.replace(" ", "_")
+            logger.info(tmp)
 
             if er.get_forward_addr().lower()[:len(tmp)] == address.lower()[:len(tmp)]:
                 er_to_execute = er
@@ -148,7 +149,7 @@ def START(message, address=None, host=None):
             else:                
                 # parse args for the shortcut
                 kargs = {'message_content': code_body}
-                args = EmailRule_Args.objects.filter(rule=shortcuts[0])
+                args = EmailRule_Args.objects.filter(rule=er_to_execute)
                 for arg in args:
                     if arg.type == "datetime":
                         try:
@@ -175,7 +176,7 @@ def START(message, address=None, host=None):
 
                         kargs[arg.name] = v
 
-                res, body = run_shortcut(shortcuts[0], mailbox, original_message_schema, kargs)
+                res, body = run_shortcut(er_to_execute, mailbox, original_message_schema, kargs)
 
                 # Go to sent folder and delete the sent function from user  
                 # if imapAccount.is_gmail:
