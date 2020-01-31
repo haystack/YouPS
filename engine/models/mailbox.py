@@ -108,36 +108,38 @@ class MailBox(object):
         conn.close()
 
     def _add_contact(self, name, email_address):
-        nylas = APIClient(
-            NYLAS_ID,
-            NYLAS_SECRET,
-            self._imap_account.nylas_access_token
-        )
+        if self._imap_account.nylas_access_token:
+            nylas = APIClient(
+                NYLAS_ID,
+                NYLAS_SECRET,
+                self._imap_account.nylas_access_token
+            )
 
-        c = nylas.contacts.where(email=email_address)
-        if c:
-            for contact in c:
-                c.given_name = name
-                c.save()
+            c = nylas.contacts.where(email=email_address)
+            if c:
+                for contact in c:
+                    c.given_name = name
+                    c.save()
 
-        else:
-            contact = nylas.contacts.create()
-            
-            contact.given_name = name
-            contact.emails['personal'] = [email_address]
-            
-            contact.save()
+            else:
+                contact = nylas.contacts.create()
+                
+                contact.given_name = name
+                contact.emails['personal'] = [email_address]
+                
+                contact.save()
 
     def _delete_contact(self, email_address):
-        nylas = APIClient(
-            NYLAS_ID,
-            NYLAS_SECRET,
-            self._imap_account.nylas_access_token
-        )
+        if self._imap_account.nylas_access_token:
+            nylas = APIClient(
+                NYLAS_ID,
+                NYLAS_SECRET,
+                self._imap_account.nylas_access_token
+            )
 
-        contacts = nylas.contacts.where(email=email_address)
-        for c in contacts:
-            nylas.contacts.delete(c.id)
+            contacts = nylas.contacts.where(email=email_address)
+            for c in contacts:
+                nylas.contacts.delete(c.id)
 
     def _check_delta(self):
         url = 'https://api.nylas.com/delta/latest_cursor'
