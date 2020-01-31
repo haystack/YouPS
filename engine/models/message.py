@@ -340,7 +340,9 @@ class Message(object):
         Returns:
             bool: True if the message is replied
         """
-        return BaseMessage.objects.filter(imap_account=self._imap_account).filter(_in_reply_to__contains=self._message_id).exists()
+        # check if messages attached to this thread and it is sent by someone else in the thread 
+
+        return BaseMessage.objects.filter(imap_account=self._imap_account, _in_reply_to__contains=self._message_id).exclude(from_m__email=self._imap_account.email).exclude(from_m__email__icontains="@youps.csail.mit.edu").exists()
 
     @CustomProperty
     def to(self):
