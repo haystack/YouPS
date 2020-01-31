@@ -126,8 +126,8 @@ class MailBox(object):
             # do sync whenever there is delta detected by Nylas
             mailbox_cursor = self._check_delta()
 
-        if not mailbox_cursor:
-            logger.info("No delta detected at %s -- move on to next inbox" % self._imap_account.email)
+            if not mailbox_cursor:
+                logger.info("No delta detected at %s -- move on to next inbox" % self._imap_account.email)
 
         # TODO request delta
 
