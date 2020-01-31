@@ -21,7 +21,7 @@ from browser.sandbox import interpret_bypass_queue
 from imapclient import IMAPClient
 from pytz import timezone as tz
 
-from schema.youps import ImapAccount, MessageSchema, EmailRule, FolderSchema  # noqa: F401 ignore unused we use it for typing
+from schema.youps import ImapAccount, MessageSchema, EmailRule, EmailRule_Args, FolderSchema  # noqa: F401 ignore unused we use it for typing
 from engine.models.mailbox import MailBox
 from engine.models.message import Message
 from engine.models.folder import Folder
@@ -99,6 +99,7 @@ def START(message, address=None, host=None):
                     imap.select_folder(folder.name)
                     original_message_id = imap.search(["HEADER", "Message-ID", arrived_message["In-Reply-To"]])
 
+
                     # original_message
 
                     if original_message_id:
@@ -116,9 +117,12 @@ def START(message, address=None, host=None):
                         if original_message_id:
                             folder._save_new_messages(original_message_id[0], urgent=True)
 
-                            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, base_message__message_id=arrived_message["In-Reply-To"])
+
+
+                            original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount, base_message__message_id=arrived_message["In-Reply-To"].replace("<", "").replace(">", ""))
                             if not original_message_schema.exists():
-                                raise
+                                raise Exception("Can't find any original message")
+                            original_message_schema = original_message_schema[0]
                             imap.select_folder(original_message_schema.folder.name)           
                             original_message = Message(original_message_schema, imap)
 
@@ -147,19 +151,22 @@ def START(message, address=None, host=None):
                 args = EmailRule_Args.objects.filter(rule=shortcuts[0])
                 for arg in args:
                     if arg.type == "datetime":
-                        kargs[arg.name] = address.split(arg.name + "_")[1].split("_")[0]
-                        kargs[arg.name].replace("_", "")
-                        d = datetime.today()
-                        d.replace(month=kargs[arg.name][:2], day=kargs[arg.name][2:4])
-                        if len(kargs[arg.name]) > 4:
-                            d.replace(hour=kargs[arg.name][4:6])
-                        if len(kargs[arg.name]) > 6:
-                            d.replace(minute=kargs[arg.name][6:8])
+                        try:
+                            kargs[arg.name] = address.split(arg.name + "_")[1].split("_")[0]
+                            kargs[arg.name].replace("_", "")
+                            d = datetime.today()
+                            d.replace(month=int(kargs[arg.name][:2]), day=int(kargs[arg.name][2:4]))
+                            if len(kargs[arg.name]) > 4:
+                                d.replace(hour=int(kargs[arg.name][4:6]))
+                            if len(kargs[arg.name]) > 6:
+                                d.replace(minute=int(kargs[arg.name][6:8]))
 
-                        d = tz('US/Eastern').localize(d)
-                        d = timezone.localtime(d)
+                            d = tz('US/Eastern').localize(d)
+                            d = timezone.localtime(d)
 
-                        kargs[arg.name] = d
+                            kargs[arg.name] = d
+                        except Exception:
+                            raise TypeError("Date in wrong format")
                     else:
                         v = address.split(arg.name + "_")[1]
                         for a in args:
