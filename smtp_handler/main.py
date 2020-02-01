@@ -228,7 +228,7 @@ def START(message, address=None, host=None):
 
             # get any message
             original_message_schema = MessageSchema.objects.filter(imap_account=imapAccount).last()
-            res, body = run_shortcut([er_to_execute], mailbox, original_message_schema, "")
+            res, body = run_shortcut(er_to_execute, mailbox, original_message_schema, "")
 
             # parseaddr(arrived_message['subject'])
         

@@ -10,10 +10,10 @@ class ButtonService extends React.Component {
         const url = '/email_rule_meta';
         return axios.get(url, {withCredentials: true}).then(response => response.data);
     }  
-    getCustomersByURL(link){
-        const url = `${API_URL}${link}`;
-        return axios.get(url).then(response => response.data);
-    }
+    getUpcomingEvents() {
+        const url = '/fetch_upcoming_events';
+        return axios.get(url, {withCredentials: true}).then(response => response.data);
+    }  
     getCustomer(pk) {
         const url = `${API_URL}/api/customers/${pk}`;
         return axios.get(url).then(response => response.data);

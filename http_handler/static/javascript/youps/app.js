@@ -48,6 +48,58 @@ function fetch_watch_message() {
   });
 }
 
+class DatePicker extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state  = {
+        schedule: []
+    };
+  }
+
+  handleSelect(e) {
+    $(e.target).parents(".dropdown").find('.btn').html($(e.target).text() + ' <span class="caret"></span>');
+    $(e.target).parents(".dropdown").find('.btn').val($(e.target).data('value'));
+  }
+
+  componentDidUpdate() {
+    // respond to the 
+  }
+
+  componentDidMount() {
+    buttonService.getUpcomingEvents().then(results => {
+      console.log(results)
+      this.setState({ schedule: results.events});
+      
+    });
+  }
+
+  render() {
+    var date_style = {color: "grey"};
+
+    var day = new Date();
+    var today_val = day.getFullYear() + "-" + (day.getMonth() +1).toString().padStart(2, 0) + "-" + day.getDate().toString().padStart(2, 0) + "T" + "00:00"
+    var nextDay = new Date(day);
+    nextDay.setDate(day.getDate() + 1);
+    var d_val = nextDay.getFullYear() + "-" + (nextDay.getMonth() +1).toString().padStart(2, 0) + "-" + nextDay.getDate().toString().padStart(2, 0) + "T" + "00:00"
+    return (
+      <div class="dropdown">
+        <button data-value={d_val} class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          { nextDay.getFullYear() } { nextDay.getMonth() + 1}/{nextDay.getDate()} 12:00 AM
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+          <li><a onClick={(e)=>  this.handleSelect(e) } data-value={d_val}>tomorrow</a></li>
+          {this.state.schedule.map( er  =>
+            <li><a onClick={(e)=>  this.handleSelect(e) } data-value={er.start}>{er.name} 
+              <span style={date_style}> {today_val.slice(0, 10) == er.start.slice(0, 10) ? er.start.slice(11):er.start} ~ {today_val.slice(0, 10) == er.end.slice(0, 10) ? er.end.slice(11):er.end}</span></a></li>
+          )}
+          <li><a onClick={(e)=>  this.handleSelect(e) } data-value={d_val}>Select date</a></li>
+        </ul>
+      </div>
+    );
+  }
+}
+
 class RuleSelector extends React.Component {
   constructor(props) {
     super(props);
@@ -162,6 +214,12 @@ $(document).ready(function() {
   ReactDOM.render(
     <RuleSelector/>,
     document.getElementById('rule-container')
+  );
+
+  // TODO attach to datetime 
+  ReactDOM.render(
+    <DatePicker/>,
+    document.getElementById('button-container')
   );
 
   if (!String.prototype.format) {

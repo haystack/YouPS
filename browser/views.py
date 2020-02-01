@@ -232,6 +232,22 @@ def get_email_rule_meta(request):
 		logger.exception(e)
 		return {'website': WEBSITE, 'imap_authenticated': False}
 
+@login_required
+def fetch_upcoming_events(request):
+	res = {'status' : False}
+
+	try: 
+		logger.exception(request.user.email)
+
+		res = engine.main.fetch_upcoming_events(request.user, request.user.email)
+		
+		return HttpResponse(json.dumps(res), content_type="application/json")
+	except ImapAccount.DoesNotExist:
+		return {'website': WEBSITE, 'imap_authenticated': False}
+	except Exception as e:
+		logger.exception(e)
+		return {'website': WEBSITE, 'imap_authenticated': False}
+
 def _load_component(component, context=None):
 
 	try:

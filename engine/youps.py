@@ -14,6 +14,7 @@ from Crypto.Cipher import AES
 from imapclient import IMAPClient
 
 from django.utils import timezone
+from pytz import timezone as tz
 from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
@@ -22,6 +23,9 @@ from engine.utils import turn_on_youps
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
+
+from http_handler.settings import NYLAS_ID, NYLAS_SECRET
+from nylas import APIClient
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 button_logger = logging.getLogger('button') # type: logging.Logger
@@ -307,7 +311,7 @@ def fetch_watch_message(user, email, watched_message):
                             except:
                                 logger.exception("parsing arrival date fail; skipping parsing")
 
-                            res['contexts'].append( {'sender': res['sender']["name"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
+                            res['contexts'].append( {'sender': res['sender']["name"] or res['sender']["email"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
 
                         # if there is update, send it to the client immediatly 
                         if 'message' in res:
@@ -354,6 +358,54 @@ def fetch_watch_message(user, email, watched_message):
         imap.logout()
 
     return res
+
+def fetch_upcoming_events(user, email):
+    res = {'status' : False, "events": []}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+
+        if imapAccount.nylas_access_token:
+            nylas = APIClient(
+                NYLAS_ID,
+                NYLAS_SECRET,
+                imapAccount.nylas_access_token
+            )
+
+            a = []
+
+            from calendar import timegm
+            now = datetime.datetime.now()
+            now_timestamp = timegm(now.timetuple())
+            now_timestamp = int(now_timestamp) + 300 * 60
+
+            # get upcoming events 
+            for e in nylas.events.where(limit=3, starts_after=now_timestamp):
+                start = datetime.datetime.fromtimestamp(e.when["start_time"])
+                start = tz('US/Eastern').localize(start)
+                start = timezone.localtime(start)
+                start = start.strftime("%Y-%m-%dT%H:%M")
+
+                end = datetime.datetime.fromtimestamp(e.when["end_time"])
+                end = tz('US/Eastern').localize(end)
+                end = timezone.localtime(end)
+                end = end.strftime("%Y-%m-%dT%H:%M")
+
+                a.append({"name": e.title, "start": start, "end": end})
+
+            logger.info(a)
+
+            res["events"] = a
+
+        res['status'] = True
+
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Error during authentication. Please refresh"
+    except Exception as e:
+        logger.exception(e)
+        res['code'] = msg_code['UNKNOWN_ERROR']
+    return res
+
 
 def fetch_available_email_rule(user, email):
     res = {'status' : False}

@@ -88,7 +88,7 @@ shared_patterns = [
     url(r'^undo', 'browser.views.undo'),
 
     url(r'^email_rule_meta', 'browser.views.get_email_rule_meta'),
-    
+    url(r'^fetch_upcoming_events', 'browser.views.fetch_upcoming_events'),
                     
     url(r'^apply_button_rule', 'browser.views.apply_button_rule'),                
     url(r'^create_mailbot_mode', 'browser.views.create_mailbot_mode'),

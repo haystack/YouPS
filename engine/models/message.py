@@ -231,7 +231,7 @@ class Message(object):
             import pytz
             datetime_obj = self.date.replace(tzinfo=pytz.utc).astimezone(self.date.tzinfo)
             timestamp = timegm(datetime_obj.timetuple())
-            FIVE_MIN = 3 * 60 * 1000
+            FIVE_MIN = 3 * 60
 
             for m in nylas.messages.where(limit=1, received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, from_=self.from_.email, subject=self.subject.replace("\r\n", ""), view='expanded'):
                 self._nylas_message = m
@@ -241,15 +241,22 @@ class Message(object):
 
     @CustomProperty
     def c(self):
-        nylas = APIClient(
-            NYLAS_ID,
-            NYLAS_SECRET,
-            self._imap_account.nylas_access_token
-        )
+        if self._imap_account.nylas_access_token:
+            nylas = APIClient(
+                NYLAS_ID,
+                NYLAS_SECRET,
+                self._imap_account.nylas_access_token
+            )
 
-        a = []
-        for e in nylas.events.where(limit=10):
-            a.append(e.title)
+            a = []
+
+            from calendar import timegm
+            
+            now_timestamp = timegm(datetime.now().timetuple())
+
+            # get upcoming events 
+            for e in nylas.events.where(limit=3, starts_after=now_timestamp):
+                a.append(e.title)
 
         return a
 
