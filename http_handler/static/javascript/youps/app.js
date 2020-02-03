@@ -72,8 +72,8 @@ class DatePicker extends React.Component {
   }
 
   showDatePicker(e) {
-    // alert(e);
-    this.a.show()
+    this.a.show();
+    e.stopPropagation();
   }
 
   componentDidUpdate() {
@@ -102,6 +102,11 @@ class DatePicker extends React.Component {
           }
       });
 
+    // Prevent custom date selector to be closed
+    $(document).on('click', '.dropdown-menu .dropdown-toggle-skip', function (e) {
+        e.stopPropagation();
+    });
+
     buttonService.getUpcomingEvents().then(results => {
       console.log(results)
       self.setState({ schedule: results.events});
@@ -118,12 +123,12 @@ class DatePicker extends React.Component {
       <div class="input-group dropdown">
           <input name={this.props.name} type="text" class="form-control dropdown-toggle" data-toggle="dropdown" data-value={this.d_val} />
           <ul class="dropdown-menu">
-            <li><a onClick={(e)=>  this.handleSelect(e.target) } href="#" data-value={this.d_val}>tomorrow</a></li>
+            <li><a onClick={(e)=>  this.handleSelect(e.target) } data-value={this.d_val}>tomorrow</a></li>
             {this.state.schedule.map( er  =>
               <li><a onClick={(e)=>  this.handleSelect(e.target) } data-value={er.start}>{er.name} 
                 <span style={date_style}> {this.today_val.slice(0, 10) == er.start.slice(0, 10) ? er.start.slice(11):er.start} ~ {this.today_val.slice(0, 10) == er.end.slice(0, 10) ? er.end.slice(11):er.end}</span></a></li>
             )}
-             <li><a onClick={(e)=>  this.showDatePicker(e) } data-value={this.d_val}><input class="skip" ref={this.dateCustom} id={this.b} value='Select a date'/></a></li>
+             <li class='dropdown-toggle-skip'><a onClick={(e)=>  this.showDatePicker(e) } data-value={this.d_val}><input class="skip" ref={this.dateCustom} id={this.b} value='Select a date'/></a></li>
           </ul>
           <span role="button" class="input-group-addon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></span>
         
