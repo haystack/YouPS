@@ -54,11 +54,26 @@ class DatePicker extends React.Component {
     this.state  = {
         schedule: []
     };
+    this.dateCustom = React.createRef();
+    this.a = ""
+    this.b = Math.random().toString(36).substring(7)
+
+    var day = new Date();
+    this.today_val = day.getFullYear() + "-" + (day.getMonth() +1).toString().padStart(2, 0) + "-" + day.getDate().toString().padStart(2, 0) + "T" + "13:00"
+    var nextDay = new Date(day);
+    nextDay.setDate(day.getDate() + 1);
+    this.d_val = nextDay.getFullYear() + "-" + (nextDay.getMonth() +1).toString().padStart(2, 0) + "-" + nextDay.getDate().toString().padStart(2, 0) + "T" + "13:00"
   }
 
   handleSelect(e) {
-    $(e.target).parents(".dropdown").find('.btn').html($(e.target).text() + ' <span class="caret"></span>');
-    $(e.target).parents(".dropdown").find('.btn').val($(e.target).data('value'));
+    if (e.tagName != "A") e = e.parentElement
+    $(e).parents('.dropdown').find('input.dropdown-toggle')
+      .val($(e).data('value'));
+  }
+
+  showDatePicker(e) {
+    // alert(e);
+    this.a.show()
   }
 
   componentDidUpdate() {
@@ -66,9 +81,30 @@ class DatePicker extends React.Component {
   }
 
   componentDidMount() {
+    var self = this;
+    $("input[name='"+ this.props.name +"']").val(this.d_val);
+    this.a = new Pikaday(
+      {
+          field: document.getElementById(this.b),//self.dateCustom.current,
+          format : "Select a date",
+          firstDay: 1,
+          minDate: new Date(),
+          maxDate: new Date('2025-01-01'),
+          yearRange: [2020,2025],
+          onSelect: function(date) {
+            // field.value = picker.toString();
+            console.log(date)
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            // $(this._o.field).parents(".dropdown").find('input.dropdown-toggle').html(`${year} ${month}/${day} 13:00` + ' <span class="caret"></span>');
+            $(this._o.field).parents(".dropdown").find('input.dropdown-toggle').val(`${year}-${month}-${day}T13:00`);
+          }
+      });
+
     buttonService.getUpcomingEvents().then(results => {
       console.log(results)
-      this.setState({ schedule: results.events});
+      self.setState({ schedule: results.events});
       
     });
   }
@@ -76,29 +112,27 @@ class DatePicker extends React.Component {
   render() {
     var date_style = {color: "grey"};
 
-    var day = new Date();
-    var today_val = day.getFullYear() + "-" + (day.getMonth() +1).toString().padStart(2, 0) + "-" + day.getDate().toString().padStart(2, 0) + "T" + "00:00"
-    var nextDay = new Date(day);
-    nextDay.setDate(day.getDate() + 1);
-    var d_val = nextDay.getFullYear() + "-" + (nextDay.getMonth() +1).toString().padStart(2, 0) + "-" + nextDay.getDate().toString().padStart(2, 0) + "T" + "00:00"
+    
     return (
-      <div class="dropdown">
-        <button data-value={d_val} class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-          { nextDay.getFullYear() } { nextDay.getMonth() + 1}/{nextDay.getDate()} 12:00 AM
-          <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-          <li><a onClick={(e)=>  this.handleSelect(e) } data-value={d_val}>tomorrow</a></li>
-          {this.state.schedule.map( er  =>
-            <li><a onClick={(e)=>  this.handleSelect(e) } data-value={er.start}>{er.name} 
-              <span style={date_style}> {today_val.slice(0, 10) == er.start.slice(0, 10) ? er.start.slice(11):er.start} ~ {today_val.slice(0, 10) == er.end.slice(0, 10) ? er.end.slice(11):er.end}</span></a></li>
-          )}
-          <li><a onClick={(e)=>  this.handleSelect(e) } data-value={d_val}>Select date</a></li>
-        </ul>
-      </div>
+      <div class="row">
+      <div class="input-group dropdown">
+          <input name={this.props.name} type="text" class="form-control dropdown-toggle" data-toggle="dropdown" data-value={this.d_val} />
+          <ul class="dropdown-menu">
+            <li><a onClick={(e)=>  this.handleSelect(e.target) } href="#" data-value={this.d_val}>tomorrow</a></li>
+            {this.state.schedule.map( er  =>
+              <li><a onClick={(e)=>  this.handleSelect(e.target) } data-value={er.start}>{er.name} 
+                <span style={date_style}> {this.today_val.slice(0, 10) == er.start.slice(0, 10) ? er.start.slice(11):er.start} ~ {this.today_val.slice(0, 10) == er.end.slice(0, 10) ? er.end.slice(11):er.end}</span></a></li>
+            )}
+             <li><a onClick={(e)=>  this.showDatePicker(e) } data-value={this.d_val}><input class="skip" ref={this.dateCustom} id={this.b} value='Select a date'/></a></li>
+          </ul>
+          <span role="button" class="input-group-addon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></span>
+        
+        </div></div>
     );
   }
 }
+
+
 
 class RuleSelector extends React.Component {
   constructor(props) {
@@ -117,6 +151,7 @@ class RuleSelector extends React.Component {
     $.each($("input[name='watched_message']:checked"), function(k, v) {
       var kargs = {};
       $(e.target).parent().parent().find('input').each(function(index, elem) {
+          if(!$(elem).attr("name")) return;
           kargs[$(elem).attr("name")] = $(elem).val();
       })
   
@@ -191,7 +226,8 @@ class RuleSelector extends React.Component {
                   <td>{ er.name } &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; </td>
                   <td>
                     <ul>
-                      {er.params.map( param  => <li>{ param.name }: <span dangerouslySetInnerHTML={{__html: param.html}}></span></li>)}
+                      {er.params.map( param  => <li>{ param.name }: {param.type=="datetime"? 
+                        <DatePicker name={ param.name }/>:<span dangerouslySetInnerHTML={{__html: param.html}}></span>} </li>)}
                     </ul>
                   </td>
                   <td><button className='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.applyRule(e, er.id) }>Run</button></td>
@@ -214,12 +250,6 @@ $(document).ready(function() {
   ReactDOM.render(
     <RuleSelector/>,
     document.getElementById('rule-container')
-  );
-
-  // TODO attach to datetime 
-  ReactDOM.render(
-    <DatePicker/>,
-    document.getElementById('button-container')
   );
 
   if (!String.prototype.format) {
