@@ -176,7 +176,7 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
             # parse datetime 
 		    if er_arg.type == "datetime":
 		        try: 
-		            kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
+		            kargs[key] = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M')
 		        except Exception:
 		            res['code'] = key
 		            logger.info("qwersdf")
@@ -384,12 +384,12 @@ def fetch_upcoming_events(user, email):
                 start = datetime.datetime.fromtimestamp(e.when["start_time"])
                 start = tz('US/Eastern').localize(start)
                 start = timezone.localtime(start)
-                start = start.strftime("%Y-%m-%dT%H:%M")
+                start = start.strftime("%Y-%m-%d %H:%M")
 
                 end = datetime.datetime.fromtimestamp(e.when["end_time"])
                 end = tz('US/Eastern').localize(end)
                 end = timezone.localtime(end)
-                end = end.strftime("%Y-%m-%dT%H:%M")
+                end = end.strftime("%Y-%m-%d %H:%M")
 
                 a.append({"name": e.title, "start": start, "end": end})
 

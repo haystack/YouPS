@@ -87,10 +87,13 @@ def index(request):
 @login_required
 def settings(request):
 	user = get_object_or_404(UserProfile, email=request.user.email)
-	login_hint = request.user.email.replace("@mit.edu", "@exchange.mit.edu")
+	# request.user.email
+	login_hint = request.user.email
 	nylas_logged_in = False
 	ia = ImapAccount.objects.filter(email=request.user.email)
-	if ImapAccount.objects.filter(email=request.user.email).exists():
+	if ia.exists():
+		if ia[0].host == "imap.exchange.mit.edu":
+			login_hint = login_hint.split("@")[0] + "@exchange.mit.edu"
 		nylas_logged_in = True if ia[0].nylas_access_token else False
 
 	return {'user': request.user, 'redirect_uri': urllib.quote_plus("%s://%s/login_imap_callback" % (PROTOCOL, BASE_URL)) , 'nylas_logged_in':nylas_logged_in, 'login_hint': login_hint.replace("@", "%40"), 'email': request.user.email.replace("@", "%40"),'nylas_client_id': NYLAS_ID, 'website' : WEBSITE, 'group_page' : True}
@@ -112,6 +115,7 @@ def login_imap_view(request):
 
 	try: 
 		if request.user.id != None:
+			# as a way to suggest 
 			username = request.user.email.split("@")[0] if "csail" in request.user.email else request.user.email
 
 			imap = ImapAccount.objects.filter(email=request.user.email)

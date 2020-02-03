@@ -59,10 +59,10 @@ class DatePicker extends React.Component {
     this.b = Math.random().toString(36).substring(7)
 
     var day = new Date();
-    this.today_val = day.getFullYear() + "-" + (day.getMonth() +1).toString().padStart(2, 0) + "-" + day.getDate().toString().padStart(2, 0) + "T" + "13:00"
+    this.today_val = day.getFullYear() + "-" + (day.getMonth() +1).toString().padStart(2, 0) + "-" + day.getDate().toString().padStart(2, 0) + " 13:00"
     var nextDay = new Date(day);
     nextDay.setDate(day.getDate() + 1);
-    this.d_val = nextDay.getFullYear() + "-" + (nextDay.getMonth() +1).toString().padStart(2, 0) + "-" + nextDay.getDate().toString().padStart(2, 0) + "T" + "13:00"
+    this.d_val = nextDay.getFullYear() + "-" + (nextDay.getMonth() +1).toString().padStart(2, 0) + "-" + nextDay.getDate().toString().padStart(2, 0) + " 13:00"
   }
 
   handleSelect(e) {
@@ -98,7 +98,7 @@ class DatePicker extends React.Component {
             const month = date.getMonth() + 1;
             const year = date.getFullYear();
             // $(this._o.field).parents(".dropdown").find('input.dropdown-toggle').html(`${year} ${month}/${day} 13:00` + ' <span class="caret"></span>');
-            $(this._o.field).parents(".dropdown").find('input.dropdown-toggle').val(`${year}-${month}-${day}T13:00`);
+            $(this._o.field).parents(".dropdown").find('input.dropdown-toggle').val(`${year}-${month}-${day} 13:00`);
           }
       });
 
@@ -224,7 +224,7 @@ class RuleSelector extends React.Component {
     var table_style = {background: "#f9f9f9"};
 
     return (
-      <table class="table table-striped table-dark" style={table_style} id="rule-selector-table">
+      <table className="table table-striped table-dark" style={table_style} id="rule-selector-table">
         <tbody>
               {this.state.rules.map( er  =>
                 <tr>

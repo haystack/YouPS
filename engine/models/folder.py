@@ -429,7 +429,11 @@ class Folder(object):
             uid_criteria = '%d' % last_seen_uid
         else:
             uid_criteria = '%d:*' % (last_seen_uid + 1)
-
+        if self._imap_account.email == "karger@mit.edu" and self.name=="INBOX.Archives.Topics.ISAT - Innovation":
+            logger.info('karger folder {f}: message_arrival skip '.format(
+                f=self.name))
+            return
+        
         # all the data we're iterating over
         fetch_data = self._imap_client.fetch(uid_criteria, descriptors)
 
@@ -437,8 +441,16 @@ class Folder(object):
         if last_seen_uid in fetch_data:
             del fetch_data[last_seen_uid]
 
+        if self._imap_account.email == "karger@mit.edu":
+            logger.info('karger folder {f}: message_arrival'.format(
+                f=self.name))
+            logger.info(fetch_data)
+
         # iterate over the fetched data
         for uid in fetch_data:
+            if self._imap_account.email == "karger@mit.edu":
+                logger.info("karger {u}".format(u=uid))
+            
             # dictionary of general data about the message
             message_data = fetch_data[uid]
 
@@ -447,6 +459,8 @@ class Folder(object):
                 ['SEQ'] + Message._get_descriptors(is_gmail, True), message_data)
             if not ok:
                 continue
+            if self._imap_account.email == "karger@mit.edu":
+                logger.info("karger {u}".format(u=uid))
 
             self._cleanup_message_data(message_data)
             message_data = parse_msg_data(message_data)
@@ -493,6 +507,9 @@ class Folder(object):
                 if "bcc" in metadata:
                     base_message.bcc.add(
                         *self._find_or_create_contacts(metadata["bcc"]))
+
+            if self._imap_account.email == "karger@mit.edu":
+                logger.info("base message saving")
 
             new_message = MessageSchema(
                 base_message=base_message,
