@@ -233,6 +233,12 @@
                 "example": ""
             },
             {
+                "name": "aggregate_response",
+                "params": "",
+                "description": "Aggregate response of messages in this thread and return a list of pairs of sender and their response",
+                "example": ""
+            },
+            {
                 "name": "copy",
                 "params": "dst_folder",
                 "description": "Copy this email from the current folder to dst_folder. If folder dst_folder does not exist, our engine creates a new folder with the name dst_folder",
