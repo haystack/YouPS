@@ -220,7 +220,7 @@ class ContactAlias(models.Model):
         db_table = "youps_contact_alias"
         unique_together = ("contact", "name")
 
-
+# Thread object is created on demand e.g., when there is an associated event
 class ThreadSchema(models.Model):
     # the primary key
     id = models.AutoField(primary_key=True)
@@ -265,6 +265,10 @@ class EmailRule(models.Model):
     code = models.TextField(null=True, blank=True)  # t.AnyStr
     mode = models.ForeignKey(
         'MailbotMode', related_name="rules", blank=True, null=True)
+
+    # shortcut has imapaccount instead of mode
+    imap_account = models.ForeignKey('ImapAccount', blank=True, null=True) 
+
     folders = models.ManyToManyField(
         FolderSchema, related_name='rules')  # type: t.List[FolderSchema]
 

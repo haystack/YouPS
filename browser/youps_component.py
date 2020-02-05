@@ -10,6 +10,7 @@ from engine.constants import msg_code
 import engine.main
 from schema.models import UserProfile
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args)
+from http_handler.settings import PROTOCOL, BASE_URL
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -17,10 +18,22 @@ request_error = json.dumps({'code': msg_code['REQUEST_ERROR'], 'status': False})
 
 def get_base_code(rule_type):
     d = {
-        "new-message": "def on_message(my_message):\n    pass",
-        "deadline": "def on_deadline(my_message):\n    pass",
+        "new-message": """def on_message(my_message):
+    # my_message is a Message instance of a newly arrived message
+    # You can choose to run this rule only if the message is arrived in certain folders by selecting them at the left panel
+    if my_message.from_ not in ['me@email.com', 'advisor@email.com']:
+        my_message.see_later()""",
+        "deadline": """def on_deadline(my_message):
+    # my_message is a Message instance 
+    # this function occurs at my_message.deadline
+    # by default, Message instances does not have deadline otherwise you specify it
+    pass""",
         "flag-change": "def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):",
-        "shortcut": "def on_command(my_message, kargs):\n    pass"
+        "shortcut": """def on_command(my_message, kargs):
+    # shortcut is a custom add-on feature. Create shortcuts and use them at %s://%s/button 
+    # my_message is a Message instance 
+    # kargs is a dictionary that contains arguments you specify at the left panel e.g., kargs['arg_name']
+    my_message.remind_me(kargs['when'])""" % (PROTOCOL, BASE_URL)
     }
 
     return d[rule_type]
@@ -83,9 +96,12 @@ def load_new_editor(request):
 
                         # mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
                         # mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
-
-                        rules = EmailRule.objects.filter(mode__imap_account=imap[0])
-                        
+                        rules = None
+                        if request.POST['type'] == "shortcut":
+                            rules = EmailRule.objects.filter(imap_account=imap[0])
+                        else:
+                            rules = EmailRule.objects.filter(mode__imap_account=imap[0])
+                        logger.info(rules)
 
                         for rule in rules:
                             for f in rule.folders.all():
@@ -94,22 +110,26 @@ def load_new_editor(request):
                             folders = FolderSchema.objects.filter(imap_account=imap[0])
                             c = {'rule': rule, 'folders': folders}
                             rule_type = rule.type
+                            if request.POST['type'] and request.POST['type'] != rule_type:
+                                continue
                             if rule_type == "shortcut":
                                 args = EmailRule_Args.objects.filter(rule=rule)
                                 c = {'rule': rule, 'folders': folders, 'args': args}
                             elif rule_type.startswith("new-message"):
                                 rule_type = "new-message"
                             
-                            logger.info('youps/%s.html' % rule_type.replace("-", "_"))
+                            logger.debug('youps/%s.html' % rule_type.replace("-", "_"))
                             template = loader.get_template('youps/components/%s.html' % rule_type.replace("-", "_"))
 
-                            e = {'type': rule_type, 'mode_uid': rule.mode.id, 'template': template.render(Context(c))}
+                            e = {'type': rule_type, 'mode_uid': -1 if not rule.mode else rule.mode.id, 'template': template.render(Context(c))}
 
                             editors.append( e )
+
+                            logger.debug(editors)
                 # create a new rule
                 else:
                     rule_type = request.POST['type']
-                    mode_id = request.POST['mode']
+                    mode_id = request.POST['mode'] if "mode" in request.POST else -1
 
                     editors = create_new_editor(imap[0], rule_type, mode_id)
     except Exception as e:

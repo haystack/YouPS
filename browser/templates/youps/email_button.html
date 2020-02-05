@@ -53,10 +53,10 @@
 		<div class="group-container">
 			<p hidden id="website-name">{{website}}</p>
 
-			<h2>YouPS button</h2>
+			<span style="font-size: 50px;">YouPS shortcuts</span>
 			<br>
-
-			{% if imap_authenticated %}
+			<a style="float:right;" href="/shortcut_editor">Edit shortcuts</a>
+			{% if False %}
 				<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
 				<a id="popuplink" href="#inline">Forgot how to use?</a>
 				<div id="inline" style="display:none;text-align:center;">
@@ -102,7 +102,7 @@
 
 			<h2>1. Select a message</h2>
 			<div id="button-container">
-				<span class='label label-primary spinning' id='btn-watch'>Loading</span><span>: Open (mark read/unread) a message you want to manipulate!</span>
+				<span class='label label-primary spinning' id='btn-watch'>Loading</span><span>: Toggle (mark read/unread) a message you want to manipulate!</span>
 			</div>
 			<br/>
 			<div id='message-param-container'>

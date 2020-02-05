@@ -174,19 +174,7 @@ def interpret(mailbox, mode):
         from schema.youps import FolderSchema
 
         # define the variables accessible to the user
-        user_environ = {
-            'create_draft': mailbox.create_draft,
-            'create_folder': mailbox.create_folder,
-            'get_email_mode': mailbox.get_email_mode,
-            'set_email_mode': mailbox.set_email_mode,
-            'send': mailbox.send,
-            'handle_on_message': lambda f: mailbox.new_message_handler.handle(f),
-            'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
-            'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
-            'handle_on_deadline': lambda f: mailbox.deadline_handler.handle(f),
-            'Calendar': MyCalendar,
-
-        }
+        user_environ = sandbox_helpers.get_default_user_environment(mailbox, print)
 
         # iterate through event queue
         for event_data in mailbox.event_data_list:
@@ -296,7 +284,11 @@ def interpret(mailbox, mode):
                 mailbox.added_flag_handler.removeAllHandles()
                 mailbox.deadline_handler.removeAllHandles()
 
-        # Task manager
+        '''
+            Task manager: Dynamic event handler. Could be triggered by a definite time or events 
+            my_message.on_response(f)
+            my_message.on_time(time, f)
+        '''
         for task in TaskManager.objects.filter(imap_account=mailbox._imap_account):
             now = timezone.now().replace(microsecond=0)
             is_fired = False

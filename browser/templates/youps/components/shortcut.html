@@ -4,7 +4,7 @@
 			<i class="fas fa-3x fa-trash"></i> 
 		</div>
 	
-		<div class="flex_item_right panel-heading panel-collapsed">
+		<div class="flex_item_right panel-heading">
 			<h3 class="panel-title">
 				<i style="float:left;" class="fas fa-2x fa-terminal"></i>
 				<input type="text" style="float:left;border: none;background: none;border-bottom: 2px solid;" placeholder="My email rule" value="{{ rule.name }}" />
@@ -16,7 +16,7 @@
 			</span>
 		</div>
 	</div>
-	<div class="panel-body" style="display:none;">
+	<div class="panel-body">
 		<div class="instruction-container">
 			<ul id="arg-list-{{rule.id}}">
 				{% for arg in args %}
@@ -38,7 +38,7 @@
 				{% endfor %}
 			</ul>
 				
-			<button id="add-{{rule.id}}">Add an element to the list</button>
+			<button id="add-{{rule.id}}">Add an argument</button>
 	
 			<script type="text/javascript">
 				var add = document.getElementById('add');
@@ -81,8 +81,8 @@
 					$(this).hide();  $(this).siblings("#display").show().text($(this).val());
 				});
 			</script>
-
-			<span>Forward your email to <b>run@youps.csail.mit.edu</b> with commands to trigger the shortcut!</span>
+			<br>
+			<span>Add your arguments for the shortcut here</span>
 		</div>
 		<div class="editor-container">
 			<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
@@ -90,7 +90,22 @@
 			</textarea>
 		</div>
 		<!-- Separte row for debugging -->
-		<div class='debugger-container' mv-app='editor2' mv-storage='#mv-data-container'  class='mv-autoedit' mv-mode='edit'>
-		</div>
+		<div class='debugger-container'>
+			<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i>Debug my code</button>
+
+			<h2>Test suites</h2>
+			<h4>Recent messages from your selected folders to test your rules</h4>
+			<table class="example-suites" class="table" style="width:100%">
+			<thead>
+					<tr>
+					  <th>Sender</th>
+					  <th>Message</th>
+					  <th>Expected Result</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+	</div>
 	</div>
 </div>

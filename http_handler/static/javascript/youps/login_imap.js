@@ -67,82 +67,6 @@ $(document).ready(function() {
         return marker;
       }
 
-    function init_editor(editor_elem) {
-        var editor = CodeMirror.fromTextArea(editor_elem, {
-            mode: {name: "python",
-                version: 2,
-                singleLineStringErrors: false},
-            lineNumbers: true,
-            matchBrackets: true,
-            indentUnit: 4,
-            gutters: ["breakpoints"],
-            lint: true,
-            lineWrapping:'true'
-        });
-
-        var arrows = [13, 27, 37, 38, 39, 40];
-        editor.on("keyup", function(cm, e) {
-          if (arrows.indexOf(e.keyCode) < 0) {
-            editor.execCommand("autocomplete")
-          }
-        })
-
-        // Add debugging interfaces 
-        editor.on("gutterClick", function(cm, n) {
-            var line_number = n +1;
-            
-            var required_new = !$(cm.getWrapperElement()).find(".CodeMirror-line:eq({0})".format(n)).hasClass('selected');
-    
-            // Update gutter and highlight the selected line
-            $(cm.getWrapperElement()).find(".CodeMirror-line").removeClass("selected");
-            $(cm.getWrapperElement()).find(".CodeMirror-gutter-wrapper").removeClass("selected");
-            $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.debugger-container tr').removeClass('selected');
-
-            if(required_new) {
-                $(cm.getWrapperElement()).find(".CodeMirror-line:eq({0})".format(n)).addClass("selected");
-                $(cm.getWrapperElement()).find(".CodeMirror-gutter-wrapper:eq({0})".format(n)).addClass("selected");
-
-                // filter examples 
-                $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.debugger-container tr[line-number{0}]'.format(line_number)).addClass('selected');
-            }
-          });
-          
-        // editor.getValue( "import re, spacy, datetime, arrow" );
-        // editor.markText({line:0,ch:0},{line:2,ch:1},{readOnly:true});
-
-        editor.on('change',function(cm){
-            // get value right from instance
-            $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.btn-debug-update').addClass('glow');
-        });
-    }
-
-    var debug_matched_row = [];
-
-    // gutter Hover 
-    $("body").on("mouseenter", ".CodeMirror-gutter-wrapper", function() {
-        var cm = $(this).parents('.CodeMirror')[0].CodeMirror;
-        var cnt = 0;
-        while(cm.getLine(cnt++)) {
-            var info = cm.lineInfo(cnt-1);
-            if( !info.gutterMarkers )
-                cm.setGutterMarker(cnt-1, "breakpoints", makeMarker());
-        }
-
-        var line_number = $(".CodeMirror-gutter-wrapper").index(this) + 1;
-
-        // highlight the email matched at the line
-        // add .selected temporarily to matched example messages, then will be removed when mouse leaves
-        $(this).parents(".panel[rule-id]").find('tr[line-number{0}]'.format(line_number)).addClass('hover-selected');
-    })
-
-    $("body").on("mouseleave", ".CodeMirror-gutter-wrapper", function() {
-        var line_number = $(".CodeMirror-gutter-wrapper").index(this) + 1;
-
-        // remove .selected from the matched example messages
-        var $root_elem = $(this).parents(".panel[rule-id]");
-        $root_elem.find('.debugger-container tr[line-number{0}]'.format(line_number)).removeClass('hover-selected');
-    })
-
     var test_mode_msg = {true: "You are currently at test mode. YouPS will simulate your rule but not actually run the rule.", 
         false: "YoUPS will apply your rules to your incoming emails. "};
 
@@ -314,42 +238,6 @@ $(document).ready(function() {
         run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
     });
 
-    // add a new editor
-    $("#editor-container").on("click", ".btn-new-editor", function() {
-        trackOutboundLink('new editor -' + $(this).attr("type"));
-        var $container = $( $(this).siblings("[type='{0}']".format($(this).attr("type"))) );
-        var editor_elem = load_rule(false, $(this).attr("type"), $container);
-    });
-
-    // remove / revive an editor
-    $("#editor-container").on("click", ".editable-container .flex_item_left", function() {
-        trackOutboundLink('remove editor -' + $(this).attr("type"));
-        if ($(this).parents('.panel').hasClass('removed')) {
-            $(this).parents('.panel').removeClass('removed');
-            run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
-
-            // give different visual effects
-            $(this).find('svg').remove();
-            $(this).append('<i class="fas fa-trash fa-3x"></i>');
-            
-        }else {
-            if(!$(this).siblings('.flex_item_right').hasClass("panel-collapsed") ) // if opened
-                $(this).siblings('.flex_item_right').click(); // then close 
-
-            // remove editor from the server
-            var rule_id = $(this).parents('.panel').attr('rule-id');
-            remove_rule(rule_id);
-
-            $(this).parents('.panel').addClass('removed');
-
-            // give different visual effects
-            $(this).find('svg').remove();
-            $(this).append('<i class="fas fa-redo fa-3x"></i>');
-            
-        }
-        
-    });
-
     // folder select listener
     $("#editor-container").on("change", ".folder-container input:checkbox", function() {
         var editor_rule_container = $(this).parents('div[rule-id]');
@@ -481,34 +369,9 @@ $(document).ready(function() {
         }
     })
 
-    // Accordion listener
-    $("#editor-container").on("click", ".panel-heading", function (e) {
-        e.preventDefault();
-
-        // Fire only by panel click not child
-        if($(e.target).is('input') || $(e.target).is('button')) return;
-
-        var $this = $(this);
-        if(!$this.hasClass('panel-collapsed')) { // close the panel
-            $this.parents('.panel').find('.panel-body').slideUp();
-            $this.addClass('panel-collapsed');
-            $this.find('.fa-chevron-down').hide();
-			$this.find('.fa-chevron-up').show();
-						
-			var selected_folders = [];
-			$this.parents(".flex_container").siblings('.panel-body').find(".folder-container input:checked").each(function () {
-				selected_folders.push( $(this).attr('value') );
-			});
-			$this.find(".preview-folder").text( selected_folders.join(", ") );
-
-            $this.find(".preview-folder").show();
-        } else { // open the panel
-            $this.parents('.panel').find('.panel-body').slideDown();
-            $this.removeClass('panel-collapsed');
-            $this.find('.fa-chevron-up').hide();
-            $this.find('.fa-chevron-down').show();
-            $this.find(".preview-folder").hide();
-        }
+    $("body").on("click", ".btn-incoming-save", function() {
+        // save the code to DB
+        run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
     })
 
     function guess_host( email_addr ) {
@@ -592,11 +455,6 @@ $(document).ready(function() {
         
     });
 
-    $("body").on("click", ".btn-incoming-save", function() {
-        // save the code to DB
-        run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active') ); 
-    })
-
     // Ctrl-s or Command-s
     $(window).keypress(function(event) {
         if (!(event.which == 115 && (event.metaKey || event.ctrlKey)) && !(event.which == 19)) return true;
@@ -605,9 +463,6 @@ $(document).ready(function() {
         return false;
     });
 
-    btn_shortcut_save.click(function() {
-        save_shortcut();
-    })
 
     $('#test-mode[type=checkbox]').change(function() {
         var want_test = $(this).is(":checked");
@@ -680,11 +535,6 @@ $(document).ready(function() {
             }
         );
     }
-
-    function show_loader( is_show ) {
-        if(is_show) $(".sk-circle").show();
-        else $(".sk-circle").hide();
-    }
 	
 	function toggle_login_mode() {
 		oauth = $('#rdo-oauth').is(":checked");
@@ -697,67 +547,19 @@ $(document).ready(function() {
 		}
     }
 
-    function get_current_mode() {
-        var id = $("#current_mode_dropdown").attr('mode-id');
-
-        return {"id": id,
-            "name": $.trim(document.querySelector('.nav.nav-tabs li.active .tab-title').innerHTML)
-        };
-    }
 
     function get_modes() {
         var modes = {};
 
         // iterate by modes 
         $("#editor-container .tab-pane").each(function() {
-            var editors = [];
-
             // get mode ID
             if(!$(this).attr('id').includes("_")) return;
             var id = $(this).attr('id').split("_")[1];
             var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
 
             // iterate by editor 
-            $(this).find('.CodeMirror').each( function(index, elem) {
-                if( $(elem).parents('.panel').hasClass('removed') ) return;
-                var code = elem.CodeMirror.getValue();
-                var $parent_container = $(elem).parents('.panel');
-                var uid = $parent_container.attr('rule-id');
-                var name = $parent_container.find('.panel-title input').val();
-                var type = $(elem).parents('.editable-container').attr('type');
-
-                // Extract if there is interval, then attach the timespan to the type value
-                if(type=="new-message" && $parent_container.find('.trigger input:checked').attr('value') != "now") {
-                    var time_span = $parent_container.find('.trigger input:checked').next().val();
-                    time_span = parseInt(time_span) || 1;
-                    var time_unit = $parent_container.find('.trigger input:checked').next().next().val();
-                    if(time_unit == "min") time_span *= 60;
-                    else if(time_unit == "hr") time_span *= (60*60);
-                    else time_span *= (60*60*24);
-                    type += ("-" + time_span);
-                }
-                
-
-                var selected_folders = [];
-                $(elem).parents('.panel').find(".folder-container input:checked").each(function () {
-                    selected_folders.push($(this).attr('value'));
-                });
-
-                var args = [];
-                // Get params
-                if( type == "shortcut" ) {
-                    debugger;
-                    $parent_container.find('.instruction-container ul li').each(function (index, elem) {
-                        var args_name = $(elem).find(".args-name").val() || "";
-                        var args_type = $(elem).find("select").val();
-
-                        args.push({"name": args_name, "type": args_type})
-                    })
-                    debugger;
-                }
-
-                editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders, "args": args}); 
-            })
+            var editors = extract_rule_code(this)
 
             modes[id] = {
                 "id": id,
@@ -803,141 +605,8 @@ $(document).ready(function() {
                 idle_mark.style.display = "inline-block";
         }
     }
-  
-    function load_rule(load_exist, rule_type=null, $container=null) {
-        show_loader(true);
 
-        var params = {
-            'load_exist' : load_exist,
-            'type': rule_type
-        };
-
-        if (!load_exist) params['mode'] = get_current_mode()['id'];
-
-        $.post('/load_new_editor', params,
-        function(res) {
-            show_loader(false);
-            console.log(res);
-            
-            if (res.status) {
-                if (res.code) { 
-                    if (load_exist) {
-                        $.each(res.editors, function( index, value ) {
-                            $( "#tab_{0} .editable-container[type='{1}']".format(value['mode_uid'], value['type']) ).append(value['template']);
-                        });
-                        
-                        var active_tab = $('.nav-tabs li.active');
-                        
-                        // Open individual tab and panel to load style properly
-                        $('.nav-tabs li').each(function() {
-                            if ( !$(this).find('span') || $(this).find('a').hasClass('add-tab') ) return;
-                        
-                            // open this tab
-                            $(this).find('a').click();
-                                
-                            // open all the editors
-                            // NOTE: weird bootstrap bug, it only opens if following lines are here. It doesn't work with only either one
-                            $( $(this).find('a').attr('href') ).find('.editable-container .panel-heading').click();
-                            $( $(this).find('a').attr('href') ).find('.editable-container .panel-heading').each(function() {
-                                $(this).click();
-                            })
     
-                            $( $(this).find('a').attr('href') ).find('.editable-container textarea.editor').each(function() {
-                                init_editor( this );
-                            })
-                        })
-                        
-                        // set dropdown to current mode name if exist
-                        if(current_mode) {
-                            active_tab.find('a').click();
-                            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
-                            $(".dropdown .btn").attr('mode-id', current_mode_id);
-                        }
-                        
-                        else {
-                            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
-                            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
-                            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
-                            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
-                            
-                            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
-                            $(".dropdown .btn").attr('mode-id', last_id);
-                        }
-                        
-                        // Init folder container
-                        // init_folder_selector( $(".folder-container") )
-                        
-                        // var tmp_simulate_load = false;
-                        // // Load EditorRule - folder selection
-                        // $("div[rule-id]").each(function() {
-                        //     var emailrule_id = $(this).attr('rule-id');
-                        
-                        //     var folders = [];
-                        //     for(var i=0; i < RULE_FOLDER.length ; i++) {
-                        //         if(RULE_FOLDER[i][1] == emailrule_id) {
-                        //             $(this).find('.folder-container input[value="'+ RULE_FOLDER[i][0] + '"]').prop( "checked", true );
-                        //             folders.push(RULE_FOLDER[i][0]);
-                        //         }
-                        //     }
-                        
-                        //     if(folders.length == 0) return;
-                        
-                        //     if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
-                        //         // TODO load only one when initialize 
-                        //         tmp_simulate_load = true;
-                        //         run_simulate_on_messages(folders, 5, this);
-                        //     }
-                                
-                        // }) 
-                    } 
-
-                    else {
-                        $container.append( res.editors[0]['template'] );
-                        
-                        // open briefly to set styling
-                        $container.find(".panel-heading").last().click();
-                        $container.find(".panel-heading").last().click();
-                                init_editor( $container.find('textarea').last()[0] );
-        
-                                $($container.find('.example-suites').last()[0]).DataTable( {
-                                    "bPaginate": false,
-                                    "bLengthChange": false,
-                                    "bFilter": true,
-                                    "bInfo": false,
-                                    "bAutoWidth": false,
-                                    "searching": false,
-                                    "columns": [
-                                        { "width": "40px", "orderable": false },
-                                        null,
-                                        { "width": "300px" }
-                                    ],
-                                    "order": [[1, 'asc']]
-                                } );
-                        
-                                
-                        
-                                // init_folder_selector( $($container.find('.folder-container').last()[0]) );
-                        
-                                // check inbox folder by default
-                                // $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
-                                //     if(elem.value.toLowerCase() == "inbox") {
-                                //         elem.checked = true;
-                                //         if($(this).attr("type") == "new-message")
-                                //             run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
-                                //     }
-                                // })
-                    }
-                }
-                else {                        
-                    notify(res, true);
-                }
-            }
-            else {
-                notify(res, false);
-            }
-        }
-    );
-}
 
     function watch_current_message() {
         var params = {};
@@ -1013,34 +682,6 @@ $(document).ready(function() {
                     alert("Fail to load! Can you try using a different browser? 403");
                 });    
         });
-
-        function remove_rule(rule_uid) {
-            show_loader(true);
-
-            var params = {
-                'rule-id' : rule_uid
-            };
-
-            $.post('/remove_rule', params,
-                function(res) {
-                    show_loader(false);
-                    console.log(res);
-                    
-                    // Auth success
-                    if (res.status) {
-
-                        if (res.code) { 
-                        }
-                        else {                        
-                            notify(res, true);
-                        }
-                    }
-                    else {
-                        notify(res, false);
-                    }
-                }
-            );
-        }
 
         function run_code(is_dry_run, is_running, silent=false) {
             var cur_mode;
@@ -1255,37 +896,6 @@ $(document).ready(function() {
                 }
             );
         }
-
-        function save_shortcut() {
-            show_loader(true);
-
-            var params = {
-                'shortcuts' : document.querySelector('#editor-shortcut-container .CodeMirror').CodeMirror.getValue()
-            };
-
-            $.post('/save_shortcut', params,
-                function(res) {
-                    show_loader(false);
-                    console.log(res);
-                    
-                    // Auth success
-                    if (res.status) {
-
-                        if (res.code) { 
-                            // some emails are not added since they are not members of the group
-                            // $('#donotsend-msg').show();
-                            // $('#donotsend-msg').html(res['code']);
-                        }
-                        else {                        
-                            notify(res, true);
-                        }
-                    }
-                    else {
-                        notify(res, false);
-                    }
-                }
-            );
-        }
     
         $(".default-text").blur();
         
@@ -1302,3 +912,147 @@ $(document).ready(function() {
             theme_advanced_resizing: true
         });
     });
+
+    function get_current_mode() {
+        var id = $("#current_mode_dropdown").attr('mode-id');
+
+        return {"id": id,
+            "name": $.trim(document.querySelector('.nav.nav-tabs li.active .tab-title').innerHTML)
+        };
+    }
+
+    // if load_exist true, it bulk loads all the message. Otherwise loads only one editor
+    function load_rule(load_exist, rule_type=null, $container=null) {
+        show_loader(true);
+
+        var params = {
+            'load_exist' : load_exist,
+            'type': rule_type
+        };
+
+        if (!load_exist) params['mode'] = get_current_mode()['id'];
+
+        $.post('/load_new_editor', params,
+        function(res) {
+            show_loader(false);
+            console.log(res);
+            
+            if (res.status) {
+                if (res.code) { 
+                    if (load_exist) {
+                        // TODO devide the part attach and retrieve components 
+                        $.each(res.editors, function( index, value ) {
+                            $( "#tab_{0} .editable-container[type='{1}']".format(value['mode_uid'], value['type']) ).append(value['template']);
+                        });
+                        
+                        var active_tab = $('.nav-tabs li.active');
+                        
+                        // Open individual tab and panel to load style properly
+                        $('.nav-tabs li').each(function() {
+                            if ( !$(this).find('span') || $(this).find('a').hasClass('add-tab') ) return;
+                        
+                            // open this tab
+                            $(this).find('a').click();
+                                
+                            // open all the editors
+                            // NOTE: weird bootstrap bug, it only opens if following lines are here. It doesn't work with only either one
+                            $( $(this).find('a').attr('href') ).find('.editable-container .panel-heading').click();
+                            $( $(this).find('a').attr('href') ).find('.editable-container .panel-heading').each(function() {
+                                $(this).click();
+                            })
+    
+                            $( $(this).find('a').attr('href') ).find('.editable-container textarea.editor').each(function() {
+                                init_editor( this );
+                            })
+                        })
+                        
+                        // set dropdown to current mode name if exist
+                        if(current_mode) {
+                            active_tab.find('a').click();
+                            $(".dropdown .btn").html(current_mode + ' <span class="caret"></span>');
+                            $(".dropdown .btn").attr('mode-id', current_mode_id);
+                        }
+                        
+                        else {
+                            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
+                            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+                            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
+                            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+                            
+                            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+                            $(".dropdown .btn").attr('mode-id', last_id);
+                        }
+                        
+                        // Init folder container
+                        // init_folder_selector( $(".folder-container") )
+                        
+                        // var tmp_simulate_load = false;
+                        // // Load EditorRule - folder selection
+                        // $("div[rule-id]").each(function() {
+                        //     var emailrule_id = $(this).attr('rule-id');
+                        
+                        //     var folders = [];
+                        //     for(var i=0; i < RULE_FOLDER.length ; i++) {
+                        //         if(RULE_FOLDER[i][1] == emailrule_id) {
+                        //             $(this).find('.folder-container input[value="'+ RULE_FOLDER[i][0] + '"]').prop( "checked", true );
+                        //             folders.push(RULE_FOLDER[i][0]);
+                        //         }
+                        //     }
+                        
+                        //     if(folders.length == 0) return;
+                        
+                        //     if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
+                        //         // TODO load only one when initialize 
+                        //         tmp_simulate_load = true;
+                        //         run_simulate_on_messages(folders, 5, this);
+                        //     }
+                                
+                        // }) 
+                    } 
+
+                    else {
+                        $container.append( res.editors[0]['template'] );
+                        
+                        // open briefly to set styling
+                        $container.find(".panel-heading").last().click();
+                        $container.find(".panel-heading").last().click();
+                                init_editor( $container.find('textarea').last()[0] );
+        
+                                $($container.find('.example-suites').last()[0]).DataTable( {
+                                    "bPaginate": false,
+                                    "bLengthChange": false,
+                                    "bFilter": true,
+                                    "bInfo": false,
+                                    "bAutoWidth": false,
+                                    "searching": false,
+                                    "columns": [
+                                        { "width": "40px", "orderable": false },
+                                        null,
+                                        { "width": "300px" }
+                                    ],
+                                    "order": [[1, 'asc']]
+                                } );
+                        
+                                
+                        
+                                // init_folder_selector( $($container.find('.folder-container').last()[0]) );
+                        
+                                // check inbox folder by default
+                                // $.each($($container.find('.folder-container').last()[0]).find("input"), function(index, elem) {
+                                //     if(elem.value.toLowerCase() == "inbox") {
+                                //         elem.checked = true;
+                                //         if($(this).attr("type") == "new-message")
+                                //             run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
+                                //     }
+                                // })
+                    }
+                }
+                else {                        
+                    notify(res, true);
+                }
+            }
+            else {
+                notify(res, false);
+            }
+        }
+    );}

@@ -239,13 +239,13 @@ def START(message, address=None, host=None):
             relay.deliver(new_message)
 
     except ImapAccount.DoesNotExist:
-        body_part = []
-        body = {}
-        body["text"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
-        body["html"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at <a href="%s://%s">%s://%s</a>' % (addr, PROTOCOL, site.domain, PROTOCOL, site.domain)
+        # body = {}
+        # body["text"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at %s://%s' % (addr, PROTOCOL, site.domain)
+        # body["html"] = 'Your email %s is not registered or stopped due to an error. Write down your own email rule at <a href="%s://%s">%s://%s</a>' % (addr, PROTOCOL, site.domain, PROTOCOL, site.domain)
         
-        mail = create_response(arrived_message, addr, arrived_message["message-id"], body, host)
-        relay.deliver(mail)
+        # mail = create_response(arrived_message, addr, arrived_message["message-id"], body, host)
+        # relay.deliver(mail)
+        logger.exception("%s try to use YouPS but does not have an account" % addr)
     except Exception, e:
         logger.exception("Error while executing %s %s " % (e, traceback.format_exc()))
         subject = "[YoUPS] shortcuts Errors"

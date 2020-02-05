@@ -239,7 +239,7 @@ ul {
   margin: 10px;
 }
 
-#editor-container .tab-content .panel.removed {
+.panel.removed {
   opacity: 0.5;
 }
 

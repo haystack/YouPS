@@ -98,6 +98,64 @@ def settings(request):
 
 	return {'user': request.user, 'redirect_uri': urllib.quote_plus("%s://%s/login_imap_callback" % (PROTOCOL, BASE_URL)) , 'nylas_logged_in':nylas_logged_in, 'login_hint': login_hint.replace("@", "%40"), 'email': request.user.email.replace("@", "%40"),'nylas_client_id': NYLAS_ID, 'website' : WEBSITE, 'group_page' : True}
 
+@render_to(WEBSITE+"/shortcut_editor.html")
+def shortcut_editor(request):
+	imap_authenticated = False
+	username= ""
+	is_test = False
+	is_running = False
+	mode_exist = False
+	modes = []
+	current_mode = None
+	shortcuts = ''
+	is_initialized = False 
+	folders = []
+	email_rule_folder = []
+	rules = []
+
+	try: 
+		if request.user.id != None:
+			# as a way to suggest 
+			username = request.user.email.split("@")[0] if "csail" in request.user.email else request.user.email
+
+			imap = ImapAccount.objects.filter(email=request.user.email)
+			
+			if imap.exists():
+				
+
+				if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
+					imap_authenticated = True
+					is_test = imap[0].is_test
+					is_running = imap[0].is_running
+					is_initialized = imap[0].is_initialized
+
+					current_mode = imap[0].current_mode
+
+					modes = MailbotMode.objects.filter(imap_account=imap[0])
+					logger.info(modes.values())
+					mode_exist = modes.exists()
+
+					if is_initialized:
+						# send their folder list
+						folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
+					
+						folders = [f['name'].encode('utf8', 'replace') for f in folders]
+
+						# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
+						# mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
+
+						rules = EmailRule.objects.filter(mode__imap_account=imap[0])
+						for rule in rules:
+							for f in rule.folders.all():
+								email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
+
+		return {'user': request.user, 'username': username,'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
+			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 'shortcuts': shortcuts}
+	except Exception as e:
+		logger.exception(e)
+		return {'user': request.user, 'website': WEBSITE}
+
 @render_to(WEBSITE+"/login_email.html")
 def login_imap_view(request):
 	imap_authenticated = False
@@ -327,6 +385,21 @@ def apply_button_rule(request):
 		return HttpResponse(request_error, content_type="application/json")
 
 @login_required
+def save_rules(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		rules = json.loads(request.POST['rules']) 
+
+		ia = ImapAccount.objects.get(email=request.user.email)
+		ers = EmailRule.objects.filter(imap_account=ia, type="shortcut")
+		res = engine.main.save_rules(user, request.user.email, ers, rules)
+		
+		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
+	except Exception as e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
 def fetch_execution_log(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
@@ -417,19 +490,6 @@ def run_simulate_on_messages(request):
 		logger.exception("Error simulating login %s %s " % (e, traceback.format_exc()))
 		return HttpResponse(request_error, content_type="application/json")
 		
-@login_required
-def save_shortcut(request):
-	try:
-		user = get_object_or_404(UserProfile, email=request.user.email)
-		
-		shortcuts = request.POST['shortcuts']
-		
-		res = engine.main.save_shortcut(user, request.user.email, shortcuts)
-		return HttpResponse(json.dumps(res), content_type="application/json")
-	except Exception as e:
-		logger.debug(e)
-		return HttpResponse(request_error, content_type="application/json")
-
 @login_required
 def undo(request):
 	try:

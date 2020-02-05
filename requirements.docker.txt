@@ -37,5 +37,6 @@ salmon-mail==3.1.1
 typing==3.6.4
 nylas
 email_reply_parser
+duckling==1.8.0
 # spacy==2.1.3
 # ics==0.6

@@ -461,7 +461,7 @@ def remove_rule(user, email, rule_id):
 
     try:
         imap_account = ImapAccount.objects.get(email=email)
-        er = EmailRule.objects.filter(id=rule_id, mode__imap_account=imap_account)
+        er = EmailRule.objects.filter(id=rule_id)
 
         er.delete()
 
@@ -474,6 +474,77 @@ def remove_rule(user, email, rule_id):
         res['code'] = msg_code['UNKNOWN_ERROR']
 
     logging.debug(res)
+    return res
+
+def save_rules(user, email, old_ers, rules, mailbotMode=None, push=True):
+    res = {'status' : False, 'imap_error': False, 'imap_log': ""}
+
+    try:
+        imapAccount = ImapAccount.objects.get(email=email)
+        auth_res = authenticate( imapAccount )
+        if not auth_res['status']:
+            raise ValueError('Something went wrong during authentication. Refresh and try again!')
+
+        imap = auth_res['imap']  # noqa: F841 ignore unused
+
+        mailbox = MailBox(imapAccount, imap, is_simulate=False)
+        # Remove old editors to re-save it
+        # TODO  dont remove it
+        
+        for er in old_ers:
+            # update contact for email triggering
+            # delete old name 
+            mailbox._delete_contact(er.get_forward_addr())
+
+        logger.debug("deleting er editor run request")
+        
+        args = EmailRule_Args.objects.filter(rule=old_ers)
+        args.delete()
+        old_ers.delete()
+
+        for value in rules:
+            name = value['name'].encode('utf-8')
+            code = value['code'].encode('utf-8')
+            folders = value['folders']
+            logger.info(value)
+            er = None
+
+            if mailbotMode:
+                er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
+            else:
+                er = EmailRule(name=name, imap_account=imapAccount, type=value['type'], code=code)
+            er.save()
+
+            # Save selected folder for the mode
+            for f in folders:
+                folder = FolderSchema.objects.get(imap_account=imapAccount, name=f)
+                logger.info("saving folder to the editor %s run request" % folder.name)
+                er.folders.add(folder)
+
+            er.save()
+
+            if value['type'] == "shortcut":
+                # Save shortcut email args
+                for arg in value['args']:
+                    logger.info(arg)
+                    
+                    new_arg = EmailRule_Args(type=arg['type'], rule=er)
+                    if arg['name']:
+                        new_arg.name = arg['name']
+                    new_arg.save()
+
+                # add a new contact
+                logger.info("add contact %s" % er.get_forward_addr())
+                mailbox._add_contact("YouPS", er.get_forward_addr())
+
+        res['status'] = True
+
+    except Exception as e:
+        # TODO add exception
+        logger.exception("failed while doing a user code run")
+        print (traceback.format_exc())
+        res['code'] = msg_code['UNKNOWN_ERROR']
+
     return res
 
 def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=True):
@@ -529,51 +600,11 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
                 mailbotMode = MailbotMode(name=mode_name, imap_account=imapAccount)
                 mailbotMode.save()
 
-            # Remove old editors to re-save it
-            # TODO  dont remove it
+           
             ers = EmailRule.objects.filter(mode=mailbotMode)
-            mailbox = MailBox(imapAccount, imap, is_simulate=False)
-            for er in ers:
-                # update contact for email triggering
-                # delete old name 
-                mailbox._delete_contact(er.get_forward_addr())
 
-            logger.debug("deleting er editor run request")
-            args = EmailRule_Args.objects.filter(rule=ers)
-            args.delete()
-            ers.delete()
-
-            for value in mode['editors']:
-                name = value['name'].encode('utf-8')
-                code = value['code'].encode('utf-8')
-                folders = value['folders']
-                logger.info(value)
-
-                er = EmailRule(name=name, mode=mailbotMode, type=value['type'], code=code)
-                er.save()
-
-                # Save selected folder for the mode
-                for f in folders:
-                    folder = FolderSchema.objects.get(imap_account=imapAccount, name=f)
-                    logger.info("saving folder to the editor %s run request" % folder.name)
-                    er.folders.add(folder)
-
-                er.save()
-
-                if value['type'] == "shortcut":
-                    # Save shortcut email args
-                    for arg in value['args']:
-                        logger.info(arg)
-                        
-                        new_arg = EmailRule_Args(type=arg['type'], rule=er)
-                        if arg['name']:
-                            new_arg.name = arg['name']
-                        new_arg.save()
-
-                    # add a new contact
-                    logger.info("add contact %s" % er.get_forward_addr())
-                    mailbox._add_contact("YouPS", er.get_forward_addr())
-                    
+            r = save_rules(user, email, ers, mode['editors'], mailbotMode)
+            
 
             logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         
@@ -734,27 +765,6 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
     logging.debug(res)
     return res
 
-def save_shortcut(user, email, shortcuts, push=True):
-    res = {'status' : False, 'imap_error': False}
-
-    try:
-        imapAccount = ImapAccount.objects.get(email=email)
-
-        imapAccount.shortcuts = shortcuts
-        imapAccount.save()
-
-        res['status'] = True
-
-
-    except IMAPClient.Error as e:
-        res['code'] = e
-    except ImapAccount.DoesNotExist:
-        res['code'] = "Not logged into IMAP"
-    except Exception as e:
-        res['code'] = msg_code['UNKNOWN_ERROR']
-
-    logging.debug(res)
-    return res
 
 def undo(user, email, logschema_id):
     res = {'status' : False, 'log': ""}

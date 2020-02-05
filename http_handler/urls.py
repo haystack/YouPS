@@ -74,6 +74,8 @@ shared_patterns = [
 
     # mailbot
     url(r'^editor', 'browser.views.login_imap_view'),
+    url(r'^shortcut_editor', 'browser.views.shortcut_editor'),
+    
     url(r'^docs', 'browser.views.docs_view'),
     url(r'^about', 'browser.views.about_view'),
     url(r'^calendar', 'browser.views.calendar_view'),
@@ -84,7 +86,7 @@ shared_patterns = [
     url(r'^remove_rule', 'browser.views.remove_rule'),
     url(r'^run_mailbot', 'browser.views.run_mailbot'),
     url(r'^run_simulate_on_messages', 'browser.views.run_simulate_on_messages'),
-    url(r'^save_shortcut', 'browser.views.save_shortcut'),
+    url(r'^save_rules', 'browser.views.save_rules'),
     url(r'^undo', 'browser.views.undo'),
 
     url(r'^email_rule_meta', 'browser.views.get_email_rule_meta'),
