@@ -330,6 +330,18 @@
                 ]
             },
             {
+                "name": "on_time",
+                "params": "when, handler",
+                "description": "Run the handler when the time is up.",
+                "example": ""
+            },
+            {
+                "name": "on_response",
+                "params": "handler",
+                "description": "Run the handler when there is new response arrived on this message thread",
+                "example": ""
+            },
+            {
                 "name": "recent_messages",
                 "params": "N=3",
                 "return_type": "Message []",
