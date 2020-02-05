@@ -6,6 +6,10 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
 import json 
 from schema.youps import LogSchema
+from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
+                      timedelta)
+from django.utils import timezone
+from pytz import timezone as tz
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
@@ -41,6 +45,26 @@ class InvalidFlagException(YoupsException):
         # Call super constructor
         super(InvalidFlagException, self).__init__(*args, **kwargs)
 
+def convertToUserTZ(datetime_obj, tz=tz('US/Eastern')):
+    if not isinstance(datetime_obj, datetime):
+        return None
+    # If timezone is not provided aka naive
+    elif datetime_obj.tzinfo is None or datetime_obj.tzinfo.utcoffset(datetime_obj) is None:
+        datetime_obj = tz.localize(datetime_obj)
+        datetime_obj = timezone.localtime(datetime_obj)
+        logger.info(datetime_obj)
+
+    # when there is time zone
+    else:
+        datetime_obj= datetime_obj.astimezone(tz)
+
+    return datetime_obj
+
+def prettyPrintTimezone(datetime_obj, tz=tz('US/Eastern')):
+    datetime_obj= convertToUserTZ(datetime_obj, tz)
+
+    return datetime_obj.strftime("%m/%d %H:%M") if datetime_obj else ""
+    
 
 def grouper(iterable, n):
     """Group data from an iterable into chunks of size n

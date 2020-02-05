@@ -15,7 +15,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from engine.models.calendar import MyCalendar
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
-from engine.utils import dump_execution_log
+from engine.utils import dump_execution_log, prettyPrintTimezone
 from schema.youps import MailbotMode, MessageSchema, TaskManager  # noqa: F401 ignore unused we use it for typing
 from http_handler.settings import TEST_ACCOUNT_EMAIL
 import sandbox_helpers
@@ -24,16 +24,37 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 def interpret_bypass_queue(mailbox, extra_info):
     # type: (MailBox, t.Dict[t.AnyStr, t.Any]) -> None
+    """This function execute the given code
+
+        Args:
+            mailbox (Mailbox): user's mailbox
+            extra_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
+
+    """
 
     # assert mailbox.is_simulate or mailbox._imap_account.email == TEST_ACCOUNT_EMAIL, "if you change this then we risk committing fake info to user accounts"
 
     # set up the default result
     res = {'status': True, 'imap_error': False, 'imap_log': "", 'appended_log': {}}
 
+    # get the logger for user output
+    userLogger = logging.getLogger('youps.user')  # type: logging.Logger
+    # get the stream handler associated with the user output
+    userLoggerStreamHandlers = filter(lambda h: isinstance(h, logging.StreamHandler), userLogger.handlers)
+    userLoggerStream = userLoggerStreamHandlers[0].stream if userLoggerStreamHandlers else None
+    assert userLoggerStream is not None
+
     # create a string buffer to store stdout
     user_std_out = StringIO()
     user_property_log = []
-    with sandbox_helpers.override_print(user_std_out) as fakeprint:
+
+    try:
+        # set the stdout to a string
+        sys.stdout = user_std_out
+
+        # set the user logger to
+        userLoggerStream = user_std_out
+
         if mailbox.is_simulate:
             print ("Simulating: this only simulates your rule behavior and won't affect your messages")
 
@@ -41,7 +62,7 @@ def interpret_bypass_queue(mailbox, extra_info):
         message_schemas = MessageSchema.objects.filter(id=extra_info['msg-id'])
         logger.info(message_schemas)
         # define the variables accessible to the user
-        user_environ = sandbox_helpers.get_default_user_environment(mailbox, fakeprint)
+        user_environ = sandbox_helpers.get_default_user_environment(mailbox, print)
 
         # Applying diff msgs to a same source code
         # TODO this code is completely broken and fires events based on function names
@@ -79,7 +100,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 # print out error messages for user
                 logger.exception("failure simulating user %s code" % mailbox._imap_account.email)
                 msg_log["error"] = True
-                fakeprint(sandbox_helpers.get_error_as_string_for_user())
+                print(sandbox_helpers.get_error_as_string_for_user())
             finally:
                 msg_log["log"] += user_std_out.getvalue()
                 msg_log["property_log"].extend(user_property_log)
@@ -96,8 +117,16 @@ def interpret_bypass_queue(mailbox, extra_info):
                     log_to_dump = {msg_log2["timestamp"]: msg_log2}
                     dump_execution_log(mailbox._imap_account, log_to_dump, msg_log["property_log"])
 
-                # clear current input buffer
-                user_std_out.truncate(0)
+                # flush buffer
+                user_std_out = StringIO()
+
+                # set the stdout to a string
+                sys.stdout = user_std_out
+
+                # set the user logger to
+                userLoggerStream = user_std_out
+    except Exception:
+        logger.exception("test")
 
     return res
 
@@ -130,8 +159,6 @@ def interpret(mailbox, mode):
         Args:
             mailbox (Mailbox): user's mailbox
             mode (MailbotMode or None): current mode. if mode is null, it will bypass executing user's code and just print logs
-            is_simulate (boolean): if True, it looks into extra_info to test run user's code
-            extra_info (dict): it includes code, which is to be test ran, and msg-id, which is a id field of MessageSchema 
 
     """
     # type: (MailBox, MailbotMode, bool) -> t.Dict[t.AnyStr, t.Any]

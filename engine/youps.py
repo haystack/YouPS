@@ -19,7 +19,7 @@ from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
-from engine.utils import turn_on_youps
+from engine.utils import turn_on_youps, prettyPrintTimezone
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
@@ -737,8 +737,8 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
                     "to": to_field,
                     "cc": cc_field,
                     "flags": [f.encode('utf8', 'replace') for f in message.flags],
-                    "date": str(message.date),
-                    "deadline": str(message.deadline), 
+                    "date": prettyPrintTimezone(message.date),
+                    "deadline": prettyPrintTimezone(message.deadline), 
                     "is_read": message.is_read, 
                     "is_deleted": message.is_deleted, 
                     "is_recent": message.is_recent,

@@ -25,7 +25,7 @@ from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, BaseMessage, MessageSchema, TaskManager)
 from smtp_handler.utils import format_email_address, get_attachments
-from engine.utils import IsNotGmailException
+from engine.utils import IsNotGmailException, convertToUserTZ, prettyPrintTimezone
 from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
 from email_reply_parser import EmailReplyParser
@@ -181,10 +181,7 @@ class Message(object):
     @deadline.setter
     def deadline(self, value):
         # type: (datetime.datetime) -> None
-        if isinstance(value, datetime) and (value.tzinfo is None or value.tzinfo.utcoffset(value) is None):
-            value = tz('US/Eastern').localize(value)
-            value = timezone.localtime(value)
-            logger.info(value)
+        value = convertToUserTZ(value)
 
         logger.info(self.subject)
         logger.info(self._is_simulate)
@@ -666,14 +663,11 @@ class Message(object):
             raise TypeError("see_later(): later_at " +
                             later_at + " is not number or datetime")
 
-        if isinstance(later_at, datetime) and (later_at.tzinfo is None or later_at.tzinfo.utcoffset(later_at) is None):
-            later_at = tz('US/Eastern').localize(later_at)
-            later_at = timezone.localtime(later_at)
-            logger.info(later_at)
-
-        elif isinstance(later_at, (int, long, float)):
+        if isinstance(later_at, (int, long, float)):
             later_at = timezone.now().replace(microsecond=0) + \
                 timedelta(seconds=later_at*60)
+
+        later_at = convertToUserTZ(later_at)
 
         current_folder = self._schema.folder.name
         if self._schema.imap_account.is_gmail and current_folder == "INBOX":
@@ -698,7 +692,7 @@ class Message(object):
             logger.critical("here %s" % hide_in)
 
         print("see_later(): Hide the message until %s at %s" %
-              (later_at, hide_in))
+              (prettyPrintTimezone(later_at), hide_in))
 
     def recent_messages(self, N=3):
         # type: (t.integer) -> t.List[Message]
@@ -956,8 +950,8 @@ class Message(object):
             "folder": self.folder.name,
             "subject": self.subject,
             "flags": [f.encode('utf8', 'replace') for f in self.flags],
-            "date": str(self.date.astimezone(tz('US/Eastern'))), # convert it to users timezone
-            "deadline": str(self.deadline),
+            "date": prettyPrintTimezone(self.date), # convert it to users timezone
+            "deadline": prettyPrintTimezone(self.deadline),
             "task": self.task,
             "is_read": self.is_read,
             "error": False
