@@ -234,7 +234,8 @@ def login_imap_callback(request):
 
 	return HttpResponseRedirect('/editor')
 
-@render_to(WEBSITE+"/docs.html")
+# @render_to(WEBSITE+"/docs.html")
+@render_to(WEBSITE+"/api_doc.html")
 def docs_view(request):
 	return {'website': WEBSITE}
 

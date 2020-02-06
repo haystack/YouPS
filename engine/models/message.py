@@ -467,6 +467,9 @@ class Message(object):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the flags in a list of flags to the message
 
+        Args: 
+            flags (string[]): a list of flags to be added
+
         This method can also optionally take a single string as a flag.
         """
         if not isinstance(flags, list):
