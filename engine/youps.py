@@ -758,28 +758,36 @@ def undo(user, email, logschema_id):
     try:
         # Redo actions reverse to undo
         for action in reversed(actions):
-            message_schema = MessageSchema.objects.get(id=action["schema_id"])
-            message = Message(message_schema, imap_client=imap)
+            target_class = None
+            if action["class_name"] == "Message":
+                message_schema = MessageSchema.objects.filter(base_message__id=action["schema_id"])
+                if not message_schema.exists():
+                    raise MessageSchema.DoesNotExist
+
+                message_schema = message_schema[0]
+                target_class = Message(message_schema, imap_client=imap)
 
             if action["type"] == "send":
                 logger.info("unreversable action")
                 continue
 
             elif action["type"] == "set":
-                 
-                setattr(message, action["function_name"], action["args"][0])
+                setattr(target_class, action["function_name"], action["args"][0])
                 logger.info("undo %s %s" % (action["function_name"], action["args"][0]))
 
             elif action["type"] == "schedule":
+                # remove task manager
                 pass
 
             elif action["type"] == "action":
-                reverse_action = [("add_flags", "remove_flags"), ("mark_read", "mark_unread"), ("move", "move")]
+                reverse_action = [("add_flags", "remove_flags"), ("mark_read", "mark_unread"), ("_move", "_move")]
                 
                 for r in reverse_action:
                     if action["function_name"] in r:
-                        reverse_func = getattr(message, r[1]) if r[0] == action["function_name"] else getattr(message, r[0])
-                        reverse_func(action["args"]) if action["args"] else reverse_func()
+                        reverse_func = getattr(target_class, r[1]) if r[0] == action["function_name"] else getattr(target_class, r[0])
+                        action["args"].reverse()
+                        logger.exception(action["args"])
+                        reverse_func(*action["args"]) if action["args"] else reverse_func()
 
         logschema.is_canceled = True
         logschema.save()

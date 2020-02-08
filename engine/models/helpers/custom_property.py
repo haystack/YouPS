@@ -71,7 +71,7 @@ def ActionLogging(f):
             "on_response": "schedule",
             "on_time": "schedule",
             "see_later": "schedule",
-            "move": "action"
+            "_move": "action"
         }
 
         info = {
@@ -79,14 +79,13 @@ def ActionLogging(f):
             "class_name": class_name,
             "function_name": function_name,
             "args": parsed_args,
-            "schema_id": obj._schema.id
+            "schema_id": obj._schema.base_message.id if class_name == "Message" else obj._schema.id 
         }
         # u"get {c}.{p}\t{v}".format(
         #     c=class_name, p=function_name, v=args)
         _set_in_log(obj, False)
 
-        if not function_name.startswith("_"):
-            _log_info(obj, info)
+        _log_info(obj, info)
         return f(obj, *args, **kwargs)       
 
     return inner_func

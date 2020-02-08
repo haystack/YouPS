@@ -258,7 +258,8 @@ def get_email_rule_meta(request):
 			# serializing
 			email_rules = []
 			for obj in EmailRule.objects.filter(imap_account=imap_account, type__startswith='shortcut'):
-				email_rules.append( {"name": obj.name, "email": obj.get_forward_addr(), "id": obj.id, "params": [{"name": era["name"], "type": era["type"], "html": _load_component(era["type"], {"name": era["name"]})} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
+				email_rules.append( {"name": obj.name, "email": obj.get_forward_addr(), "code": obj.code, \
+					"id": obj.id, "params": [{"name": era["name"], "type": era["type"], "html": _load_component(era["type"], {"name": era["name"]})} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
 			logger.exception(email_rules)
 
 

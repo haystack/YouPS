@@ -565,18 +565,20 @@ class Message(object):
         self._check_folder(dst_folder)
         if not self._is_message_already_in_dst_folder(dst_folder):
             if not self._is_simulate:
-                try:
-                    self._imap_client.move([self._uid], dst_folder)
-                except exceptions.CapabilityError:
-                    self.copy(dst_folder)
-                    self.delete()
-                    self._imap_client.expunge()
+                self._move(self.folder.name, dst_folder)
 
     @ActionLogging
     def _move(self, src_folder, dst_folder):
         """helper function for move() for logging and undo
         """
-        pass
+        # logger.exception(src_folder)
+        # logger.exception(dst_folder)
+        try:
+            self._imap_client.move([self._uid], dst_folder)
+        except exceptions.CapabilityError:
+            self.copy(dst_folder)
+            self.delete()
+            self._imap_client.expunge()
 
     @ActionLogging
     def forward(self, to=[], cc=[], bcc=[], subject="", content=""):

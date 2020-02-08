@@ -214,21 +214,25 @@ class RuleSelector extends React.Component {
       console.log(results)
       this.setState({ rules: results.rules});
 
+      $('[data-toggle="tooltip"]').tooltip();
+
       show_loader(false);
     });
+
+    
   }
 
   
 
   render() {
-    var table_style = {background: "#f9f9f9"};
+    var table_style = {background: "aliceblue"};
 
     return (
-      <table className="table table-striped table-dark" style={table_style} id="rule-selector-table">
+      <table className="table table-dark" style={table_style} id="rule-selector-table">
         <tbody>
               {this.state.rules.map( er  =>
                 <tr>
-                  <td>{ er.name } &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; </td>
+                  <td>{ er.name }<span data-toggle="tooltip" data-placement="bottom" data-html="true" title={["<div style='position:relative;overflow:auto;'><p>" + er.code.replace(/ /gi, '&nbsp;').replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;").replace(/\n/g, "<br>") + "</p></div>"].join()} class="glyphicon glyphicon-info-sign"></span> &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; </td>
                   <td>
                     <ul>
                       {er.params.map( param  => <li>{ param.name }: {param.type=="datetime"? 
