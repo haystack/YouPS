@@ -15,7 +15,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from engine.models.calendar import MyCalendar
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
-from engine.utils import dump_execution_log, prettyPrintTimezone
+from engine.utils import dump_execution_log, prettyPrintTimezone, print_execution_log
 from schema.youps import MailbotMode, MessageSchema, TaskManager  # noqa: F401 ignore unused we use it for typing
 from http_handler.settings import TEST_ACCOUNT_EMAIL
 import sandbox_helpers
@@ -131,28 +131,6 @@ def interpret_bypass_queue(mailbox, extra_info):
     return res
 
 
-def print_execution_log(message):
-    new_msg = {}
-
-    # This is to log for users
-    from_field = message._get_from_friendly()
-
-    to_field = message._get_to_friendly()
-
-    cc_field = message._get_cc_friendly()
-
-    new_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
-    new_msg["type"] = "new_message"
-    new_msg["from_"] = from_field
-    new_msg["to"] = to_field
-    new_msg["cc"] = cc_field
-    new_msg["log"] = ""
-
-    new_msg.update(message._get_meta_data_friendly())
-
-    return new_msg
-
-
 def interpret(mailbox, mode):
     """This function executes users' code.  
 
@@ -229,13 +207,15 @@ def interpret(mailbox, mode):
                 # the event
                 # user code strings can be found at http_handler/static/javascript/youps/login_imap.js ~ line 300
                 # our handlers are in mailbox and the user environment
-                if rule.type.startswith("new-message"):
+                event_class_name = type(event_data).__name__
+                if (event_class_name == "MessageArrivalData" and rule.type =="new-message") or \
+                    (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
                     valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
                     code = code + "\nhandle_on_message(on_message)"
-                elif rule.type == "flag-change":
+                elif event_class_name == "NewFlagsData" and rule.type == "flag-change":
                     code = code + "\nhandle_on_flag_added(on_flag_added)"
                     code = code + "\nhandle_on_flag_removed(on_flag_removed)"
-                elif rule.type.startswith("deadline"):
+                elif event_class_name == "NewMessageDataDue" and rule.type.startswith("deadline"):
                     valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account).filter(is_selectable=True)
                     code = code + "\nhandle_on_deadline(on_deadline)"
                 # else:
@@ -244,29 +224,22 @@ def interpret(mailbox, mode):
 
 
                 try:
-                    # execute the user's code
-                    # exec cant register new function (e.g., on_message_arrival) when there is a user_env
                     # logger.exception(rule.id)
                     # logger.exception(code)
+                    # add corresponding rules to handler 
                     exec(code, user_environ)
 
-
+                    # check the current event data then fire_event e.g., run handler 
                     # TODO this should be cleaned up. accessing class name is ugly and this is very wet (Not DRY)
                     if event_data.message._schema.folder in valid_folders:
-                        event_class_name = type(event_data).__name__
-                        if (event_class_name == "MessageArrivalData" and rule.type =="new-message") or \
-                                (event_class_name == "NewMessageDataScheduled" and rule.type.startswith("new-message-")):
-                            is_fired = True
-                            event_data.fire_event(mailbox.new_message_handler)                            
-                        if (event_class_name == "NewFlagsData" and rule.type == "flag-change"):
-                            is_fired = True
-                            event_data.fire_event(mailbox.added_flag_handler)
-                        if (event_class_name == "RemovedFlagsData" and rule.type == "flag-change"):
-                            is_fired = True
-                            event_data.fire_event(mailbox.removed_flag_handler)
-                        if (event_class_name == "NewMessageDataDue" and rule.type.startswith("deadline")):
-                            is_fired = True
-                            event_data.fire_event(mailbox.deadline_handler)                            
+                        is_fired = True
+
+                        logger.info("handlers %d %d %d %d " % 
+                            (mailbox.new_message_handler.getHandlerCount(), mailbox.added_flag_handler.getHandlerCount(), mailbox.removed_flag_handler.getHandlerCount(), mailbox.deadline_handler.getHandlerCount()))
+                        event_data.fire_event(mailbox.new_message_handler)
+                        event_data.fire_event(mailbox.added_flag_handler)
+                        event_data.fire_event(mailbox.removed_flag_handler)
+                        event_data.fire_event(mailbox.deadline_handler)                        
 
                         if is_fired:
                             logger.debug("firing %s %s" % (rule.name, event_data.message.subject))
@@ -319,7 +292,7 @@ def interpret(mailbox, mode):
         for task in TaskManager.objects.filter(imap_account=mailbox._imap_account):
             now = timezone.now().replace(microsecond=0)
             is_fired = False
-            logger.critical("%s %s" % (task.date, now))
+            logger.critical("task manager %s now: %s" % (prettyPrintTimezone(task.date), prettyPrintTimezone(now)))
             if task.date > now:
                 continue
 

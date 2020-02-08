@@ -81,3 +81,4 @@ class RemovedFlagsData(NewFlagsData):
         # type : (Event) -> None
         super(RemovedFlagsData, self).fire_event(event)
         
+# class SeeLaterData(AbstractEventData):

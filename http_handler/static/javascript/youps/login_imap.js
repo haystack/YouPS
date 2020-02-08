@@ -89,33 +89,6 @@ $(document).ready(function() {
         '</table>';
     }
 
-    var table = $('.example-suites').DataTable( {
-        "bPaginate": false,
-        "bLengthChange": false,
-        "bFilter": true,
-        "bInfo": false,
-        "bAutoWidth": false,
-        "searching": false,
-        "columns": [
-            { "width": "40px", "orderable": false },
-            null,
-            { "width": "300px" }
-        ],
-        // "columns": [
-        //     {
-        //         "className":      'details-control',
-        //         "orderable":      false,
-        //         "data":           null,
-        //         "defaultContent": ''
-        //     },
-        //     { "data": "sender" },
-        //     { "data": "subject" },
-        //     { "data": "deadline" },
-        //     { "data": "task" }
-        // ],
-        "order": [[1, 'asc']]
-    } );
-
     // Create the sandbox:
     // window.sandbox = new Sandbox.View({
     //     el : $('#sandbox'),
@@ -131,72 +104,7 @@ $(document).ready(function() {
      * 
      */
     
-    document.addEventListener("mv-load", function(e){   
-        // Init editor & its autocomplete
-        if(e.srcElement.id != "apis-container") return;
-
-        // Editor autocomplete
-        var global_method = [];
-        document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
-            global_method.push( $.trim(element.innerHTML.split("(")[0]) );
-        });
-
-        var entity_method = [];
-        document.querySelectorAll('#apis-container div[property="message"] h4').forEach(function(element) {
-            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
-        });
-
-        document.querySelectorAll('#apis-container div[property="contact"] h4').forEach(function(element) {
-            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
-        });
-
-        document.querySelectorAll('#apis-container div[property="calendar"] h4').forEach(function(element) {
-            entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
-        });
-
-        CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor, options) {
-            var cur = editor.getCursor();
-            var curLine = editor.getLine(cur.line);
-            var start = cur.ch;
-            var end = start;
-
-            while (end < curLine.length && /[\w|\\.]/.test(curLine.charAt(end))) ++end;
-            while (start && /[\w]/.test(curLine.charAt(start - 1))) --start;
-            var curWord = start !== end && curLine.slice(start, end);
-            var regex = new RegExp('^' + curWord, 'i');
-            
-            console.log(entity_method)
-            console.log(global_method)
-            debugger;
-            var suggestion = curLine.includes(".") ? 
-                entity_method.filter(function(item) {
-                    return item.match(regex);
-                }).sort() : 
-                global_method.filter(function(item) {
-                    return item.match(regex);
-                }).sort();
-
-            if (curWord[curWord.length -1] == ".") suggestion = [];
-            console.log(suggestion);
-            suggestion.length == 1 ? suggestion.push(" ") : console.log();
-
-            return {
-                list: suggestion,
-                from: CodeMirror.Pos(cur.line, start),
-                to: CodeMirror.Pos(cur.line, end)
-            }
-        });
-
-        CodeMirror.commands.autocomplete = function(cm) {
-            CodeMirror.showHint(cm, CodeMirror.hint.dictionaryHint);
-        };
-
-        // Hide body until editor is ready
-        setTimeout(() => {
-            $('#loading-wall').hide();
-            show_loader(false);
-        }, 500);
-    });
+    
     
     // Switch to different tabs
     $(".nav-tabs").on("click", "a", function (e) {
@@ -546,50 +454,6 @@ $(document).ready(function() {
             $(".plain").show();
 		}
     }
-
-
-    function get_modes() {
-        var modes = {};
-
-        // iterate by modes 
-        $("#editor-container .tab-pane").each(function() {
-            // get mode ID
-            if(!$(this).attr('id').includes("_")) return;
-            var id = $(this).attr('id').split("_")[1];
-            var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
-
-            // iterate by editor 
-            var editors = extract_rule_code(this)
-
-            modes[id] = {
-                "id": id,
-                "name": $.trim( name ), 
-                "editors": editors
-            };
-        })
-
-        return modes;
-    }
-
-    function get_running() {
-        return is_running;
-    }
-
-    function set_running(start_running) {
-        // Start running
-        if(start_running) {
-            spinStatusCog(true);
-            $("#engine-status-msg").text("Your email engine is running.");
-            is_running = true;
-        }
-        
-        // Stop running
-        else {
-            spinStatusCog(false);
-            $("#engine-status-msg").text("Your email engine is not running at the moment.");
-            is_running = false;
-        }
-    }
     
     function spinStatusCog(spin) {
         if(spin) {
@@ -683,67 +547,6 @@ $(document).ready(function() {
                 });    
         });
 
-        function run_code(is_dry_run, is_running, silent=false) {
-            var cur_mode;
-            try {
-                cur_mode = get_current_mode();
-            } catch (err){
-                notify({'code': 'There is no rule defined in this mode'}, false);
-                return false;
-            }
-
-            show_loader(true);
-
-            var modes = get_modes();
-
-            var params = {
-                'current_mode_id': 'id' in cur_mode? cur_mode['id']: null,
-                'modes': JSON.stringify(modes),
-                'email': $("#input-email").val(),
-                'test_run': is_dry_run,
-                'run_request': is_running
-            };
-
-            $.post('/run_mailbot', params,
-                function(res) {
-                    show_loader(false);
-                    console.log(res);
-                    
-                    if (res.status) {
-                        
-                        // Flush unsaved tags 
-                        unsaved_tabs = [];
-
-                        if(res['imap_error'])  {
-                            append_log(res['imap_log'], true);
-
-                            set_running(false);   
-                        }
-                        else {
-                            // append_log(res['imap_log'], false)
-                            set_running(is_running);   
-                        }
-
-                        if (res.code) { 
-                            // some emails are not added since they are not members of the group
-                            // $('#donotsend-msg').show();
-                            // $('#donotsend-msg').html(res['code']);
-                        }
-                        else {            
-                            if(!silent)             
-                                notify(res, true);
-                        }
-                    }
-                    else {
-                        set_running(false);   
-                        notify(res, false);
-                    }
-                }
-            );
-
-            return true;
-        }
-
         // function folder_recent_messages(folder_name, N, code="") {
         //     var params = {
                 
@@ -804,98 +607,6 @@ $(document).ready(function() {
         //         }
         //     );
         // }
-
-        function run_simulate_on_messages(folder_name, N, editor_rule_container) {
-            show_loader(true);
-        
-            var params = {
-                'folder_name': folder_name,
-                'N': N,
-                'user_code': $.trim( $(editor_rule_container).find('.CodeMirror')[0].CodeMirror.getValue() )
-                // TODO if message_ids is not given, run simulation on recent messages on folders
-                // 'message_ids': JSON.stringify(msgs_id)
-            };
-
-            $.post('/run_simulate_on_messages', params,
-                function(res) {
-                    show_loader(false);
-                    console.log(res);
-                    
-                    // get simulation result
-                    if (res.status) {
-                        $(editor_rule_container).find('.btn-debug-update').removeClass('glow');
-                        var dt_elem = $(editor_rule_container).find('.debugger-container table')[0];
-                        var t = $( dt_elem ).DataTable();
-                        // delete all before added new 
-                        $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
-                            if(folder_name.includes($(elem).attr('folder')))
-                                t.row( elem ).remove().draw();  
-                        })
-
-                        $.each( res['messages'], function( msg_id, value ) {
-                            var Message = value;
-    
-                            var json_panel_id = Math.floor(Math.random() * 10000) + 1;
-    
-                            var added_row = t.row.add( [
-                                '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
-                                '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                                '{0}'.format(Message["log"].replace(/\n/g , "<br>"))
-                                // '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, Message["log"])
-                            ] ).draw( false ).node();
-                            
-
-                            $( added_row ).attr('folder', Message['folder'])
-                                .attr('msg-id', msg_id)
-                                .attr('line-number2', 1);
-                                
-                                // .attr('line-number{0}', 1); // TODO add activated line
-                            if(Message["error"])
-                                $( added_row ).find("td:eq(2)").addClass("error");
-                            // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
-                            if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
-
-                            // Delete attributes that are not allowed for users 
-                            delete Message["trigger"];
-                            delete Message["error"];
-                            delete Message["log"];
-                            delete Message["timestamp"];
-                            delete Message["type"];
-    
-                            $('#jsonpanel-from-' + json_panel_id).jsonpanel({
-                                data: {
-                                    Contact :  Message['from_'] || []
-                                }
-                            });
-            
-                            if (Message['from_'])
-                                // set contact object preview 
-                                $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
-                                    '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
-                
-                            
-                            $('#jsonpanel-' + json_panel_id).jsonpanel({
-                                data: {
-                                    Message : Message
-                                }
-                            });
-            
-                            // set msg object preview 
-                            var preview_msg = '{0}: "{1}", '.format("subject", Message['subject']) +  '{0}: "{1}", '.format("folder", Message['folder']);
-                            for (var key in Message) {
-                                if (Message.hasOwnProperty(key)) {
-                                    preview_msg += '{0}: "{1}", '.format(key, Message[key])
-                                }
-                            }
-                            $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
-                          });      
-                    }
-
-                    // Save the code as well    
-                    run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit.hasClass('active'), true ); 
-                }
-            );
-        }
     
         $(".default-text").blur();
         
@@ -919,6 +630,29 @@ $(document).ready(function() {
         return {"id": id,
             "name": $.trim(document.querySelector('.nav.nav-tabs li.active .tab-title').innerHTML)
         };
+    }
+
+    function get_modes() {
+        var modes = {};
+
+        // iterate by modes 
+        $("#editor-container .tab-pane").each(function() {
+            // get mode ID
+            if(!$(this).attr('id').includes("_")) return;
+            var id = $(this).attr('id').split("_")[1];
+            var name = $.trim( $(".nav.nav-tabs span[mode-id='{0}'].tab-title".format(id)).html() ).split("<span")[0]
+
+            // iterate by editor 
+            var editors = extract_rule_code(this)
+
+            modes[id] = {
+                "id": id,
+                "name": $.trim( name ), 
+                "editors": editors
+            };
+        })
+
+        return modes;
     }
 
     // if load_exist true, it bulk loads all the message. Otherwise loads only one editor
@@ -983,31 +717,37 @@ $(document).ready(function() {
                             $(".dropdown .btn").attr('mode-id', last_id);
                         }
                         
-                        // Init folder container
-                        // init_folder_selector( $(".folder-container") )
-                        
-                        // var tmp_simulate_load = false;
-                        // // Load EditorRule - folder selection
-                        // $("div[rule-id]").each(function() {
-                        //     var emailrule_id = $(this).attr('rule-id');
-                        
-                        //     var folders = [];
-                        //     for(var i=0; i < RULE_FOLDER.length ; i++) {
-                        //         if(RULE_FOLDER[i][1] == emailrule_id) {
-                        //             $(this).find('.folder-container input[value="'+ RULE_FOLDER[i][0] + '"]').prop( "checked", true );
-                        //             folders.push(RULE_FOLDER[i][0]);
-                        //         }
-                        //     }
-                        
-                        //     if(folders.length == 0) return;
-                        
-                        //     if($(this).parent().attr("type") == "new-message" && !tmp_simulate_load) {
-                        //         // TODO load only one when initialize 
-                        //         tmp_simulate_load = true;
-                        //         run_simulate_on_messages(folders, 5, this);
-                        //     }
-                                
-                        // }) 
+                        $('.example-suites').DataTable( {
+                            "bPaginate": false,
+                            "bLengthChange": false,
+                            "bFilter": true,
+                            "bInfo": false,
+                            "bAutoWidth": false,
+                            "searching": false,
+                            "language": {
+                                "emptyTable": 'Click "Debug my code" to test your rule',
+                                "infoEmpty": "No entries to show",
+                                "zeroRecords": "No records to display"
+                              },
+                            "columns": [
+                                { "width": "40px", "orderable": false },
+                                null,
+                                { "width": "300px" }
+                            ],
+                            // "columns": [
+                            //     {
+                            //         "className":      'details-control',
+                            //         "orderable":      false,
+                            //         "data":           null,
+                            //         "defaultContent": ''
+                            //     },
+                            //     { "data": "sender" },
+                            //     { "data": "subject" },
+                            //     { "data": "deadline" },
+                            //     { "data": "task" }
+                            // ],
+                            "order": [[1, 'asc']]
+                        } );
                     } 
 
                     else {
@@ -1030,6 +770,11 @@ $(document).ready(function() {
                                         null,
                                         { "width": "300px" }
                                     ],
+                                    "language": {
+                                        "emptyTable": 'Click "Debug my code" to test your rule',
+                                        "infoEmpty": "No entries to show",
+                                        "zeroRecords": "No records to display"
+                                      },
                                     "order": [[1, 'asc']]
                                 } );
                         
@@ -1056,3 +801,80 @@ $(document).ready(function() {
             }
         }
     );}
+
+    function get_running() {
+        return is_running;
+    }
+
+    function set_running(start_running) {
+        // Start running
+        if(start_running) {
+            is_running = true;
+        }
+        
+        // Stop running
+    else {
+            is_running = false;
+        }
+    }
+
+    function run_code(is_dry_run, is_running, silent=false) {
+        var cur_mode;
+        try {
+            cur_mode = get_current_mode();
+        } catch (err){
+            notify({'code': 'There is no rule defined in this mode'}, false);
+            return false;
+        }
+
+        show_loader(true);
+
+        var modes = get_modes();
+
+        var params = {
+            'current_mode_id': 'id' in cur_mode? cur_mode['id']: null,
+            'modes': JSON.stringify(modes),
+            'email': $("#input-email").val(),
+            'test_run': is_dry_run,
+            'run_request': is_running
+        };
+
+        $.post('/run_mailbot', params,
+            function(res) {
+                show_loader(false);
+                console.log(res);
+                
+                if (res.status) {
+                    
+                    // Flush unsaved tags 
+                    unsaved_tabs = [];
+
+                    if(res['imap_error'])  {
+                        append_log(res['imap_log'], true);
+
+                        set_running(false);   
+                    }
+                    else {
+                        // append_log(res['imap_log'], false)
+                        set_running(is_running);   
+                    }
+
+                    if (res.code) { 
+                        // some emails are not added since they are not members of the group
+                        // $('#donotsend-msg').show();
+                        // $('#donotsend-msg').html(res['code']);
+                    }
+                    else {            
+                        if(!silent)             
+                            notify(res, true);
+                    }
+                }
+                else {
+                    set_running(false);   
+                    notify(res, false);
+                }
+            }
+        );
+
+        return true;
+    }

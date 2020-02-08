@@ -60,8 +60,22 @@ def ActionLogging(f):
         function_name = _get_method_name(f)
         parsed_args = [str(args[i]) for i in range(len(args))]
 
+        types_of_action = {
+            "add_flags": "action",
+            "remove_flags": "action",
+            "forward": "send",
+            "reply": "send", 
+            "reply_all": "send",
+            "mark_read": "action", 
+            "mark_unread": "action", 
+            "on_response": "schedule",
+            "on_time": "schedule",
+            "see_later": "schedule",
+            "move": "action"
+        }
+
         info = {
-            "type": "send",
+            "type": types_of_action[function_name] or "send",
             "class_name": class_name,
             "function_name": function_name,
             "args": parsed_args,
@@ -74,6 +88,7 @@ def ActionLogging(f):
         if not function_name.startswith("_"):
             _log_info(obj, info)
         return f(obj, *args, **kwargs)       
+
     return inner_func
 
 class CustomProperty(object):

@@ -327,10 +327,12 @@ class Message_Thread(models.Model):
 
 class TaskManager(models.Model):
     id = models.AutoField(primary_key=True)
+    imap_account = models.ForeignKey(ImapAccount)
     email_rule = models.ForeignKey('EmailRule')
 
     base_message = models.ForeignKey('BaseMessage', blank=True, null=True)
-    imap_account = models.ForeignKey(ImapAccount)
+    # thread = models.ForeignKey('ThreadSchema', blank=True, null=True)
+    # contact = models.ForeignKey('ContactSchema', blank=True, null=True)
     # when it should be performed
     date = models.DateTimeField(null=True, blank=True)
 

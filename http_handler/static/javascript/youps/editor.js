@@ -1,3 +1,21 @@
+var datatable_config = {
+    "bPaginate": false,
+    "bLengthChange": false,
+    "bFilter": true,
+    "bInfo": false,
+    "bAutoWidth": false,
+    "searching": false,
+    "columns": [
+        { "width": "40px", "orderable": false },
+        null,
+        { "width": "300px" }
+    ],
+    "language": {
+        "emptyTable": 'Click "Debug my code" to test your rule',
+      },
+    "order": [[1, 'asc']]
+};
+
 function init_editor(editor_elem) {
     var editor = CodeMirror.fromTextArea(editor_elem, {
         mode: {name: "python",
@@ -47,6 +65,17 @@ function init_editor(editor_elem) {
     });
 }
 
+function extract_shortcut_argument($container) {
+    var args = [];
+    $container.find('.instruction-container ul li').each(function (index, elem) {
+        var args_name = $(elem).find(".args-name").val() || "";
+        var args_type = $(elem).find("select").val();
+
+        args.push({"name": args_name, "type": args_type})
+    })
+    return args;
+}
+
 function extract_rule_code(container) {
     var editors = [];
 
@@ -78,12 +107,7 @@ function extract_rule_code(container) {
         var args = [];
         // Get params
         if( type == "shortcut" ) {
-            $parent_container.find('.instruction-container ul li').each(function (index, elem) {
-                var args_name = $(elem).find(".args-name").val() || "";
-                var args_type = $(elem).find("select").val();
-
-                args.push({"name": args_name, "type": args_type})
-            })
+            args=extract_shortcut_argument($parent_container);
         }
 
         editors.push({"uid": uid, "name": name, "code": $.trim( code ).replace('\t', "    "), "type": type, "folders": selected_folders, "args": args}); 
@@ -125,32 +149,192 @@ function remove_rule(rule_uid) {
     );
 }
 
+function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_info={}) {
+    show_loader(true);
+
+    var params = {
+        'folder_name': folder_name,
+        'N': N,
+        'user_code': $.trim( $(editor_rule_container).find('.CodeMirror')[0].CodeMirror.getValue() ),
+        'extra_info': JSON.stringify(extra_info)
+        // TODO if message_ids is not given, run simulation on recent messages on folders
+        // 'message_ids': JSON.stringify(msgs_id)
+    };
+
+    $.post('/run_simulate_on_messages', params,
+        function(res) {
+            show_loader(false);
+            console.log(res);
+            
+            // get simulation result
+            if (res.status) {
+                $(editor_rule_container).find('.btn-debug-update').removeClass('glow');
+                var dt_elem = $(editor_rule_container).find('.debugger-container table')[0];
+                var t = $( dt_elem ).DataTable();
+                // delete all before added new 
+                $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
+                    if(folder_name.includes($(elem).attr('folder')))
+                        t.row( elem ).remove().draw();  
+                })
+
+                $.each( res['messages'], function( msg_id, value ) {
+                    var Message = value;
+
+                    var json_panel_id = Math.floor(Math.random() * 10000) + 1;
+
+                    var added_row = t.row.add( [
+                        '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
+                        '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
+                        '{0}'.format(Message["log"].replace(/\n/g , "<br>"))
+                        // '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, Message["log"])
+                    ] ).draw( false ).node();
+                    
+
+                    $( added_row ).attr('folder', Message['folder'])
+                        .attr('msg-id', msg_id)
+                        .attr('line-number2', 1);
+                        
+                        // .attr('line-number{0}', 1); // TODO add activated line
+                    if(Message["error"])
+                        $( added_row ).find("td:eq(2)").addClass("error");
+                    // else $( added_row ).find("td:eq(2)").addClass(json_panel_id % 2 == 0? "warning":""); 
+                    if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
+
+                    // Delete attributes that are not allowed for users 
+                    delete Message["trigger"];
+                    delete Message["error"];
+                    delete Message["log"];
+                    delete Message["timestamp"];
+                    delete Message["type"];
+
+                    $('#jsonpanel-from-' + json_panel_id).jsonpanel({
+                        data: {
+                            Contact :  Message['from_'] || []
+                        }
+                    });
+    
+                    if (Message['from_'])
+                        // set contact object preview 
+                        $('#jsonpanel-from-' + json_panel_id + " .val-inner").text(
+                            '"{0}", '.format(Message['from_']['name']) + '"{0}", '.format(Message['from_']['email'])  + '"{0}", '.format(Message['from_']['organization'])  + '"{0}", '.format(Message['from_']['geolocation'])  );
+        
+                    
+                    $('#jsonpanel-' + json_panel_id).jsonpanel({
+                        data: {
+                            Message : Message
+                        }
+                    });
+    
+                    // set msg object preview 
+                    var preview_msg = '{0}: "{1}", '.format("subject", Message['subject']) +  '{0}: "{1}", '.format("folder", Message['folder']);
+                    for (var key in Message) {
+                        if (Message.hasOwnProperty(key)) {
+                            preview_msg += '{0}: "{1}", '.format(key, Message[key])
+                        }
+                    }
+                    $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
+                  });      
+            }
+
+            // Save the code as well    
+            run_code( $('#test-mode[type=checkbox]').is(":checked"), $("#btn-code-submit") ? $("#btn-code-submit").hasClass('active'): true, true ); 
+        }
+    );
+}
+
 var debug_matched_row = [];
 
+
+document.addEventListener("mv-load", function(e){   
+    // Init editor & its autocomplete
+    if(e.srcElement.id != "apis-container") return;
+
+    // Editor autocomplete
+    var global_method = [];
+    document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
+        global_method.push( $.trim(element.innerHTML.split("(")[0]) );
+    });
+
+    var entity_method = [];
+    document.querySelectorAll('#apis-container div[property="message"] h4').forEach(function(element) {
+        entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+    });
+
+    document.querySelectorAll('#apis-container div[property="contact"] h4').forEach(function(element) {
+        entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+    });
+
+    document.querySelectorAll('#apis-container div[property="calendar"] h4').forEach(function(element) {
+        entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+    });
+
+    CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor, options) {
+        var cur = editor.getCursor();
+        var curLine = editor.getLine(cur.line);
+        var start = cur.ch;
+        var end = start;
+
+        while (end < curLine.length && /[\w|\\.]/.test(curLine.charAt(end))) ++end;
+        while (start && /[\w]/.test(curLine.charAt(start - 1))) --start;
+        var curWord = start !== end && curLine.slice(start, end);
+        var regex = new RegExp('^' + curWord, 'i');
+        
+        console.log(entity_method)
+        console.log(global_method)
+        debugger;
+        var suggestion = curLine.includes(".") ? 
+            entity_method.filter(function(item) {
+                return item.match(regex);
+            }).sort() : 
+            global_method.filter(function(item) {
+                return item.match(regex);
+            }).sort();
+
+        if (curWord[curWord.length -1] == ".") suggestion = [];
+        console.log(suggestion);
+        suggestion.length == 1 ? suggestion.push(" ") : console.log();
+
+        return {
+            list: suggestion,
+            from: CodeMirror.Pos(cur.line, start),
+            to: CodeMirror.Pos(cur.line, end)
+        }
+    });
+
+    CodeMirror.commands.autocomplete = function(cm) {
+        CodeMirror.showHint(cm, CodeMirror.hint.dictionaryHint);
+    };
+
+    // Hide body until editor is ready
+    setTimeout(() => {
+        $('#loading-wall').hide();
+        show_loader(false);
+    }, 500);
+});
 // gutter Hover 
-$("body").on("mouseenter", ".CodeMirror-gutter-wrapper", function() {
-    var cm = $(this).parents('.CodeMirror')[0].CodeMirror;
-    var cnt = 0;
-    while(cm.getLine(cnt++)) {
-        var info = cm.lineInfo(cnt-1);
-        if( !info.gutterMarkers )
-            cm.setGutterMarker(cnt-1, "breakpoints", makeMarker());
-    }
+// $("body").on("mouseenter", ".CodeMirror-gutter-wrapper", function() {
+//     var cm = $(this).parents('.CodeMirror')[0].CodeMirror;
+//     var cnt = 0;
+//     while(cm.getLine(cnt++)) {
+//         var info = cm.lineInfo(cnt-1);
+//         if( !info.gutterMarkers )
+//             cm.setGutterMarker(cnt-1, "breakpoints", makeMarker());
+//     }
 
-    var line_number = $(".CodeMirror-gutter-wrapper").index(this) + 1;
+//     var line_number = $(".CodeMirror-gutter-wrapper").index(this) + 1;
 
-    // highlight the email matched at the line
-    // add .selected temporarily to matched example messages, then will be removed when mouse leaves
-    $(this).parents(".panel[rule-id]").find('tr[line-number{0}]'.format(line_number)).addClass('hover-selected');
-})
+//     // highlight the email matched at the line
+//     // add .selected temporarily to matched example messages, then will be removed when mouse leaves
+//     $(this).parents(".panel[rule-id]").find('tr[line-number{0}]'.format(line_number)).addClass('hover-selected');
+// })
 
-$("body").on("mouseleave", ".CodeMirror-gutter-wrapper", function() {
-    var line_number = $(".CodeMirror-gutter-wrapper").index(this) + 1;
+// $("body").on("mouseleave", ".CodeMirror-gutter-wrapper", function() {
+//     var line_number = $(".CodeMirror-gutter-wrapper").index(this) + 1;
 
-    // remove .selected from the matched example messages
-    var $root_elem = $(this).parents(".panel[rule-id]");
-    $root_elem.find('.debugger-container tr[line-number{0}]'.format(line_number)).removeClass('hover-selected');
-})
+//     // remove .selected from the matched example messages
+//     var $root_elem = $(this).parents(".panel[rule-id]");
+//     $root_elem.find('.debugger-container tr[line-number{0}]'.format(line_number)).removeClass('hover-selected');
+// })
 
 // Accordion listener
 $("#editor-container").on("click", ".panel-heading", function (e) {
@@ -194,7 +378,7 @@ $("#editor-container").on("click", ".editable-container .flex_item_left", functi
     trackOutboundLink('remove editor -' + $(this).attr("type"));
     if ($(this).parents('.panel').hasClass('removed')) {
         $(this).parents('.panel').removeClass('removed');
-        run_code( $('#test-mode[type=checkbox]').is(":checked"), btn_code_sumbit? btn_code_sumbit.hasClass('active') : null); 
+        run_code( $('#test-mode[type=checkbox]').is(":checked"), $("#btn-code-submit")? $("#btn-code-submit").hasClass('active') : null); 
         
 
         // give different visual effects

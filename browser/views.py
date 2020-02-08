@@ -111,13 +111,9 @@ def shortcut_editor(request):
 	is_initialized = False 
 	folders = []
 	email_rule_folder = []
-	rules = []
 
 	try: 
 		if request.user.id != None:
-			# as a way to suggest 
-			username = request.user.email.split("@")[0] if "csail" in request.user.email else request.user.email
-
 			imap = ImapAccount.objects.filter(email=request.user.email)
 			
 			if imap.exists():
@@ -131,27 +127,8 @@ def shortcut_editor(request):
 
 					current_mode = imap[0].current_mode
 
-					modes = MailbotMode.objects.filter(imap_account=imap[0])
-					logger.info(modes.values())
-					mode_exist = modes.exists()
-
-					if is_initialized:
-						# send their folder list
-						folders = FolderSchema.objects.filter(imap_account=imap[0]).values('name')
-					
-						folders = [f['name'].encode('utf8', 'replace') for f in folders]
-
-						# mode_folder = MailbotMode_Folder.objects.filter(imap_account=imap[0])
-						# mode_folder = [[str(mf.folder.name), str(mf.mode.uid)] for mf in mode_folder]
-
-						rules = EmailRule.objects.filter(mode__imap_account=imap[0])
-						for rule in rules:
-							for f in rule.folders.all():
-								email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
-
-		return {'user': request.user, 'username': username,'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
-			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
-			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 'shortcuts': shortcuts}
+		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+			'imap_authenticated': imap_authenticated, 'website': WEBSITE}
 	except Exception as e:
 		logger.exception(e)
 		return {'user': request.user, 'website': WEBSITE}
@@ -260,7 +237,7 @@ def email_button_view(request):
 						
 			folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
-			email_rules = EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut')
+			email_rules = EmailRule.objects.filter(imap_account=imap_account, type__startswith='shortcut')
 
 			today = timezone.now()
 			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules, 'imap_authenticated': True, 'is_gmail': imap_account.is_gmail, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
@@ -280,7 +257,7 @@ def get_email_rule_meta(request):
 
 			# serializing
 			email_rules = []
-			for obj in EmailRule.objects.filter(mode__imap_account=imap_account, type__startswith='shortcut'):
+			for obj in EmailRule.objects.filter(imap_account=imap_account, type__startswith='shortcut'):
 				email_rules.append( {"name": obj.name, "email": obj.get_forward_addr(), "id": obj.id, "params": [{"name": era["name"], "type": era["type"], "html": _load_component(era["type"], {"name": era["name"]})} for era in EmailRule_Args.objects.filter(rule=obj).values('name', 'type')]} )
 			logger.exception(email_rules)
 
@@ -481,11 +458,12 @@ def run_simulate_on_messages(request):
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		
 		# folder_name = request.POST['folder_name']
-		folder_name = request.POST.getlist('folder_name[]')
+		folder_name = request.POST.getlist('folder_name[]') or "INBOX"
 		N = request.POST['N']
 		code = request.POST['user_code']
+		extra_info = json.loads(request.POST['extra_info']) 
 		
-		res = engine.main.run_simulate_on_messages(user, request.user.email, folder_name, N, code)
+		res = engine.main.run_simulate_on_messages(user, request.user.email, folder_name, N, code, extra_info)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.exception("Error simulating login %s %s " % (e, traceback.format_exc()))

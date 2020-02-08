@@ -65,6 +65,9 @@ class Message(object):
         self._flags = self._schema.flags
 
         self._nylas_message = None
+
+        self._imap_client.select_folder(self.folder.name)
+
         logger.debug('caller name: %s', inspect.stack()[1][3])
 
     @staticmethod
@@ -176,7 +179,13 @@ class Message(object):
         Returns:
             datetime: The deadline
         """
-        return self._schema.base_message.deadline
+        if not self._is_simulate:
+            return self._schema.base_message.deadline
+        else:
+            if not hasattr(self, '_deadline'):
+                self._deadline = None
+            return self._deadline
+        
 
     @deadline.setter
     def deadline(self, value):
@@ -190,6 +199,8 @@ class Message(object):
             logger.info("here")
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
+        else:
+            self._deadline = value
 
     @CustomProperty
     def task(self):
@@ -454,7 +465,7 @@ class Message(object):
         """
         return message_helpers.get_content_from_message(self)
 
-    def has_flag(self, flag):
+    def _has_flag(self, flag):
         # type: (t.AnyStr) -> bool
         """Check if the message has a given flag
 
@@ -463,7 +474,7 @@ class Message(object):
         """
         return flag in self.flags
 
-    def add_flags(self, flags):
+    def _add_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the flags in a list of flags to the message
 
@@ -498,7 +509,7 @@ class Message(object):
 
         return a
 
-    def remove_flags(self, flags):
+    def _remove_flags(self, flags):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Remove each of the flags in a list of flags from the message
 
@@ -530,21 +541,22 @@ class Message(object):
         # type: () -> None
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
-        self.add_flags('\\Deleted')
+        self._add_flags('\\Deleted')
 
-    @CustomProperty
+    @ActionLogging
     def mark_read(self):
         # type: () -> None
         """Mark a message as read.
         """
-        self.add_flags('\\Seen')
+        self._add_flags('\\Seen')
 
-    
+    @ActionLogging
     def mark_unread(self):
         # type: () -> None
         """Mark a message as unread
         """
-        self.remove_flags('\\Seen')
+        logger.exception("HEELo")
+        self._remove_flags('\\Seen')
 
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -559,6 +571,12 @@ class Message(object):
                     self.copy(dst_folder)
                     self.delete()
                     self._imap_client.expunge()
+
+    @ActionLogging
+    def _move(self, src_folder, dst_folder):
+        """helper function for move() for logging and undo
+        """
+        pass
 
     @ActionLogging
     def forward(self, to=[], cc=[], bcc=[], subject="", content=""):
@@ -641,17 +659,24 @@ class Message(object):
 
         self.reply(more_to, more_cc, more_bcc, content)
 
-    def test(self):
-        from engine.models.helpers.message_helpers import _open_rfc822
-        from email_reply_parser import EmailReplyParser
-        # logger.info(EmailReplyParser.read(self.content['text']).fragments)
-        for f in EmailReplyParser.read(self.content['text']).fragments:
-            logger.info(f.headers)
-            logger.info(f.content)
-        
-        # with _open_rfc822(message) as rfc_contents:
-        # with _open_rfc822(self) as email_message:
-        #     logger.info(EmailReplyParser.read(email_message))
+    def on_response(self, handler):
+        """add an event handler that is triggered everytime when there is a new message arrived at its thread
+
+        Args:
+            handler (function): A function to execute each time when there are messaged arrvied to this thread.
+        """
+        # add 
+
+        pass
+    
+    def on_time(self, later_at, handler):
+        """The number of hours to wait before executing the code. If omitted, the value 0 is used
+
+        Args:
+            later_at (int): when to move this message back to inbox (in minutes)
+            handler (function): A function that will be executed
+        """
+        pass
 
     def see_later(self, later_at=60, hide_in='YouPS see later'):
         """Hide a message to a folder and move it back to a original folder

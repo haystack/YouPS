@@ -148,7 +148,7 @@ def _flag_change_helper(message, uids, flags, gmail_label_func, imap_flag_func):
         logger.exception("flag change returned flags {flags}".format(
             flags=pprint.pformat(returned_flags)))
     else:
-        returned_flags = imap_flag_func(uids, flags)
+        returned_flags = imap_flag_func([uids], flags)
         logger.debug("flag change returned flags {flags}".format(
             flags=pprint.pformat(returned_flags)))
 

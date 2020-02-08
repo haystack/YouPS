@@ -55,12 +55,14 @@ function append_log( msg_log, is_error ) {
                 // alert(Message["trigger"]);
     
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
-                var property_log= JSON.parse(Message["property_log"]);
-                $.each(property_log, function(k, v) {
+                var property_log_json= JSON.parse(Message["property_log"]);
+                var property_log = "";
+                $.each(property_log_json, function(k, v) {
                     if(v["type"] == "send")
                         property_log += "- {0} {1} (can not be canceled)\n".format( v["function_name"], v["args"])
-                    else 
+                    else if (v["type"] == "set")
                         property_log += "- {0} {1} to {2} \n".format( v["type"], v["function_name"], v["args"].length > 1 ? v["args"][1] : "")
+                    else property_log += "- {0} {1}\n".format(  v["function_name"], v["args"].length >= 1 ? v["args"][0] : "")
                 });
 
                 console.log(property_log)

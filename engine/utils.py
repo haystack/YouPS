@@ -65,6 +65,26 @@ def prettyPrintTimezone(datetime_obj, tz=tz('US/Eastern')):
 
     return datetime_obj.strftime("%m/%d %H:%M") if datetime_obj else ""
     
+def print_execution_log(message):
+    new_msg = {}
+
+    # This is to log for users
+    from_field = message._get_from_friendly()
+
+    to_field = message._get_to_friendly()
+
+    cc_field = message._get_cc_friendly()
+
+    new_msg["timestamp"] = str(datetime.now().strftime("%m/%d %H:%M:%S,%f"))
+    new_msg["type"] = "new_message"
+    new_msg["from_"] = from_field
+    new_msg["to"] = to_field
+    new_msg["cc"] = cc_field
+    new_msg["log"] = ""
+
+    new_msg.update(message._get_meta_data_friendly())
+
+    return new_msg
 
 def grouper(iterable, n):
     """Group data from an iterable into chunks of size n

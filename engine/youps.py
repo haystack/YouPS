@@ -19,7 +19,7 @@ from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
-from engine.utils import turn_on_youps, prettyPrintTimezone
+from engine.utils import turn_on_youps, prettyPrintTimezone, print_execution_log
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
@@ -283,7 +283,7 @@ def fetch_watch_message(user, email, watched_message):
                     if highest_mod_seq is not None and folder._highest_mod_seq <= 0:
                         continue
 
-                    logger.info("refresh flags")
+                    # logger.info("refresh flags")
 
                     msgs = folder._refresh_flag_changes(highest_mod_seq)
 
@@ -657,7 +657,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     logging.debug(res)
     return res
 
-def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
+def run_simulate_on_messages(user, email, folder_names, N=3, code='', extra_info={}):
     """This function is called to evaluate user's code on messages
 
         Args:
@@ -666,6 +666,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
             folder_name (string): name of a folder to extract messages 
             N (int): number of recent messages
             code (string): code to be simulated
+            extra_info (dict): dictionary continas extra information such as argument list for shortucts
     """
     res = {'status' : False, 'imap_error': False, 'imap_log': ""}
     logger = logging.getLogger('youps')  # type: logging.Logger
@@ -691,63 +692,28 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code=''):
 
     try:
         res['messages'] = {}
-
+        
+        args = {}
+        for e in extra_info:
+            if "type" in e:
+                args[e["name"]] = datetime.datetime.now() if e["type"] == "datetime" else "test string"
+                    
         for folder_name in folder_names:
             messages = MessageSchema.objects.filter(imap_account=imapAccount, folder__name=folder_name).order_by("-base_message__date")[:N]
 
             for message_schema in messages:
                 assert isinstance(message_schema, MessageSchema)
                 mailbox = MailBox(imapAccount, imap, is_simulate=True)
-                imap_res = interpret_bypass_queue(mailbox, extra_info={'code': code, 'msg-id': message_schema.id})
+                imap_res = interpret_bypass_queue(mailbox, extra_info={'code': code, 'msg-id': message_schema.id, 'shortcut':args})
                 logger.debug(imap_res)
 
                 message = Message(message_schema, imap)
+                result = print_execution_log(message)
+                result["log"] = imap_res['appended_log'][message_schema.id]['log']
+                result["error"] = imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
 
-                from_field = None
-                if message.from_:
-                    from_field = {
-                        "name": message.from_.name,
-                        "email": message.from_.email,
-                        "organization": message.from_.organization,
-                        "geolocation": message.from_.geolocation
-                    }
-                    
-                to_field = [{
-                    "name": tt.name,
-                    "email": tt.email,
-                    "organization": tt.organization,
-                    "geolocation": tt.geolocation
-                } for tt in message.to]
-
-                cc_field = [{
-                    "name": tt.name,
-                    "email": tt.email,
-                    "organization": tt.organization,
-                    "geolocation": tt.geolocation
-                } for tt in message.cc]
-
-                # TODO attach activated line
-                # This is to log for users
-                new_msg = {
-                    "timestamp": str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f")), 
-                    "type": "new_message", 
-                    "folder": message.folder.name, 
-                    "from_": from_field, 
-                    "subject": message.subject, 
-                    "to": to_field,
-                    "cc": cc_field,
-                    "flags": [f.encode('utf8', 'replace') for f in message.flags],
-                    "date": prettyPrintTimezone(message.date),
-                    "deadline": prettyPrintTimezone(message.deadline), 
-                    "is_read": message.is_read, 
-                    "is_deleted": message.is_deleted, 
-                    "is_recent": message.is_recent,
-                    "log": imap_res['appended_log'][message_schema.id]['log'],
-                    "error": imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
-                }
+                res['messages'][message_schema.id] = result
                 
-
-                res['messages'][message_schema.id] = new_msg
         
         res['status'] = True
     except ImapAccount.DoesNotExist:
@@ -780,17 +746,40 @@ def undo(user, email, logschema_id):
             raise ValueError('Something went wrong during authentication. Refresh and try again!')
 
         imap = auth_res['imap']  # noqa: F841 ignore unused
-    
+    except ImapAccount.DoesNotExist:
+        res['code'] = "Not logged into IMAP"
+    except LogSchema.DoesNotExist:
+        res['code'] = "Can't undo the action!"
+    except Exception as e:
+        logger.exception("failed while logging into imap")
+        res['code'] = "Fail to access your IMAP account"
+        return
+
+    try:
         # Redo actions reverse to undo
         for action in reversed(actions):
+            message_schema = MessageSchema.objects.get(id=action["schema_id"])
+            message = Message(message_schema, imap_client=imap)
+
             if action["type"] == "send":
                 logger.info("unreversable action")
                 continue
 
-            message_schema = MessageSchema.objects.get(id=action["schema_id"])
-            message = Message(message_schema, imap_client=imap) 
-            setattr(message, action["function_name"], action["args"][0])
-            logger.info("undo %s %s" % (action["function_name"], action["args"][0]))
+            elif action["type"] == "set":
+                 
+                setattr(message, action["function_name"], action["args"][0])
+                logger.info("undo %s %s" % (action["function_name"], action["args"][0]))
+
+            elif action["type"] == "schedule":
+                pass
+
+            elif action["type"] == "action":
+                reverse_action = [("add_flags", "remove_flags"), ("mark_read", "mark_unread"), ("move", "move")]
+                
+                for r in reverse_action:
+                    if action["function_name"] in r:
+                        reverse_func = getattr(message, r[1]) if r[0] == action["function_name"] else getattr(message, r[0])
+                        reverse_func(action["args"]) if action["args"] else reverse_func()
 
         logschema.is_canceled = True
         logschema.save()
@@ -798,16 +787,16 @@ def undo(user, email, logschema_id):
         res['status'] = True
 
     except IMAPClient.Error as e:
+        logger.exception(e)
         res['code'] = e
-    except ImapAccount.DoesNotExist:
-        res['code'] = "Not logged into IMAP"
-    except LogSchema.DoesNotExist:
-        res['code'] = "Can't undo the action!"
     except MessageSchema.DoesNotExist:
+        logger.exception("error here")
         res['code'] = "This message no longer exists in your inbox"
     except Exception as e:
         logger.exception(e)
         res['code'] = msg_code['UNKNOWN_ERROR']
+    finally:
+        imap.logout()
 
     logging.debug(res)
     return res

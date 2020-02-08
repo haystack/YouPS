@@ -164,11 +164,11 @@ class MailBox(object):
             if not mailbox_cursor:
                 logger.info("No delta detected at %s -- move on to next inbox" % self._imap_account.email)
 
-        # TODO request delta
-
-        # TODO update the cursor
-        #self._imap_account.delta_cursor = res['cursor_end']
-        #self._imap_account.save()
+            else:
+                # TODO update the cursor
+                #self._imap_account.delta_cursor = res['cursor_end']
+                #self._imap_account.save()
+                pass
 
         # should do a couple things based on
         # https://stackoverflow.com/questions/9956324/imap-synchronization
