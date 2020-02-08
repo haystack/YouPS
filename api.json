@@ -226,12 +226,7 @@
                 "example": ""
             }
         ],
-        "method": [{
-                "name": "add_flags",
-                "params": "flags",
-                "description": "Add each of the flags in a list of flags to the message",
-                "example": ""
-            },
+        "method": [
             {
                 "name": "aggregate_response",
                 "params": "",
@@ -254,13 +249,6 @@
                 "name": "forward",
                 "params": "to=[], cc=[], bcc=[]",
                 "description": "Forward this email to the given recipients.",
-                "example": ""
-            },
-            {
-                "name": "has_flag",
-                "params": "flag",
-                "return_type": "bool",
-                "description": "Check if the message has a given flag",
                 "example": ""
             },
             {
@@ -287,13 +275,6 @@
                 "description": "Get if the message is recent",
                 "example": "",
                 "related": []
-            },
-            {
-                "name": "remove_flags",
-                "params": "flags",
-                "return_type": "",
-                "description": "Remove each of the flags in a list of flags from the message",
-                "example": ""
             },
             {
                 "name": "mark_read",
