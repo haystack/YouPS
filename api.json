@@ -188,7 +188,7 @@
                         "name": "add_flags"
                     },
                     {
-                        "name": "has_flags"
+                        "name": "has_flag"
                     },
                     {
                         "name": "remove_flags"
@@ -257,7 +257,7 @@
                 "example": ""
             },
             {
-                "name": "has_flags",
+                "name": "has_flag",
                 "params": "flag",
                 "return_type": "bool",
                 "description": "Check if the message has a given flag",
