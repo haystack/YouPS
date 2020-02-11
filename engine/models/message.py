@@ -543,9 +543,8 @@ class Message(object):
         """
         self._check_folder(dst_folder)
 
-        if not self._is_message_already_in_dst_folder(dst_folder):
-            if not self._is_simulate:
-                self._imap_client.copy(self._uid, dst_folder)
+        if not self._is_simulate:
+            self._imap_client.copy(self._uid, dst_folder)
 
     def delete(self):
         # type: () -> None
@@ -578,9 +577,9 @@ class Message(object):
         """Move the message to another folder.
         """
         self._check_folder(dst_folder)
-        if not self._is_message_already_in_dst_folder(dst_folder):
-            if not self._is_simulate:
-                self._move(self.folder.name, dst_folder)
+        if not self._is_simulate:
+            self._move(self.folder.name, dst_folder)
+            
 
     @ActionLogging
     def _move(self, src_folder, dst_folder):
@@ -791,6 +790,12 @@ class Message(object):
 
         return convertToUserTZ(later_at)
 
+    @ActionLogging
+    def _see_later(self, email_rule_id):
+        """helper function for on_time() for logging and undo
+        """
+        pass
+
     def see_later(self, later_at=60, hide_in='YouPS see later'):
         """Hide a message to a folder and move it back to a original folder
 
@@ -818,6 +823,8 @@ class Message(object):
             t = EventManager(email_rule=er, date=later_at, base_message=self._schema.base_message)
             t.save()
             logger.critical("here %s" % hide_in)
+
+            self._see_later(er.id)
 
         print("see_later(): Hide the message until %s at %s" %
               (prettyPrintTimezone(later_at), hide_in))

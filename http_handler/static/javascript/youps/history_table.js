@@ -86,8 +86,8 @@ function append_log( msg_log, is_error ) {
                 delete Message["timestamp"];
                 delete Message["type"];
                 delete Message["logschema_id"];
+                delete Message["property_log"];
     
-                Contact :  Message['from_']
                 $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                     data: {
                         Contact :  Message['from_']
