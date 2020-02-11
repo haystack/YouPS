@@ -68,8 +68,8 @@ def ActionLogging(f):
             "reply_all": "send",
             "mark_read": "action", 
             "mark_unread": "action", 
-            "on_response": "schedule",
-            "on_time": "schedule",
+            "_on_response": "schedule",
+            "_on_time": "schedule",
             "see_later": "schedule",
             "_move": "action"
         }

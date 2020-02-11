@@ -201,45 +201,48 @@ def interpret(mailbox, mode):
             '''  
             rule_type_to_search = ""
             handler = call_back= None
-            email_rules = None
-            if event_class_name == "ThreadArrivalData":
-                rule_type_to_search = call_back = "on_response"
-                handler = mailbox.new_message_handler
-                
-                email_rules = [e.email_rule for e in EventManager.objects.filter(thread=event_data.message._schema.base_message._thread, email_rule__type__startswith=rule_type_to_search)]
-            elif event_class_name == "MessageArrivalData":
-                rule_type_to_search = "new-message"
-                handler = mailbox.new_message_handler
-                call_back = "on_message"
-                email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
-            elif event_class_name == "NewFlagsData":
-                rule_type_to_search = "flag-change"
-                handler = mailbox.added_flag_handler
-                call_back = "on_flag_change"
-                email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
-            elif event_class_name == "NewMessageDataDue":
-                 rule_type_to_search= "deadline"
-                 handler = mailbox.deadline_handler
-                 call_back = "on_deadline"
-                 email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
-
-            for rule in email_rules:
-                code = rule.code
-                if event_class_name == "ThreadArrivalData":
-                    code = codeobject_loads(json.loads(code))
-                    code = type(codeobject_loads)(code, user_environ)
-
-                    logger.exception(mailbox.new_message_handler.getHandlerCount())
-                    handler.handle(code)
-
-                    logger.exception(mailbox.new_message_handler.getHandlerCount())
-                else:
-                    valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
-                    if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
-                        exec(code + "\nhandler.handle(%s)" % call_back, user_environ.update({'handler': handler}))
-                        # handler.handle(code)
-
+            email_rules = []
             try:
+                if event_class_name == "ThreadArrivalData":
+                    rule_type_to_search = call_back = "on_response"
+                    handler = mailbox.new_message_handler
+                    
+                    email_rules = [e.email_rule for e in EventManager.objects.filter(thread=event_data.message._schema.base_message._thread, email_rule__type__startswith=rule_type_to_search)]
+                elif event_class_name == "MessageArrivalData":
+                    rule_type_to_search = "new-message"
+                    handler = mailbox.new_message_handler
+                    call_back = "on_message"
+                    email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
+                elif event_class_name == "NewFlagsData":
+                    rule_type_to_search = "flag-change"
+                    handler = mailbox.added_flag_handler
+                    call_back = "on_flag_change"
+                    email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
+                elif event_class_name == "NewMessageDataDue":
+                    rule_type_to_search= "deadline"
+                    handler = mailbox.deadline_handler
+                    call_back = "on_deadline"
+                    email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
+                elif event_class_name == "MessageMovedData":
+                    continue
+
+                for rule in email_rules:
+                    code = rule.code
+                    if event_class_name == "ThreadArrivalData":
+                        code = codeobject_loads(json.loads(code))
+                        code = type(codeobject_loads)(code, user_environ)
+
+                        logger.exception(mailbox.new_message_handler.getHandlerCount())
+                        handler.handle(code)
+
+                        logger.exception(mailbox.new_message_handler.getHandlerCount())
+                    else:
+                        valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
+                        if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
+                            exec(code + "\nhandler.handle(%s)" % call_back, user_environ.update({'handler': handler}))
+                            # handler.handle(code)
+
+                
                 event_data.fire_event(handler)
             except Exception as e:
                 # Get error message for users if occurs
@@ -258,7 +261,7 @@ def interpret(mailbox, mode):
                 copy_msg["log"] = error_msg
                 copy_msg["error"] = True     
 
-            if handler.getHandlerCount():
+            if handler and handler.getHandlerCount():
                 copy_msg.update(print_execution_log(event_data.message))
                 logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
                 copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
@@ -298,6 +301,18 @@ def interpret(mailbox, mode):
             if skip:
                 continue
 
+            # TODO user logger
+            user_std_out = StringIO()
+
+             # set the stdout to a string
+            sys.stdout = user_std_out
+
+            # set the user logger to
+            userLoggerStream = user_std_out
+
+            user_property_log = []
+            mailbox._imap_client.user_property_log = user_property_log
+
             now = timezone.now().replace(microsecond=0)
             is_fired = False
             logger.critical("task manager %s now: %s" % (prettyPrintTimezone(task.date), prettyPrintTimezone(now)))
@@ -311,15 +326,17 @@ def interpret(mailbox, mode):
 
             copy_msg = copy.deepcopy(new_msg)
             copy_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))
-
+            copy_msg["log"] = ""
+            msg=None
             try:
-                if new_msg["type"] == "see-later":
-                    user_environ = json.loads(task.email_rule.code) if len(task.email_rule.code) else {}
+                if task.email_rule.type == "see-later":
+                    msg_schema = MessageSchema.objects.filter(base_message=task.base_message)
+                    if msg_schema.exists(): 
+                        msg=Message(msg_schema[0], mailbox._imap_client)
+                        user_environ.update({"my_message": msg})
+                        exec(json.loads(task.email_rule.code), user_environ)
+                    is_fired = True
                     
-                    msg_schema = MessageSchema.objects.get(base_message__id=user_environ["base_message_id"], folder__name=user_environ["hide_in"])
-                    mailbox._imap_client.select_folder(user_environ["hide_in"])
-                    msg=Message(msg_schema, mailbox._imap_client)
-                    msg.move(user_environ["current_folder"])
                 elif new_msg["type"] == "remind":
                     user_environ = json.loads(task.email_rule.code) if len(task.email_rule.code) else {}
                     
@@ -328,11 +345,15 @@ def interpret(mailbox, mode):
                         msg=Message(msg_schema, mailbox._imap_client)
                         msg.forward(user_environ["note"])
                         break
-                else:
-                    # TODO replace with Task schema and make it more extensible
-                    # TODO task; id, type="hide-show", string='{}'
-                    pass
-                is_fired = True
+                else: # on times
+                    code = task.email_rule.code
+                    code = codeobject_loads(json.loads(code))
+                    code = type(codeobject_loads)(code, user_environ)
+                    message_schemas = MessageSchema.objects.filter(base_message=task.base_message)
+                    if message_schemas.exists(): 
+                        msg = Message(message_schemas[0], mailbox._imap_client)
+                        code(msg)
+                    is_fired = True
             except Exception as e:
                 logger.critical("Error during task managing %s " % e)
                 copy_msg["error"] = True
@@ -349,10 +370,15 @@ def interpret(mailbox, mode):
                 task.delete()
             finally:
                 if is_fired:
+                    copy_msg.update(print_execution_log(msg))
                     copy_msg["trigger"] = task.email_rule.name
                     task.delete()
+                    
+
+                    copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
+                    dump_execution_log(mailbox._imap_account, {copy_msg["timestamp"]: copy_msg}, mailbox._imap_client.user_property_log)
                         
-                    # copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] )
+                    
 
                     # new_log[copy_msg["timestamp"]] = copy_msg    
 

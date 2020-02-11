@@ -777,7 +777,8 @@ def undo(user, email, logschema_id):
 
             elif action["type"] == "schedule":
                 # remove task manager
-                pass
+                er = EmailRule.objects.filter(id=action["args"][0])
+                er.delete()
 
             elif action["type"] == "action":
                 reverse_action = [("add_flags", "remove_flags"), ("mark_read", "mark_unread"), ("_move", "_move")]

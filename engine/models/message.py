@@ -676,6 +676,12 @@ class Message(object):
 
         self.reply(more_to, more_cc, more_bcc, content)
 
+    @ActionLogging
+    def _on_response(self, email_rule_id):
+        """helper function for on_response() for logging and undo
+        """
+        pass
+
     def on_response(self, handler):
         """add an event handler that is triggered everytime when there is a new message arrived at its thread
 
@@ -724,26 +730,66 @@ class Message(object):
             er = EmailRule(imap_account=self._imap_account, name='on response', type='on_response', code=json.dumps(a))
             er.save()
 
+            self._on_response(er.id)
+
             e = EventManager(thread=thread_schema, email_rule=er)
             e.save()
 
-        a = 'newMessage="TODO REPLACE THIS"\
-            a.code is return value of codeobject_dumps() \
-            code_object=co_loads(a.code) \
-            g = type(co_loads)(code_object ,locals()) \
-            g(newMessage)'
-
         print("on_response(): The handler will be executed when a new message arrives on this thread")
 
-    
-    def on_time(self, later_at, handler):
+    @ActionLogging
+    def _on_time(self, email_rule_id):
+        """helper function for on_time() for logging and undo
+        """
+        pass
+
+    def on_time(self, handler, later_at=60):
         """The number of hours to wait before executing the code. If omitted, the value 0 is used
 
         Args:
-            later_at (int): when to move this message back to inbox (in minutes)
             handler (function): A function that will be executed. The function provides the newly arrived message as an argument
+            later_at (int): when to move this message back to inbox (in minutes)
         """
-        pass
+        if not handler or type(handler).__name__ != "function":
+            raise Exception('on_time(): requires callback function but it is %s ' % type(handler).__name__)
+
+        if handler.func_code.co_argcount != 1:
+            raise Exception('on_time(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
+
+        later_at = self._get_datetime(later_at)
+
+        a = codeobject_dumps(handler.func_code)
+        if self._is_simulate:
+            a=codeobject_loads(a)
+            code_object=a
+
+            from browser.sandbox_helpers import get_default_user_environment
+            from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
+            g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
+            print("on_time(): Simulating callback function..:")
+            g(self)
+        else:
+            # add EventManager attached to it
+            er = EmailRule(imap_account=self._imap_account, name='on time', type='on_time', code=json.dumps(a))
+            er.save()
+
+            self._on_time(er.id)
+
+            e = EventManager(base_message=self._schema.base_message, date=later_at, email_rule=er)
+            e.save()
+
+        print("on_time(): The handler will be executed at %s " % prettyPrintTimezone(later_at))
+
+    def _get_datetime(self, later_at):
+        if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
+            raise TypeError("see_later(): later_at " +
+                            later_at + " is not number or datetime")
+
+        if isinstance(later_at, (int, long, float)):
+            later_at = timezone.now().replace(microsecond=0) + \
+                timedelta(seconds=later_at*60)
+
+        return convertToUserTZ(later_at)
 
     def see_later(self, later_at=60, hide_in='YouPS see later'):
         """Hide a message to a folder and move it back to a original folder
@@ -754,15 +800,7 @@ class Message(object):
             later_at (int): when to move this message back to inbox (in minutes)
             hide_in (string): a name of folder to hide this message temporarily
         """
-        if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
-            raise TypeError("see_later(): later_at " +
-                            later_at + " is not number or datetime")
-
-        if isinstance(later_at, (int, long, float)):
-            later_at = timezone.now().replace(microsecond=0) + \
-                timedelta(seconds=later_at*60)
-
-        later_at = convertToUserTZ(later_at)
+        later_at = self._get_datetime(later_at)
 
         current_folder = self._schema.folder.name
         if self._schema.imap_account.is_gmail and current_folder == "INBOX":
@@ -772,16 +810,12 @@ class Message(object):
             self.move(hide_in)
 
             # find message schema (at folder hide_in) of base message then move back to original message schema 
-            code= {"base_message_id": self._schema.base_message.id,
-                "hide_in": hide_in,
-                "current_folder": current_folder}
+            code = "my_message.move('%s')" % self.folder.name
             
             er = EmailRule(name='see later', type='see-later', code=json.dumps(code))
             er.save()
 
-            
-            
-            t = EventManager(email_rule=er, date=later_at)
+            t = EventManager(email_rule=er, date=later_at, base_message=self._schema.base_message)
             t.save()
             logger.critical("here %s" % hide_in)
 

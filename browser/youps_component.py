@@ -101,7 +101,7 @@ def load_new_editor(request):
                             rules = EmailRule.objects.filter(imap_account=imap[0])
                         else:
                             rules = EmailRule.objects.filter(mode__imap_account=imap[0])
-                        logger.info(rules)
+                        # logger.info(rules)
 
                         for rule in rules:
                             for f in rule.folders.all():
