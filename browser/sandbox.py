@@ -208,6 +208,11 @@ def interpret(mailbox, mode):
                     handler = mailbox.new_message_handler
                     
                     email_rules = [e.email_rule for e in EventManager.objects.filter(thread=event_data.message._schema.base_message._thread, email_rule__type__startswith=rule_type_to_search)]
+                elif event_class_name ==  "ContactArrivalData":
+                    rule_type_to_search = call_back = "on_response"
+                    handler = mailbox.new_message_handler
+                    
+                    email_rules = [e.email_rule for e in EventManager.objects.filter(contact=event_data.message._schema.base_message.from_m, email_rule__type__startswith=rule_type_to_search)]
                 elif event_class_name == "MessageArrivalData":
                     rule_type_to_search = "new-message"
                     handler = mailbox.new_message_handler
@@ -228,7 +233,7 @@ def interpret(mailbox, mode):
 
                 for rule in email_rules:
                     code = rule.code
-                    if event_class_name == "ThreadArrivalData":
+                    if event_class_name in ["ThreadArrivalData", "ContactArrivalData"]:
                         code = codeobject_loads(json.loads(code))
                         code = type(codeobject_loads)(code, user_environ)
 

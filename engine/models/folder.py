@@ -16,12 +16,12 @@ from imapclient.response_types import \
     Address  # noqa: F401 ignore unused we use it for typing
 
 from engine.models.event_data import (AbstractEventData, ThreadArrivalData, MessageArrivalData, 
-                                      MessageMovedData, NewFlagsData,
+                                      MessageMovedData, NewFlagsData, ContactArrivalData,
                                       NewMessageDataScheduled,
                                       RemovedFlagsData)
 from engine.models.message import Message
 from schema.youps import (  # noqa: F401 ignore unused we use it for typing
-    BaseMessage, ContactSchema, ContactAlias, FolderSchema, ImapAccount,
+    BaseMessage, ContactSchema, ContactAlias, EventManager, FolderSchema, ImapAccount,
     MessageSchema, ThreadSchema)
 from engine.models.helpers import CustomProperty
 
@@ -538,6 +538,7 @@ class Folder(object):
             if event_data_list is not None:
                 assert new_message_ids is not None
                 if metadata['message-id'] in new_message_ids:
+                    # Check thread arrival event
                     if self._imap_account.nylas_access_token:
                         nylas = APIClient(
                             NYLAS_ID,
@@ -563,6 +564,16 @@ class Folder(object):
                                         m))
                                     logger.info('folder {f}: uid {u}: thread arrival'.format(
                                         f=self.name, u=uid))
+
+                    # Check message arrived from a contact event
+                    if base_message.from_m:
+                        events = EventManager.objects.filter(contact=base_message.from_m)
+                        if events.exists():
+                            event_data_list.append(ContactArrivalData(
+                                Message(new_message, self._imap_client)))
+
+                            logger.info('folder {f}: uid {u}: contact arrival'.format(
+                                f=self.name, u=uid))
 
                     event_data_list.append(MessageArrivalData(
                         Message(new_message, self._imap_client)))

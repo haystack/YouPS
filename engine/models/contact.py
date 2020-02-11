@@ -3,6 +3,7 @@ import typing as t  # noqa: F401 ignore unused we use it for typing
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ContactSchema, MessageSchema  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Q
+from smtp_handler.utils import codeobject_dumps, codeobject_loads
 import logging
 from engine.models.helpers import CustomProperty, ActionLogging
 
@@ -169,7 +170,7 @@ class Contact(object):
         """add an event handler that is triggered everytime when there is a new message arrived from this contact
 
         Args:
-            handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the contact object as an argument
+            handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument
         """
         if not handler or type(handler).__name__ != "function":
             raise Exception('on_response(): requires callback function but it is %s ' % type(handler).__name__)
@@ -190,10 +191,8 @@ class Contact(object):
             print("on_response(): Simulating callback function..:")
             g(self)
         else: 
-            nylas_message = self._get_nylas_message()
-            # create threadschema
-            thread_schema = ThreadSchema.objects.filter(nylas_id=nylas_message.thread_id)
-            if not thread_schema.exists():
+            events = EventManager.objects.filter(contact=self._schema)
+            if not events.exists():
                 thread_schema = ThreadSchema(imap_account=self._imap_account, nylas_id=nylas_message.thread_id)
                 thread_schema.save()
             else:
@@ -218,7 +217,7 @@ class Contact(object):
             e = EventManager(thread=thread_schema, email_rule=er)
             e.save()
 
-        print("on_response(): The handler will be executed when a new message arrives on this thread")
+        print("on_response(): The handler will be executed when a new message arrives from this contact")
 
     @ActionLogging
     def _on_time(self, email_rule_id):
