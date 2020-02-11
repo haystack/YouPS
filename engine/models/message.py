@@ -384,7 +384,7 @@ class Message(object):
             t.List[Contact]: The contacts in the to field of the message
         """
 
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.to.all()]
+        return [Contact(contact_schema, self._imap_client, self._is_simulate) for contact_schema in self._schema.base_message.to.all()]
 
     @CustomProperty
     def from_(self):
@@ -394,7 +394,7 @@ class Message(object):
         Returns:
             Contact: The contact in the from field of the message
         """
-        return Contact(self._schema.base_message.from_m, self._imap_client) if self._schema.base_message.from_m else None
+        return Contact(self._schema.base_message.from_m, self._imap_client, self._is_simulate) if self._schema.base_message.from_m else None
 
     @CustomProperty
     def sender(self):
@@ -419,7 +419,7 @@ class Message(object):
         Returns:
             t.List[Contact]: The contacts in the reply_to field of the message
         """
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.reply_to.all()]
+        return [Contact(contact_schema, self._imap_client, self._is_simulate) for contact_schema in self._schema.base_message.reply_to.all()]
 
     @CustomProperty
     def cc(self):
@@ -429,7 +429,7 @@ class Message(object):
         Returns:
             t.List[Contact]: The contacts in the cc field of the message
         """
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.cc.all()]
+        return [Contact(contact_schema, self._imap_client, self._is_simulate) for contact_schema in self._schema.base_message.cc.all()]
 
     @CustomProperty
     def bcc(self):
@@ -439,7 +439,7 @@ class Message(object):
         Returns:
             t.List[Contact]: The contacts in the bcc field of the message
         """
-        return [Contact(contact_schema, self._imap_client) for contact_schema in self._schema.base_message.bcc.all()]
+        return [Contact(contact_schema, self._imap_client, self._is_simulate) for contact_schema in self._schema.base_message.bcc.all()]
 
     @CustomProperty
     def recipients(self):

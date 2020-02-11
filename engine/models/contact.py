@@ -1,7 +1,8 @@
 from __future__ import unicode_literals, print_function, division
 import typing as t  # noqa: F401 ignore unused we use it for typing
+import json
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
-from schema.youps import ContactSchema, MessageSchema  # noqa: F401 ignore unused we use it for typing
+from schema.youps import ContactSchema, EmailRule, EventManager, MessageSchema  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Q
 from smtp_handler.utils import codeobject_dumps, codeobject_loads
 import logging
@@ -11,13 +12,14 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 
 class Contact(object):
 
-    def __init__(self, contact_schema, imap_client):
+    def __init__(self, contact_schema, imap_client, is_simulate):
         # type: (ContactSchema, IMAPClient) -> Contact
 
         self._schema = contact_schema  # type: ContactSchema
 
         # the connection to the server
         self._imap_client = imap_client  # type: IMAPClient
+        self._is_simulate = is_simulate
 
     def __str__(self):
         return "%s, %s" % (self.name, self.email)
@@ -98,7 +100,7 @@ class Contact(object):
             t.List[Message]: The messages where this contact is listed in the to field
         """
         from engine.models.message import Message
-        return [Message(message_schema, self._imap_client) for message_schema in self._schema.to_messages.all()]
+        return [Message(message_schema, self._imap_client) for message_schema in MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__to=self._schema)]
 
     @CustomProperty
     def messages_from(self):
@@ -109,7 +111,7 @@ class Contact(object):
             t.List[Message]: The messages where this contact is listed in the from field
         """
         from engine.models.message import Message
-        return [Message(message_schema, self._imap_client) for message_schema in self._schema.from_messages.all()]
+        return [Message(message_schema, self._imap_client) for message_schema in MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__from_m=self._schema)]
 
     def messages_from_date(self, from_date=None, to_date=None):
         """Get the Messages which are from this contact
@@ -189,32 +191,15 @@ class Contact(object):
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
             print("on_response(): Simulating callback function..:")
-            g(self)
+            g(self.messages_from[0])
         else: 
-            events = EventManager.objects.filter(contact=self._schema)
-            if not events.exists():
-                thread_schema = ThreadSchema(imap_account=self._imap_account, nylas_id=nylas_message.thread_id)
-                thread_schema.save()
-            else:
-                thread_schema = thread_schema[0]
-
-                # TODO if there is same handlr registered if it is, then skip 
-                eventManagers = EventManager.objects.filter(thread=thread_schema, email_rule__type="on_response")
-                if eventManagers.exists():
-                    print("on_response(): The handler already registered for this thread; skip")
-                    return 
-            
-            self._schema.base_message._thread = thread_schema
-            self._schema.base_message.save()
-            logger.exception("Thread id: %s" % self._schema.base_message._thread.nylas_id)
-
             # add EventManager attached to it
-            er = EmailRule(imap_account=self._imap_account, name='on response', type='on_response', code=json.dumps(a))
+            er = EmailRule(imap_account=self._schema.imap_account, name='on response', type='on_response', code=json.dumps(a))
             er.save()
 
             self._on_response(er.id)
 
-            e = EventManager(thread=thread_schema, email_rule=er)
+            e = EventManager(contact=self._schema, email_rule=er)
             e.save()
 
         print("on_response(): The handler will be executed when a new message arrives from this contact")
@@ -249,10 +234,11 @@ class Contact(object):
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
             print("on_time(): Simulating callback function..:")
-            g(self)
+            
+            g(self.messages_from[0])
         else:
             # add EventManager attached to it
-            er = EmailRule(imap_account=self._imap_account, name='on time', type='on_time', code=json.dumps(a))
+            er = EmailRule(imap_account=self._schema.imap_account, name='on time', type='on_time', code=json.dumps(a))
             er.save()
 
             self._on_time(er.id)
