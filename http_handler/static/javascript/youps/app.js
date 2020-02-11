@@ -225,25 +225,26 @@ class RuleSelector extends React.Component {
   
 
   render() {
-    var table_style = {background: "aliceblue"};
-
+    var table_style = {background: "aliceblue", width:"100%"};
+    var row_style={"margin-top": "10px", "padding-bottom": "5px", "border-bottom": "1px solid"}
     return (
-      <table className="table table-dark" style={table_style} id="rule-selector-table">
-        <tbody>
-              {this.state.rules.map( er  =>
-                <tr>
-                  <td>{ er.name }<span data-toggle="tooltip" data-placement="bottom" data-html="true" title={["<div style='position:relative;overflow:auto;'><p>" + er.code.replace(/ /gi, '&nbsp;').replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;").replace(/\n/g, "<br>") + "</p></div>"].join()} class="glyphicon glyphicon-info-sign"></span> &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; </td>
-                  <td>
-                    <ul>
-                      {er.params.map( param  => <li>{ param.name }: {param.type=="datetime"? 
-                        <DatePicker name={ param.name }/>:<span dangerouslySetInnerHTML={{__html: param.html}}></span>} </li>)}
-                    </ul>
-                  </td>
-                  <td><button className='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.applyRule(e, er.id) }>Run</button></td>
-                </tr>
-              )}
-        </tbody>
-      </table>
+      <div class="container" style={table_style} id="rule-selector-table">
+        {this.state.rules.map( er  =>
+          <div class="row" style={row_style}>
+            <div class="col-md-9">
+            { er.name }<span data-toggle="tooltip" data-placement="bottom" data-html="true" title={["<div style='position:relative;overflow:auto;'><p>" + er.code.replace(/ /gi, '&nbsp;').replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;").replace(/\n/g, "<br>") + "</p></div>"].join()} class="glyphicon glyphicon-info-sign"></span> &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; 
+            </div>
+            <div class="col-md-2">
+              <ul>
+                {er.params.map( param  => <li>{ param.name }: {param.type=="datetime"? 
+                  <DatePicker name={ param.name }/>:<span dangerouslySetInnerHTML={{__html: param.html}}></span>} </li>)}
+              </ul>
+            </div>
+            <div class="col-md-1">
+              <button className='btn btn-info rule-select-btn' er-id={er.id} onClick={(e)=>  this.applyRule(e, er.id) }>Run</button>
+            </div>
+            </div>)}
+      </div>
     );
   }
 }

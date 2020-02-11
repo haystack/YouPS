@@ -711,6 +711,10 @@ class Message(object):
                 thread_schema = thread_schema[0]
 
                 # TODO if there is same handlr registered if it is, then skip 
+                eventManagers = EventManager.objects.filter(thread=thread_schema, email_rule__type="on_response")
+                if eventManagers.exists():
+                    print("on_response(): The handler already registered for this thread; skip")
+                    return 
             
             self._schema.base_message._thread = thread_schema
             self._schema.base_message.save()

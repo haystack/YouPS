@@ -258,13 +258,14 @@ def interpret(mailbox, mode):
                 copy_msg["log"] = error_msg
                 copy_msg["error"] = True     
 
-            copy_msg.update(print_execution_log(event_data.message))
-            logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
-            copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
+            if handler.getHandlerCount():
+                copy_msg.update(print_execution_log(event_data.message))
+                logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
+                copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
 
-            copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
-                        
-            dump_execution_log(mailbox._imap_account, {copy_msg["timestamp"]: copy_msg}, mailbox._imap_client.user_property_log)
+                copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
+                            
+                dump_execution_log(mailbox._imap_account, {copy_msg["timestamp"]: copy_msg}, mailbox._imap_client.user_property_log)
 
             # flush buffer
             user_std_out = StringIO()
