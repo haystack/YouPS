@@ -37,7 +37,7 @@ class ImapAccount(models.Model):
     sync_paused = models.BooleanField(default=False)
 
     nylas_access_token = models.CharField('nylas_access_token', max_length=200, blank=True, null=True)
-
+    nylas_delta_cursor = models.CharField('nylas_delta_cursor', max_length=200, blank=True, null=True)
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
 
 class LogSchema(models.Model):
@@ -119,6 +119,8 @@ class BaseMessage(models.Model):
     # the thread that the message is associated with
     _thread = models.ForeignKey(
         'ThreadSchema', related_name='baseMessages', blank=True, null=True)
+    # contains relevant events attached to this message 
+    events = models.ForeignKey('EventManager', related_name="message_events", blank=True, null=True)  # type: EventManager
 
     @property
     def references(self):
@@ -201,6 +203,8 @@ class ContactSchema(models.Model):
     organization = models.TextField(null=True, blank=True)
     geolocation = models.TextField(null=True, blank=True)
     availability = models.TextField(null=True, blank=True)
+    # contains relevant events attached to this message 
+    events = models.ForeignKey('EventManager', related_name="contact_events", null=True, blank=True)  # type: EventManager
 
     class Meta:
         db_table = "youps_contact"
@@ -228,10 +232,14 @@ class ThreadSchema(models.Model):
     imap_account = models.ForeignKey('ImapAccount')
     # gmail threads have a gm_thread_id which ties them all together
     gm_thread_id = models.CharField(max_length=191, blank=True)
+    # contains relevant events attached to this message 
+    events = models.ForeignKey('EventManager', related_name="thread_events", null=True, blank=True)  # type: EventManager
+    # nylas thread id
+    nylas_id = models.CharField('nylas_thread_id', max_length=200, unique=True)
 
     class Meta:
         db_table = "youps_thread"
-        unique_together = ('imap_account', 'gm_thread_id')
+        unique_together = ('imap_account', 'nylas_id')
 
 
 class CalendarSchema(models.Model):
@@ -253,6 +261,18 @@ class MailbotMode(models.Model):
     name = models.CharField('mode_name', max_length=100)
     imap_account = models.ForeignKey('ImapAccount')
 
+class EventManager(models.Model):
+    id = models.AutoField(primary_key=True)
+    email_rule = models.ForeignKey('EmailRule')
+
+    base_message = models.ForeignKey('BaseMessage', blank=True, null=True)
+    thread = models.ForeignKey('ThreadSchema', blank=True, null=True)
+    contact = models.ForeignKey('ContactSchema', blank=True, null=True)
+    # when it should be performed
+    date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "youps_eventmanager"
 
 class EmailRule(models.Model):
     id = models.AutoField(primary_key=True)
@@ -272,7 +292,7 @@ class EmailRule(models.Model):
     folders = models.ManyToManyField(
         FolderSchema, related_name='rules')  # type: t.List[FolderSchema]
 
-    # timestamp when it is executed by taskmanager
+    # timestamp when it is executed by EventManager
     executed_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
@@ -323,21 +343,6 @@ class Message_Thread(models.Model):
     class Meta:
         db_table = "youps_threads"
         unique_together = ("id", "imap_account")
-
-
-class TaskManager(models.Model):
-    id = models.AutoField(primary_key=True)
-    imap_account = models.ForeignKey(ImapAccount)
-    email_rule = models.ForeignKey('EmailRule')
-
-    base_message = models.ForeignKey('BaseMessage', blank=True, null=True)
-    # thread = models.ForeignKey('ThreadSchema', blank=True, null=True)
-    # contact = models.ForeignKey('ContactSchema', blank=True, null=True)
-    # when it should be performed
-    date = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        db_table = "youps_taskmanager"
 
 # TODO later be replaced with websocket or django channel
 class ButtonChannel(models.Model):

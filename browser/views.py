@@ -207,6 +207,10 @@ def login_imap_callback(request):
 
 	i = ImapAccount.objects.get(email=state)
 	i.nylas_access_token = access_token
+
+	delta = _check_delta(i)
+	i.nylas_delta_cursor = delta
+
 	i.save()
 
 	return HttpResponseRedirect('/editor')

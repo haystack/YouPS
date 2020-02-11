@@ -56,7 +56,17 @@
 				<div class="navbar-collapse collapse">
 						<ul class="nav navbar-nav navbar-right">
 								<li><a href="/editor/">Editor</a></li>
-								<li><a href="/button/">Shortcut</a></li>
+								{% if user.is_authenticated %}
+									<li class="dropdown dropdown-right">
+										<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span>Shortcut</span><span class="caret"></span></a>
+										<ul class="dropdown-menu" role="menu">
+											<li><a href="/button/">Widget</a></li>
+											<li><a href="/shortcut_editor/">Editor</a></li>
+										</ul>
+									</li>
+								{% else %}
+									<li><a href="/button/">Shortcut</a></li>
+								{% endif %}
 								<li><a href="/about/">About</a></li>
 								<li><a href="/docs/">Docs</a></li>
 								{% if user.is_authenticated %}

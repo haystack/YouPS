@@ -185,7 +185,7 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 		mailbox = MailBox(imapAccount, imap, is_simulate=False)
 		res = interpret_bypass_queue(mailbox, extra_info={"msg-id": msg_schema_id, "code": er.code, "shortcut": kargs, "rule_name": er.name})
 		logger.info(kargs) 
-		logger.info(er.code)
+		logger.debug(er.code)
 		# logger.info(res)
 		res['status'] = True
 	

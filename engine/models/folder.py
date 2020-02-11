@@ -15,7 +15,7 @@ from imapclient import \
 from imapclient.response_types import \
     Address  # noqa: F401 ignore unused we use it for typing
 
-from engine.models.event_data import (AbstractEventData, MessageArrivalData,
+from engine.models.event_data import (AbstractEventData, ThreadArrivalData, MessageArrivalData, 
                                       MessageMovedData, NewFlagsData,
                                       NewMessageDataScheduled,
                                       RemovedFlagsData)
@@ -24,6 +24,9 @@ from schema.youps import (  # noqa: F401 ignore unused we use it for typing
     BaseMessage, ContactSchema, ContactAlias, FolderSchema, ImapAccount,
     MessageSchema, ThreadSchema)
 from engine.models.helpers import CustomProperty
+
+from http_handler.settings import NYLAS_ID, NYLAS_SECRET
+from nylas import APIClient
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -479,6 +482,7 @@ class Folder(object):
                 assert internal_date is not None
                 date = metadata.get('date', '') or internal_date
                 from_ = self._find_or_create_contacts(metadata.get('from', []))
+                
                 base_message = BaseMessage(
                     imap_account=self._imap_account,
                     message_id=metadata['message-id'],
@@ -490,6 +494,7 @@ class Folder(object):
                     from_m=from_[0] if from_ else None,
                     _thread=None  # self._find_or_create_gmail_thread(message_data['X-GM-THRID']) if is_gmail else
                 )
+
                 base_message.save()
                 if new_message_ids is not None:
                     new_message_ids.add(metadata['message-id'])
@@ -507,9 +512,6 @@ class Folder(object):
                 if "bcc" in metadata:
                     base_message.bcc.add(
                         *self._find_or_create_contacts(metadata["bcc"]))
-
-            if self._imap_account.email == "karger@mit.edu":
-                logger.info("base message saving")
 
             new_message = MessageSchema(
                 base_message=base_message,
@@ -532,9 +534,36 @@ class Folder(object):
                 # to prevent dup saved email
                 continue
 
+            # during normal sync, not initialization
             if event_data_list is not None:
                 assert new_message_ids is not None
                 if metadata['message-id'] in new_message_ids:
+                    if self._imap_account.nylas_access_token:
+                        nylas = APIClient(
+                            NYLAS_ID,
+                            NYLAS_SECRET,
+                            self._imap_account.nylas_access_token
+                        )
+                        # TODO 
+                        # find thread in nylas
+                        m = Message(new_message, self._imap_client)
+                        if m._get_nylas_message():
+                            logger.info("Find Nylas msg for the new msg")
+                            nylas_thread = nylas.threads.get(m._get_nylas_message().thread_id)
+                            if nylas_thread:
+                                logger.info("Find Nylas thread for the new msg")
+                                logger.info(nylas_thread.id)
+                                thread_schema = ThreadSchema.objects.filter(nylas_id=nylas_thread.id)
+                                if thread_schema.exists(): 
+                                    logger.info("Find Nylas thread for the new msg")
+                                    base_message._thread = thread_schema[0]
+                                    base_message.save()
+                                    # add events to event_data_list
+                                    event_data_list.append(ThreadArrivalData(
+                                        m))
+                                    logger.info('folder {f}: uid {u}: thread arrival'.format(
+                                        f=self.name, u=uid))
+
                     event_data_list.append(MessageArrivalData(
                         Message(new_message, self._imap_client)))
                     logger.info('folder {f}: uid {u}: message_arrival'.format(

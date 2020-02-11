@@ -42,6 +42,15 @@ class MessageArrivalData(AbstractEventData):
             self.message._schema.folder.name)
         event.fire(self.message)
 
+class ThreadArrivalData(MessageArrivalData):
+    def __init__(self, message):
+        # type: (Message) -> ThreadArrivalData
+        super(ThreadArrivalData, self).__init__(message)
+
+    def fire_event(self, event):
+        # type : (Event) -> None
+        super(ThreadArrivalData, self).fire_event(event)
+
 class NewMessageDataScheduled(MessageArrivalData):
     def __init__(self, message):
         # type: (Message) -> NewMessageDataScheduled

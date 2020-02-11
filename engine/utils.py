@@ -304,6 +304,12 @@ def references_algorithm(start_msg):
     # TODO PART 5 and PART 6 RFC 5256
 
 def dump_execution_log(imapAccount, new_log, action_log):
+    '''
+        Args:
+            imapAccount
+            new_log: a dictinary where the key is timestamp of each log
+            action_log: a list that contains all the actions. This will be used by the undo feature
+    '''
     from django.core.serializers.json import DjangoJSONEncoder
     if new_log != {}:
         l = LogSchema(imap_account=imapAccount, content=json.dumps(new_log,cls=DjangoJSONEncoder), action=json.dumps(action_log,cls=DjangoJSONEncoder))

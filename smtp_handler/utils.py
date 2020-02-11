@@ -5,6 +5,7 @@ import hashlib
 import random
 import dkim
 import pytz
+import requests
 from salmon.server import Relay
 from config.settings import relay_config
 from smtp_handler.lamson_subclass import MurmurMailResponse
@@ -19,6 +20,7 @@ from markdown2 import markdown
 import pickle
 import chardet
 import logging
+import new
 
 '''
 Murmur Mail Utils and Constants
@@ -26,6 +28,8 @@ Murmur Mail Utils and Constants
 @author: Anant Bhardwaj
 @date: Oct 20, 2012
 '''
+
+logger = logging.getLogger('youps')  # type: logging.Logger
 
 HOST = BASE_URL
 NO_REPLY = DEFAULT_FROM_EMAIL
@@ -756,6 +760,43 @@ def codeobject_dumps(co):
             co.co_code, co.co_consts, co.co_names, co.co_varnames,
             co.co_filename, co.co_name, co.co_firstlineno, co.co_lnotab]
     return pickle.dumps(co_tup)
+
+def codeobject_loads(s):
+    """loads a code object pickled with co_dumps() return a code object ready for exec()"""
+    r = pickle.loads(s)
+    return new.code(r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11])
+
+def _check_delta(imap_account):
+    url = 'https://api.nylas.com/delta/latest_cursor'
+    user_access_token = imap_account.nylas_access_token
+    headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
+    r=requests.post(url, headers=headers)
+
+    if 'cursor' in r.json() and (r.json()['cursor'] != imap_account.nylas_delta_cursor):
+        return r.json()['cursor']
+
+    return None
+
+def _request_new_delta(imap_account):
+    url = 'https://api.nylas.com/delta?cursor=' + imap_account.nylas_delta_cursor
+    user_access_token = imap_account.nylas_access_token
+    headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
+    r=requests.get(url, headers=headers)
+    # logger.info(r.json())
+    if 'cursor_end' not in r.json():
+        return _check_delta(imap_account)
+    else:
+        # logger.info(imap_account.nylas_delta_cursor)
+        if r.json()['cursor_start'] != r.json()['cursor_end']:
+            for d in r.json()['deltas']:
+                if d["object"] == "event":
+                    continue 
+                logger.debug("%s %s %s" % (d["event"], d["object"], d["attributes"]) )
+                if d["object"] in ["message", "thread"]:
+                    return r.json()['cursor_end'], True
+                
+
+    return r.json()['cursor_end'], False
 
 def is_gmail(imap_account=None):
     # type: (ImapAccount) -> bool

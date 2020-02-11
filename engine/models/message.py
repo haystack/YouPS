@@ -23,8 +23,8 @@ from pytz import timezone as tz
 
 from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
-                          ImapAccount, BaseMessage, MessageSchema, TaskManager)
-from smtp_handler.utils import format_email_address, get_attachments
+                          ImapAccount, BaseMessage, MessageSchema, EventManager, ThreadSchema)
+from smtp_handler.utils import format_email_address, get_attachments, codeobject_dumps, codeobject_loads
 from engine.utils import IsNotGmailException, convertToUserTZ, prettyPrintTimezone
 from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
@@ -230,22 +230,31 @@ class Message(object):
 
     def _get_nylas_message(self):
         if self._nylas_message is None:
-            logger.exception("here")
+            if not self._imap_account.nylas_access_token:
+                raise Exception("You need to log in to add-on in order to use this function. Log in here: https://youps.csail.mit.edu/%s" % "settings")
+
             nylas = APIClient(
                 NYLAS_ID,
                 NYLAS_SECRET,
                 self._imap_account.nylas_access_token
             )
+
             
             from calendar import timegm
             import pytz
-            datetime_obj = self.date.replace(tzinfo=pytz.utc).astimezone(self.date.tzinfo)
+            datetime_obj = self.date.replace(tzinfo=pytz.utc)
+            if self.date.tzinfo:
+                logger.info("tz exist")
+                datetime_obj = datetime_obj.astimezone(self.date.tzinfo)
+            # d=convertToUserTZ(self.date)
             timestamp = timegm(datetime_obj.timetuple())
-            FIVE_MIN = 3 * 60
+            FIVE_MIN = 3 * 60 *60 *10 # -> 10hrs
 
-            for m in nylas.messages.where(limit=1, received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, from_=self.from_.email, subject=self.subject.replace("\r\n", ""), view='expanded'):
-                self._nylas_message = m
-                return m
+            # search a broard time range in order to locate the email
+            for m in nylas.messages.where(received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, from_=self.from_.email, subject=self.subject.replace("\r\n", ""), view='expanded'):
+                if self._message_id == m.headers['Message-Id'].replace("<", "").replace(">", ""):
+                    self._nylas_message = m
+                    return m
 
         return self._nylas_message
 
@@ -272,7 +281,8 @@ class Message(object):
 
     @CustomProperty
     def snippet(self):
-        return self._get_nylas_message.snippet
+        return self._get_nylas_message().snippet
+
 
     @CustomProperty
     def thread(self):
@@ -548,15 +558,20 @@ class Message(object):
         # type: () -> None
         """Mark a message as read.
         """
-        self._add_flags('\\Seen')
+        if not self._is_simulate:
+            self._add_flags('\\Seen')
+        else:
+            logger.info("simulate: mark as read")
 
     @ActionLogging
     def mark_unread(self):
         # type: () -> None
         """Mark a message as unread
         """
-        logger.exception("HEELo")
-        self._remove_flags('\\Seen')
+        if not self._is_simulate:
+            self._remove_flags('\\Seen')
+        else:
+            logger.info("simulate: mark as read")
 
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -665,18 +680,64 @@ class Message(object):
         """add an event handler that is triggered everytime when there is a new message arrived at its thread
 
         Args:
-            handler (function): A function to execute each time when there are messaged arrvied to this thread.
+            handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument
         """
-        # add 
+        if not handler or type(handler).__name__ != "function":
+            raise Exception('on_response(): requires callback function but it is %s ' % type(handler).__name__)
 
-        pass
+        if handler.func_code.co_argcount != 1:
+            raise Exception('on_response(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
+
+        a = codeobject_dumps(handler.func_code)
+        if self._is_simulate:
+            a=codeobject_loads(a)
+            # s=exec(a)
+            # logger.info(s)
+            code_object=a
+
+            from browser.sandbox_helpers import get_default_user_environment
+            from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
+            g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
+            print("on_response(): Simulating callback function..:")
+            g(self)
+        else: 
+            nylas_message = self._get_nylas_message()
+            # create threadschema
+            thread_schema = ThreadSchema.objects.filter(nylas_id=nylas_message.thread_id)
+            if not thread_schema.exists():
+                thread_schema = ThreadSchema(imap_account=self._imap_account, nylas_id=nylas_message.thread_id)
+                thread_schema.save()
+            else:
+                thread_schema = thread_schema[0]
+
+                # TODO if there is same handlr registered if it is, then skip 
+            
+            self._schema.base_message._thread = thread_schema
+            self._schema.base_message.save()
+            logger.exception("Thread id: %s" % self._schema.base_message._thread.nylas_id)
+
+            # add EventManager attached to it
+            er = EmailRule(imap_account=self._imap_account, name='on response', type='on_response', code=json.dumps(a))
+            er.save()
+
+            e = EventManager(thread=thread_schema, email_rule=er)
+            e.save()
+
+        a = 'newMessage="TODO REPLACE THIS"\
+            a.code is return value of codeobject_dumps() \
+            code_object=co_loads(a.code) \
+            g = type(co_loads)(code_object ,locals()) \
+            g(newMessage)'
+
+        print("on_response(): The handler will be executed when a new message arrives on this thread")
+
     
     def on_time(self, later_at, handler):
         """The number of hours to wait before executing the code. If omitted, the value 0 is used
 
         Args:
             later_at (int): when to move this message back to inbox (in minutes)
-            handler (function): A function that will be executed
+            handler (function): A function that will be executed. The function provides the newly arrived message as an argument
         """
         pass
 
@@ -716,8 +777,7 @@ class Message(object):
 
             
             
-            t = TaskManager(email_rule=er, date=later_at,
-                            imap_account=self._schema.imap_account)
+            t = EventManager(email_rule=er, date=later_at)
             t.save()
             logger.critical("here %s" % hide_in)
 

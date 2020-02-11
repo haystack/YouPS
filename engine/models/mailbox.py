@@ -5,11 +5,10 @@ import logging
 import datetime
 import smtplib
 import traceback
-import requests
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
-from smtp_handler.utils import format_email_address, send_email
+from smtp_handler.utils import format_email_address, send_email, _request_new_delta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -141,16 +140,6 @@ class MailBox(object):
             for c in contacts:
                 nylas.contacts.delete(c.id)
 
-    def _check_delta(self):
-        url = 'https://api.nylas.com/delta/latest_cursor'
-        user_access_token = self._imap_account.nylas_access_token
-        headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
-        r=requests.post(url, headers=headers)
-
-        if r.json()['cursor'] != "XXX":#self._imap_account.delta_cursor:
-            return True
-
-        return None
         
     def _sync(self):
         # type: () -> bool 
@@ -159,16 +148,18 @@ class MailBox(object):
 
         if self._imap_account.nylas_access_token:
             # do sync whenever there is delta detected by Nylas
-            mailbox_cursor = self._check_delta()
+            cursor, is_new_message = _request_new_delta(self._imap_account)
 
-            if not mailbox_cursor:
+            if not cursor:
                 logger.info("No delta detected at %s -- move on to next inbox" % self._imap_account.email)
-
+                return 
             else:
                 # TODO update the cursor
-                #self._imap_account.delta_cursor = res['cursor_end']
-                #self._imap_account.save()
-                pass
+                self._imap_account.nylas_delta_cursor = cursor
+                self._imap_account.save()
+
+                if not is_new_message:
+                    return
 
         # should do a couple things based on
         # https://stackoverflow.com/questions/9956324/imap-synchronization
