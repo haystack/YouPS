@@ -4,7 +4,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from schema.youps import ContactSchema, MessageSchema  # noqa: F401 ignore unused we use it for typing
 from django.db.models import Q
 import logging
-from engine.models.helpers import CustomProperty
+from engine.models.helpers import CustomProperty, ActionLogging
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -159,6 +159,111 @@ class Contact(object):
         from engine.models.message import Message
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.cc_messages.all()]
 
+    @ActionLogging
+    def _on_response(self, email_rule_id):
+        """helper function for on_response() for logging and undo
+        """
+        pass
+
+    def on_response(self, handler):
+        """add an event handler that is triggered everytime when there is a new message arrived from this contact
+
+        Args:
+            handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the contact object as an argument
+        """
+        if not handler or type(handler).__name__ != "function":
+            raise Exception('on_response(): requires callback function but it is %s ' % type(handler).__name__)
+
+        if handler.func_code.co_argcount != 1:
+            raise Exception('on_response(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
+
+        a = codeobject_dumps(handler.func_code)
+        if self._is_simulate:
+            a=codeobject_loads(a)
+            # s=exec(a)
+            # logger.info(s)
+            code_object=a
+
+            from browser.sandbox_helpers import get_default_user_environment
+            from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
+            g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
+            print("on_response(): Simulating callback function..:")
+            g(self)
+        else: 
+            nylas_message = self._get_nylas_message()
+            # create threadschema
+            thread_schema = ThreadSchema.objects.filter(nylas_id=nylas_message.thread_id)
+            if not thread_schema.exists():
+                thread_schema = ThreadSchema(imap_account=self._imap_account, nylas_id=nylas_message.thread_id)
+                thread_schema.save()
+            else:
+                thread_schema = thread_schema[0]
+
+                # TODO if there is same handlr registered if it is, then skip 
+                eventManagers = EventManager.objects.filter(thread=thread_schema, email_rule__type="on_response")
+                if eventManagers.exists():
+                    print("on_response(): The handler already registered for this thread; skip")
+                    return 
+            
+            self._schema.base_message._thread = thread_schema
+            self._schema.base_message.save()
+            logger.exception("Thread id: %s" % self._schema.base_message._thread.nylas_id)
+
+            # add EventManager attached to it
+            er = EmailRule(imap_account=self._imap_account, name='on response', type='on_response', code=json.dumps(a))
+            er.save()
+
+            self._on_response(er.id)
+
+            e = EventManager(thread=thread_schema, email_rule=er)
+            e.save()
+
+        print("on_response(): The handler will be executed when a new message arrives on this thread")
+
+    @ActionLogging
+    def _on_time(self, email_rule_id):
+        """helper function for on_time() for logging and undo
+        """
+        pass
+
+    def on_time(self, handler, later_at=60):
+        """The number of minutes to wait before executing the handler. 
+
+        Args:
+            handler (function): A function that will be executed. The function provides the contact object as an argument
+            later_at (int): when to move this message back to inbox (in minutes)
+        """
+        if not handler or type(handler).__name__ != "function":
+            raise Exception('on_time(): requires callback function but it is %s ' % type(handler).__name__)
+
+        if handler.func_code.co_argcount != 1:
+            raise Exception('on_time(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
+
+        later_at = self._get_datetime(later_at)
+
+        a = codeobject_dumps(handler.func_code)
+        if self._is_simulate:
+            a=codeobject_loads(a)
+            code_object=a
+
+            from browser.sandbox_helpers import get_default_user_environment
+            from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
+            g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
+            print("on_time(): Simulating callback function..:")
+            g(self)
+        else:
+            # add EventManager attached to it
+            er = EmailRule(imap_account=self._imap_account, name='on time', type='on_time', code=json.dumps(a))
+            er.save()
+
+            self._on_time(er.id)
+
+            e = EventManager(base_message=self._schema.base_message, date=later_at, email_rule=er)
+            e.save()
+
+        print("on_time(): The handler will be executed at %s " % prettyPrintTimezone(later_at))
+
+
     def recent_messages(self, N=3):
         # type: (t.integer) -> t.List[Message]
         """Get the N Messages which are exchanged with this contact
@@ -173,3 +278,4 @@ class Contact(object):
         # TODO fetch from imap 
         # self._imap_client.search('OR FROM "%s" (OR TO "%s" (OR CC "%s" BCC "%s"))' % (self.email, self.email, self.email, self.email))
         return [Message(message_schema, self._imap_client) for message_schema in message_schemas]
+

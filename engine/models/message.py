@@ -743,10 +743,10 @@ class Message(object):
         pass
 
     def on_time(self, handler, later_at=60):
-        """The number of hours to wait before executing the code. If omitted, the value 0 is used
+        """The number of minutes to wait before executing the code. If omitted, the value 0 is used
 
         Args:
-            handler (function): A function that will be executed. The function provides the newly arrived message as an argument
+            handler (function): A function that will be executed. The function provides the newly arrived message as an argument \n
             later_at (int): when to move this message back to inbox (in minutes)
         """
         if not handler or type(handler).__name__ != "function":

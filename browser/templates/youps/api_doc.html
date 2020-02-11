@@ -18,413 +18,539 @@
 
   {% block content %}
   <div class="container">
-  <div class="document">
-    <div class="documentwrapper">
-      <div class="bodywrapper">
-        
-
-        <div class="body" role="main">
-          
-<div class="section" id="welcome-to-youps">
-<h1>YouPS documentation<a class="headerlink" href="#welcome-to-youps" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-</div>
-<div class="section" id="message-object">
-<h2>Message object<a class="headerlink" href="#message-object" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-</div>
-<span class="target" id="module-Message"></span><dl class="function">
-<dt id="Message.add_flags">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">add_flags</code><span class="sig-paren">(</span><em class="sig-param">flags</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.add_flags" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add each of the flags in a list of flags to the message</p>
-<p>This method can also optionally take a single string as a flag.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.bcc">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">bcc</code><a class="headerlink" href="#Message.bcc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Contacts the message is bcced to</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the bcc field of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.cc">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">cc</code><a class="headerlink" href="#Message.cc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Contacts the message is cced to</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the cc field of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.contains">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">contains</code><span class="sig-paren">(</span><em class="sig-param">string</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.contains" title="Permalink to this definition">¶</a></dt>
-<dd><p>check if a string is contained in the content of a message</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>string (str): string to check for</p>
-</dd>
-<dt>Returns:</dt><dd><p>bool: true if the passed in string is in the message content</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.content">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">content</code><a class="headerlink" href="#Message.content" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the content of the message</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>dict {‘text’: t.AnyStr, ‘html’: t.AnyStr}: The content of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.copy">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param">dst_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.copy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Copy the message to another folder.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.date">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">date</code><a class="headerlink" href="#Message.date" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the date and time that the message was sent</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>datetime: The date and time the message was sent</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.deadline">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">deadline</code><a class="headerlink" href="#Message.deadline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the user-defined deadline of the message</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>datetime: The deadline</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.delete">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.delete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mark a message as deleted, the imap server will move it to the deleted messages.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.flags">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">flags</code><a class="headerlink" href="#Message.flags" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the flags on the message</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>List(str): List of flags on the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.folder">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">folder</code><a class="headerlink" href="#Message.folder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Folder the message is contained in</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>Folder: the folder that the message is contained in</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.from_">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">from_</code><a class="headerlink" href="#Message.from_" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Contact the message is addressed from</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>Contact: The contact in the from field of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.has_flag">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">has_flag</code><span class="sig-paren">(</span><em class="sig-param">flag</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.has_flag" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if the message has a given flag</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>bool: True if the flag is on the message else false</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.in_reply_to">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">in_reply_to</code><a class="headerlink" href="#Message.in_reply_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the message ids in the in_reply_to field</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>List(str): List of in_reply_to message ids on the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.is_deleted">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_deleted</code><a class="headerlink" href="#Message.is_deleted" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get if the message has been deleted</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>bool: True if the message has been deleted</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.is_read">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_read</code><a class="headerlink" href="#Message.is_read" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get if the message has been read</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>bool: True if the message has been read</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.is_recent">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_recent</code><a class="headerlink" href="#Message.is_recent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get if the message is recent</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>bool: True if the message is recent</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.is_replied">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_replied</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.is_replied" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get if the message is replied</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>bool: True if the message is replied</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.is_unread">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_unread</code><a class="headerlink" href="#Message.is_unread" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get if the message is unread</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>bool: True if the message is unread</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.mark_read">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">mark_read</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.mark_read" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mark a message as read.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.mark_unread">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">mark_unread</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.mark_unread" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mark a message as unread</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.move">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">move</code><span class="sig-paren">(</span><em class="sig-param">dst_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.move" title="Permalink to this definition">¶</a></dt>
-<dd><p>Move the message to another folder.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.recent_messages">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.recent_messages" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the N Messages of this thread</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Message]: The messages in this thread before this message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.recipients">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">recipients</code><a class="headerlink" href="#Message.recipients" title="Permalink to this definition">¶</a></dt>
-<dd><p>Shortcut method to get a list of all the recipients of an email.</p>
-<p>Returns the people in the to field, cc field, and bcc field 
-Useful for doing things like getting the total number of people a message is sent to</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Contact]: All the visible recipients of an email</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.references">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">references</code><a class="headerlink" href="#Message.references" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the message ids in the references field</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>List(str): List of references message ids on the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.remove_flags">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">remove_flags</code><span class="sig-paren">(</span><em class="sig-param">flags</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.remove_flags" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove each of the flags in a list of flags from the message</p>
-<p>This method can also optionally take a single string as a flag.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.reply">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">reply</code><span class="sig-paren">(</span><em class="sig-param">to=[]</em>, <em class="sig-param">cc=[]</em>, <em class="sig-param">bcc=[]</em>, <em class="sig-param">content=''</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.reply" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reply to the sender of this message</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.reply_to">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">reply_to</code><a class="headerlink" href="#Message.reply_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Contacts the message is replied to</p>
-<p>These are the addresses the message is meant to be sent to if the client
-hits reply.</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the reply_to field of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="Message.see_later">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">see_later</code><span class="sig-paren">(</span><em class="sig-param">later_at=60</em>, <em class="sig-param">hide_in='YouPS see later'</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.see_later" title="Permalink to this definition">¶</a></dt>
-<dd><p>Hide a message to a folder and move it back to a original folder</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>later_at (int): when to move this message back to inbox (in minutes)
-hide_in (string): a name of folder to hide this message temporarily</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.sender">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">sender</code><a class="headerlink" href="#Message.sender" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Contact the message is addressed from</p>
-<p>See also <a href="#id1"><span class="problematic" id="id2">Message.from_</span></a></p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>Contact: The contact in the from field of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.subject">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">subject</code><a class="headerlink" href="#Message.subject" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Subject of the message</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>str: The subject of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.task">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">task</code><a class="headerlink" href="#Message.task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the user-defined task of the message</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>str: The tasks</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="Message.to">
-<code class="sig-prename descclassname">Message.</code><code class="sig-name descname">to</code><a class="headerlink" href="#Message.to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Contacts the message is addressed to</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the to field of the message</p>
-</dd>
-</dl>
-</dd></dl>
-
-<div class="section" id="events-handler">
-<h3>Events handler<a class="headerlink" href="#events-handler" title="Permalink to this headline">¶</a></h3>
-<span class="target" id="module-Message"></span></div>
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
-</div>
 
 
+      <div class="document">
+          <div class="documentwrapper">
+            <div class="bodywrapper">
+              
+    
+              <div class="body" role="main">
+                
+      <div class="section" id="youps-documentation">
+    <h1>YouPS documentation<a class="headerlink" href="#youps-documentation" title="Permalink to this headline">¶</a></h1>
+    <div class="toctree-wrapper compound">
+    </div>
+    <div class="section" id="message-object">
+    <h2>Message object<a class="headerlink" href="#message-object" title="Permalink to this headline">¶</a></h2>
+    <div class="toctree-wrapper compound">
+    </div>
+    <span class="target" id="module-Message"></span><dl class="function">
+    <dt id="Message.aggregate_response">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">aggregate_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.aggregate_response" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Aggregate responses of messages in this thread and return a list of pairs of sender and their response</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[(Contact, t.AnyStr)]: pairs of sender and their response</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.bcc">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">bcc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.bcc" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Contacts the message is bcced to</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the bcc field of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.cc">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">cc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.cc" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Contacts the message is cced to</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the cc field of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.contains">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">contains</code><span class="sig-paren">(</span><em class="sig-param">string</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.contains" title="Permalink to this definition">¶</a></dt>
+    <dd><p>check if a string is contained in the content of a message</p>
+    <dl class="simple">
+    <dt>Args:</dt><dd><p>string (str): string to check for</p>
+    </dd>
+    <dt>Returns:</dt><dd><p>bool: true if the passed in string is in the message content</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.content">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">content</code><span class="sig-paren">(</span><em class="sig-param">return_only_text=True</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.content" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the content of the message</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>dict {‘text’: t.AnyStr, ‘html’: t.AnyStr}: The content of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.copy">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param">dst_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.copy" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Copy the message to another folder.</p>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.date">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">date</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.date" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the date and time that the message was sent</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>datetime: The date and time the message was sent</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.delete">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.delete" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Mark a message as deleted, the imap server will move it to the deleted messages.</p>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.flags">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">flags</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.flags" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the flags on the message</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>List(str): List of flags on the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.folder">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">folder</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.folder" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Folder the message is contained in</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>Folder: the folder that the message is contained in</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.from_">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">from_</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.from_" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Contact the message is addressed from</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>Contact: The contact in the from field of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.in_reply_to">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">in_reply_to</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.in_reply_to" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the message ids in the in_reply_to field</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>List(str): List of in_reply_to message ids on the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.is_deleted">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_deleted</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.is_deleted" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get if the message has been deleted</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>bool: True if the message has been deleted</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.is_read">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_read</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.is_read" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get if the message has been read</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>bool: True if the message has been read</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.is_recent">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_recent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.is_recent" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get if the message is recent</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>bool: True if the message is recent</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.is_replied">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_replied</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.is_replied" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get if the message is replied</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>bool: True if the message is replied</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.is_unread">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">is_unread</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.is_unread" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get if the message is unread</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>bool: True if the message is unread</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.mark_read">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">mark_read</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.mark_read" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Mark a message as read.</p>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.mark_unread">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">mark_unread</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.mark_unread" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Mark a message as unread</p>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.move">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">move</code><span class="sig-paren">(</span><em class="sig-param">dst_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.move" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Move the message to another folder.</p>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.recent_messages">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.recent_messages" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the N Messages of this thread</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages in this thread before this message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.recipients">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">recipients</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.recipients" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Shortcut method to get a list of all the recipients of an email.</p>
+    <p>Returns the people in the to field, cc field, and bcc field 
+    Useful for doing things like getting the total number of people a message is sent to</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Contact]: All the visible recipients of an email</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.references">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">references</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.references" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the message ids in the references field</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>List(str): List of references message ids on the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.reply">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">reply</code><span class="sig-paren">(</span><em class="sig-param">to=[]</em>, <em class="sig-param">cc=[]</em>, <em class="sig-param">bcc=[]</em>, <em class="sig-param">content=''</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.reply" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Reply to the sender of this message</p>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.reply_to">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">reply_to</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.reply_to" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Contacts the message is replied to</p>
+    <p>These are the addresses the message is meant to be sent to if the client
+    hits reply.</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the reply_to field of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.see_later">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">see_later</code><span class="sig-paren">(</span><em class="sig-param">later_at=60</em>, <em class="sig-param">hide_in='YouPS see later'</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.see_later" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Hide a message to a folder and move it back to a original folder</p>
+    <p>my_message.on_time(now+later_at, f(message){ message.move(‘original_location’) })</p>
+    <dl class="simple">
+    <dt>Args:</dt><dd><p>later_at (int): when to move this message back to inbox (in minutes)
+    hide_in (string): a name of folder to hide this message temporarily</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.sender">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">sender</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.sender" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Contact the message is addressed from</p>
+    <p>See also <a href="#id2"><span class="problematic" id="id3">Message.from_</span></a></p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>Contact: The contact in the from field of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.subject">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">subject</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.subject" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Subject of the message</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>str: The subject of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.to">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">to</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.to" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Contacts the message is addressed to</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the to field of the message</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <div class="section" id="events-handler">
+    <h3>Events handler<a class="headerlink" href="#events-handler" title="Permalink to this headline">¶</a></h3>
+    <span class="target" id="module-Message"></span><dl class="function">
+    <dt id="Message.on_response">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">on_response</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.on_response" title="Permalink to this definition">¶</a></dt>
+    <dd><p>add an event handler that is triggered everytime when there is a new message arrived at its thread</p>
+    <dl class="simple">
+    <dt>Args:</dt><dd><p>handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Message.on_time">
+    <code class="sig-prename descclassname">Message.</code><code class="sig-name descname">on_time</code><span class="sig-paren">(</span><em class="sig-param">handler</em>, <em class="sig-param">later_at=60</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.on_time" title="Permalink to this definition">¶</a></dt>
+    <dd><p>The number of minutes to wait before executing the code.</p>
+    <dl class="simple">
+    <dt>Args:</dt><dd><p>handler (function): A function that will be executed. The function provides the contact object as an argument <br>
+    later_at (int): when to move this message back to inbox (in minutes)</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    </div>
+    </div>
+    <div class="section" id="contact-object">
+    <h2>Contact object<a class="headerlink" href="#contact-object" title="Permalink to this headline">¶</a></h2>
+    <div class="toctree-wrapper compound">
+    </div>
+    <span class="target" id="module-Contact"></span><dl class="function">
+    <dt id="Contact.aliases">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">aliases</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.aliases" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get all the names associated with this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>list: The names associated with this contact</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.email">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">email</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.email" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the email address associated with this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>str: The email address associated with this contact</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.geolocation">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">geolocation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.geolocation" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the location of this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>str: The location associated with this contact</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.messages_bcc">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">messages_bcc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.messages_bcc" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Messages which are bcc this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the bcc field</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.messages_cc">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">messages_cc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.messages_cc" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Messages which are cc this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the cc field</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.messages_from">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">messages_from</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.messages_from" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Messages which are from this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.messages_from_date">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">messages_from_date</code><span class="sig-paren">(</span><em class="sig-param">from_date=None</em>, <em class="sig-param">to_date=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.messages_from_date" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Messages which are from this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.messages_to">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">messages_to</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.messages_to" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the Messages which are to this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the to field</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.name">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.name" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the name associated with this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>str: The name associated with this contact</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.organization">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">organization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Contact.organization" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the organization of this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>str: The organization associated with this contact</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.recent_messages">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.recent_messages" title="Permalink to this definition">¶</a></dt>
+    <dd><p>Get the N Messages which are exchanged with this contact</p>
+    <dl class="simple">
+    <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <div class="section" id="id1">
+    <h3>Events handler<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+    <span class="target" id="module-Contact"></span><dl class="function">
+    <dt id="Contact.on_response">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">on_response</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.on_response" title="Permalink to this definition">¶</a></dt>
+    <dd><p>add an event handler that is triggered everytime when there is a new message arrived from this contact</p>
+    <dl class="simple">
+    <dt>Args:</dt><dd><p>handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides this contact as an argument</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    <dl class="function">
+    <dt id="Contact.on_time">
+    <code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">on_time</code><span class="sig-paren">(</span><em class="sig-param">handler</em>, <em class="sig-param">later_at=60</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.on_time" title="Permalink to this definition">¶</a></dt>
+    <dd><p>The number of minutes to wait before executing the code.</p>
+    <dl>
+    <dt>Args:</dt><dd><p>handler (function): A function that will be executed. The function provides this contact as an argument</p>
+    <p>later_at (int): when to move this message back to inbox (in minutes)</p>
+    </dd>
+    </dl>
+    </dd></dl>
+    
+    </div>
+    </div>
+    </div>
+    <div class="section" id="indices-and-tables">
+    <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+    <ul class="simple">
+    <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+    <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+    
+    </ul>
+    </div>
+    
+    
+              </div>
+              
+            </div>
+          </div>
+          <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+            <div class="sphinxsidebarwrapper">
+    <h1 class="logo"><a href="index.html">YouPS</a></h1>
+    
+    
+    
+    
+    
+    
+    
+    
+    <h3>Navigation</h3>
+    <p class="caption"><span class="caption-text">Contents:</span></p>
+    <ul class="current">
+    <li class="toctree-l1 current"><a class="current reference internal" href="#">YouPS documentation</a><ul>
+    <li class="toctree-l2"><a class="reference internal" href="#message-object">Message object</a><ul>
+    <li class="toctree-l3"><a class="reference internal" href="#events-handler">Events handler</a></li>
+    </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contact-object">Contact object</a><ul>
+    <li class="toctree-l3"><a class="reference internal" href="#id1">Events handler</a></li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li class="toctree-l1"><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+    </ul>
+    
+    <div class="relations">
+    <h3>Related Topics</h3>
+    <ul>
+      <li><a href="index.html">Documentation overview</a><ul>
+          <li>Previous: <a href="index.html" title="previous chapter">Welcome to YouPS!</a></li>
+      </ul></li>
+    </ul>
+    </div>
+    <script type="text/javascript">$('#searchbox').show(0);</script>
+    
+    
+    
+    
+    
+    
+    
+    
+            </div>
+          </div>
+          <div class="clearer"></div>
         </div>
+        <div class="footer">
+          &copy;2020, Soya Park.
+          
+          |
+          Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+          &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+          
+          |
+          <a href="_sources/index2.rst.txt"
+              rel="nofollow">Page source</a>
+        </div>
+    
         
-      </div>
-    </div>
-    <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-      <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">YouPS</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Welcome to YouPS!</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#message-object">Message object</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#events-handler">Events handler</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-<li><a href="index.html">Documentation overview</a><ul>
-    <li>Previous: <a href="index.html" title="previous chapter">Welcome to YouPS!</a></li>
-</ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-<h3 id="searchlabel">Quick search</h3>
-  <div class="searchformwrapper">
-  <form class="search" action="search.html" method="get">
-    <input type="text" name="q" aria-labelledby="searchlabel" />
-    <input type="submit" value="Go" />
-  </form>
-  </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-      </div>
-    </div>
-    <div class="clearer"></div>
-  </div>
-  <div class="footer">
-    &copy;2020, Soya Park.
-    
-    |
-    Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
-    &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-    
-    |
-    <a href="_sources/index2.rst.txt"
-        rel="nofollow">Page source</a>
-  </div>
 
 </div>
 
