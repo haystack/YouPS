@@ -224,17 +224,20 @@ class MailBox(object):
         time_start = email_rule.executed_at - datetime.timedelta(seconds=time_span)
         time_end = now - datetime.timedelta(seconds=time_span)
 
-        message_schemas = BaseMessage.objects.filter(deadline__range=[time_start, time_end])
+        message_schemas = BaseMessage.objects.filter(imap_account=self._imap_account, deadline__range=[time_start, time_end])
         from engine.models.message import Message
 
         # Check if there are messages arrived+time_span between (email_rule.executed_at, now), then add them to the queue
         for bm_schema in message_schemas:
+            
             logger.info("add deadline queue %s %s %s" %
                         (time_start, bm_schema.deadline, time_end))
+            logger.info(bm_schema.subject)
             
             # TODO Maybe we should find a better way to pick a message schema
             for message_schema in bm_schema.messages.all():
                 msg = Message(message_schema, self._imap_client)
+                
                 if "\\Deleted" in msg.flags:
                     continue
                 self.event_data_list.append( NewMessageDataDue(msg) )
