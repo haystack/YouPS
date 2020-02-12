@@ -272,7 +272,7 @@ class Folder(object):
             # for each message compare the flags
             for uid in res:
                 for key, attribute in ((b'FLAGS', 'flags'), (b'X-GM-LABELS', 'gm_labels')):
-                    if key in res[uid]:
+                    if (key in res[uid]) and (uid in messages):
                         # TODO this line broke when the message is not saved in db due to errors e.g., encoding issue
                         cached_flags = set(getattr(messages[uid], attribute, []))
                         server_flags = set(parse_flags(res[uid][key]))
