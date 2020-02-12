@@ -405,8 +405,9 @@ def fetch_watch_message(request):
 		res = engine.main.fetch_watch_message(user, request.user.email, watched_message)
 
 		res['message_rows'] = []
-		for context in res['contexts']:
-			res['message_rows'].append( _load_component("email_expandable_row", context) )
+		if 'contexts' in res:
+			for context in res['contexts']:
+				res['message_rows'].append( _load_component("email_expandable_row", context) )
 			
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except EmailRule.DoesNotExist:

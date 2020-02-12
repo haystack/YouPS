@@ -267,6 +267,8 @@ class Folder(object):
             logger.debug("modseq %d " % self._schema.highest_mod_seq)
             res = self._imap_client.fetch("1:*", query_fields, ['CHANGEDSINCE {}'.format(self._schema.highest_mod_seq)])
             messages = {m.uid: m for m in MessageSchema.objects.filter(folder=self._schema, uid__in=res.keys()).all()}
+            if self._imap_account.email== "soya@csail.mit.edu":
+                logger.exception(messages)
             # for each message compare the flags
             for uid in res:
                 for key, attribute in ((b'FLAGS', 'flags'), (b'X-GM-LABELS', 'gm_labels')):
