@@ -145,7 +145,7 @@ class Folder(object):
         # return 1
 
         mail_ids = self._imap_client.search(
-            'SINCE 1-Jan-{year}'.format(year=datetime.now().year))
+            'SINCE 1-Jul-{year}'.format(year=datetime.now().year-1))
             
         if mail_ids:
             return min(mail_ids)

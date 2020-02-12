@@ -392,9 +392,11 @@ class MailBox(object):
 
     def create_folder(self, folder_name):
         if not self.is_simulate: 
+            if "csail" in self._imap_account.host:
+                folder_name = "INBOX." + folder_name
             self._imap_client.create_folder( folder_name )
 
-        logger.debug("create_folder(): A new folder %s has been created" % folder_name)
+        print("create_folder(): A new folder %s has been created" % folder_name)
 
     def get_email_mode(self):
         if self._imap_account.current_mode:

@@ -778,6 +778,8 @@ def _check_delta(imap_account):
     return None
 
 def _request_new_delta(imap_account):
+    if not imap_account.nylas_delta_cursor:
+        imap_account.nylas_delta_cursor = ""
     url = 'https://api.nylas.com/delta?cursor=' + imap_account.nylas_delta_cursor
     user_access_token = imap_account.nylas_access_token
     headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
