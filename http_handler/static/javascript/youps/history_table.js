@@ -55,17 +55,21 @@ function append_log( msg_log, is_error ) {
                 // alert(Message["trigger"]);
     
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
-                var property_log_json= JSON.parse(Message["property_log"]);
                 var property_log = "";
-                $.each(property_log_json, function(k, v) {
-                    if(v["type"] == "send")
-                        property_log += "- {0} {1} (can not be canceled)\n".format( v["function_name"], v["args"])
-                    else if (v["type"] == "set")
-                        property_log += "- {0} {1} to {2} \n".format( v["type"], v["function_name"], v["args"].length > 1 ? v["args"][1] : "")
-                    else if (v["type"] == "schedule") 
-                        property_log += "- {0} run the callback function\n".format(  v["function_name"].replace("_", " ") )
-                    else property_log += "- {0} {1}\n".format(  v["function_name"], v["args"].length >= 1 ? v["args"][0] : "")
-                });
+
+                if ("property_log" in Message) {
+                    var property_log_json= JSON.parse(Message["property_log"]);
+                    $.each(property_log_json, function(k, v) {
+                        if(v["type"] == "send")
+                            property_log += "- {0} {1} (can not be canceled)\n".format( v["function_name"], v["args"])
+                        else if (v["type"] == "set")
+                            property_log += "- {0} {1} to {2} \n".format( v["type"], v["function_name"], v["args"].length > 1 ? v["args"][1] : "")
+                        else if (v["type"] == "schedule") 
+                            property_log += "- {0} run the callback function\n".format(  v["function_name"].replace("_", " ") )
+                        else property_log += "- {0} {1}\n".format(  v["function_name"], v["args"].length >= 1 ? v["args"][0] : "")
+                    });
+                    delete Message["property_log"];
+                }
 
                 console.log(property_log)
                 console.log(Message['subject'])
@@ -86,7 +90,7 @@ function append_log( msg_log, is_error ) {
                 delete Message["timestamp"];
                 delete Message["type"];
                 delete Message["logschema_id"];
-                delete Message["property_log"];
+                
     
                 $('#jsonpanel-from-' + json_panel_id).jsonpanel({
                     data: {

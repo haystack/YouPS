@@ -236,6 +236,9 @@ def interpret(mailbox, mode):
                 elif event_class_name == "MessageMovedData":
                     continue
 
+                if not handler:
+                    continue
+
                 for rule in email_rules:
                     code = rule.code
                     if event_class_name in ["ThreadArrivalData", "ContactArrivalData"]:
