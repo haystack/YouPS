@@ -786,7 +786,7 @@ def _request_new_delta(imap_account):
     r=requests.get(url, headers=headers)
     # logger.info(r.json())
     if 'cursor_end' not in r.json():
-        return _check_delta(imap_account)
+        return _check_delta(imap_account), False
     else:
         # logger.info(imap_account.nylas_delta_cursor)
         if r.json()['cursor_start'] != r.json()['cursor_end']:
