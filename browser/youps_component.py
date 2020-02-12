@@ -33,7 +33,10 @@ def get_base_code(rule_type):
     # shortcut is a custom add-on feature. Create shortcuts and use them at %s://%s/button 
     # my_message is a Message instance 
     # kargs is a dictionary that contains arguments you specify at the left panel e.g., kargs['arg_name']
-    my_message.remind_me(kargs['when'])""" % (PROTOCOL, BASE_URL)
+    def highlight(msg):
+        if not msg.is_replied:
+            msg.mark_unread()
+    my_message.on_time(highlight, 300)""" % (PROTOCOL, BASE_URL)
     }
 
     return d[rule_type]
