@@ -16,6 +16,7 @@ from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typi
 from engine.models.calendar import MyCalendar
 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
 from engine.models.message import Message
+from engine.models.contact import Contact
 from engine.utils import dump_execution_log, prettyPrintTimezone, print_execution_log
 from schema.youps import MailbotMode, MessageSchema, EventManager  # noqa: F401 ignore unused we use it for typing
 from http_handler.settings import TEST_ACCOUNT_EMAIL
@@ -52,6 +53,7 @@ def interpret_bypass_queue(mailbox, extra_info):
 
     try:
         # set the stdout to a string
+        stdout_original = sys.stdout
         sys.stdout = user_std_out
 
         # set the user logger to
@@ -128,6 +130,9 @@ def interpret_bypass_queue(mailbox, extra_info):
                 userLoggerStream = user_std_out
     except Exception:
         logger.exception("test")
+    finally: 
+        sys.stdout = stdout_original
+
 
     return res
 
@@ -354,10 +359,17 @@ def interpret(mailbox, mode):
                     code = task.email_rule.code
                     code = codeobject_loads(json.loads(code))
                     code = type(codeobject_loads)(code, user_environ)
-                    message_schemas = MessageSchema.objects.filter(base_message=task.base_message)
-                    if message_schemas.exists(): 
-                        msg = Message(message_schemas[0], mailbox._imap_client)
-                        code(msg)
+
+                    if task.base_message:
+                        message_schemas = MessageSchema.objects.filter(base_message=task.base_message)
+                        if message_schemas.exists(): 
+                            msg = Message(message_schemas[0], mailbox._imap_client)
+                            code(msg)
+                    else:
+                        contact_schemas = task.contact
+                    
+                        contact = Contact(contact_schemas, mailbox._imap_client)
+                        code(contact)
                     is_fired = True
             except Exception as e:
                 logger.critical("Error during task managing %s " % e)
@@ -375,7 +387,8 @@ def interpret(mailbox, mode):
                 task.delete()
             finally:
                 if is_fired:
-                    copy_msg.update(print_execution_log(msg))
+                    if msg:
+                        copy_msg.update(print_execution_log(msg))
                     copy_msg["trigger"] = task.email_rule.name
                     task.delete()
                     

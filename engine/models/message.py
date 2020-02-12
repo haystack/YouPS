@@ -25,7 +25,7 @@ from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, BaseMessage, MessageSchema, EventManager, ThreadSchema)
 from smtp_handler.utils import format_email_address, get_attachments, codeobject_dumps, codeobject_loads
-from engine.utils import IsNotGmailException, convertToUserTZ, prettyPrintTimezone
+from engine.utils import IsNotGmailException, convertToUserTZ, get_datetime_from_now, prettyPrintTimezone
 from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
 from email_reply_parser import EmailReplyParser
@@ -755,7 +755,7 @@ class Message(object):
         if handler.func_code.co_argcount != 1:
             raise Exception('on_time(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
 
-        later_at = self._get_datetime(later_at)
+        later_at = get_datetime_from_now(later_at)
 
         a = codeobject_dumps(handler.func_code)
         if self._is_simulate:
@@ -779,16 +779,6 @@ class Message(object):
 
         print("on_time(): The handler will be executed at %s " % prettyPrintTimezone(later_at))
 
-    def _get_datetime(self, later_at):
-        if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
-            raise TypeError("see_later(): later_at " +
-                            later_at + " is not number or datetime")
-
-        if isinstance(later_at, (int, long, float)):
-            later_at = timezone.now().replace(microsecond=0) + \
-                timedelta(seconds=later_at*60)
-
-        return convertToUserTZ(later_at)
 
     @ActionLogging
     def _see_later(self, email_rule_id):
@@ -805,7 +795,7 @@ class Message(object):
             later_at (int): when to move this message back to inbox (in minutes)
             hide_in (string): a name of folder to hide this message temporarily
         """
-        later_at = self._get_datetime(later_at)
+        later_at = get_datetime_from_now(later_at)
 
         current_folder = self._schema.folder.name
         if self._schema.imap_account.is_gmail and current_folder == "INBOX":

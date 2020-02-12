@@ -45,6 +45,17 @@ class InvalidFlagException(YoupsException):
         # Call super constructor
         super(InvalidFlagException, self).__init__(*args, **kwargs)
 
+def get_datetime_from_now(later_at):
+    if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
+        raise TypeError("see_later(): later_at " +
+            later_at + " is not number or datetime")
+
+    if isinstance(later_at, (int, long, float)):
+        later_at = timezone.now().replace(microsecond=0) + \
+            timedelta(seconds=later_at*60)
+
+    return convertToUserTZ(later_at)
+
 def convertToUserTZ(datetime_obj, tz=tz('US/Eastern')):
     if not isinstance(datetime_obj, datetime):
         return None

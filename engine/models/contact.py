@@ -7,12 +7,13 @@ from django.db.models import Q
 from smtp_handler.utils import codeobject_dumps, codeobject_loads
 import logging
 from engine.models.helpers import CustomProperty, ActionLogging
+from engine.utils import get_datetime_from_now, prettyPrintTimezone
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
 class Contact(object):
 
-    def __init__(self, contact_schema, imap_client, is_simulate):
+    def __init__(self, contact_schema, imap_client, is_simulate=False):
         # type: (ContactSchema, IMAPClient) -> Contact
 
         self._schema = contact_schema  # type: ContactSchema
@@ -223,7 +224,7 @@ class Contact(object):
         if handler.func_code.co_argcount != 1:
             raise Exception('on_time(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
 
-        later_at = self._get_datetime(later_at)
+        later_at = get_datetime_from_now(later_at)
 
         a = codeobject_dumps(handler.func_code)
         if self._is_simulate:
@@ -235,7 +236,7 @@ class Contact(object):
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
             print("on_time(): Simulating callback function..:")
             
-            g(self.messages_from[0])
+            g(self)
         else:
             # add EventManager attached to it
             er = EmailRule(imap_account=self._schema.imap_account, name='on time', type='on_time', code=json.dumps(a))
@@ -243,7 +244,7 @@ class Contact(object):
 
             self._on_time(er.id)
 
-            e = EventManager(base_message=self._schema.base_message, date=later_at, email_rule=er)
+            e = EventManager(contact=self._schema, date=later_at, email_rule=er)
             e.save()
 
         print("on_time(): The handler will be executed at %s " % prettyPrintTimezone(later_at))

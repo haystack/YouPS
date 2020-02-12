@@ -268,8 +268,8 @@ def get_email_rule_meta(request):
 
 
 			res['rules'] = email_rules
-			logger.exception(res)
-			logger.exception(json.dumps(res))
+			logger.debug(res)
+			logger.debug(json.dumps(res))
 			return HttpResponse(json.dumps(res), content_type="application/json")
 	except ImapAccount.DoesNotExist:
 		return {'website': WEBSITE, 'imap_authenticated': False}

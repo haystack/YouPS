@@ -25,10 +25,12 @@ logger = logging.getLogger('youps')  # type: logging.Logger
 class Command(BaseCommand):
     args = ''
     help = 'Process email'
+    def add_arguments(self, parser):
+        parser.add_argument('mode')
 
     # Auto-send messages to TEST_ACCOUNT_EMAIL and see the results match expected results by running multiple unit tests
     def handle(self, *args, **options):
-        if len(args) == 0:
+        if len(options) == 0:
             print ("option: send-test|run-test")
             print ("You should run `send-test` at least once prior to `run-test`")
             return
@@ -76,7 +78,7 @@ class Command(BaseCommand):
             print("failed logging into imap", str(e))
             return
 
-        if args[0] == "send-test":
+        if options['mode'] == "send-test":
             mailbox = MailBox(imapAccount, imap, is_simulate=False)
             for i in range(len(test_emails)):
                 test = test_emails[i]
@@ -90,11 +92,11 @@ class Command(BaseCommand):
             #     send_email("#%d " % index + t['subject'].decode('utf-8'), t['from_addr'], TEST_ACCOUNT_EMAIL, t['body_plain'].decode('utf-8'), t['body_html'].decode('utf-8'))
             #     index = index + 1
 
-        elif args[0] == "run-test":
+        elif options['mode'] == "run-test":
             test_cases = [
                 [ # test cases for #0 email
                     {
-                        'code': 'print (my_message.from_)',
+                        'code': 'print (my_message.from_.email)',
                         'expected': TEST_ACCOUNT_EMAIL
                     }, 
                     {
@@ -128,11 +130,19 @@ class Command(BaseCommand):
                         'expected': 'True'
                     }, 
                     {
-                        'code': """my_message.add_flags("test")\n\tprint (my_message.has_flag("test"))""",
+                        'code': """my_message._add_flags("test")\n\tprint (my_message._has_flag("test"))""",
                         'expected': 'True'
                     }, 
                     {
-                        'code': """my_message.remove_flags("test")\n\tprint (my_message.has_flag("test"))""",
+                        'code': """my_message._remove_flags("test")\n\tprint (my_message._has_flag("test"))""",
+                        'expected': 'False'
+                    },
+                    {
+                        'code': """my_message.mark_read()\n\tprint (my_message.is_read)""",
+                        'expected': 'True'
+                    },
+                    {
+                        'code': """my_message.mark_unread()\n\tprint (my_message.is_read)""",
                         'expected': 'False'
                     }
                 ]
@@ -142,15 +152,16 @@ class Command(BaseCommand):
             try:
                 folder_names = ["INBOX"]
                 for msg_index in range(len(test_cases)):
+                    print ("Testing %s" % msg_index)
                     for folder_name in folder_names:
                         # pick up recent messages 
                         message = MessageSchema.objects.filter( \
                             imap_account=imapAccount, folder__name=folder_name, base_message__subject__startswith='#%d ' % msg_index).order_by("-base_message__date")
-
+                        
                         if not message.exists():
                             print ("Unable to load the corresponding message #%d %s" % (msg_index, test_emails[msg_index]['subject']))
                             continue
-
+                        
                         message = message[0]
                         assert isinstance(message, MessageSchema)
 
@@ -158,8 +169,7 @@ class Command(BaseCommand):
                         for test_per_message_index in range(len(test_cases[msg_index])):
                             imap_res = interpret_bypass_queue(mailbox, extra_info={'code': "def on_message(my_message):\n\t" + \
                                 test_cases[msg_index][test_per_message_index]['code'].decode("utf-8", "replace"), 'msg-id': message.id})
-                            # print(imap_res)
-
+                            
                             try:
                                 # print(imap_res['appended_log'][message.id])
                                 result = imap_res['appended_log'][message.id]['log'].rstrip("\n\r")
