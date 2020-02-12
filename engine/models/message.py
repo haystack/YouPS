@@ -279,6 +279,10 @@ class Message(object):
 
         return a
 
+    def _folder_list(self):
+        from schema.youps import FolderSchema
+        return FolderSchema.objects.filter(imap_account=self._imap_account).filter(is_selectable=True).values('name')
+
     @CustomProperty
     def snippet(self):
         return self._get_nylas_message().snippet
