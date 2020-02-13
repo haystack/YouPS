@@ -24,10 +24,10 @@ function fetch_watch_message() {
               // uid: message schema id
               else  { // If everything successful
                   $.each(res['message_rows'], function(i, message) {
-                    if( watched_message.indexOf( res['message_schemaids'][i] ) == -1 ) {
+                    if( watched_message.indexOf( res['contexts'][i]['base_message_id'] ) == -1 ) {
                       $("#message-parameter-table").prepend( message );
                       
-                      watched_message.push( res['message_schemaids'][i] );
+                      watched_message.push( res['contexts'][i]['base_message_id'] );
                     }
                   })
               }

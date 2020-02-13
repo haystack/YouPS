@@ -221,8 +221,10 @@ def interpret(mailbox, mode):
                 elif event_class_name == "MessageArrivalData":
                     rule_type_to_search = "new-message"
                     handler = mailbox.new_message_handler
-                    call_back = "on_message"
+                    call_back = "on_message"              
                     email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
+                    logger.exception(mode.id)
+                    logger.exception(email_rules.values())
                 elif event_class_name == "NewFlagsData":
                     rule_type_to_search = "flag-change"
                     handler = mailbox.added_flag_handler
@@ -236,7 +238,8 @@ def interpret(mailbox, mode):
                 elif event_class_name == "MessageMovedData":
                     continue
 
-                if not handler:
+                logger.exception("here")
+                if handler is None:
                     continue
 
                 for rule in email_rules:
@@ -251,6 +254,9 @@ def interpret(mailbox, mode):
                         logger.exception(mailbox.new_message_handler.getHandlerCount())
                     else:
                         valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
+                        logger.info(valid_folders)
+                        for v in valid_folders:
+                            logger.exception(v.name)
                         if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
                             exec(code + "\nhandler.handle(%s)" % call_back, user_environ.update({'handler': handler}))
                             # handler.handle(code)
@@ -305,15 +311,16 @@ def interpret(mailbox, mode):
         now = timezone.now()
         for task in EventManager.objects.filter(date__lte=now).order_by('date'): #(imap_account=mailbox._imap_account): # TODO filter by timestamp has passed and either thread, message or contact belongs to this imap account
             # check membership first
+            logger.info("task detected")
             skip = True
             if (task.base_message and task.base_message.imap_account == mailbox._imap_account) or \
                 (task.thread and task.thread.imap_account == mailbox._imap_account) or \
                 (task.contact and task.contact.imap_account == mailbox._imap_account):
                 skip = False
-            
+            logger.info("task detected")
             if skip:
                 continue
-
+            logger.info("task detected")
             # TODO user logger
             user_std_out = StringIO()
 
@@ -329,9 +336,6 @@ def interpret(mailbox, mode):
             now = timezone.now().replace(microsecond=0)
             is_fired = False
             logger.critical("task manager %s now: %s" % (prettyPrintTimezone(task.date), prettyPrintTimezone(now)))
-            if task.date > now:
-                continue
-
             new_msg = {}
 
             new_msg["timestamp"] = str(datetime.datetime.now().strftime("%m/%d %H:%M:%S,%f"))

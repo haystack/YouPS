@@ -30,8 +30,9 @@ from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
 from email_reply_parser import EmailReplyParser
 
-from http_handler.settings import NYLAS_ID, NYLAS_SECRET
+from http_handler.settings import NYLAS_ID, NYLAS_SECRET, time_entity_extractor
 from nylas import APIClient
+from duckling import Duckling
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -67,6 +68,8 @@ class Message(object):
         self._nylas_message = None
 
         self._imap_client.select_folder(self.folder.name)
+
+        self.time_entity_extractor = None
 
         logger.debug('caller name: %s', inspect.stack()[1][3])
 
@@ -282,6 +285,51 @@ class Message(object):
     def _folder_list(self):
         from schema.youps import FolderSchema
         return FolderSchema.objects.filter(imap_account=self._imap_account).filter(is_selectable=True).values('name')
+
+    def _get_duckling(self):
+        if self.time_entity_extractor is None:
+            logger.exception("loading extractor")
+            self.time_entity_extractor = Duckling()
+            self.time_entity_extractor.load()
+        
+        return self.time_entity_extractor
+
+    def test(self):
+        
+        #  parse only the current message
+        
+        # return d.parse_time(EmailReplyParser.parse_reply(self.content['text']))
+        content = self.content
+        t = EmailReplyParser.parse_reply(content['text'] or content['html'])
+        
+        # t= Text_entity_extractor().parse(t, reference_time=str(self.date))
+        # logger.info("parse done")
+        # a = []
+        # for e in t:
+        #     if e["dim"] not in ["time", "interval"]:
+        #         continue
+        #     if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
+        #          continue
+        #     logger.info (e)
+        #     a.append(e)
+        #     # if "text" in e and len(e["text"]) >=3:
+                 
+        # return a
+        
+
+    def q(self):
+        return self._imap_client.get_flags([self._uid]), self._imap_client.get_gmail_labels([self._uid])
+        # self._imap_client.remove_gmail_labels([self._uid], "\\Inbox")
+
+    def w(self):
+        self._imap_client.add_flags([self._uid], "Inbox")
+        self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+
+    def e(self):
+
+        self._imap_client.remove_gmail_labels([self._uid], "\\Important")
+        self._imap_client.remove_gmail_labels([self._uid], "\\Inbox")
+        self._imap_client.move([self._uid], "YouPS see later")
 
     @CustomProperty
     def snippet(self):
@@ -592,11 +640,34 @@ class Message(object):
         # logger.exception(src_folder)
         # logger.exception(dst_folder)
         try:
+            if self._imap_account.is_gmail:
+                raise exceptions.CapabilityError
             self._imap_client.move([self._uid], dst_folder)
         except exceptions.CapabilityError:
-            self.copy(dst_folder)
-            self.delete()
+            if self._imap_account.is_gmail:
+                if dst_folder.lower() == "inbox":
+                    logger.info("Hello world")
+                    self._imap_client.remove_gmail_labels([self._uid], "\\" + src_folder)
+                    self._imap_client.move([self._uid], "INBOX")
+                    #self._imap_client.move("INBOX")
+                    self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+                else:
+                    self.copy(dst_folder)
+                    self._imap_client.add_flags([self._uid], "\\Deleted")
+            else:
+                self.copy(dst_folder)
+                self.delete()
             self._imap_client.expunge()
+
+    def qq(self):
+        logger.info(self._imap_client.get_gmail_labels([self._uid]))
+        logger.info(self.folder.name)
+        self._imap_client.remove_gmail_labels([self._uid], "\\" + self.folder.name)
+        self._imap_client.move([self._uid], "INBOX")
+        #self._imap_client.move("INBOX")
+        self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+
+        self._imap_client.expunge()
 
     @ActionLogging
     def forward(self, to=[], cc=[], bcc=[], subject="", content=""):
@@ -809,7 +880,7 @@ class Message(object):
             self.move(hide_in)
 
             # find message schema (at folder hide_in) of base message then move back to original message schema 
-            code = "my_message.move('%s')" % self.folder.name
+            code = "my_message._move('%s','%s')" % (hide_in, self.folder.name)
             
             er = EmailRule(name='see later', type='see-later', code=json.dumps(code))
             er.save()

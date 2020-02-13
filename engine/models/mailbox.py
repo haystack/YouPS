@@ -8,7 +8,7 @@ import traceback
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
-from smtp_handler.utils import format_email_address, send_email, _request_new_delta
+from smtp_handler.utils import format_email_address, send_email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -18,6 +18,7 @@ from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
 from nylas import APIClient
 from http_handler.settings import CLIENT_ID, NYLAS_ID, NYLAS_SECRET
+from duckling import Duckling
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -44,6 +45,7 @@ class MailBox(object):
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.new_message_ids = set()  # type: t.Set[str]
         self.is_simulate = is_simulate  # type: bool
+        self.time_entity_extractor = None
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -106,6 +108,14 @@ class MailBox(object):
         # Just be sure any changes have been committed or they will be lost.
         conn.close()
 
+    def _get_time_entity_extractor(self):
+        if self.time_entity_extractor is None:
+            logger.exception("loading extractor")
+            self.time_entity_extractor = Duckling()
+            self.time_entity_extractor.load()
+        
+        return self.time_entity_extractor
+
     def _add_contact(self, name, email_address):
         if self._imap_account.nylas_access_token:
             nylas = APIClient(
@@ -145,21 +155,6 @@ class MailBox(object):
         # type: () -> bool 
         """Synchronize the mailbox with the imap server.
         """
-
-        if self._imap_account.nylas_access_token:
-            # do sync whenever there is delta detected by Nylas
-            cursor, is_new_message = _request_new_delta(self._imap_account)
-
-            if not cursor:
-                logger.info("No delta detected at %s -- move on to next inbox" % self._imap_account.email)
-                return 
-            else:
-                # TODO update the cursor
-                self._imap_account.nylas_delta_cursor = cursor
-                self._imap_account.save()
-
-                if not is_new_message:
-                    return
 
         # should do a couple things based on
         # https://stackoverflow.com/questions/9956324/imap-synchronization
@@ -232,7 +227,6 @@ class MailBox(object):
             
             logger.info("add deadline queue %s %s %s" %
                         (time_start, bm_schema.deadline, time_end))
-            logger.info(bm_schema.subject)
             
             # TODO Maybe we should find a better way to pick a message schema
             for message_schema in bm_schema.messages.all():
@@ -298,6 +292,8 @@ class MailBox(object):
 
             # TODO maybe fire if the flags have changed
             folder.flags = flags
+
+            # TODO add duckling here that come down from previous level? 
 
             # assume there are children unless specifically told otherwise
             recurse_children = True

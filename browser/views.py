@@ -22,6 +22,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from nylas import APIClient
 
+from smtp_handler.utils import _check_delta
 from browser.util import load_groups, paginator, get_groups_links_from_roles, get_role_from_group_name
 import engine.main
 from engine.constants import msg_code
@@ -238,13 +239,24 @@ def email_button_view(request):
 		if request.user.email:
 			imap_account = ImapAccount.objects.get(email=request.user.email)
 			folders = FolderSchema.objects.filter(imap_account=imap_account).filter(is_selectable=True).values('name')
-						
+			new_to_shortcut = False			
 			folders = [f['name'].encode('utf8', 'replace') for f in folders]
 
 			email_rules = EmailRule.objects.filter(imap_account=imap_account, type__startswith='shortcut')
+			# create a basic rule for the user, if there is no email rule exist
+			if len(email_rules) == 0:
+				er=EmailRule(imap_account=imap_account, type='shortcut', name='hide', code="""def on_command(my_message, kargs):
+    my_message.see_later(kargs['until'])""")
+				er.save()
+				er_args = EmailRule_Args(name="until", rule=er, type='datetime')
+				er_args.save()
+
+				email_rules = [er]
+				new_to_shortcut = True
+
 
 			today = timezone.now()
-			return {'website': WEBSITE, 'folders': folders, 'email_rules': email_rules, 'imap_authenticated': True, 'is_gmail': imap_account.is_gmail, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
+			return {'website': WEBSITE, 'folders': folders, 'new_to_shortcut': new_to_shortcut, 'email_rules': email_rules, 'imap_authenticated': True, 'is_gmail': imap_account.is_gmail, 'YEAR': today.year, 'MONTH': "%02d" % today.month, 'DAY': "%02d" % today.day}
 	except ImapAccount.DoesNotExist:
 		return {'website': WEBSITE, 'folders': [], 'imap_authenticated': False}
 	except:
@@ -309,8 +321,9 @@ def _load_component(component, context=None):
 			
 			c = {'user_datetime': today.strftime('%Y-%m-%dT00:00'), "name": context["name"]} 		
 		elif component == "email_expandable_row":
-			c = {'sender': context['sender'], "subject": context['subject'], "date": context['date'], "message_id": context['message_id']}
-			logger.info(c)
+			logger.info(context)
+			c = {'sender': context['sender'], "subject": context['subject'], "date": context['date'], "base_message_id": context["base_message_id"],"message_id": context['message_id']}
+			
 		return template.render( Context(c) )
 
 	except Exception as e:
@@ -372,6 +385,7 @@ def save_rules(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		rules = json.loads(request.POST['rules']) 
+		logger.exception(request.POST)
 
 		ia = ImapAccount.objects.get(email=request.user.email)
 		ers = EmailRule.objects.filter(imap_account=ia, type="shortcut")

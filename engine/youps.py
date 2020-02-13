@@ -289,7 +289,6 @@ def fetch_watch_message(user, email, watched_message):
 
                     if msgs:
                         res['contexts'] = []
-                        res['message_schemaids'] = []
                         for r in msgs:
 
                             # if this message is already caught, skip to next to find another new msgs
@@ -299,7 +298,6 @@ def fetch_watch_message(user, email, watched_message):
                                 continue
                             logger.info(r.base_message.subject)
                             message = Message(r, imap_client=imap)   
-                            res['message_schemaids'].append(r.id)
                             res['message'] = message._get_meta_data_friendly()
                             res['sender'] = message._get_from_friendly()
                             
@@ -311,7 +309,7 @@ def fetch_watch_message(user, email, watched_message):
                             except:
                                 logger.exception("parsing arrival date fail; skipping parsing")
 
-                            res['contexts'].append( {'sender': res['sender']["name"] or res['sender']["email"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
+                            res['contexts'].append( {'base_message_id': r.base_message.id,'sender': res['sender']["name"] or res['sender']["email"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
 
                         # if there is update, send it to the client immediatly 
                         if 'message' in res:
@@ -506,7 +504,7 @@ def save_rules(user, email, old_ers, rules, mailbotMode=None, push=True):
             name = value['name'].encode('utf-8')
             code = value['code'].encode('utf-8')
             folders = value['folders']
-            logger.info(value)
+            logger.info(mailbotMode)
             er = None
 
             if mailbotMode:
@@ -610,6 +608,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         
 
         if run_request:
+            logger.info(current_mode_id)
             imapAccount.current_mode = MailbotMode.objects.get(id=current_mode_id, imap_account=imapAccount)
 
             # if the code execute well without any bug, then save the code to DB

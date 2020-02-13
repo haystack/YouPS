@@ -3,7 +3,8 @@
 import os
 import django
 import sys
-
+# from duckling import DucklingWrapper, Duckling
+from duckling import Duckling
 
 DJANGO_ROOT = os.path.dirname(os.path.realpath(django.__file__))
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
@@ -99,6 +100,10 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 DEFAULT_EMAIL = 'no-reply@' + BASE_URL
 DEFAULT_FROM_EMAIL = DEFAULT_EMAIL
+
+time_entity_extractor = None
+# time_entity_extractor = Duckling()
+# time_entity_extractor.load()
 
 DATABASES = {
     'default': {

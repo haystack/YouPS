@@ -7,7 +7,7 @@ from engine.models.mailbox import MailBox
 from engine.utils import dump_execution_log
 from http_handler.settings import BASE_URL, PROTOCOL
 from schema.youps import ImapAccount, EmailRule, LogSchema
-from smtp_handler.utils import send_email
+from smtp_handler.utils import send_email, _request_new_delta
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import fcntl
 from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
@@ -156,9 +156,23 @@ def loop_sync_user_inbox():
             # if imapAccount.email not in ["pmarsena@mit.edu", "youps.empty@gmail.com", "shachieg@csail.mit.edu"]:
             #     continue
             # refresh from database
+            is_new_message = True
             imapAccount = ImapAccount.objects.get(id=imapAccount.id)
             if not imapAccount.is_initialized:
                 continue
+
+            if imapAccount.nylas_access_token:
+                logger.info("Checking delta of %s " % imapAccount.email)
+                # do sync whenever there is delta detected by Nylas
+                cursor, is_new_message = _request_new_delta(imapAccount)
+
+                if not cursor:
+                    logger.info("No delta detected at %s -- move on to next inbox" % imapAccount.email)
+                    continue 
+                else:
+                    # TODO update the cursor
+                    imapAccount.nylas_delta_cursor = cursor
+                    imapAccount.save()
 
             imapAccount_email = imapAccount.email
 
@@ -184,8 +198,9 @@ def loop_sync_user_inbox():
 
                     mailbox._log_message_ids()
                     # sync the mailbox with imap
-                    mailbox._sync()
-                    logger.info(mailbox.event_data_list)
+                    if is_new_message:
+                        mailbox._sync()
+                        logger.info(mailbox.event_data_list)
                 except Exception:
                     logger.exception("Mailbox sync failed")
                     # TODO maybe we should email the user
