@@ -660,10 +660,11 @@ class Message(object):
             self._imap_client.expunge()
 
     def qq(self):
-        logger.info(self._imap_client.get_gmail_labels([self._uid]))
-        logger.info(self.folder.name)
-        self._imap_client.remove_gmail_labels([self._uid], "\\" + self.folder.name)
+        print(self._imap_client.get_gmail_labels([self._uid]))
+        print(self._imap_client.get_flags([self._uid]))
+        print(self.folder.name)
         self._imap_client.move([self._uid], "INBOX")
+        self._imap_client.remove_gmail_labels([self._uid], "\\YouPS see later")
         #self._imap_client.move("INBOX")
         self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
 

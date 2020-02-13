@@ -349,10 +349,11 @@ def interpret(mailbox, mode):
                 if task.email_rule.type == "see-later":
                     msg_schema = MessageSchema.objects.filter(base_message=task.base_message)
                     if msg_schema.exists(): 
-                        msg=Message(msg_schema[0], mailbox._imap_client)
-                        user_environ.update({"my_message": msg})
-                        exec(json.loads(task.email_rule.code), user_environ)
-                    is_fired = True
+                        for m in msg_schema:
+                            msg=Message(m, mailbox._imap_client)
+                            user_environ.update({"my_message": msg})
+                            exec(json.loads(task.email_rule.code), user_environ)
+                        is_fired = True
                     
                 elif new_msg["type"] == "remind":
                     user_environ = json.loads(task.email_rule.code) if len(task.email_rule.code) else {}
