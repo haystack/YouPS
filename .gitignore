@@ -38,4 +38,4 @@ scripts/imap_interact.ini
 
 \.pytest_cache/
 
-imap_config.ini
+*.ini

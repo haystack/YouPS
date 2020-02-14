@@ -60,7 +60,7 @@ def interpret_bypass_queue(mailbox, extra_info):
         userLoggerStream = user_std_out
 
         if mailbox.is_simulate:
-            print ("Simulating: this only simulates your rule behavior and won't affect your messages")
+            print ("[Debugging mode: this only simulates your rule behavior and won't affect your messages]")
 
         code = extra_info['code']
         message_schemas = MessageSchema.objects.filter(id=extra_info['msg-id'])
@@ -99,12 +99,18 @@ def interpret_bypass_queue(mailbox, extra_info):
                 elif "on_deadline" in code:
                     exec(code + "\non_deadline(new_message)", user_environ)    
 
-            except Exception:   
+            except Exception as e:   
                 # Get error message for users if occurs
                 # print out error messages for user
                 logger.exception("failure simulating user %s code" % mailbox._imap_account.email)
                 msg_log["error"] = True
-                print(sandbox_helpers.get_error_as_string_for_user())
+                logger.critical(sandbox_helpers.get_error_as_string_for_user())
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                error_msg = str(e) + traceback.format_tb(exc_tb)[-1]
+                logger.critical(str(e))
+                logger.critical(traceback.format_tb(exc_tb))
+                tb = traceback.format_tb(exc_tb)
+                print(str(e) + " " + (tb[-1] if len(tb) > 1 else ""))
             finally:
                 msg_log["log"] += user_std_out.getvalue()
                 msg_log["property_log"].extend(user_property_log)

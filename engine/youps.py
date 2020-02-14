@@ -264,7 +264,7 @@ def fetch_watch_message(user, email, watched_message):
     except Exception as e:
         logger.exception("failed while logging into imap")
         res['code'] = "Fail to access your IMAP account"
-        return
+        return res
 
     try:
         if res['watch_status']:
@@ -645,13 +645,17 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
     except MailbotMode.DoesNotExist:
         logger.exception("No current mode exist")
         res['code'] = "Currently no mode is selected. Select one of your mode to execute your YouPS."
+    except ValueError:
+        logger.exception("login error")
+        res['code'] = 'Something went wrong during authentication. If this persists, contact our team!'
     except Exception as e:
         # TODO add exception
         logger.exception("failed while doing a user code run")
         print (traceback.format_exc())
         res['code'] = msg_code['UNKNOWN_ERROR']
     finally:
-        imap.logout()
+        if imap:
+            imap.logout()
 
     logging.debug(res)
     return res
@@ -687,7 +691,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code='', extra_info
     except Exception as e:
         logger.exception("failed while logging into imap")
         res['code'] = "Fail to access your IMAP account"
-        return
+        return res
 
     try:
         res['messages'] = {}
@@ -752,7 +756,7 @@ def undo(user, email, logschema_id):
     except Exception as e:
         logger.exception("failed while logging into imap")
         res['code'] = "Fail to access your IMAP account"
-        return
+        return res
 
     try:
         # Redo actions reverse to undo
