@@ -177,7 +177,7 @@ class Message(object):
     @CustomProperty
     def deadline(self):
         # type: () -> datetime.datetime
-        """Get the user-defined deadline of the message
+        """Get the user-defined deadline of the message (Mutable)
 
         Returns:
             datetime: The deadline
@@ -193,6 +193,11 @@ class Message(object):
     @deadline.setter
     def deadline(self, value):
         # type: (datetime.datetime) -> None
+        """Set the user-defined deadline of the message
+
+        Args:
+            datetime: The deadline
+        """
         value = convertToUserTZ(value)
 
         logger.info(self.subject)
@@ -208,7 +213,7 @@ class Message(object):
     @CustomProperty
     def task(self):
         # type: () -> t.AnyStr
-        """Get the user-defined task of the message
+        """Get the user-defined task of the message (Mutable)
 
         Returns:
             str: The tasks
@@ -339,6 +344,12 @@ class Message(object):
     @CustomProperty
     def thread(self):
         # type: () -> t.List[Message]
+        """Return a list of messages in this thread
+
+        Returns:
+            t.List[Message]: a list of Message instances
+        """
+
         nylas = APIClient(
             NYLAS_ID,
             NYLAS_SECRET,
@@ -672,6 +683,15 @@ class Message(object):
 
     @ActionLogging
     def forward(self, to=[], cc=[], bcc=[], subject="", content=""):
+        """forward a message
+
+        Args:
+            to (str): 
+            cc (str): 
+            bcc (str): 
+            subject (str): 
+            content (str): You can add additional content on a body of this forwarded message
+        """
         to = format_email_address(to)
         cc = format_email_address(cc)
         bcc = format_email_address(bcc)
@@ -708,6 +728,12 @@ class Message(object):
     def reply(self, to=[], cc=[], bcc=[], content=""):
         # type: (t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.Iterable[t.AnyStr], t.AnyStr) -> None
         """Reply to the sender of this message
+
+        Args:
+            to (str): 
+            cc (str): 
+            bcc (str):
+            content (str): 
         """
         if not self._is_simulate:
             to_addr = ""
@@ -733,6 +759,14 @@ class Message(object):
 
     @ActionLogging
     def reply_all(self, more_to=[], more_cc=[], more_bcc=[], content=""):
+        """Reply to every recipient of this message
+
+        Args:
+            to (str): 
+            cc (str): 
+            bcc (str):
+            content (str): 
+        """
         if isinstance(more_cc, list):
             if len(self.cc) > 0:
                 more_cc = more_cc + self.cc
