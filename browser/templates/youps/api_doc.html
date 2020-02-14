@@ -18,21 +18,11 @@
 
 
 
-
       <div class="document">
           
             <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
               <div class="sphinxsidebarwrapper">
-      <h1 class="logo"><a href="index.html">YouPS</a></h1>
       
-      
-      
-      
-      
-      
-      
-      
-      <h3>Navigation</h3>
       <p class="caption"><span class="caption-text">Contents:</span></p>
       <ul class="current">
       <li class="toctree-l1 current"><a class="current reference internal" href="#">YouPS documentation</a><ul>
@@ -42,7 +32,8 @@
       </ul>
       </li>
       <li class="toctree-l2"><a class="reference internal" href="#contact-object">Contact object</a><ul>
-      <li class="toctree-l3"><a class="reference internal" href="#id1">Events handler</a></li>
+      <li class="toctree-l3"><a class="reference internal" href="#id1">Property</a></li>
+      <li class="toctree-l3"><a class="reference internal" href="#id2">Events handler</a></li>
       </ul>
       </li>
       </ul>
@@ -58,7 +49,7 @@
         </ul></li>
       </ul>
       </div>
-      <div id="searchbox" style="display: none" role="search">
+      <!-- <div id="searchbox" style="display: none" role="search">
         <h3 id="searchlabel">Quick search</h3>
           <div class="searchformwrapper">
           <form class="search" action="search.html" method="get">
@@ -66,7 +57,7 @@
             <input type="submit" value="Go" />
           </form>
           </div>
-      </div>
+      </div> -->
       <script type="text/javascript">$('#searchbox').show(0);</script>
       
       
@@ -166,7 +157,7 @@
       <dl class="method">
       <dt id="Message.Message.deadline">
       <em class="property">property </em><code class="sig-name descname">deadline</code><a class="headerlink" href="#Message.Message.deadline" title="Permalink to this definition">¶</a></dt>
-      <dd><p>Get the user-defined deadline of the message</p>
+      <dd><p>Get the user-defined deadline of the message (Mutable)</p>
       <dl class="simple">
       <dt>Returns:</dt><dd><p>datetime: The deadline</p>
       </dd>
@@ -387,7 +378,7 @@
       <dt id="Message.Message.sender">
       <em class="property">property </em><code class="sig-name descname">sender</code><a class="headerlink" href="#Message.Message.sender" title="Permalink to this definition">¶</a></dt>
       <dd><p>Get the Contact the message is addressed from</p>
-      <p>See also <a href="#id2"><span class="problematic" id="id3">Message.from_</span></a></p>
+      <p>See also <a href="#id3"><span class="problematic" id="id4">Message.from_</span></a></p>
       <dl class="simple">
       <dt>Returns:</dt><dd><p>Contact: The contact in the from field of the message</p>
       </dd>
@@ -407,7 +398,7 @@
       <dl class="method">
       <dt id="Message.Message.task">
       <em class="property">property </em><code class="sig-name descname">task</code><a class="headerlink" href="#Message.Message.task" title="Permalink to this definition">¶</a></dt>
-      <dd><p>Get the user-defined task of the message</p>
+      <dd><p>Get the user-defined task of the message (Mutable)</p>
       <dl class="simple">
       <dt>Returns:</dt><dd><p>str: The tasks</p>
       </dd>
@@ -512,7 +503,7 @@
       <dl class="method">
       <dt>
       <em class="property">property </em><code class="sig-name descname">deadline</code></dt>
-      <dd><p>Get the user-defined deadline of the message</p>
+      <dd><p>Get the user-defined deadline of the message (Mutable)</p>
       <dl class="simple">
       <dt>Returns:</dt><dd><p>datetime: The deadline</p>
       </dd>
@@ -733,7 +724,7 @@
       <dt>
       <em class="property">property </em><code class="sig-name descname">sender</code></dt>
       <dd><p>Get the Contact the message is addressed from</p>
-      <p>See also <a href="#id4"><span class="problematic" id="id5">Message.from_</span></a></p>
+      <p>See also <a href="#id5"><span class="problematic" id="id6">Message.from_</span></a></p>
       <dl class="simple">
       <dt>Returns:</dt><dd><p>Contact: The contact in the from field of the message</p>
       </dd>
@@ -753,7 +744,7 @@
       <dl class="method">
       <dt>
       <em class="property">property </em><code class="sig-name descname">task</code></dt>
-      <dd><p>Get the user-defined task of the message</p>
+      <dd><p>Get the user-defined task of the message (Mutable)</p>
       <dl class="simple">
       <dt>Returns:</dt><dd><p>str: The tasks</p>
       </dd>
@@ -933,7 +924,125 @@
       </dd></dl>
       
       <div class="section" id="id1">
-      <h3>Events handler<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+      <h3>Property<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+      <dl class="class">
+      <dt>
+      <em class="property">class </em><code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">Contact</code><span class="sig-paren">(</span><em class="sig-param">contact_schema</em>, <em class="sig-param">imap_client</em><span class="sig-paren">)</span></dt>
+      <dd><dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">aliases</code></dt>
+      <dd><p>Get all the names associated with this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>list: The names associated with this contact</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">email</code></dt>
+      <dd><p>Get the email address associated with this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>str: The email address associated with this contact</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">geolocation</code></dt>
+      <dd><p>Get the location of this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>str: The location associated with this contact</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">messages_bcc</code></dt>
+      <dd><p>Get the Messages which are bcc this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the bcc field</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">messages_cc</code></dt>
+      <dd><p>Get the Messages which are cc this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the cc field</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">messages_from</code></dt>
+      <dd><p>Get the Messages which are from this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <code class="sig-name descname">messages_from_date</code><span class="sig-paren">(</span><em class="sig-param">from_date=None</em>, <em class="sig-param">to_date=None</em><span class="sig-paren">)</span></dt>
+      <dd><p>Get the Messages which are from this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">messages_to</code></dt>
+      <dd><p>Get the Messages which are to this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the to field</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">name</code></dt>
+      <dd><p>Get the name associated with this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>str: The name associated with this contact</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <em class="property">property </em><code class="sig-name descname">organization</code></dt>
+      <dd><p>Get the organization of this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>str: The organization associated with this contact</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      <dl class="method">
+      <dt>
+      <code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
+      <dd><p>Get the N Messages which are exchanged with this contact</p>
+      <dl class="simple">
+      <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field</p>
+      </dd>
+      </dl>
+      </dd></dl>
+      
+      </dd></dl>
+      
+      </div>
+      <div class="section" id="id2">
+      <h3>Events handler<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
       <dl class="class">
       <dt>
       <em class="property">class </em><code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">Contact</code><span class="sig-paren">(</span><em class="sig-param">contact_schema</em>, <em class="sig-param">imap_client</em><span class="sig-paren">)</span></dt>
@@ -990,9 +1099,7 @@
             <a href="_sources/index2.rst.txt"
                 rel="nofollow">Page source</a>
           </div>
-
-
-
+    
 
 
 <!-- </div> -->
@@ -1020,8 +1127,16 @@
         $("#message-object > #property").find("em.property").each(function (k, v) {
           $(v).parents("dl.method").show();
         });
+
+        $("#contact-object > .class").find("em.property").each(function (k, v) {
+          $(v).parents("dl.method").remove();
+        });
   
-        // $("#property").find("dt em.")
+        $("#contact-object > #id1 dl.method").hide();
+  
+        $("#contact-object > #id1").find("em.property").each(function (k, v) {
+          $(v).parents("dl.method").show();
+        });
     });
     </script>
 
