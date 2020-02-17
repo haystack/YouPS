@@ -168,11 +168,15 @@ class MailBox(object):
                     continue
                 logger.debug("Laula; about to select_folder %s" % (folder.name))
 
-            if self._imap_account.sync_paused:
+            
+            try:
+                if self._imap_account.email == "shachieg@csail.mit.edu":
+                    logger.info(folder.name)
+                    
+                response = self._imap_client.select_folder(folder.name)
+            except Exception as e:
+                logger.critical(e)
                 continue
-
-            response = self._imap_client.select_folder(folder.name)
-
             # our algorithm doesn't work without these
             if not ('UIDNEXT' in response and 'UIDVALIDITY' in response):
                 logger.critical("%s Missing UID Information" % folder)
