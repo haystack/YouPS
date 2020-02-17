@@ -25,7 +25,7 @@ from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, BaseMessage, MessageSchema, EventManager, ThreadSchema)
 from smtp_handler.utils import format_email_address, get_attachments, codeobject_dumps, codeobject_loads
-from engine.utils import IsNotGmailException, convertToUserTZ, get_datetime_from_now, prettyPrintTimezone
+from engine.utils import IsNotGmailException, convertToUserTZ, get_datetime_from_now, is_gmail_label, prettyPrintTimezone
 from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
 from email_reply_parser import EmailReplyParser
@@ -200,11 +200,10 @@ class Message(object):
         """
         value = convertToUserTZ(value)
 
-        logger.info(self.subject)
-        logger.info(self._is_simulate)
+        logger.debug(self.subject)
+        logger.debug(self._is_simulate)
         
         if not self._is_simulate:
-            logger.info("here")
             self._schema.base_message.deadline = value
             self._schema.base_message.save()
         else:
@@ -658,7 +657,9 @@ class Message(object):
             if self._imap_account.is_gmail:
                 if dst_folder.lower() == "inbox":
                     logger.info("Hello world")
-                    self._imap_client.remove_gmail_labels([self._uid], "\\" + src_folder)
+                    custom_labels = list(filter(lambda l: not is_gmail_label(l), self._imap_client.get_gmail_labels())) 
+                    map(lambda x: self._imap_client.remove_gmail_labels([self._uid], x), custom_labels)
+                    # self._imap_client.remove_gmail_labels([self._uid], "\\" + src_folder)
                     self._imap_client.move([self._uid], "INBOX")
                     #self._imap_client.move("INBOX")
                     self._imap_client.add_gmail_labels([self._uid], "\\Inbox")

@@ -551,14 +551,12 @@ class Folder(object):
                         # find thread in nylas
                         m = Message(new_message, self._imap_client)
                         if m._get_nylas_message():
-                            logger.info("Find Nylas msg for the new msg")
+                            logger.debug("Find Nylas msg for the new msg")
                             nylas_thread = nylas.threads.get(m._get_nylas_message().thread_id)
                             if nylas_thread:
-                                logger.info("Find Nylas thread for the new msg")
-                                logger.info(nylas_thread.id)
+                                logger.debug(nylas_thread.id)
                                 thread_schema = ThreadSchema.objects.filter(nylas_id=nylas_thread.id)
                                 if thread_schema.exists(): 
-                                    logger.info("Find Nylas thread for the new msg")
                                     base_message._thread = thread_schema[0]
                                     base_message.save()
                                     # add events to event_data_list
