@@ -154,12 +154,12 @@
                 "description": "",
                 "example": ""
             },
-            {
-                "name": "from_",
-                "return_type": "Contact",
-                "return_href": "contact",
-                "description": "",
-                "example": ""
+            {	
+                "name": "sender",	
+                "return_type": "Contact",	
+                "return_href": "contact",	
+                "description": "",	
+                "example": ""	
             },
             {
                 "name": "subject",
