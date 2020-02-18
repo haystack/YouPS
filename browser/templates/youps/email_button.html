@@ -55,7 +55,7 @@
 
 			<span style="font-size: 50px;">YouPS shortcuts</span>
 			<br>
-			<a style="float:right;" href="/shortcut_editor">Edit shortcuts</a>
+			<a class="btn btn-default" style="float:right;" href="/shortcut_editor">Edit shortcuts</a>
 			{% if imap_authenticated  %}
 				<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
 				<a id="popuplink" href="#inline">Forgot how to use?</a>
@@ -63,7 +63,7 @@
 					Do you have features that you wish to have at your email client? In YouPS shortcut, you can create your own custom email shortcuts. Unlike arrival or deadline handler, you can specify certain messages using the YouPS interface to apply shortcuts. 
 					<br><br>
 					{% if new_to_shortcut %}
-						To give you an idea, we've created a rule <code>hide</code> which will hide the message until the specified from the current folder, but will bring it back later. 
+						To give you an idea, we've created a rule <code>hide</code> which will hide the message until the specified time from the current folder, but will bring it back later. 
 						Give it a try and devise your own rules!
 						<br><br>
 					{% endif %}
@@ -109,7 +109,7 @@
 
 			<h2>1. Select a message</h2>
 			<div id="button-container">
-				<span class='label label-primary spinning' id='btn-watch'>Loading</span><span>: Toggle (mark read/unread) a message you want to make it appear here!</span>
+				<span class='label label-primary spinning' id='btn-watch'>Loading</span><span>: if you don't see a message you'd like to select, toggle (mark read/unread) a message you want to make it appear here!</span>
 			</div>
 			<br/>
 			<div id='message-param-container'>
@@ -122,7 +122,7 @@
 
 			</div>
 	
-			<p>If you have any new feature you'd like to have, please write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
+			<p>If you have any new feature you'd like to have, you can edit your shortcuts <a href="/shortcut_editor">here</a> or write an email to <a href="mailto:youps.help@gmail.com">youps.help@gmail.com</a>!</p>
 			<br>
 			
 			<div id='selected-rule-container'>

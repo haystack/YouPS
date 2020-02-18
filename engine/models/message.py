@@ -602,6 +602,9 @@ class Message(object):
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
         """Copy the message to another folder.
+
+            Args:
+                dst_folder (str): a name of destination folder
         """
         self._check_folder(dst_folder)
 
@@ -613,6 +616,16 @@ class Message(object):
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
         self._add_flags('\\Deleted')
+
+    def extract_response(self):
+        # type: () -> t.AnyStr
+        """For the thread messages, only take out a body of *this message* without previous headers and contetns
+            
+            Returns:
+                t.AnyStr: extracted contents without previous messages contents in the thread
+        """
+        content = self.content
+        return EmailReplyParser.parse_reply(content['text'] or content['html'])
 
     @ActionLogging
     def mark_read(self):
@@ -637,6 +650,9 @@ class Message(object):
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None
         """Move the message to another folder.
+
+            Args:
+                dst_folder (str): a name of destination folder
         """
         self._check_folder(dst_folder)
         if not self._is_simulate:
@@ -858,7 +874,7 @@ class Message(object):
 
         Args:
             handler (function): A function that will be executed. The function provides the newly arrived message as an argument \n
-            later_at (int): when to move this message back to inbox (in minutes)
+            later_at (int): when to execute the handler (in minutes)
         """
         if not handler or type(handler).__name__ != "function":
             raise Exception('on_time(): requires callback function but it is %s ' % type(handler).__name__)

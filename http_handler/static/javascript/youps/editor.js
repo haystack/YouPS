@@ -290,6 +290,12 @@ document.addEventListener("mv-load", function(e){
                 return item.match(regex);
             }).sort();
 
+        var suggestion_tmp = [];
+        $.each(suggestion, function(k, v) {
+            suggestion_tmp.push({"text": v, "displayText": v + "(): \n test"})
+        });
+        suggestion = suggestion_tmp;
+
         if (curWord[curWord.length -1] == ".") suggestion = [];
         console.log(suggestion);
         suggestion.length == 1 ? suggestion.push(" ") : console.log();

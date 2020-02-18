@@ -75,22 +75,34 @@ class Contact(object):
     @CustomProperty
     def organization(self):
         # type: () -> t.AnyStr
-        """Get the organization of this contact
+        """Get the organization of this contact (mutable)
 
         Returns:
             str: The organization associated with this contact
         """
         return self._schema.organization
 
+    @organization.setter
+    def organization(self, value):
+        # type: () -> t.AnyStr
+        self._schema.organization = value
+        self._schema.save()
+
     @CustomProperty
     def geolocation(self):
         # type: () -> t.AnyStr
-        """Get the location of this contact
+        """Get the location of this contact (mutable)
 
         Returns:
             str: The location associated with this contact
         """
         return self._schema.geolocation
+
+    @geolocation.setter
+    def geolocation(self, value):
+        # type: () -> t.AnyStr
+        self._schema.geolocation = value
+        self._schema.save()
 
     @CustomProperty
     def messages_to(self):
@@ -215,8 +227,8 @@ class Contact(object):
         """The number of minutes to wait before executing the handler. 
 
         Args:
-            handler (function): A function that will be executed. The function provides the contact object as an argument
-            later_at (int): when to move this message back to inbox (in minutes)
+            handler (function): A function that will be executed. The function provides the contact object as an argument \n
+            later_at (int): when to execute the handler (in minutes)
         """
         if not handler or type(handler).__name__ != "function":
             raise Exception('on_time(): requires callback function but it is %s ' % type(handler).__name__)

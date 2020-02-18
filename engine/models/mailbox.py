@@ -170,9 +170,9 @@ class MailBox(object):
 
             
             try:
-                if self._imap_account.email == "shachieg@csail.mit.edu":
-                    logger.info(folder.name)
-                    
+                # if self._imap_account.email == "shachieg@csail.mit.edu":
+                #     logger.info(folder.name)
+
                 response = self._imap_client.select_folder(folder.name)
             except Exception as e:
                 logger.critical(e)

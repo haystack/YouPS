@@ -2,3 +2,7 @@
 .documentwrapper, .sphinxsidebar {
     margin-top: 60px;
   }
+
+  #message-object, .toctree-l2:first-child {
+  background: lightgray;
+}
