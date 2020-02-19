@@ -169,8 +169,9 @@ class MailBox(object):
 
                 response = self._imap_client.select_folder(folder.name)
             except Exception as e:
-                logger.critical(e)
+                logger.critical("%s at %s" % (str(e), folder.name))
                 continue
+                
             # our algorithm doesn't work without these
             if not ('UIDNEXT' in response and 'UIDVALIDITY' in response):
                 logger.critical("%s Missing UID Information" % folder)
