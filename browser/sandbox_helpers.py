@@ -36,7 +36,6 @@ def get_default_user_environment(mailbox, fakeprint):
         'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),
         'handle_on_deadline': lambda f: mailbox.deadline_handler.handle(f),
         'Calendar': MyCalendar,
-        'Text_entity_extractor': mailbox._get_time_entity_extractor,
         'print': fakeprint # TODO potentially get rid of this and use userlogger
     }
 

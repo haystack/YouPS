@@ -45,7 +45,7 @@ class MailBox(object):
         self.event_data_list = []  # type: t.List[AbstractEventData]
         self.new_message_ids = set()  # type: t.Set[str]
         self.is_simulate = is_simulate  # type: bool
-        self.time_entity_extractor = None
+        
 
     def __str__(self):
         # type: () -> t.AnyStr
@@ -108,13 +108,7 @@ class MailBox(object):
         # Just be sure any changes have been committed or they will be lost.
         conn.close()
 
-    def _get_time_entity_extractor(self):
-        if self.time_entity_extractor is None:
-            logger.exception("loading extractor")
-            self.time_entity_extractor = Duckling()
-            self.time_entity_extractor.load()
-        
-        return self.time_entity_extractor
+    
 
     def _add_contact(self, name, email_address):
         if self._imap_account.nylas_access_token:

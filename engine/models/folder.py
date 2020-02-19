@@ -41,6 +41,8 @@ class Folder(object):
         # the connection to the server
         self._imap_client = imap_client  # type: IMAPClient
 
+        self.time_entity_extractor = None
+
     def __str__(self):
         # type: () -> t.AnyStr
         return "folder: %s" % (self.name)
@@ -176,6 +178,14 @@ class Folder(object):
         # finally update our last seen uid (this uses the cached messages to determine last seen uid)
         self._update_last_seen_uid()
         logger.debug("%s finished completely refreshing cache" % self)
+
+    def _get_time_entity_extractor(self):
+        if self.time_entity_extractor is None:
+            logger.exception("loading extractor")
+            self.time_entity_extractor = Duckling()
+            self.time_entity_extractor.load()
+        
+        return self.time_entity_extractor
 
     def _update_last_seen_uid(self):
         # type () -> None
@@ -540,6 +550,22 @@ class Folder(object):
             if event_data_list is not None:
                 assert new_message_ids is not None
                 if metadata['message-id'] in new_message_ids:
+                    m = Message(new_message, self._imap_client)
+                    te = self._get_time_entity_extractor()
+                    time_entities = te.parse(m.extract_response(), reference_time=str(date))
+
+                    time_entities_filter = []
+                    for e in time_entities:
+                        if e["dim"] not in ["time", "interval"]:
+                            continue
+                        if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
+                             continue
+                        logger.info (e)
+                        time_entities_filter.append(e)
+                    
+                    # base_message.extracted_time = json.dumps(time_entities,cls=DjangoJSONEncoder)
+                    # base_message.save()
+
                     # Check thread arrival event
                     if self._imap_account.nylas_access_token:
                         nylas = APIClient(
@@ -549,7 +575,7 @@ class Folder(object):
                         )
                         # TODO 
                         # find thread in nylas
-                        m = Message(new_message, self._imap_client)
+                        
                         if m._get_nylas_message():
                             logger.debug("Find Nylas msg for the new msg")
                             nylas_thread = nylas.threads.get(m._get_nylas_message().thread_id)

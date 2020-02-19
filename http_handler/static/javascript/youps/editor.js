@@ -281,7 +281,7 @@ document.addEventListener("mv-load", function(e){
         
         console.log(entity_method)
         console.log(global_method)
-        debugger;
+        
         var suggestion = curLine.includes(".") ? 
             entity_method.filter(function(item) {
                 return item.match(regex);
@@ -290,11 +290,12 @@ document.addEventListener("mv-load", function(e){
                 return item.match(regex);
             }).sort();
 
-        var suggestion_tmp = [];
-        $.each(suggestion, function(k, v) {
-            suggestion_tmp.push({"text": v, "displayText": v + "(): \n test"})
-        });
-        suggestion = suggestion_tmp;
+        // var suggestion_tmp = [];
+        // $.each(suggestion, function(k, v) {
+        //     // TODO find the text in doc and get its description & args
+        //     suggestion_tmp.push({"text": v, "displayText": v + "(): \n test"})
+        // });
+        // suggestion = suggestion_tmp;
 
         if (curWord[curWord.length -1] == ".") suggestion = [];
         console.log(suggestion);

@@ -152,20 +152,16 @@ def loop_sync_user_inbox():
 
         imapAccounts = ImapAccount.objects.filter(
             is_initialized=True)  # type: t.List[ImapAccount]
+
         for imapAccount in imapAccounts:
             # if imapAccount.email not in ["pmarsena@mit.edu", "youps.empty@gmail.com", "shachieg@csail.mit.edu"]:
             #     continue
             # refresh from database
             is_new_message = True
-            imapAccount = ImapAccount.objects.get(id=imapAccount.id)
-            if not imapAccount.is_initialized:
-                continue
-
             if imapAccount.nylas_access_token:
                 logger.info("Checking delta of %s " % imapAccount.email)
                 # do sync whenever there is delta detected by Nylas
                 cursor, is_new_message = _request_new_delta(imapAccount)
-
                 if not cursor:
                     logger.info("No delta detected at %s -- move on to next inbox" % imapAccount.email)
                     continue 
@@ -255,8 +251,6 @@ def loop_sync_user_inbox():
                 logger.info(
                     'Sync done for %s', imapAccount_email)
             except ImapAccount.DoesNotExist:
-                imapAccount.is_initialized = False
-                imapAccount.save()
                 logger.exception(
                     "syncing fails Remove periodic tasks. imap_account not exist %s" % (imapAccount_email))
 

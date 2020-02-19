@@ -784,19 +784,17 @@ def _request_new_delta(imap_account):
     user_access_token = imap_account.nylas_access_token
     headers = {'Authorization': user_access_token, 'Content-Type': 'application/json', 'cache-control': 'no-cache'}
     r=requests.get(url, headers=headers)
-    # logger.info(r.json())
     if 'cursor_end' not in r.json():
         return _check_delta(imap_account), False
     else:
-        # logger.info(imap_account.nylas_delta_cursor)
         if r.json()['cursor_start'] != r.json()['cursor_end']:
             for d in r.json()['deltas']:
+                logger.debug("%s %s" % (d["event"], d["object"]) )
                 if d["object"] == "event":
                     continue 
-                logger.debug("%s %s %s" % (d["event"], d["object"], d["attributes"]) )
+                
                 if d["object"] in ["message", "thread"]:
                     return r.json()['cursor_end'], True
-                
 
     return r.json()['cursor_end'], False
 

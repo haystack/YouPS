@@ -317,7 +317,7 @@ def interpret(mailbox, mode):
         now = timezone.now()
         for task in EventManager.objects.filter(date__lte=now).order_by('date'): #(imap_account=mailbox._imap_account): # TODO filter by timestamp has passed and either thread, message or contact belongs to this imap account
             # check membership first
-            logger.info("task detected")
+
             skip = True
             if (task.base_message and task.base_message.imap_account == mailbox._imap_account) or \
                 (task.thread and task.thread.imap_account == mailbox._imap_account) or \

@@ -372,7 +372,7 @@ hits reply.</p>
 <dt id="Message.Message.see_later">
 <code class="sig-name descname">see_later</code><span class="sig-paren">(</span><em class="sig-param">later_at=60</em>, <em class="sig-param">hide_in='YouPS see later'</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.see_later" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hide a message to a folder and move it back to a original folder</p>
-<p>my_message.on_time(now+later_at, f(message){ message.move(‘original_location’) })</p>
+<p>my_message.on_time(f(message){ message.move(‘original_location’) }, later_at)</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>later_at (int): when to move this message back to inbox (in minutes)
 hide_in (string): a name of folder to hide this message temporarily</p>
