@@ -27,6 +27,7 @@ from engine.models.helpers import CustomProperty
 
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 from nylas import APIClient
+from duckling import Duckling
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -551,17 +552,17 @@ class Folder(object):
                 assert new_message_ids is not None
                 if metadata['message-id'] in new_message_ids:
                     m = Message(new_message, self._imap_client)
-                    te = self._get_time_entity_extractor()
-                    time_entities = te.parse(m.extract_response(), reference_time=str(date))
+                    # te = self._get_time_entity_extractor()
+                    # time_entities = te.parse(m.extract_response(), reference_time=str(date))
 
-                    time_entities_filter = []
-                    for e in time_entities:
-                        if e["dim"] not in ["time", "interval"]:
-                            continue
-                        if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
-                             continue
-                        logger.info (e)
-                        time_entities_filter.append(e)
+                    # time_entities_filter = []
+                    # for e in time_entities:
+                    #     if e["dim"] not in ["time", "interval"]:
+                    #         continue
+                    #     if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
+                    #          continue
+                    #     logger.info (e)
+                    #     time_entities_filter.append(e)
                     
                     # base_message.extracted_time = json.dumps(time_entities,cls=DjangoJSONEncoder)
                     # base_message.save()

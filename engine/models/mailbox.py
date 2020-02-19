@@ -18,7 +18,6 @@ from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
 from nylas import APIClient
 from http_handler.settings import CLIENT_ID, NYLAS_ID, NYLAS_SECRET
-from duckling import Duckling
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -171,7 +170,7 @@ class MailBox(object):
             except Exception as e:
                 logger.critical("%s at %s" % (str(e), folder.name))
                 continue
-                
+
             # our algorithm doesn't work without these
             if not ('UIDNEXT' in response and 'UIDVALIDITY' in response):
                 logger.critical("%s Missing UID Information" % folder)
