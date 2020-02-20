@@ -26,6 +26,7 @@ from engine.models.message import Message  # noqa: F401 ignore unused we use it 
 
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 from nylas import APIClient
+from engine.utils import auth_to_nylas
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 button_logger = logging.getLogger('button') # type: logging.Logger
@@ -362,6 +363,11 @@ def fetch_upcoming_events(user, email):
 
     try:
         imapAccount = ImapAccount.objects.get(email=email)
+
+        try:
+            auth_to_nylas(imapAccount)
+        except :
+            logger.exception("Can't log into Nylas")
 
         if imapAccount.nylas_access_token:
             nylas = APIClient(

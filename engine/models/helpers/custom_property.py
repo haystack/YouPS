@@ -56,7 +56,7 @@ def _is_nested(obj):
 def ActionLogging(f):
     def inner_func(obj, *args, **kwargs):
         class_name = _get_class_name(obj)
-        _get_logger().info(obj)
+        #_get_logger().info(obj)
         function_name = _get_method_name(f)
         parsed_args = [str(args[i]) for i in range(len(args))]
 

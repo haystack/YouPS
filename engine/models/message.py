@@ -25,14 +25,13 @@ from engine.models.contact import Contact
 from schema.youps import (EmailRule,  # noqa: F401 ignore unused we use it for typing
                           ImapAccount, BaseMessage, MessageSchema, EventManager, ThreadSchema)
 from smtp_handler.utils import format_email_address, get_attachments, codeobject_dumps, codeobject_loads
-from engine.utils import IsNotGmailException, convertToUserTZ, get_datetime_from_now, is_gmail_label, prettyPrintTimezone
+from engine.utils import IsNotGmailException, auth_to_nylas, convertToUserTZ, get_datetime_from_now, is_gmail_label, prettyPrintTimezone
 from engine.models.helpers import message_helpers, CustomProperty, ActionLogging
 
 from email_reply_parser import EmailReplyParser
 
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET, time_entity_extractor
 from nylas import APIClient
-from duckling import Duckling
 
 userLogger = logging.getLogger('youps.user')  # type: logging.Logger
 logger = logging.getLogger('youps')  # type: logging.Logger
@@ -237,13 +236,12 @@ class Message(object):
 
     def _get_nylas_message(self):
         if self._nylas_message is None:
-            if not self._imap_account.nylas_access_token:
-                raise Exception("You need to log in to add-on in order to use this function. Log in here: https://youps.csail.mit.edu/%s" % "settings")
+            auth_to_nylas(self._imap_account)
 
             nylas = APIClient(
                 NYLAS_ID,
                 NYLAS_SECRET,
-                self._imap_account.nylas_access_token
+                auth_to_nylas(self._imap_account)
             )
 
             
@@ -251,7 +249,7 @@ class Message(object):
             import pytz
             datetime_obj = self.date.replace(tzinfo=pytz.utc)
             if self.date.tzinfo:
-                logger.info("tz exist")
+                # logger.info("tz exist")
                 datetime_obj = datetime_obj.astimezone(self.date.tzinfo)
             # d=convertToUserTZ(self.date)
             timestamp = timegm(datetime_obj.timetuple())
@@ -267,6 +265,8 @@ class Message(object):
 
     @CustomProperty
     def c(self):
+        auth_to_nylas(self._imap_account)
+
         if self._imap_account.nylas_access_token:
             nylas = APIClient(
                 NYLAS_ID,
@@ -291,6 +291,8 @@ class Message(object):
         return FolderSchema.objects.filter(imap_account=self._imap_account).filter(is_selectable=True).values('name')
 
     def _get_duckling(self):
+        from duckling import Duckling
+
         if self.time_entity_extractor is None:
             logger.exception("loading extractor")
             self.time_entity_extractor = Duckling()
@@ -299,26 +301,54 @@ class Message(object):
         return self.time_entity_extractor
 
     def test(self):
-        
-        #  parse only the current message
-        
-        # return d.parse_time(EmailReplyParser.parse_reply(self.content['text']))
         content = self.content
-        t = EmailReplyParser.parse_reply(content['text'] or content['html'])
+        content = content['text'] or content['html']
+        t = EmailReplyParser.parse_reply(content)
         
-        # t= Text_entity_extractor().parse(t, reference_time=str(self.date))
-        # logger.info("parse done")
-        # a = []
-        # for e in t:
-        #     if e["dim"] not in ["time", "interval"]:
-        #         continue
-        #     if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
-        #          continue
-        #     logger.info (e)
-        #     a.append(e)
-        #     # if "text" in e and len(e["text"]) >=3:
-                 
-        # return a
+        time_entities= self._get_duckling().parse(t, reference_time=str(self.date))
+        logger.info("parse done")
+        a = []
+        values = []
+        for e in time_entities:
+            if e["dim"] not in ["time", "interval"]: # extract url
+                continue
+            if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
+                 continue
+            
+            if "body" in e and e["body"].lower().strip() in ["now", "spring", "summer", "fall", "winter"]:
+                continue
+
+            if "body" in e and len(e["body"]) >= 3 and e['value'] not in values:
+                logger.info(e)
+                body = t[max(e["start"]-20, 0):min(e["end"]+20, len(t))].replace(e["body"], "*%s*" % e["body"]).replace("\n", "")
+                logger.info (body)
+                start = end = ""
+
+                if len(e["value"]["values"]) > 0:
+                    if "type" in e["value"]["values"][0] and e["value"]["values"][0]["type"] == "interval":
+                        start = e["value"]["values"][0]["from"]["value"]
+                        end = e["value"]["values"][0]["to"]["value"]
+                    else:
+                        start = e["value"]["values"][0]["value"]
+
+                        logger.info(e["value"]["values"][0]["value"])
+                else:
+                    if "from" in e["value"]:
+                        start = e["value"]["from"]["value"]
+                        logger.info(e["value"]["from"]["value"])
+
+                    else:
+                        end = e["value"]["to"]["value"]
+                        logger.info(e["value"]["to"]["value"])
+
+                if start or end:
+                    # TODO if the extracted date is too old or too far future, jump
+                    a.append({"body": ".. %s .." %body, "start": start, "end": end}) # TODO only take duration of event start, end, m
+                    #a.append(e)
+                    values.append(e['value'])
+            
+        logger.info(time_entities)
+        return a
         
 
     def q(self):
@@ -348,11 +378,10 @@ class Message(object):
         Returns:
             t.List[Message]: a list of Message instances
         """
-
         nylas = APIClient(
             NYLAS_ID,
             NYLAS_SECRET,
-            self._imap_account.nylas_access_token
+            auth_to_nylas(self._imap_account)
         )
 
         # p = re.compile( '([\[\(] *)?(RE?S?|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$', re.IGNORECASE)

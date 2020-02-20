@@ -5,11 +5,13 @@ import re
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from itertools import izip, tee
 import json 
+import requests
 from schema.youps import LogSchema
 from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from django.utils import timezone
 from pytz import timezone as tz
+from http_handler.settings import NYLAS_ID
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
@@ -44,6 +46,82 @@ class InvalidFlagException(YoupsException):
             args = (default_message,)
         # Call super constructor
         super(InvalidFlagException, self).__init__(*args, **kwargs)
+
+def auth_to_nylas(imapAccount):
+    if imapAccount.nylas_access_token:
+        return imapAccount.nylas_access_token
+
+    response_body = None
+    if "csail" in imapAccount.host:
+        response_body = {
+            "client_id": NYLAS_ID,
+            "email_address": imapAccount.email,
+            "name": imapAccount.email.split("@")[0],
+            "provider": "imap",
+            "settings":      {
+                "imap_host":     "imap.csail.mit.edu",
+                "imap_port":     993,
+                "imap_username": imapAccount.email.split("@")[0],
+                "imap_password": imapAccount.password,
+                "smtp_host":     "outgoing.csail.mit.edu",
+                "smtp_port":     587,
+                "smtp_username": imapAccount.email.split("@")[0],
+                "smtp_password": imapAccount.password,
+                "ssl_required":  True
+            },
+            "scopes": "email,calendar,contacts"
+        }
+
+    elif "exchange" in imapAccount.host:
+        response_body = {
+        	"client_id": NYLAS_ID,
+            "email_address": imapAccount.email,
+            "name": imapAccount.email.split("@")[0],
+            "provider":      "exchange",
+            "settings": {
+        		"username": imapAccount.email.split("@")[0],
+        		"password": imapAccount.password,
+        		"eas_server_host": "owa.exchange.mit.edu",
+        	},
+            "scopes": "email,calendar,contacts"
+        }
+
+    else:
+        response_body = {
+            "client_id": NYLAS_ID,
+            "email_address": imapAccount.email,
+            "name": imapAccount.email.split("@")[0],
+            "provider": "imap",
+            "settings":      {
+                "imap_host":     imapAccount.host,
+                "imap_port":     993,
+                "imap_username": imapAccount.email,
+                "imap_password": imapAccount.password,
+                "smtp_host":     imapAccount.host.replace("imap", "smtp"),
+                "smtp_port":     587,
+                "smtp_username": imapAccount.email,
+                "smtp_password": imapAccount.password,
+                "ssl_required":  True
+            },
+            "scopes": "email,calendar,contacts"
+        }
+
+    nylas_authorize_resp = requests.post(
+        "https://api.nylas.com/connect/authorize", json=response_body
+    )
+
+    if not nylas_authorize_resp.ok:
+        message = nylas_authorize_resp.json()["message"]
+        logger.exception(message)
+        raise Exception("You need to log in to add-on in order to use this function. Log in here: https://youps.csail.mit.edu/%s" % "settings")
+
+    nylas_code = nylas_authorize_resp.json()["code"]
+    imapAccount.nylas_access_token = nylas_code
+    imapAccount.save()
+
+    return nylas_code
+
+
 
 def get_datetime_from_now(later_at):
     if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):

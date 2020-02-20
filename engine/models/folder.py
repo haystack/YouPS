@@ -24,6 +24,7 @@ from schema.youps import (  # noqa: F401 ignore unused we use it for typing
     BaseMessage, ContactSchema, ContactAlias, EventManager, FolderSchema, ImapAccount,
     MessageSchema, ThreadSchema)
 from engine.models.helpers import CustomProperty
+from engine.utils import auth_to_nylas
 
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 from nylas import APIClient
@@ -568,6 +569,11 @@ class Folder(object):
                     # base_message.save()
 
                     # Check thread arrival event
+                    try:
+                        auth_to_nylas(self._imap_account)
+                    except :
+                        logger.exception("Can't log into Nylas")
+                        
                     if self._imap_account.nylas_access_token:
                         nylas = APIClient(
                             NYLAS_ID,
