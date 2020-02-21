@@ -50,6 +50,7 @@ class InvalidFlagException(YoupsException):
 def auth_to_nylas(imapAccount):
     if imapAccount.nylas_access_token:
         return imapAccount.nylas_access_token
+    from browser.imap import decrypt_plain_password
 
     response_body = None
     if "csail" in imapAccount.host:
@@ -62,11 +63,11 @@ def auth_to_nylas(imapAccount):
                 "imap_host":     "imap.csail.mit.edu",
                 "imap_port":     993,
                 "imap_username": imapAccount.email.split("@")[0],
-                "imap_password": imapAccount.password,
+                "imap_password": decrypt_plain_password(imapAccount.password),
                 "smtp_host":     "outgoing.csail.mit.edu",
                 "smtp_port":     587,
                 "smtp_username": imapAccount.email.split("@")[0],
-                "smtp_password": imapAccount.password,
+                "smtp_password": decrypt_plain_password(imapAccount.password),
                 "ssl_required":  True
             },
             "scopes": "email,calendar,contacts"
@@ -80,7 +81,7 @@ def auth_to_nylas(imapAccount):
             "provider":      "exchange",
             "settings": {
         		"username": imapAccount.email.split("@")[0],
-        		"password": imapAccount.password,
+        		"password": decrypt_plain_password(imapAccount.password),
         		"eas_server_host": "owa.exchange.mit.edu",
         	},
             "scopes": "email,calendar,contacts"
@@ -96,11 +97,11 @@ def auth_to_nylas(imapAccount):
                 "imap_host":     imapAccount.host,
                 "imap_port":     993,
                 "imap_username": imapAccount.email,
-                "imap_password": imapAccount.password,
+                "imap_password": decrypt_plain_password(imapAccount.password),
                 "smtp_host":     imapAccount.host.replace("imap", "smtp"),
                 "smtp_port":     587,
                 "smtp_username": imapAccount.email,
-                "smtp_password": imapAccount.password,
+                "smtp_password": decrypt_plain_password(imapAccount.password),
                 "ssl_required":  True
             },
             "scopes": "email,calendar,contacts"

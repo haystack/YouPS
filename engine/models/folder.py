@@ -576,7 +576,6 @@ class Folder(object):
                             if "body" in e and len(e["body"]) >= 3 and e['value'] not in values:
                                 logger.debug(e)
                                 body = t[max(e["start"]-20, 0):min(e["end"]+20, len(t))].replace(e["body"], "*%s*" % e["body"]).replace("\n", " ")
-                                logger.info (body)
                                 start = end = ""
 
                                 if len(e["value"]["values"]) > 0:
@@ -622,20 +621,13 @@ class Folder(object):
                     base_message.save()
 
                     # Check thread arrival event
-                    try:
-                        auth_to_nylas(self._imap_account)
-                    except :
-                        logger.exception("Can't log into Nylas")
-
                     if self._imap_account.nylas_access_token:
                         nylas = APIClient(
                             NYLAS_ID,
                             NYLAS_SECRET,
                             self._imap_account.nylas_access_token
                         )
-                        # TODO 
-                        # find thread in nylas
-                        
+                        # find thread in nylas        
                         if m._get_nylas_message():
                             logger.debug("Find Nylas msg for the new msg")
                             nylas_thread = nylas.threads.get(m._get_nylas_message().thread_id)
