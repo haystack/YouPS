@@ -11,13 +11,14 @@ from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from django.utils import timezone
 from pytz import timezone as tz
-from http_handler.settings import NYLAS_ID
+from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
     from engine.models.folder import Folder
     from schema.youps import ImapAccount, MessageSchema, FolderSchema, BaseMessage  # noqa: F401 ignore unused we use it for typing
     from imapclient import IMAPClient
+from nylas import APIClient
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -80,7 +81,7 @@ def auth_to_nylas(imapAccount):
             "name": imapAccount.email.split("@")[0],
             "provider":      "exchange",
             "settings": {
-        		"username": imapAccount.email.split("@")[0],
+        		"username": imapAccount.email,
         		"password": decrypt_plain_password(imapAccount.password),
         		"eas_server_host": "owa.exchange.mit.edu",
         	},
@@ -117,7 +118,14 @@ def auth_to_nylas(imapAccount):
         raise Exception("You need to log in to add-on in order to use this function. Log in here: https://youps.csail.mit.edu/%s" % "settings")
 
     nylas_code = nylas_authorize_resp.json()["code"]
-    imapAccount.nylas_access_token = nylas_code
+
+    nylas_app = APIClient(
+        NYLAS_ID,
+        NYLAS_SECRET
+    )
+
+    ACCESS_TOKEN = nylas_app.token_for_code(nylas_code)
+    imapAccount.nylas_access_token = ACCESS_TOKEN
     imapAccount.save()
 
     return nylas_code
