@@ -303,14 +303,14 @@ class Message(object):
     def test(self):
         content = self.content
         content = content['text'] or content['html']
-        t = EmailReplyParser.parse_reply(content)
+        t = self.extract_response(content)
         
         time_entities= self._get_duckling().parse(t, reference_time=str(self.date))
         logger.info("parse done")
         a = []
         values = []
         for e in time_entities:
-            if e["dim"] not in ["time", "interval"]: # extract url
+            if e["dim"] not in ["time", "interval"]: # extract url?
                 continue
             if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
                  continue
@@ -320,7 +320,7 @@ class Message(object):
 
             if "body" in e and len(e["body"]) >= 3 and e['value'] not in values:
                 logger.info(e)
-                body = t[max(e["start"]-20, 0):min(e["end"]+20, len(t))].replace(e["body"], "*%s*" % e["body"]).replace("\n", "")
+                body = t[max(e["start"]-20, 0):min(e["end"]+20, len(t))].replace(e["body"], "*%s*" % e["body"]).replace("\n", " ")
                 logger.info (body)
                 start = end = ""
 
@@ -342,9 +342,20 @@ class Message(object):
                         logger.info(e["value"]["to"]["value"])
 
                 if start or end:
-                    # TODO if the extracted date is too old or too far future, jump
-                    a.append({"body": ".. %s .." %body, "start": start, "end": end}) # TODO only take duration of event start, end, m
-                    #a.append(e)
+                    # if the extracted date is too old or too far future, jump
+                    if start:
+                        # parse start
+                        # e.g., 1980-01-01T00:00:00.000Z
+                        start = datetime.strptime(start, '%Y-%m-%dT%H:%M:%S.%fZ')
+                        if start.year < datetime.today().year or start.year > (datetime.today().year +1):
+                            continue
+
+                    if end:
+                        end = datetime.strptime(end, '%Y-%m-%dT%H:%M:%S.%fZ')
+                        if end.year < datetime.today().year or end.year > (datetime.today().year +1):
+                            continue
+                    
+                    a.append({"body": ".. %s .." % body, "start": start, "end": end}) # TODO only take duration of event start, end, m
                     values.append(e['value'])
             
         logger.info(time_entities)
@@ -655,6 +666,15 @@ class Message(object):
         """
         content = self.content
         return EmailReplyParser.parse_reply(content['text'] or content['html'])
+
+    def extract_time_entity(self):
+        # type: () -> t.List[t.AnyStr]
+        """return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP 
+            
+            Returns:
+                t.List[t.AnyStr]: list of {"body": "~", "start": "~", "end": "~"}
+        """
+        return self._schema.base_message.extracted_time
 
     @ActionLogging
     def mark_read(self):

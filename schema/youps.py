@@ -100,6 +100,8 @@ class BaseMessage(models.Model):
     _in_reply_to = models.TextField(db_column="in_reply_to", default="[]")
     # the date when the message was sent
     date = models.DateTimeField(null=True, blank=True)
+    # extracted time in contents with duckling 
+    extracted_time = models.TextField(null=True, blank=True) 
     # the subject of the message
     subject = models.TextField(null=True, blank=True)
     # the date when the message was received
