@@ -196,12 +196,6 @@
                 ]
             },
             {
-                "name": "thread",
-                "return_type": "t.List[Message]",
-                "description": "Return a list of messages in this thread",
-                "example": ""
-            },
-            {
                 "name": "progress",
                 "return_type": "string",
                 "description": "",
