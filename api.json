@@ -246,12 +246,6 @@
                 "example": ""
             },
             {
-                "name": "extract_time_entity",
-                "params": "",
-                "description": "Return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP ",
-                "example": ""
-            },
-            {
                 "name": "forward",
                 "params": "to=[], cc=[], bcc=[]",
                 "description": "Forward this email to the given recipients.",
