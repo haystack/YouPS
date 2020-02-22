@@ -196,6 +196,12 @@
                 ]
             },
             {
+                "name": "thread",
+                "return_type": "t.List[Message]",
+                "description": "Return a list of messages in this thread",
+                "example": ""
+            },
+            {
                 "name": "progress",
                 "return_type": "string",
                 "description": "",
@@ -243,6 +249,12 @@
                 "name": "delete",
                 "params": "",
                 "description": "Delete this email to your trash folder.",
+                "example": ""
+            },
+            {
+                "name": "extract_time_entity",
+                "params": "",
+                "description": "Return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP ",
                 "example": ""
             },
             {
@@ -388,7 +400,7 @@
                 "params": "handler",
                 "description": "Contact method- Run the handler when there is new response arrived from this contact",
                 "example": ""
-            },]
+        }]
     },
     "getter_archieve": [{
             "name": "get_content",
