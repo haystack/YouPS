@@ -319,14 +319,14 @@
             {
                 "name": "on_response",
                 "params": "handler",
-                "description": "Run the handler when there is new response arrived on this message thread",
+                "description": "Message method- Run the handler when there is new response arrived on this message thread",
                 "example": ""
             },
             {
                 "name": "recent_messages",
                 "params": "N=3",
                 "return_type": "Message []",
-                "description": "Return previous messages in this message thread.",
+                "description": "Message method- Return previous messages in this message thread.",
                 "example": []
             },
             {
@@ -380,9 +380,15 @@
             "name": "recent_messages",
             "params": "N=3",
             "return_type": "Message []",
-            "description": "Return the messages where this contact is listed in the from/to/cc/bcc field",
+            "description": "Contact method- Return the messages where this contact is listed in the from/to/cc/bcc field",
             "example": []
-        }]
+        },
+        {
+                "name": "on_response",
+                "params": "handler",
+                "description": "Contact method- Run the handler when there is new response arrived from this contact",
+                "example": ""
+            },]
     },
     "getter_archieve": [{
             "name": "get_content",
