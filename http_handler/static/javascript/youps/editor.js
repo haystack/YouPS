@@ -252,21 +252,24 @@ document.addEventListener("mv-load", function(e){
     // Editor autocomplete
     var global_method = [];
     document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
-        global_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        var func_with_param = $.trim(element.innerHTML.replace(" (", "("));
+        global_method.push( {"text": func_with_param, "displayText": func_with_param + ": " + $(element).siblings("span").text() });
     });
 
     var entity_method = [];
     document.querySelectorAll('#apis-container div[property="message"] h4').forEach(function(element) {
-        entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        var func_with_param = $.trim(element.innerHTML.replace(" (", "("));
+        entity_method.push( {"text": func_with_param, "displayText": func_with_param + ": " + $(element).siblings("span").text()} );
     });
 
     document.querySelectorAll('#apis-container div[property="contact"] h4').forEach(function(element) {
-        entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+        var func_with_param = $.trim(element.innerHTML.replace(" (", "("));
+        entity_method.push( {"text": func_with_param, "displayText": func_with_param + ": " + $(element).siblings("span").text()});
     });
 
-    document.querySelectorAll('#apis-container div[property="calendar"] h4').forEach(function(element) {
-        entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
-    });
+    // document.querySelectorAll('#apis-container div[property="calendar"] h4').forEach(function(element) {
+    //     entity_method.push( $.trim(element.innerHTML.split("(")[0]) );
+    // });
 
     CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor, options) {
         var cur = editor.getCursor();
@@ -284,10 +287,10 @@ document.addEventListener("mv-load", function(e){
         
         var suggestion = curLine.includes(".") ? 
             entity_method.filter(function(item) {
-                return item.match(regex);
+                return item["text"].match(regex);
             }).sort() : 
             global_method.filter(function(item) {
-                return item.match(regex);
+                return item["text"].match(regex);
             }).sort();
 
         // var suggestion_tmp = [];

@@ -568,3 +568,7 @@ div[type='repeat'] {
 #example tr.unmatched{
   opacity: 0.5;
 }
+
+.CodeMirror-hints, .CodeMirror-hint {
+  width: 700px;
+}

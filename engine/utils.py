@@ -128,7 +128,7 @@ def auth_to_nylas(imapAccount):
     imapAccount.nylas_access_token = ACCESS_TOKEN
     imapAccount.save()
 
-    return nylas_code
+    return ACCESS_TOKEN
 
 
 

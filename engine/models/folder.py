@@ -463,7 +463,6 @@ class Folder(object):
         if self._imap_account.email == "karger@mit.edu":
             logger.info('karger folder {f}: message_arrival'.format(
                 f=self.name))
-            logger.info(fetch_data)
 
         # iterate over the fetched data
         for uid in fetch_data:
