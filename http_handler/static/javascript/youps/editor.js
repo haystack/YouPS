@@ -252,7 +252,8 @@ document.addEventListener("mv-load", function(e){
     // Editor autocomplete
     var global_method = [];
     document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {
-        var func_with_param = $.trim(element.innerHTML.replace(" (", "("));
+        var func_with_param = element.innerHTML.split(")")[0] + ")";
+        func_with_param = $.trim(func_with_param.replace(" (", "("));
         global_method.push( {"text": func_with_param, "displayText": func_with_param + ": " + $(element).siblings("span").text() });
     });
 
