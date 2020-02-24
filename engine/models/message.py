@@ -575,7 +575,15 @@ class Message(object):
         Returns:
             dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """
-        return message_helpers.get_content_from_message(self)
+        
+        _is_read = self.is_read
+        logger.critical(_is_read)
+        c = message_helpers.get_content_from_message(self)
+        if not _is_read:
+            logger.critical("MARK UNREAD")
+            self.mark_unread()
+        return c
+
 
     def _has_flag(self, flag):
         # type: (t.AnyStr) -> bool
@@ -681,10 +689,12 @@ class Message(object):
         # type: () -> None
         """Mark a message as read.
         """
+        
         if not self._is_simulate:
-            self._add_flags('\\Seen')
+            self._imap_client.add_flags([self._uid], '\\Seen')
         else:
             logger.info("simulate: mark as read")
+        self._flags = list(set(self._flags + ['\\Seen']))
 
     @ActionLogging
     def mark_unread(self):
@@ -692,9 +702,12 @@ class Message(object):
         """Mark a message as unread
         """
         if not self._is_simulate:
-            self._remove_flags('\\Seen')
+            # self._remove_flags('\\Seen')
+            self._imap_client.remove_flags([self._uid], '\\Seen')
         else:
             logger.info("simulate: mark as read")
+        if '\\Seen' in self._flags:
+            self._flags = self._flags.remove('\\Seen')
 
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None

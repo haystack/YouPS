@@ -557,7 +557,7 @@ class Folder(object):
                     te = self._get_time_entity_extractor()
                     t = m.extract_response()
                     t = m.subject +" "+ t
-                    time_entities = te.parse(t, reference_time=str(date))
+                    time_entities = te.parse(t, reference_time=str(base_message.date))
 
                     a = []
                     values = []
