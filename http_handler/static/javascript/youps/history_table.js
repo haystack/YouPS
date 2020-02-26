@@ -149,6 +149,10 @@ function fetch_log(from_id=null, to_id=null) {
                 var new_msg_key = $(Object.keys(msg_log)).not(Object.keys(log_backup)).get();      
                 console.log(new_msg_key);                  
                 append_log(new_msg_key.reduce((a, c) => ({ ...a, [c]: msg_log[c] }), {}), false);
+                if (!from_id && !to_id) {
+                    $("input[name='historyTableFilter']").prop( "checked", true );
+                    $("input[name='historyTableFilter']").trigger("change");
+                }
                 
                 // update min and max of log IDs
                 if (res["log_min_id"] != -1)   
@@ -175,6 +179,22 @@ function fetch_log(from_id=null, to_id=null) {
     ).fail(function(res) {
         alert("Please refresh the page!");
     });
+}
+
+function filterNoop(cb) {
+    // If log and undo button are emtpy, then hide or show
+    if(cb.checked) {
+        $("#console-table tbody tr").hide();
+        $("#console-table tbody tr").each(function(k, v) {
+            if($.trim($(v).find("td:nth-child(5)").html() + $(v).find("td:nth-child(6)").html()))
+                $(this).show();
+        })
+        // $("#console-table tbody tr").show();
+    }
+    else {
+        // show all 
+        $("#console-table tbody tr").show();
+    }
 }
 
 $(document).ready(function() {
