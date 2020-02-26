@@ -71,7 +71,8 @@ def ActionLogging(f):
             "_on_response": "schedule",
             "_on_time": "schedule",
             "_see_later": "schedule",
-            "_move": "action"
+            "_move": "action",
+            "delete": "send"
         }
 
         info = {

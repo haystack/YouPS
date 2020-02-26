@@ -70,7 +70,7 @@ function append_log( msg_log, is_error ) {
                     });
                     delete Message["property_log"];
                 }
-
+                console.log( Message['log'])
                 console.log(property_log)
                 console.log(Message['subject'])
 
@@ -80,7 +80,7 @@ function append_log( msg_log, is_error ) {
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
                         (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log'],
-                        '<button type="button" logschema_id={0} class="btn btn-warning btn-undo" data-property-log="{1}">Undo</button>'.format(Message["logschema_id"], property_log)
+                        $.trim(property_log) ? '<button type="button" logschema_id={0} class="btn btn-warning btn-undo" data-property-log="{1}">Undo</button>'.format(Message["logschema_id"], property_log):""
                 ] ).draw( false );  
     
                 // Delete attributes that are not allowed for users 

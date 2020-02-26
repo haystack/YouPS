@@ -661,14 +661,16 @@ class Message(object):
         if not self._is_simulate:
             self._imap_client.copy(self._uid, dst_folder)
 
-    def delete(self):
+    @ActionLogging
+    def delete(self, slient=False):
         # type: () -> None
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
         if not self._is_simulate:
             self._imap_client.add_flags([self._uid],'\\Deleted')
 
-        print("delete(): delete the message")
+        if not slient:
+            print("delete(): delete the message")
         
 
     def extract_response(self):
@@ -752,7 +754,7 @@ class Message(object):
                     self._imap_client.add_flags([self._uid], "\\Deleted")
             else:
                 self.copy(dst_folder)
-                self.delete()
+                self.delete(True)
             self._imap_client.expunge()
 
     def qq(self):
