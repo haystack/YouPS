@@ -96,11 +96,15 @@ class Command(BaseCommand):
             test_cases = [
                 [ # test cases for #0 email
                     {
-                        'code': 'print (my_message.from_.email)',
+                        'code': 'print (my_message.sender.email)',
                         'expected': TEST_ACCOUNT_EMAIL
                     }, 
                     {
-                        'code': 'print("True" if "%s" == my_message.from_ else "") ' % TEST_ACCOUNT_EMAIL,
+                        'code': 'print("True" if "%s" == my_message.sender else "") ' % TEST_ACCOUNT_EMAIL,
+                        'expected': "True"
+                    }, 
+                    {
+                        'code': 'print("True" if "%s" in my_message.to else "") ' % TEST_ACCOUNT_EMAIL,
                         'expected': "True"
                     }, 
                     {

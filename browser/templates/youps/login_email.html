@@ -165,7 +165,8 @@
 									<!-- https://codepen.io/aanjulena/pen/ZLZjzV  -->
 									<button id='btn-code-submit' type="button" class="btn btn-lg btn-toggle" data-toggle="button" aria-pressed="false" autocomplete="off">
 										<div class="handle"></div>
-									  </button>
+									  </button>	  
+									<span data-toggle="tooltip" data-placement="top" data-html="true" title="If you turn off your YouPS, your rule won't be applied to incoming messages" class="glyphicon glyphicon-info-sign"></span>
 								{% else %}
 									<button type="button" class="btn btn-lg btn-toggle" data-toggle="button" aria-pressed="false" autocomplete="off" disabled>
 										<div class="handle"></div>
@@ -464,7 +465,7 @@ print get_sender()
 
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
 
-	<script src="/static/javascript/youps/jquery-ui.min.js"></script>
+	
 	<script type="text/javascript" src="/static/javascript/youps/jquery.switchButton.js"></script>
 
 	<script type="text/javascript" src="/static/javascript/youps/prism.js"></script>
@@ -482,14 +483,8 @@ print get_sender()
 
 	<script src="https://cdn.rawgit.com/CryptoStore/crypto-js/3.1.2/build/rollups/aes.js"></script>
 	
-	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/cipher-core.js"></script>
-	
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/aes.js"></script>
-	<script src="https://cdn.rawgit.com/CryptoStore/crypto-js/3.1.2/build/components/mode-cfb-min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/enc-base64.js"></script> -->
-	
-	
 	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
+	<!-- <script type="text/javascript" src="/static/javascript/youps/message_loader.js"></script> -->
 	<script type="text/javascript" src="/static/javascript/youps/editor.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/login_imap.js"></script>
 

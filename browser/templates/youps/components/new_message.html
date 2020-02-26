@@ -75,7 +75,7 @@
 						<button class='btn btn-default btn-debug-update'><i class="fas fa-sync"></i>Debug my code</button>
 
 						<h2>Test suites</h2>
-						<h4>Recent messages from your selected folders to test your rules</h4>
+						<h4>Let's test your rule on recent messages to your recent messages! <span style='font-size:14px;'>Don't worry -- we don't actually apply the rule, just debugging</span></h4>
 						<table class="example-suites table" style="width:100%">
 						<thead>
 								<tr>
@@ -86,6 +86,90 @@
 							</thead>
 							<tbody>
 							</tbody>
+						</table>
+						<div class="text-center">
+							<button class="btn-log-load-test-messages btn btn-primary" style="display:none;margin-bottom:10px">Load specific messages</button>
+						</div>
+						<div id="button-container" class="btn-watch-container" style="display:none;margin-bottom:10px">
+							<span class='label label-primary spinning' id="btn-watch">Loading</span><span>: toggle (mark read/unread) a message you want to make it appear here! (if the message is read then mark unread, vice versa)</span>
+						</div>
+
+						<script type="text/javascript">
+						var watched_message = [];
+						function fetch_watch_message(container="body") {
+							var params = {
+								"watched_message": watched_message
+							};
+							
+							$.post('/fetch_watch_message', params,
+								function(res) {
+									console.log(res);
+									console.log(res["message_row"]);
+
+									if (res.status) {
+										if ( !res['watch_status'] ) {
+											spin_watch_btn(false);
+											return;
+										}
+
+										if(res["log"]) { // something went wrong
+											watching_msg_container.find("span").text("");
+											watching_msg_container.find("[name='subject']").text( res["log"] );
+										}
+										else  { // If everything successful
+											$.each(res['message_rows'], function(i, message) {
+												debugger;
+												if( watched_message.indexOf( res['contexts'][i]['base_message_id'] ) == -1 ) {
+												$(container+ " .message-parameter-table").prepend( message );
+												$(container+ " .message-parameter-table input[type='radio']").replaceWith("<button class='btn btn-info btn-message-select'>Select</button>")
+												
+												watched_message.push( res['contexts'][i]['base_message_id'] );
+												}
+											})
+										}
+										
+										// show_loader(false);
+									}
+									else if (!res['uid']) {
+										
+									}
+									else {
+										notify(res, false);
+									}
+
+									setTimeout(fetch_watch_message, 1 * 1000, container); // 1 second
+								}
+							).fail(function(res) {
+								alert("Please refresh the page!");
+							});
+						}
+
+							//adding a new element to the list
+							var first = true;
+							$("[rule-id={{rule.id}}] .btn-debug-update").click(function() {
+								if (first) {
+									first = false;
+									$("[rule-id={{rule.id}}] .btn-log-load-test-messages").show();
+								}		
+							})
+
+							$("[rule-id={{rule.id}}] .btn-log-load-test-messages").click(function() {
+								$("[rule-id={{rule.id}}] .btn-log-load-test-messages").hide();
+								$("[rule-id={{rule.id}}] .btn-watch-container").show();
+								fetch_watch_message("[rule-id={{rule.id}}]");
+							});
+
+							$("[rule-id={{rule.id}}] .message-parameter-table").on("click", ".btn-message-select", function() {
+								$(this).parents("tr").hide();
+								var msg_id = $(this).parents("tr").attr("message-index");
+								// simulate on this message and add it to the debugging list
+								debugging_messages_ids.push({"messageschema-id": msg_id});
+								run_simulate_on_messages([], 0, $("[rule-id={{rule.id}}]"), [{"messageschema-id": msg_id}]); 
+							});
+						</script>
+
+						<table class="table message-parameter-table" style="width:100%">
+
 						</table>
 				</div>
 			</div>

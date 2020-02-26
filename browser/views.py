@@ -501,6 +501,10 @@ def run_mailbot(request):
 
 @login_required
 def run_simulate_on_messages(request):
+	"""
+		Args:
+            extra_info (list): used for shortcut args and test on 
+    """
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
 		

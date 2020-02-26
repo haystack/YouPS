@@ -15,6 +15,7 @@ var datatable_config = {
       },
     "order": [[1, 'asc']]
 };
+var debugging_messages_ids = [];
 
 function init_editor(editor_elem) {
     var editor = CodeMirror.fromTextArea(editor_elem, {
@@ -173,7 +174,7 @@ function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_i
                 var t = $( dt_elem ).DataTable();
                 // delete all before added new 
                 $.each($(dt_elem).find('tr[folder]'), function(index, elem) {
-                    if(folder_name.includes($(elem).attr('folder')))
+                    if(N> 0 || folder_name.includes($(elem).attr('folder')))
                         t.row( elem ).remove().draw();  
                 })
 
@@ -293,15 +294,10 @@ document.addEventListener("mv-load", function(e){
             global_method.filter(function(item) {
                 return item["text"].match(regex);
             }).sort();
-
-        // var suggestion_tmp = [];
-        // $.each(suggestion, function(k, v) {
-        //     // TODO find the text in doc and get its description & args
-        //     suggestion_tmp.push({"text": v, "displayText": v + "(): \n test"})
-        // });
-        // suggestion = suggestion_tmp;
-
-        if (curWord[curWord.length -1] == ".") suggestion = [];
+        
+        // Showing all the possible method/property of the object
+        curLine = $.trim(curLine);
+        if ( curLine[curLine.length -1] == ".") suggestion = entity_method;
         console.log(suggestion);
         suggestion.length == 1 ? suggestion.push(" ") : console.log();
 

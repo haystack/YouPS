@@ -572,6 +572,8 @@ class Message(object):
         # type: () -> t.AnyStr
         """Get the content of the message
 
+        See also Message.contains
+
         Returns:
             dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """

@@ -15,8 +15,8 @@ class ButtonService extends React.Component {
         return axios.get(url, {withCredentials: true}).then(response => response.data);
     }  
     getCustomer(pk) {
-        const url = `${API_URL}/api/customers/${pk}`;
-        return axios.get(url).then(response => response.data);
+        const url = `/fetch_watch_message`;
+        return axios.post(url).then(response => response.data);
     }
     deleteCustomer(customer){
         const url = `${API_URL}/api/customers/${customer.pk}`;

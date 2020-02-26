@@ -12,7 +12,8 @@ $(document).ready(function() {
         btn_code_sumbit = $("#btn-code-submit"),
         btn_shortcut_save = $("#btn-shortcut-save");
 
-    var import_str = "import spacy"
+    var import_str = "import spacy";
+    
 
     // Format string
     if (!String.prototype.format) {
@@ -26,6 +27,8 @@ $(document).ready(function() {
           });
         };
     }
+
+    $('[data-toggle="tooltip"]').tooltip();
     
     function append_status_msg( msg, is_error ) {
         if(!msg) return;
@@ -151,7 +154,7 @@ $(document).ready(function() {
         var editor_rule_container = $(this).parents('div[rule-id]');
 
         if ($(this).is(':checked')) {
-            run_simulate_on_messages([$(this).val()], 5, editor_rule_container);
+            run_simulate_on_messages([$(this).val()], 3, editor_rule_container, debugging_messages_ids);
         }
         else { // remove from the table
                 var dt_elem = $(this).parents('.panel-body').find('.debugger-container table')[0];
@@ -237,7 +240,7 @@ $(document).ready(function() {
         $.each($(editor_rule_container).find('.folder-container input:checked'), function(index, val) {
             folders.push($(this).val())
         })
-        run_simulate_on_messages(folders, 5, editor_rule_container);
+        run_simulate_on_messages(folders, 3, editor_rule_container, debugging_messages_ids);
     }); 
 
     // Tab name editor
@@ -866,8 +869,11 @@ $(document).ready(function() {
                         // $('#donotsend-msg').html(res['code']);
                     }
                     else {            
-                        if(!silent)             
+                        if(!silent)  {
+                            res.code = is_running ? "Your rule will be applied from now on to new incoming messages" : "Your YouPS is currently OFF. Your rule won't be applied to messages."
                             notify(res, true);
+                        }           
+                            
                     }
                 }
                 else {

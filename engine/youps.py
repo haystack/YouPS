@@ -9,6 +9,7 @@ import dateutil.parser
 import json
 import requests
 from time import sleep
+from itertools import chain
 
 from Crypto.Cipher import AES
 from imapclient import IMAPClient, exceptions
@@ -600,6 +601,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
             mailbotMode = MailbotMode.objects.filter(id=mode['id'], imap_account=imapAccount)
             if mailbotMode.exists():
                 mailbotMode = mailbotMode[0]
+                # logger.info(mailbotMode.values())
                 mailbotMode.name = mode_name
                 mailbotMode.save()
             else:
@@ -611,7 +613,7 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
 
             r = save_rules(user, email, ers, mode['editors'], mailbotMode)
             
-
+            logger.info(MailbotMode.objects.filter(imap_account=imapAccount).values('name', 'id'))
             logger.info(EmailRule.objects.filter(mode=mailbotMode).values('name', 'id'))
         
 
@@ -677,7 +679,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code='', extra_info
             folder_name (string): name of a folder to extract messages 
             N (int): number of recent messages
             code (string): code to be simulated
-            extra_info (dict): dictionary continas extra information such as argument list for shortucts
+            extra_info (list): a list of dictionary contains extra information such as argument list for shortucts
     """
     res = {'status' : False, 'imap_error': False, 'imap_log': ""}
     logger = logging.getLogger('youps')  # type: logging.Logger
@@ -705,25 +707,30 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code='', extra_info
         res['messages'] = {}
         
         args = {}
+        messages = None
         for e in extra_info:
             if "type" in e:
                 args[e["name"]] = datetime.datetime.now() if e["type"] == "datetime" else "test string"
-                    
+            elif "messageschema-id" in e:
+                msgs = MessageSchema.objects.filter(imap_account=imapAccount, id=e["messageschema-id"])
+                messages = list(chain(messages, msgs)) if messages else msgs
+
         for folder_name in folder_names:
-            messages = MessageSchema.objects.filter(imap_account=imapAccount, folder__name=folder_name).order_by("-base_message__date")[:N]
+            msgs = MessageSchema.objects.filter(imap_account=imapAccount, folder__name=folder_name).order_by("-base_message__date")[:N]
+            messages = list(chain(messages, msgs)) if messages else msgs
 
-            for message_schema in messages:
-                assert isinstance(message_schema, MessageSchema)
-                mailbox = MailBox(imapAccount, imap, is_simulate=True)
-                imap_res = interpret_bypass_queue(mailbox, extra_info={'code': code, 'msg-id': message_schema.id, 'shortcut':args})
-                logger.debug(imap_res)
+        for message_schema in messages:
+            assert isinstance(message_schema, MessageSchema)
+            mailbox = MailBox(imapAccount, imap, is_simulate=True)
+            imap_res = interpret_bypass_queue(mailbox, extra_info={'code': code, 'msg-id': message_schema.id, 'shortcut':args})
+            logger.debug(imap_res)
 
-                message = Message(message_schema, imap)
-                result = print_execution_log(message)
-                result["log"] = imap_res['appended_log'][message_schema.id]['log']
-                result["error"] = imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
+            message = Message(message_schema, imap)
+            result = print_execution_log(message)
+            result["log"] = imap_res['appended_log'][message_schema.id]['log']
+            result["error"] = imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
 
-                res['messages'][message_schema.id] = result
+            res['messages'][message_schema.id] = result
                 
         
         res['status'] = True

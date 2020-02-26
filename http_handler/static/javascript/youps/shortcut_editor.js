@@ -34,7 +34,7 @@ $(document).ready(function() {
         trackOutboundLink('run simulate');
         var editor_rule_container = $(this).parents('div[rule-id]');
 
-        run_simulate_on_messages(["INBOX"], 5, editor_rule_container, extract_shortcut_argument($(this).parents(".panel-body")));
+        run_simulate_on_messages(["INBOX"], 3, editor_rule_container, extract_shortcut_argument($(this).parents(".panel-body")), debugging_messages_ids);
     }); 
 
     $("body").on("click", ".btn-incoming-save", function() {
