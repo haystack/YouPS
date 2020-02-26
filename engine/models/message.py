@@ -665,7 +665,11 @@ class Message(object):
         # type: () -> None
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
-        self._add_flags('\\Deleted')
+        if not self._is_simulate:
+            self._imap_client.add_flags([self._uid],'\\Deleted')
+
+        print("delete(): delete the message")
+        
 
     def extract_response(self):
         # type: () -> t.AnyStr
