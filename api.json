@@ -176,7 +176,7 @@
             {
                 "name": "content",
                 "return_type": "string",
-                "description": "",
+                "description": "Get the content of the message. See also contains() and extract_response()",
                 "example": ""
             },
             {
@@ -198,7 +198,7 @@
             {
                 "name": "thread",
                 "return_type": "t.List[Message]",
-                "description": "Return a list of messages in this thread",
+                "description": "Return a list of Message objects in this thread",
                 "example": ""
             },
             {
