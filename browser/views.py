@@ -246,6 +246,7 @@ def email_button_view(request):
 			# create a basic rule for the user, if there is no email rule exist
 			if len(email_rules) == 0:
 				er=EmailRule(imap_account=imap_account, type='shortcut', name='hide', code="""def on_command(my_message, kargs):
+	# kargs is a dictionary that includes arguments specified left. 
     my_message.see_later(kargs['until'])""")
 				er.save()
 				er_args = EmailRule_Args(name="until", rule=er, type='datetime')
@@ -346,7 +347,21 @@ def load_components(request):
 		logger.info(e)
 		return HttpResponse(request_error, content_type="application/json")
 
-		
+def unpad(data):
+    return data[:-(data[-1] if type(data[-1]) == int else ord(data[-1]))]
+
+def bytes_to_key(data, salt, output=48):
+    from hashlib import md5
+    # extended from https://gist.github.com/gsakkis/4546068
+    assert len(salt) == 8, len(salt)
+    data += salt
+    key = md5(data).digest()
+    final_key = key
+    while len(final_key) < output:
+        key = md5(key + data).digest()
+        final_key += key
+    return final_key[:output]
+
 @login_required
 def login_imap(request):
 	try:
@@ -359,7 +374,19 @@ def login_imap(request):
 		username = request.POST['username']
 		password = request.POST['password']
 
-		res = engine.main.login_imap(user.email, username, password, host, is_oauth)
+		from Crypto.Cipher import AES
+		import base64
+
+		logger.critical(password)
+		encrypted = base64.b64decode(password)
+		passphrase = "yYjdthJ6Hg0PAreSMqKq".encode()
+		salt = encrypted[8:16]
+		key_iv = bytes_to_key(passphrase, salt, 32+16)
+		key = key_iv[:32]
+		iv = key_iv[32:]
+		aes = AES.new(key, AES.MODE_CBC, iv)
+
+		res = engine.main.login_imap(user.email, username, unpad(aes.decrypt(encrypted[16:])), host, is_oauth)
 		return HttpResponse(json.dumps(res), content_type="application/json")
 	except Exception as e:
 		logger.exception(e)

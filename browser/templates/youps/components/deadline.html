@@ -17,7 +17,13 @@
 			</div>
 		</div>
 		<div class="panel-body" style="display:none;">
-			<div class="folder-container"></div>
+			<div class="folder-container">
+				<br>
+				<code>Message</code> instance has an attribute called <code ><a href="/docs/#property">deadline</a></code>. 
+				Initially, <code><a href="/docs/#property">deadline</a></code> of each message is null by default.<br>
+				You can set a relevant datetime to this message. 
+				Then, this handler will be exectued when the deadline has come. 
+			</div>
 			<div class="editor-container">
 				<textarea class="editor mode-editor" id="editor-{{mode.uid}}">
 {{ rule.code }}

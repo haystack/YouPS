@@ -452,6 +452,8 @@ print get_sender()
 {% endblock %}
 
 {% block customjs %}
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core.js"></script>
+
 	<script type="text/javascript" src="/static/javascript/notify.js"></script>
 
 	<script type="text/javascript" src="/static/javascript/youps/fontawesome-all.min.js"></script>
@@ -469,7 +471,8 @@ print get_sender()
 	<script src="/static/javascript/youps/mavo.min.js"></script>
 	<!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
 	<!-- <script type="text/javascript" src="/static/javascript/youps/console/sandbox-console.js"></script> -->
-
+	<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/md5.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/evpkdf.js"></script> -->
 	<!-- JSON Formatter -->
 	<script src="/static/javascript/youps/qunit.js"></script>
     <script src="/static/javascript/youps/blanket.min.js"></script>
@@ -477,6 +480,15 @@ print get_sender()
 	<script src="/static/javascript/youps/jsonpanel.js"></script>
 	<script src="/static/javascript/youps/tests.js"></script>
 
+	<script src="https://cdn.rawgit.com/CryptoStore/crypto-js/3.1.2/build/rollups/aes.js"></script>
+	
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/cipher-core.js"></script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/aes.js"></script>
+	<script src="https://cdn.rawgit.com/CryptoStore/crypto-js/3.1.2/build/components/mode-cfb-min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/enc-base64.js"></script> -->
+	
+	
 	<script type="text/javascript" src="/static/javascript/youps/history_table.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/editor.js"></script>
 	<script type="text/javascript" src="/static/javascript/youps/login_imap.js"></script>

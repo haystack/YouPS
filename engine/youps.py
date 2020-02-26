@@ -11,7 +11,7 @@ import requests
 from time import sleep
 
 from Crypto.Cipher import AES
-from imapclient import IMAPClient
+from imapclient import IMAPClient, exceptions
 
 from django.utils import timezone
 from pytz import timezone as tz
@@ -101,6 +101,8 @@ def login_imap(email, username, password, host, is_oauth):
         res['status'] = True
         logger.info("added new account %s" % imapAccount.email)
 
+    except exceptions.LoginError:
+        res['code'] = "Wrong username or password"
     except IMAPClient.Error as e:
         res['code'] = e
         logger.exception(e)

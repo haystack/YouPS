@@ -176,7 +176,7 @@ class Message(object):
     @CustomProperty
     def deadline(self):
         # type: () -> datetime.datetime
-        """Get the user-defined deadline of the message (Mutable)
+        """Get the user-defined deadline of the message (Mutable). When the specified date time is come, user's deadline handler will be executed. 
 
         Returns:
             datetime: The deadline

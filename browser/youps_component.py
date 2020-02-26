@@ -25,7 +25,7 @@ def get_base_code(rule_type):
         my_message.see_later()""",
         "deadline": """def on_deadline(my_message):
     # my_message is a Message instance 
-    # this function occurs at my_message.deadline
+    # this function executes at my_message.deadline
     # by default, Message instances does not have deadline otherwise you specify it
     pass""",
         "flag-change": "def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):",
@@ -43,14 +43,22 @@ def get_base_code(rule_type):
 
 def create_new_editor(imap_account, rule_type, mode_id):
     editors = []
+    
+    rule_name = ""
+    if "new-message" in rule_type:
+        rule_name = "My email filters"
+    elif "deadline" in rule_type:
+        rule_name = "Message deadline handler"
+    else:
+        rule_name = "My email shortcut"
 
     try:
-        new_er = EmailRule(type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+        new_er = EmailRule(name=rule_name, type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
     except MailbotMode.DoesNotExist:
         new_mm = MailbotMode(imap_account=imap_account)
         new_mm.save()
 
-        new_er = EmailRule(type=rule_type, mode=new_mm, code=get_base_code(rule_type))
+        new_er = EmailRule(name=rule_name, type=rule_type, mode=new_mm, code=get_base_code(rule_type))
     new_er.save()
 
     user_inbox = FolderSchema.objects.get(imap_account=imap_account, name__iexact="inbox")
