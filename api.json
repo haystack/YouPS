@@ -134,7 +134,7 @@
                 "name": "to",
                 "return_type": "Contact []",
                 "return_href": "contact",
-                "description": "",
+                "description": "Get the Contacts the message is addressed to. Return a list of Contact objects",
                 "example": [
                     "print (new_message.to) # [<Contact object- David Karger>, <Contact object- Soya Park>]",
                     ">>> ['David Karger', 'Soya Park']"
@@ -144,21 +144,21 @@
                 "name": "bcc",
                 "return_type": "Contact []",
                 "return_href": "contact",
-                "description": "",
+                "description": "Get the Contacts the message is bcced to. Return a list of Contact objects",
                 "example": ""
             },
             {
                 "name": "cc",
                 "return_type": "Contact []",
                 "return_href": "contact",
-                "description": "",
+                "description": "Get the Contacts the message is cced to. Return a list of Contact objects",
                 "example": ""
             },
             {	
                 "name": "sender",	
                 "return_type": "Contact",	
                 "return_href": "contact",	
-                "description": "",	
+                "description": "Get the Contact the message is addressed from. Return a Contact object",	
                 "example": ""	
             },
             {
