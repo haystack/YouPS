@@ -176,7 +176,7 @@
             {
                 "name": "content",
                 "return_type": "string",
-                "description": "Get the content of the message. Returns a dictionary contains keys \"text\" and \"html\". See also contains() and extract_response()',
+                "description": "Get the content of the message. Returns a dictionary contains keys \"text\" and \"html\". See also contains() and extract_response()",
                 "example": ""
             },
             {
