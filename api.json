@@ -246,6 +246,12 @@
                 "example": ""
             },
             {
+                "name": "contains",
+                "params": "string",
+                "description": "check if a string is contained in the content of a message",
+                "example": ""
+            },
+            {
                 "name": "delete",
                 "params": "",
                 "description": "Delete this email to your trash folder.",
