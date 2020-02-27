@@ -627,7 +627,8 @@ class Message(object):
         
         a = []
         for m in self.thread:
-            a.append((m.from_, EmailReplyParser.parse_reply(m.content['text'])))
+            c = m.content
+            a.append((m.from_, EmailReplyParser.parse_reply(c['text'] or c['html'])))
 
         return a
 
@@ -784,13 +785,15 @@ class Message(object):
         bcc = format_email_address(bcc)
 
         new_message_wrapper = self._create_message_instance(
-            subject or "Fwd: " + self.subject, to, cc, bcc, content)
+        subject or "Fwd: " + self.subject, to, cc, bcc, content)
 
         if not self._is_simulate:
             if new_message_wrapper:
                 from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
-                mailbox = MailBox(self._schema.imap_account, self._imap_client)
-                mailbox._send_message( new_message_wrapper )
+            mailbox = MailBox(self._schema.imap_account, self._imap_client)
+            mailbox._send_message( new_message_wrapper )
+
+        print("forward(): forward a message to %s" % (to+cc+bcc))
 
     def contains(self, string):
         # type: (t.AnyStr) -> bool

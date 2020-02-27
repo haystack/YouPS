@@ -87,7 +87,6 @@ def register_inbox():
                     # if we catch any other type of exception we abort to avoid infinite loop
                     except Exception:
                         logger.critical("Failure while initially syncing")
-                        logger.exception("Failure while initially syncing")
                         raise
 
                 logger.info("After sync, set up an exercise folder for the new user")

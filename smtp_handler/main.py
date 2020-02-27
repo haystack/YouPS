@@ -53,10 +53,11 @@ def START(message, address=None, host=None):
         imapAccount = ImapAccount.objects.get(email=addr)
 
         er_to_execute = None
-        ers = EmailRule.objects.filter(mode__imap_account=imapAccount, type='shortcut')
+        ers = EmailRule.objects.filter(imap_account=imapAccount, type='shortcut')
         for er in ers:
             tmp = er.name.replace(" ", "_")
-            logger.info(tmp)
+            logger.info(er.get_forward_addr().lower()[:len(tmp)])
+            logger.info(address.lower()[:len(tmp)])
 
             if er.get_forward_addr().lower()[:len(tmp)] == address.lower()[:len(tmp)]:
                 er_to_execute = er
@@ -133,11 +134,14 @@ def START(message, address=None, host=None):
             entire_message = message_from_string(str(arrived_message))
             entire_body = get_body(entire_message)
 
-            code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
-            gmail_header = "---------- Forwarded message ---------"
-            if gmail_header in code_body:
-                code_body = code_body.split(gmail_header)[0].strip()
-            logging.debug(code_body)
+            try:
+                code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
+                gmail_header = "---------- Forwarded message ---------"
+                if gmail_header in code_body:
+                    code_body = code_body.split(gmail_header)[0].strip()
+                logging.debug(code_body)
+            except:
+                code_body = ""
 
             shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
             if not imapAccount.current_mode or not shortcuts.exists():
