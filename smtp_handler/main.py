@@ -143,8 +143,8 @@ def START(message, address=None, host=None):
             except:
                 code_body = ""
 
-            shortcuts = EmailRule.objects.filter(mode=imapAccount.current_mode, type="shortcut")
-            if not imapAccount.current_mode or not shortcuts.exists():
+            shortcuts = EmailRule.objects.filter(type="shortcut")
+            if not shortcuts.exists():
                 body = "Your YouPS hasn't turned on or don't have email shortcuts yet! Define your shortcuts here %s://%s" % (PROTOCOL, site.domain)
 
                 mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
