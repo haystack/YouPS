@@ -258,6 +258,12 @@
                 "example": ""
             },
             {
+                "name": "extract_response",
+                "params": "",
+                "description": "For the thread messages, only take out a body of *this message* without previous headers and contetns",
+                "example": ""
+            },
+            {
                 "name": "extract_time_entity",
                 "params": "",
                 "description": "Return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP ",
