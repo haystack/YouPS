@@ -120,11 +120,10 @@ def register_inbox():
                 imapAccount.save()
 
                 site = Site.objects.get_current()
-                # TODO(lukemurray): bring this back
-                # send_email("Your YouPS account is ready!",
-                #            "no-reply@" + BASE_URL,
-                #            imapAccount.email,
-                #            "Start writing your automation rule here! %s://%s" % (PROTOCOL, site.domain))
+                send_email("Your YouPS account is ready!",
+                           "no-reply@" + BASE_URL,
+                           imapAccount.email,
+                           "Start writing your automation rule here! %s://%s" % (PROTOCOL, site.domain))
 
                 # Create a default mode & email rule to demo
 
