@@ -430,7 +430,7 @@ print get_sender()
 		</div>
 	</div>
 	<script type="text/javascript">
-		var user_email="{{ request.user.email }}",
+		var user_email="{{ user.email }}",
 			is_authenticated = {{ user.is_authenticated|yesno:"true,false" }},
 			is_imap_authenticated = {{ imap_authenticated|yesno:"true,false" }},
 			is_test = {{ is_test|yesno:"true,false" }},

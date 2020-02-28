@@ -6,8 +6,7 @@ var trackOutboundLink = function(inCategory) {
 
 $(document).ready(function() {
 
-    var user_email = $.trim($('#user_email').text()),
-        btn_login = $("#btn-login"),
+    var btn_login = $("#btn-login"),
         btn_test_run = $("#btn-test-run"),
         btn_code_sumbit = $("#btn-code-submit"),
         btn_shortcut_save = $("#btn-shortcut-save");
@@ -101,7 +100,6 @@ $(document).ready(function() {
     // init editor  
     var unsaved_tabs = [];
 
-
     /**
      * Event listeners 
      * 
@@ -117,11 +115,8 @@ $(document).ready(function() {
             $(this).tab('show');
             // change to value of mode dropdown only if the engine is not currently running. 
             if(!btn_code_sumbit.hasClass('active')) {
-                var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
-                last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
-
-                $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
-                $(".dropdown .btn").attr('mode-id', last_id);
+                update_tab_dropdown();
+                
             } 
         }
     })
@@ -712,13 +707,7 @@ $(document).ready(function() {
                         }
                         
                         else {
-                            // init $("#current_mode_dropdown") with a default value if there is no selected mode yet
-                            var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
-                            // var random_id = document.querySelector('.nav.nav-tabs li.active .tab-title').getAttribute('mode-id'),
-                            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
-                            
-                            $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
-                            $(".dropdown .btn").attr('mode-id', last_id);
+                            update_tab_dropdown();
                         }
                         
                         $('.example-suites').DataTable( {
@@ -884,4 +873,14 @@ $(document).ready(function() {
         );
 
         return true;
+    }
+
+    function update_tab_dropdown() {
+        var last_id = $('.nav.nav-tabs li.active').find('.tab-title').attr('mode-id');
+        var last_name = "No mode";
+        if (last_id)
+            last_name = $.trim( document.querySelector('.nav.nav-tabs span[mode-id="'+ last_id + '"]').innerHTML );
+
+        $(".dropdown .btn").html(last_name + ' <span class="caret"></span>');
+        $(".dropdown .btn").attr('mode-id', last_id);
     }
