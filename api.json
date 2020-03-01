@@ -168,6 +168,12 @@
                 "example": ""
             },
             {
+                "name": "recipients",
+                "return_type": "Contact []",
+                "description": "Returns the people in the to field, cc field, and bcc field. Return a list of Contact objects",
+                "example": ""
+            },
+            {
                 "name": "date",
                 "return_type": "string",
                 "description": "",
