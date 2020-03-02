@@ -668,6 +668,7 @@ class Message(object):
         """
         if not self._is_simulate:
             self._imap_client.add_flags([self._uid],'\\Deleted')
+            self._imap_client.expunge()
 
         if not slient:
             print("delete(): delete the message")

@@ -28,6 +28,9 @@ from engine.models.folder import Folder
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from email_reply_parser import EmailReplyParser
+from duckling import Duckling
+
 
 logger = logging.getLogger("routing") # type: logging.Logger
 
@@ -135,11 +138,7 @@ def START(message, address=None, host=None):
             entire_body = get_body(entire_message)
 
             try:
-                code_body = entire_body['plain'][:(-1)*len(original_message.content['text'])]
-                gmail_header = "---------- Forwarded message ---------"
-                if gmail_header in code_body:
-                    code_body = code_body.split(gmail_header)[0].strip()
-                logging.debug(code_body)
+                code_body = EmailReplyParser.parse_reply(entire_body["text"] or entire_body["html"])
             except:
                 code_body = ""
 
@@ -150,9 +149,17 @@ def START(message, address=None, host=None):
                 mail = MailResponse(From = WEBSITE+"@" + host, To = imapAccount.email, Subject = "Re: " + original_message.subject, Body = body)
                 relay.deliver(mail)
 
-            else:                
+            else:       
+                extracted_time = []         
+                if code_body:
+                    # TODO extract time entity
+                    now = datetime.now()
+                    time_entity_extractor = Duckling()
+                    time_entity_extractor.load()
+                    extracted_time = time_entity_extractor.parse(t, reference_time=str(now))
+
                 # parse args for the shortcut
-                kargs = {'message_content': code_body}
+                kargs = {'message_content': code_body, 'extracted_time': extracted_time}
                 args = EmailRule_Args.objects.filter(rule=er_to_execute)
                 for arg in args:
                     if arg.type == "datetime":

@@ -18,6 +18,8 @@
 	</div>
 	<div class="panel-body">
 		<div class="instruction-container">
+			<span>You can run this shortcut either using the <a href='/button'>shotcut window</a> or forwarding the target messsage to {{rule.name}}@youps.csail.mit.edu</span>
+			<br><br>	
 			<ul id="arg-list-{{rule.id}}">
 				{% for arg in args %}
 					<li class="element">
@@ -81,8 +83,7 @@
 					$(this).hide();  $(this).siblings("#display").show().text($(this).val());
 				});
 			</script>
-			<br>
-			<span>Add your arguments for the shortcut here</span>
+			
 		</div>
 		<div class="editor-container">
 			<textarea class="editor mode-editor" id="editor-{{mode.uid}}">

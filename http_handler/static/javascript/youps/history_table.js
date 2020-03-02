@@ -4,8 +4,10 @@ var log_min_id = null, log_max_id = null;
 
 $(document).ready(function() {
     $("#btn-log-load-more").click(function() {
-        fetch_log(null, log_min_id - 1);
-        $(this).hide();
+        fetch_log(Math.max(1,log_min_id - 20), log_min_id - 1);
+
+        if (log_min_id == 1)    
+            $(this).hide();
     });
 })
 
@@ -125,6 +127,8 @@ function append_log( msg_log, is_error ) {
             }
             
         });
+
+        filterNoop($("[name='historyTableFilter']").get(0));
 
         // recent msg at top
         $("#console-table").DataTable().order([0, 'des']).draw();   
