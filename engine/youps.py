@@ -727,6 +727,7 @@ def run_simulate_on_messages(user, email, folder_names, N=3, code='', extra_info
 
             message = Message(message_schema, imap)
             result = print_execution_log(message)
+            result["property_log"] = imap_res['appended_log'][message_schema.id]['property_log']
             result["log"] = imap_res['appended_log'][message_schema.id]['log']
             result["error"] = imap_res['appended_log'][message_schema.id]['error'] if 'error' in imap_res['appended_log'][message_schema.id] else False
 
@@ -808,6 +809,9 @@ def undo(user, email, logschema_id):
                         action["args"].reverse()
                         logger.exception(action["args"])
                         reverse_func(*action["args"]) if action["args"] else reverse_func()
+
+            elif action["type"] == "get":
+                pass
 
         logschema.is_canceled = True
         logschema.save()

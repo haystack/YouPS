@@ -70,7 +70,7 @@ class Message(object):
 
         self.time_entity_extractor = None
 
-        logger.debug('caller name: %s', inspect.stack()[1][3])
+        logger.debug('caller name: %s' % inspect.stack()[1][3])
 
     @staticmethod
     def _get_flag_descriptors(is_gmail):
@@ -578,12 +578,11 @@ class Message(object):
             dict {'text': t.AnyStr, 'html': t.AnyStr}: The content of the message
         """
         
-        _is_read = self.is_read
-        logger.critical(_is_read)
-        c = message_helpers.get_content_from_message(self)
-        if not _is_read:
-            logger.critical("MARK UNREAD")
-            self.mark_unread()
+        try:
+            c = message_helpers.get_content_from_message(self)
+        except:
+            raise Exception("This message is currently not in this folder due to the delay of IMAP.")
+
         return c
 
 
@@ -710,6 +709,12 @@ class Message(object):
         # type: () -> None
         """Mark a message as unread
         """
+        self._mark_unread()
+
+    def _mark_unread(self, silent=False):
+        # type: (bool) -> None
+        """Helper method of mark_unread() to avoid logging e.g., for content
+        """
         if not self._is_simulate:
             # self._remove_flags('\\Seen')
             self._imap_client.remove_flags([self._uid], '\\Seen')
@@ -717,6 +722,9 @@ class Message(object):
             logger.info("simulate: mark as read")
         if '\\Seen' in self._flags:
             self._flags = self._flags.remove('\\Seen')
+
+        if not silent:
+            print("mark message as unread")
 
     def move(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -808,7 +816,8 @@ class Message(object):
         if string is None:
             raise TypeError("contains(): input string should not be None")
 
-        return string in self.content["text"] if self.content["text"] else False
+        content = self.content
+        return string in content["text"] if content["text"] else False
 
     @CustomProperty
     def attachments(self):
@@ -1104,7 +1113,7 @@ class Message(object):
             response = self._imap_client.fetch(
                 self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
             if self._uid not in response:
-                raise RuntimeError('Invalid response missing UID')
+                raise RuntimeError('This message is not currently in this folder. It takes some time due to IMAP delay')
             response = response[self._uid]
 
             if 'RFC822' not in response:
@@ -1171,7 +1180,7 @@ class Message(object):
             new_message_wrapper.attach(new_message)
         except Exception as e:
             logger.exception ("%s %s" % (e, traceback.format_exc()))
-            raise RuntimeError('Failed to deal with a message: %s' % str(e))
+            raise RuntimeError('Failed to create a message: %s' % str(e))
             return
         finally:
             # mark the message unread if it is unread

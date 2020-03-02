@@ -793,7 +793,7 @@ def _request_new_delta(imap_account):
                 if d["object"] == "event":
                     continue 
                 
-                if d["object"] in ["message", "thread"]:
+                if d["object"] in ["message", "thread", "folder"]:
                     return r.json()['cursor_end'], True
 
     return r.json()['cursor_end'], False

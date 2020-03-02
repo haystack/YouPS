@@ -12,7 +12,7 @@ $(document).ready(function() {
         btn_shortcut_save = $("#btn-shortcut-save");
 
     var import_str = "import spacy";
-    
+   
 
     // Format string
     if (!String.prototype.format) {
@@ -197,39 +197,50 @@ $(document).ready(function() {
         $(this).addClass("detail-viewing");
         
         // Remove line widgets
-        $(".CodeMirror-linewidget").remove();
+        for (var i = 0; i < line_widgets.length; ++i) {
+            $(this).parents('div[rule-id]').find('.CodeMirror')[0].CodeMirror.removeLineWidget(line_widgets[i]);
+        }
+        line_widgets = [];
 
-        var node = document.createElement('div')
-        var display = document.createElement('div')
-        
-        node.appendChild(display)
-        
-        display.innerText = 'from: David Karger \nto: Amy Zhang, Soya Park, Luke Murray'// output
-        display.style.backgroundColor = 'lightgray'
-        display.style.padding = '5px'
-        // node.style.height = '20px'
-
-        $('body').find('.CodeMirror')[0].CodeMirror.addLineWidget(1, node)
-
-        $('body').find('.CodeMirror')[0].CodeMirror.addLineWidget(1, node)
-
-        const node2 = document.createElement('div')
-        var display = document.createElement('div')
-        
-        node2.appendChild(display)
-        
-        display.innerText = 'flags: [] -> ["should read"]'// output
-        display.style.backgroundColor = 'lightyellow'
-        display.style.padding = '5px'
-        
-        $('body').find('.CodeMirror')[0].CodeMirror.addLineWidget(2, node2)
+        var logs = inspect[$(this).attr("msg-id")];
+        for(var i = 0; i < logs.length;i++) {
+            if(logs[i]["type"] != "get" && logs[i]["type"] != "set")
+                continue
+            
+            var node = document.createElement('div')
+            var display = document.createElement('div')
+            
+            node.appendChild(display)
+            
+            if(logs[i]["type"] == "get") {
+                display.innerText = "{0}.{1}: {2}".format(logs[i]["class_name"], logs[i]["function_name"], logs[i]["args"][0])
+                display.style.backgroundColor = 'lightgray' || 'lightyellow'
+            }
+            else {
+                display.innerText = "{0}.{1}: {2}->{3}".format(logs[i]["class_name"], logs[i]["function_name"], logs[i]["args"][0], logs[i]["args"][1])
+                display.style.backgroundColor = 'lightyellow'
+            }
+            
+            display.style.padding = '5px'
+            // node.style.height = '20px'
+    
+            var w = $(this).parents('div[rule-id]').find('.CodeMirror')[0].CodeMirror.addLineWidget(logs[i]["line_number"]-1, node);
+    
+            line_widgets.push(w);
+            
+        }
     }); 
 
     // run simulation on the editor
     $("#editor-container").on("click", ".btn-debug-update", function() {
         trackOutboundLink('run simulate');
         var editor_rule_container = $(this).parents('div[rule-id]');
-        debugger;
+        
+        // Remove line widgets
+        for (var i = 0; i < line_widgets.length; ++i) {
+            $(this).parents('div[rule-id]').find('.CodeMirror')[0].CodeMirror.removeLineWidget(line_widgets[i]);
+        }
+        line_widgets = [];
 
         var folders = [];
         $.each($(editor_rule_container).find('.folder-container input:checked'), function(index, val) {
@@ -725,7 +736,8 @@ $(document).ready(function() {
                             "columns": [
                                 { "width": "40px", "orderable": false },
                                 null,
-                                { "width": "300px" }
+                                { "width": "300px" },
+                                null
                             ],
                             // "columns": [
                             //     {
@@ -761,7 +773,8 @@ $(document).ready(function() {
                                     "columns": [
                                         { "width": "40px", "orderable": false },
                                         null,
-                                        { "width": "300px" }
+                                        { "width": "300px", "orderable":false },
+                                        null
                                     ],
                                     "language": {
                                         "emptyTable": 'Click "Debug my code" to test your rule',

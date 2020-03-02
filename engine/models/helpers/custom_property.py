@@ -2,6 +2,7 @@ from __future__ import print_function
 import typing as t
 
 import logging
+import inspect
 
 def _get_class_name(obj):
     # type: (object) -> str
@@ -115,19 +116,52 @@ class CustomProperty(object):
 
         # value we are getting or wrapping around
         value = self.fget(obj)
+        
 
         # name of the class we are a property on
         class_name = _get_class_name(obj)
         # name of the property we're wrapping around
         property_name = _get_method_name(self.fget)
+        # TODO if property_name == "content", trunc first n letters
+        # _get_logger().critical(property_name)
+        log_value = value
+        if property_name == "content" and value:
+            if "text" in value and value["text"]:
+                _get_logger().info(value)
+                log_value["text"] = value["text"][:30] + " .. (truncated)"
+            if "html" in value and value["html"]:
+                log_value["html"] = value["html"][:30] + " .. (truncated)"
 
         # TODO format in a parsable format
         info_string = u"get {c}.{p}\t{v}".format(
             c=class_name, p=property_name, v=value)
         _set_in_log(obj, False)
+        
+        call_trace = inspect.stack()
+        ln = None
+        for i in range(len(call_trace)):
+            
+            if i<3 and call_trace[i][3] in ["on_message", "on_deadline", "on_command"]:
+                # _get_logger().critical(property_name)
+                # _get_logger().critical(call_trace)
+                ln = call_trace[i][2]
 
-        # if not property_name.startswith("_"):
-        #     _log_info(obj, info_string)
+        if ln:
+            info_string = {
+                "type": "get",
+                "class_name": class_name,
+                "function_name": property_name,
+                "args": [str(log_value)],
+                "schema_id": obj._schema.id,
+                "line_number":ln            
+            }
+            # _get_logger().info(inspect.stack()[1])
+
+            # if inspect.stack()[1][3] in ["on_message", "on_deadline", "on_command"]:
+            #     _get_logger().info("line: %d" % inspect.stack()[1][2])
+
+            if not property_name.startswith("_"):
+                _log_info(obj, info_string)
 
         return value
 
@@ -145,6 +179,15 @@ class CustomProperty(object):
         curr_value = self.fget(obj)
         class_name = _get_class_name(obj)
         property_name = _get_method_name(self.fset)
+        call_trace = inspect.stack()
+        ln = None
+        for i in range(len(call_trace)):
+            if i<3 and call_trace[i][3] in ["on_message", "on_deadline", "on_command"]:
+                # _get_logger().critical(property_name)
+                # _get_logger().critical(call_trace)
+                ln = call_trace[i][2]
+
+        
         info_string = {
             "type": "set",
             "class_name": class_name,
@@ -152,6 +195,8 @@ class CustomProperty(object):
             "args": [curr_value, new_value],
             "schema_id": obj._schema.id
         }
+        if ln:
+            info_string["line_number"] = ln
         # u"set {c}.{p}\t{v} -> {nv}".format(
         #     c=class_name, p=property_name, v=curr_value, nv=new_value)
         self.fset(obj, new_value)

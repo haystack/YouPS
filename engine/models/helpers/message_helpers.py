@@ -37,10 +37,11 @@ def _open_rfc822(message):
     # check if the message is initially read
     initially_unread = message.is_unread
     try:
+        logger.info(message._uid)
         response = message._imap_client.fetch(
             message._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
         if message._uid not in response:
-            raise RuntimeError('Failed to get message content')
+           raise RuntimeError('Failed to get message content')
         response = response[message._uid]
 
         # get the rfc data we're looking for
@@ -57,7 +58,7 @@ def _open_rfc822(message):
         if initially_unread:
             logger.debug("INITIALLLY UNREAD")
             # TODO see remove_flags_gmail, marking unread doesn't actually work
-            message.mark_unread()
+            message._mark_unread(silent=True)
 
 
 def _get_text_from_python_message(part):

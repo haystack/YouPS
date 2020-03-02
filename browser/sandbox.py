@@ -82,8 +82,10 @@ def interpret_bypass_queue(mailbox, extra_info):
                 mailbox._imap_client.select_folder(message_schema.folder.name)
 
                 # clear the property log at the last possible moment
-                user_property_log = []
-                mailbox._imap_client.user_property_log = user_property_log
+                
+                mailbox._imap_client.user_property_log = []
+                if hasattr(mailbox._imap_client, 'nested_log'):
+                    delattr(mailbox._imap_client, 'nested_log')
                 # execute the user's code
                 if "on_message" in code:
                     exec(code + "\non_message(new_message)", user_environ)    
@@ -110,10 +112,18 @@ def interpret_bypass_queue(mailbox, extra_info):
                 logger.critical(str(e))
                 logger.critical(traceback.format_tb(exc_tb))
                 tb = traceback.format_tb(exc_tb)
-                print(str(e) + " " + (tb[-1] if len(tb) > 1 else ""))
+                logger.critical(tb)
+                
+                tb_index = -1
+                for i in reversed(range(len(tb))):
+                    if "on_message" in tb[i] or "on_deadline" in tb[i] or "on_command" in tb[i]:
+                        tb_index = i
+                        break
+
+                print(str(e) + " " + (tb[tb_index] if len(tb) > 0 else ""))
             finally:
                 msg_log["log"] += user_std_out.getvalue()
-                msg_log["property_log"].extend(user_property_log)
+                msg_log["property_log"].extend(copy.deepcopy(mailbox._imap_client.user_property_log))
                 logger.info(msg_log)
                 # msg_log["log"] = "%s\n%s" % (user_std_out.getvalue(), msg_log["log"])
                 res['appended_log'][message_schema.id] = msg_log
@@ -204,6 +214,8 @@ def interpret(mailbox, mode):
 
             user_property_log = []
             mailbox._imap_client.user_property_log = user_property_log
+            if hasattr(mailbox._imap_client, 'nested_log'):
+                delattr(mailbox._imap_client, 'nested_log')
 
             event_class_name = type(event_data).__name__
 
@@ -278,6 +290,7 @@ def interpret(mailbox, mode):
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 logger.exception(sys.exc_info())
                 logger.exception("failure running user %s code" % mailbox._imap_account.email)
+                logger.info(traceback.format_tb(exc_tb))
                 error_msg = str(e) + traceback.format_tb(exc_tb)[-1]
                 try:
                     send_email("failure running user %s code" % mailbox._imap_account.email, "youps.help@youps.csail.mit.edu", "youps.help@gmail.com", error_msg.decode('utf-8'), error_msg.decode('utf-8'))

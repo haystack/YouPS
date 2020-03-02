@@ -281,8 +281,6 @@ class Folder(object):
             logger.debug("modseq %d " % self._schema.highest_mod_seq)
             res = self._imap_client.fetch("1:*", query_fields, ['CHANGEDSINCE {}'.format(self._schema.highest_mod_seq)])
             messages = {m.uid: m for m in MessageSchema.objects.filter(folder=self._schema, uid__in=res.keys()).all()}
-            if self._imap_account.email== "soya@csail.mit.edu":
-                logger.exception(messages)
             # for each message compare the flags
             for uid in res:
                 for key, attribute in ((b'FLAGS', 'flags'), (b'X-GM-LABELS', 'gm_labels')):
@@ -657,9 +655,16 @@ class Folder(object):
                     logger.info('folder {f}: uid {u}: message_arrival'.format(
                         f=self.name, u=uid))
                 else:
+                    MessageSchema.objects.filter(
+                        base_message=base_message,
+                        imap_account=self._imap_account,
+                        folder=self._schema
+                    ).update(uid=uid)
+
+
                     event_data_list.append(MessageMovedData(
                         Message(new_message, self._imap_client)))
-                    logger.info('folder {f}: uid {u}: message_moved'.format(
+                    logger.critical('folder {f}: uid {u}: message_moved'.format(
                         f=self.name, u=uid))
 
     def _find_or_create_gmail_thread(self, gm_thread_id):

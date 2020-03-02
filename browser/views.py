@@ -515,7 +515,7 @@ def run_simulate_on_messages(request):
 		extra_info = json.loads(request.POST['extra_info']) 
 		
 		res = engine.main.run_simulate_on_messages(user, request.user.email, folder_name, N, code, extra_info)
-		return HttpResponse(json.dumps(res), content_type="application/json")
+		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
 	except Exception as e:
 		logger.exception("Error simulating login %s %s " % (e, traceback.format_exc()))
 		return HttpResponse(request_error, content_type="application/json")

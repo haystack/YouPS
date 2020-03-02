@@ -16,6 +16,8 @@ var datatable_config = {
     "order": [[1, 'asc']]
 };
 var debugging_messages_ids = [];
+var line_widgets = [];
+var inspect = {};
 
 function init_editor(editor_elem) {
     var editor = CodeMirror.fromTextArea(editor_elem, {
@@ -58,12 +60,16 @@ function init_editor(editor_elem) {
       });
       
     // editor.getValue( "import re, spacy, datetime, arrow" );
-    // editor.markText({line:0,ch:0},{line:2,ch:1},{readOnly:true});
+    editor.markText({line:0,ch:0},{line:1,ch:1},{readOnly:true});
 
     editor.on('change',function(cm){
         // get value right from instance
         $(cm.getWrapperElement()).parents(".panel[rule-id]").find('.btn-debug-update').addClass('glow');
+
     });
+
+    
+    
 }
 
 function extract_shortcut_argument($container) {
@@ -150,6 +156,7 @@ function remove_rule(rule_uid) {
     );
 }
 
+
 function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_info={}) {
     show_loader(true);
 
@@ -182,13 +189,16 @@ function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_i
                     var Message = value;
 
                     var json_panel_id = Math.floor(Math.random() * 10000) + 1;
-
+                    debugger;
                     var added_row = t.row.add( [
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
-                        '{0}'.format(Message["log"].replace(/\n/g , "<br>"))
+                        '{0}'.format(Message["log"].replace(/\n/g , "<br>")),
+                        '<button msg-id={0} class="detail-inspect"></button>'.format(msg_id)
                         // '{1}  <button msg-id={0} class="detail-inspect"></button>'.format(msg_id, Message["log"])
                     ] ).draw( false ).node();
+
+                    inspect[msg_id]= Message["property_log"];
                     
 
                     $( added_row ).attr('folder', Message['folder'])
@@ -202,6 +212,7 @@ function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_i
                     if(json_panel_id % 2 == 0) $( added_row ).attr('line-number3', 1);     
 
                     // Delete attributes that are not allowed for users 
+                    delete Message["property_log"];
                     delete Message["trigger"];
                     delete Message["error"];
                     delete Message["log"];
