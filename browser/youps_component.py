@@ -53,13 +53,17 @@ def create_new_editor(imap_account, rule_type, mode_id):
     else:
         rule_name = "My email shortcut"
 
-    try:
-        new_er = EmailRule(name=rule_name, type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
-    except MailbotMode.DoesNotExist:
-        new_mm = MailbotMode(imap_account=imap_account)
-        new_mm.save()
+    new_er = None
+    if rule_type != "shortcut":
+        try:
+            new_er = EmailRule(name=rule_name, type=rule_type, mode=MailbotMode.objects.get(id=mode_id), code=get_base_code(rule_type))
+        except MailbotMode.DoesNotExist:
+            new_mm = MailbotMode(imap_account=imap_account)
+            new_mm.save()
 
-        new_er = EmailRule(name=rule_name, type=rule_type, mode=new_mm, code=get_base_code(rule_type))
+            new_er = EmailRule(name=rule_name, type=rule_type, mode=new_mm, code=get_base_code(rule_type))
+    else:
+        new_er = EmailRule(name=rule_name, type=rule_type, imap_account=imap_account, code=get_base_code(rule_type))
     new_er.save()
 
     user_inbox = FolderSchema.objects.get(imap_account=imap_account, name__iexact="inbox")

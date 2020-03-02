@@ -142,7 +142,7 @@ def _flag_change_helper(message, uids, flags, gmail_label_func, imap_flag_func):
         # logger.debug("flag change returned labels {flags}".format(
         #     flags=pprint.pformat(returned_labels)))
         
-        # Wouldn't Gmail users would want to use gmail labels which is visible in their interface?
+    # Wouldn't Gmail users would want to use gmail labels which is visible in their interface?
         not_gmail_labels = filter(lambda f: not is_gmail_label(f), flags)
         logger.exception(not_gmail_labels)
         returned_flags = gmail_label_func(uids, not_gmail_labels)

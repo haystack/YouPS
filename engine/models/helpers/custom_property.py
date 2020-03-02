@@ -129,7 +129,6 @@ class CustomProperty(object):
         if property_name == "content" and value:
             log_value = copy.deepcopy(value)
             if "text" in value and value["text"]:
-                _get_logger().info(value)
                 log_value["text"] = value["text"][:30] + " .. (truncated)"
             if "html" in value and value["html"]:
                 log_value["html"] = value["html"][:30] + " .. (truncated)"
