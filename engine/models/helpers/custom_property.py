@@ -3,6 +3,7 @@ import typing as t
 
 import logging
 import inspect
+import copy
 
 def _get_class_name(obj):
     # type: (object) -> str
@@ -126,12 +127,15 @@ class CustomProperty(object):
         # _get_logger().critical(property_name)
         log_value = value
         if property_name == "content" and value:
+            log_value = copy.deepcopy(value)
             if "text" in value and value["text"]:
                 _get_logger().info(value)
                 log_value["text"] = value["text"][:30] + " .. (truncated)"
             if "html" in value and value["html"]:
                 log_value["html"] = value["html"][:30] + " .. (truncated)"
 
+
+            #_get_logger().critical("%d %d" % (len(log_value["text"]), len(value["text"])))
         # TODO format in a parsable format
         info_string = u"get {c}.{p}\t{v}".format(
             c=class_name, p=property_name, v=value)
