@@ -260,7 +260,7 @@
             {
                 "name": "delete",
                 "params": "",
-                "description": "Delete this email to your trash folder.",
+                "description": "Delete this message from your inbox (irreversible)",
                 "example": ""
             },
             {
