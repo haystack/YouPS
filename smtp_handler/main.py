@@ -11,7 +11,7 @@ from email.utils import *
 from email import message_from_string, header, message
 # from engine.main import *
 from engine.s3_storage import upload_message
-from utils import parseaddr, get_body
+from smtp_handler.utils import parseaddr, get_body, get_valid_time_entity
 from django.db.utils import OperationalError
 from datetime import datetime
 import pytz
@@ -140,7 +140,7 @@ def START(message, address=None, host=None):
             try:
                 code_body = EmailReplyParser.parse_reply(entire_body["text"] or entire_body["html"])
             except:
-                code_body = ""
+                code_body = entire_body
 
             shortcuts = EmailRule.objects.filter(type="shortcut")
             if not shortcuts.exists():
@@ -150,35 +150,30 @@ def START(message, address=None, host=None):
                 relay.deliver(mail)
 
             else:       
-                extracted_time = []         
-                if code_body:
-                    # TODO extract time entity
-                    now = datetime.now()
-                    time_entity_extractor = Duckling()
-                    time_entity_extractor.load()
-                    extracted_time = time_entity_extractor.parse(t, reference_time=str(now))
-
                 # parse args for the shortcut
-                kargs = {'message_content': code_body, 'extracted_time': extracted_time}
+                kargs = {'message_content': code_body}
                 args = EmailRule_Args.objects.filter(rule=er_to_execute)
-                for arg in args:
+                for arg in args: # there should be 0 or 1
                     if arg.type == "datetime":
                         try:
-                            kargs[arg.name] = address.split(arg.name + "_")[1].split("_")[0]
-                            kargs[arg.name].replace("_", "")
-                            d = datetime.today()
-                            d = d.replace(month=int(kargs[arg.name][:2]), day=int(kargs[arg.name][2:4]))
-                            if len(kargs[arg.name]) > 4:
-                                d = d.replace(hour=int(kargs[arg.name][4:6]))
-                            if len(kargs[arg.name]) > 6:
-                                d = d.replace(minute=int(kargs[arg.name][6:8]))
+                            extracted_time = []         
+                            if code_body:
+                                # TODO extract time entity
+                                now = datetime.now()
+                                time_entity_extractor = Duckling()
+                                time_entity_extractor.load()
+                                extracted_time = time_entity_extractor.parse(code_body, reference_time=str(now))
 
-                            d = tz('US/Eastern').localize(d)
-                            d = timezone.localtime(d)
+                            d = get_valid_time_entity(extracted_time, code_body)
+                            if len(d) > 0:
+                                d = tz('US/Eastern').localize(d[0]["start"])
+                                d = timezone.localtime(d)
 
-                            kargs[arg.name] = d
+                                kargs[arg.name] = d
+                            else:
+                                raise Exception
                         except Exception:
-                            raise TypeError("Date in wrong format")
+                            raise TypeError("Can't detect date in a forwarded message")
                     else:
                         v = address.split(arg.name + "_")[1]
                         for a in args:

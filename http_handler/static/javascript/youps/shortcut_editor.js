@@ -27,8 +27,6 @@ $(document).ready(function() {
         };
     }
 
-    
-
     // run simulation on the editor
     $("#editor-container").on("click", ".btn-debug-update", function() {
         trackOutboundLink('run simulate');
@@ -95,7 +93,7 @@ function load_rule(load_exist, rule_type=null, $container=null) {
                     $container.find(".panel-heading").last().click();
                             init_editor( $container.find('textarea').last()[0] );
     
-                            $($container.find('.example-suites').last()[0]).DataTable( datatable_config );
+                    $($container.find('.example-suites').last()[0]).DataTable( datatable_config );
                     
                             
                     
@@ -110,6 +108,11 @@ function load_rule(load_exist, rule_type=null, $container=null) {
                             //     }
                             // })
                 }
+
+                // fancybox init 
+                $("a.glyphicon-info-sign").each(function (k,v) {
+                    $(v).fancybox({modal:true, maxWidth: 640, overlay : {closeClick : true}});
+                });
             }
             else {                        
                 notify(res, true);

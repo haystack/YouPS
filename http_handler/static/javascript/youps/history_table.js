@@ -59,9 +59,12 @@ function append_log( msg_log, is_error ) {
                 var json_panel_id = timestamp.replace(/[ /:,]/g,'');
                 var property_log = "";
 
+                var is_undo_delay = false;
                 if ("property_log" in Message) {
                     var property_log_json= JSON.parse(Message["property_log"]);
                     $.each(property_log_json, function(k, v) {
+                        if(["_move", "_see_later", "delete"].indexOf(v["function_name"]) != -1) 
+                            is_undo_delay = true;
                         if(v["type"] == "send")
                             property_log += "- {0} {1} (can not be canceled)\n".format( v["function_name"], v["args"])
                         else if (v["type"] == "set")
@@ -77,15 +80,32 @@ function append_log( msg_log, is_error ) {
                 console.log(property_log)
                 console.log(Message['subject'])
 
+                var timestamp = Message["timestamp"].split(",")[0];
+                timestamp = new Date(Date.parse(timestamp));
+                var now = new Date;
+                timestamp.setYear(now.getFullYear());
+
+                var five_min = 5 * 60 * 1000;
+                var undo_cell = "";
+                if (((now - timestamp) < five_min) && is_undo_delay && false) {
+                    undo_cell = '<button type="button" data-toggle="tooltip" title="Your Inbox is still syncing, it will take a couple minutes to be ready to cancel the action!" class="btn btn-warning"><i class="far fa-clock"></i></button>';
+                } else {
+                    undo_cell = $.trim(property_log) ? '<button type="button" logschema_id={0} class="btn btn-warning btn-undo" data-property-log="{1}">Undo</button>'.format(Message["logschema_id"], property_log):"";
+                }
+
+                
+
                 t.row.add( [
-                        timestamp.split(",")[0],
+                        Message["timestamp"].split(",")[0],
                         '<span class="label label-info">{0}</span>'.format(Message["trigger"] || ""),
                         '<div class="jsonpanel contact" id="jsonpanel-from-{0}"></div>'.format(json_panel_id),
                         '<div class="jsonpanel" id="jsonpanel-{0}"></div>'.format(json_panel_id),
                         (Message["error"] ? '<span class="label label-danger">Error</span>' : "") + Message['log'],
-                        $.trim(property_log) ? '<button type="button" logschema_id={0} class="btn btn-warning btn-undo" data-property-log="{1}">Undo</button>'.format(Message["logschema_id"], property_log):""
+                        undo_cell
                 ] ).draw( false );  
     
+                $('[data-toggle="tooltip"]').tooltip();
+
                 // Delete attributes that are not allowed for users 
                 delete Message["trigger"];
                 delete Message["error"];

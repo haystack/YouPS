@@ -764,8 +764,36 @@ class Message(object):
                     self._imap_client.add_flags([self._uid], "\\Deleted")
             else:
                 self.copy(dst_folder)
+                # logger.critical(self.folder)
+                # logger.critical(dst_folder)
                 self._imap_client.add_flags([self._uid], "\\Deleted")
             self._imap_client.expunge()
+        finally:
+            try:
+                # this is to make YouPS server upto that to move() rather than it has to wait until the next sync
+                self._imap_client.select_folder(dst_folder)
+                uids= self._imap_client.search(["HEADER", "Message-ID", self._schema.base_message.message_id])
+
+                from schema.youps import FolderSchema
+                folder = FolderSchema.objects.get(imap_account=self._imap_account, name=dst_folder)
+
+                new_message = MessageSchema(
+                    base_message=self._schema.base_message,
+                    imap_account=self._imap_account,
+                    folder=folder,
+                    uid=uids[0]
+                )
+                new_message.save()
+
+                MessageSchema.objects.filter(
+                    base_message=self._schema.base_message,
+                    imap_account=self._imap_account,
+                    folder=self.folder._schema
+                ).delete()
+
+                self._imap_client.select_folder(self.folder.name)
+            except:
+                logger.exception("Not able to delete the new message instance")
 
     def qq(self):
         print(self._imap_client.get_gmail_labels([self._uid]))

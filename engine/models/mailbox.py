@@ -358,11 +358,11 @@ class MailBox(object):
         """Create a draft message and save it to user's draft folder
 
             Args:
-                subject (string): the subject line of the draft message
-                to (a single instance|list of string|Contact): addresses that go in to field
-                cc (a single instance|list of string|Contact): addresses that go in cc field
-                bcc (a single instance|list of string|Contact): addresses that go in bcc field
-                content (string): content of the draft message 
+                subject (string): the subject line of the draft message \n
+                to (a single instance|list of string|Contact): addresses that go in to field \n
+                cc (a single instance|list of string|Contact): addresses that go in cc field \n
+                bcc (a single instance|list of string|Contact): addresses that go in bcc field \n
+                content (string): content of the draft message \n
                 draft_folder (string): a name of draft folder 
         """
         
@@ -379,13 +379,18 @@ class MailBox(object):
                     drafts = self._imap_client.find_special_folder(imapclient.DRAFTS)
                     if drafts is not None:
                         self._imap_client.append(drafts, str(new_message))
-            except IMAPClient.Error, e:
+            except IMAPClient.Error as e:
                 logger.critical('create_draft() failed')
                 return 
 
-            logger.debug("create_draft(): Your draft %s has been created" % subject)
+        print("create_draft(): Your draft %s has been created" % subject)
 
     def create_folder(self, folder_name):
+        """Create a new folder
+
+            Args:
+                folder_name (string): a name of a new folder
+        """
         if not self.is_simulate: 
             if "csail" in self._imap_account.host:
                 folder_name = "INBOX." + folder_name
@@ -394,12 +399,22 @@ class MailBox(object):
         print("create_folder(): A new folder %s has been created" % folder_name)
 
     def get_email_mode(self):
+        """Get uid of the your current mode
+
+            Args:
+                folder_name (string): a name of a new folder
+        """
         if self._imap_account.current_mode:
             return self._imap_account.current_mode.uid
         else:
             return None
 
     def set_email_mode(self, uid):
+        """Get uid of the your current mode
+
+            Returns:
+                uid (int): 
+        """
         if not self.is_simulate: 
             self._imap_account.current_mode = MailbotMode.objects.get(imap_account=self._imap_account, uid=uid)
             self._imap_account.save()
@@ -407,12 +422,30 @@ class MailBox(object):
         print ("Change a current email mode to %s (%d)" % (self._imap_account.current_mode.name, self._imap_account.current_mode.uid))
 
     def rename_folder(self, old_name, new_name):
+        """Rename a folder 
+
+            Args:
+                old_name (string): a current name of a folder
+                new_name (string): a new name for the folder
+        """
         if not self.is_simulate: 
             self._imap_client.rename_folder( old_name, new_name )
 
-        logger.debug("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
+        print("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
 
-    def send(self, subject="", to="", cc="", bcc="", body="", body_html="", smtp=""):  # TODO add "cc", "bcc"
+    def send(self, subject="", to="", cc="", bcc="", body="", body_html="", smtp=""):
+        """Send a message
+
+            Args:
+                subject (string): the subject line of the draft message \n
+                to (a single instance|list of string|Contact): addresses that go in to field \n
+                cc (a single instance|list of string|Contact): addresses that go in cc field \n
+                bcc (a single instance|list of string|Contact): addresses that go in bcc field \n
+                body (string): plain text body of a message \n
+                body_html (string): html body of a message. Either body or body_html is required \n
+                smtp (string): a name of draft folder (optional)
+        """
+
         # if len(to) == 0:
         #     raise Exception('send(): recipient email address is not provided')
         msg_wrapper = self._create_message_wrapper(subject, to, cc, bcc, body, body_html)
@@ -421,7 +454,7 @@ class MailBox(object):
             # send_email(subject, self._imap_account.email, to, body)
             self._send_message( msg_wrapper )
 
-        logger.debug("send(): sent a message to  %s" % str(to))
+        print("send(): sent a message to  %s" % str(to))
 
     def _send_message(self, new_message_wrapper):
         # type: (MIMEMultipart) -> None

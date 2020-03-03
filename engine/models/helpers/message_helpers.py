@@ -114,7 +114,7 @@ def get_content_from_message(message, return_only_text=False):
                 extra[sub_type] += text_contents
             # fail otherwise
             else:
-                logger.critical(
+                logger.info(
                     "%s unsupported sub type %s" % (message, sub_type))
                 # raise NotImplementedError(
                 #     "Unsupported sub type %s" % sub_type)

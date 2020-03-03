@@ -90,7 +90,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 # execute the user's code
                 if "on_message" in code:
                     exec(code + "\non_message(new_message)", user_environ)    
-                
+
                 elif "on_flag_change" in code:
                     user_environ['new_flag'] = 'test-flag'
                     exec(code + "\non_flag_change(new_message, new_flag)", user_environ)    
@@ -278,10 +278,9 @@ def interpret(mailbox, mode):
                         for v in valid_folders:
                             logger.exception(v.name)
                         if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
-                            exec(code + "\nhandler.handle(%s)" % call_back, user_environ.update({'handler': handler}))
+                            exec(code + "(%s)" % "new_message", user_environ.update({'handler': handler, 'new_message': event_data.message}))
                             # handler.handle(code)
 
-                
                 event_data.fire_event(handler)
             except Exception as e:
                 # Get error message for users if occurs

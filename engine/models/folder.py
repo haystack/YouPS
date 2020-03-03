@@ -27,6 +27,7 @@ from schema.youps import (  # noqa: F401 ignore unused we use it for typing
     MessageSchema, ThreadSchema)
 from engine.models.helpers import CustomProperty
 from engine.utils import auth_to_nylas
+from smtp_handler.utils import get_valid_time_entity
 
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 from nylas import APIClient
@@ -365,7 +366,7 @@ class Folder(object):
             # if we don't get any information about the message we have to remove it from the cache
             if message_schema.uid not in fetch_data:
                 message_schema.delete()
-                logger.debug("%s deleted message with uid %d" %
+                logger.info("%s deleted message with uid %d" %
                              (self, message_schema.uid))
                 continue
             message_data = fetch_data[message_schema.uid]
@@ -557,61 +558,9 @@ class Folder(object):
                     t = m.subject +" "+ t
                     time_entities = te.parse(t, reference_time=str(base_message.date))
 
-                    a = []
-                    values = []
-
-                    for e in time_entities:
-                        try: 
-                            if e["dim"] not in ["time", "interval"]: # extract url?
-                                continue
-                            if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
-                                continue
-                            
-                            if "body" in e and e["body"].lower().strip() in ["now", "spring", "summer", "fall", "winter"]:
-                                continue
-
-                            if "body" in e and len(e["body"]) >= 3 and e['value'] not in values:
-                                logger.debug(e)
-                                body = t[max(e["start"]-20, 0):min(e["end"]+20, len(t))].replace(e["body"], "*%s*" % e["body"]).replace("\n", " ")
-                                start = end = ""
-
-                                if len(e["value"]["values"]) > 0:
-                                    if "type" in e["value"]["values"][0] and e["value"]["values"][0]["type"] == "interval":
-                                        start = e["value"]["values"][0]["from"]["value"]
-                                        end = e["value"]["values"][0]["to"]["value"]
-                                    else:
-                                        start = e["value"]["values"][0]["value"]
-
-                                        logger.info(e["value"]["values"][0]["value"])
-                                else:
-                                    if "from" in e["value"]:
-                                        start = e["value"]["from"]["value"]
-                                        logger.info(e["value"]["from"]["value"])
-
-                                    else:
-                                        end = e["value"]["to"]["value"]
-                                        logger.info(e["value"]["to"]["value"])
-
-                                if start or end:
-                                    # if the extracted date is too old or too far future, jump
-                                    if start:
-                                        # parse start
-                                        # e.g., 1980-01-01T00:00:00.000Z
-                                        start = start.split(".")[0]
-                                        start = datetime.strptime(start, '%Y-%m-%dT%H:%M:%S')
-                                        if start.year < datetime.today().year or start.year > (datetime.today().year +1):
-                                            continue
-
-                                    if end:
-                                        end = end.split(".")[0]
-                                        end = datetime.strptime(end, '%Y-%m-%dT%H:%M:%S')
-                                        if end.year < datetime.today().year or end.year > (datetime.today().year +1):
-                                            continue
-                                    
-                                    a.append({"body": ".. %s .." % body, "start": start, "end": end}) # TODO only take duration of event start, end, m
-                                    values.append(e['value'])
-                        except Exception as e:
-                            logger.exception(str(e))    
+                    
+                    a = get_valid_time_entity(time_entities, t)
+                     
                         
                     logger.info(a)
                     base_message.extracted_time = json.dumps(a,cls=DjangoJSONEncoder)
@@ -660,7 +609,17 @@ class Folder(object):
                         imap_account=self._imap_account,
                         folder=self._schema
                     ).update(uid=uid)
+                    
+                    old_messages = MessageSchema.objects.filter(
+                        base_message=base_message,
+                        imap_account=self._imap_account
+                    )
 
+                    if not self._imap_account.is_gmail:
+                        for m in old_messages:
+                            if m.folder != self._schema:
+                                logger.info("delete old message")
+                                m.delete()
 
                     event_data_list.append(MessageMovedData(
                         Message(new_message, self._imap_client)))

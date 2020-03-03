@@ -585,9 +585,6 @@ def run_mailbot(user, email, current_mode_id, modes, is_test, run_request, push=
         imapAccount.is_test = is_test
         turn_on_youps(imapAccount, run_request, "By user's request")
 
-        # TODO these don't work anymore
-        # uid = fetch_latest_email_id(imapAccount, imap)'
-        # imapAccount.newest_msg_id = uid
 
         # remove all user's tasks of this user to keep tasks up-to-date
         # old_mailbotMode = MailbotMode.objects.filter(imap_account=imapAccount)
@@ -807,7 +804,7 @@ def undo(user, email, logschema_id):
                     if action["function_name"] in r:
                         reverse_func = getattr(target_class, r[1]) if r[0] == action["function_name"] else getattr(target_class, r[0])
                         action["args"].reverse()
-                        logger.exception(action["args"])
+                        logger.info(action["args"])
                         reverse_func(*action["args"]) if action["args"] else reverse_func()
 
             elif action["type"] == "get":

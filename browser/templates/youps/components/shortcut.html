@@ -18,7 +18,20 @@
 	</div>
 	<div class="panel-body">
 		<div class="instruction-container">
-			<span>You can run this shortcut either using the <a href='/button'>shotcut window</a> or forwarding the target messsage to {{rule.name}}@youps.csail.mit.edu</span>
+			<span>You can run this shortcut using the <a href='/button'>shotcut window</a></span> <span class='email-instruction'>or forwarding the target messsage to {{rule.get_forward_addr}}
+				<a class="glyphicon glyphicon-info-sign" id="popuplink{{rule.id}}" href="#inline"></a></span>
+
+			<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" />
+			
+			<div id="inline" style="display:none;text-align:center;">
+				If you want to quickly run one of your rule within your email client, you can simply forward a messsage to us! 
+				Each rule has different email address assigned based on their rule name.
+				If you have an argument, you can write an argument value on forwared body.   
+				<img src="/static/images/shortcut_email.png" width=700/>
+				<br><br>
+				<p><a href="javascript:;" onclick="jQuery.fancybox.close();" style="background-color:#333;padding:5px 10px;color:#fff;border-radius:5px;text-decoration:none;">Close</a></p>
+			</div>
+			<!-- <script src="https://code.jquery.com/jquery-latest.min.js"></script> -->
 			<br><br>	
 			<ul id="arg-list-{{rule.id}}">
 				{% for arg in args %}
@@ -47,7 +60,7 @@
 	
 				//adding a new element to the list
 				$("#add-{{rule.id}}").click(function() {
-						$("#arg-list-{{rule.id}}").append(`<li class="element">
+					$("#arg-list-{{rule.id}}").append(`<li class="element">
 						<input class="args-name" type="text" placeholder="name"/>:
 						<select>
 							<option value="datetime">Datetime</option>
@@ -57,13 +70,18 @@
 						</select>
 						<button class="btn">X</button>	
 					</li>`);
+
+					if ($("#arg-list-{{rule.id}} li").length > 1) {
+						$("div[rule-id={{rule.id}}] .email-instruction").css("text-decoration", "line-through");
+					}
 				})
 	
 				$("#arg-list-{{rule.id}}").click(function(e) {
 					if(e.target && e.target.nodeName == "BUTTON") {
-						// List item found!  Output the ID!
-						console.log("Button ", e, " was clicked!");
 						e.target.parentNode.remove();
+
+						if ($("#arg-list-{{rule.id}} li").length <= 1) 
+							$("div[rule-id={{rule.id}}] .email-instruction").css("text-decoration", "none");
 					}
 				})
 
@@ -81,6 +99,16 @@
 
 				$("#edit").focusout(function(){
 					$(this).hide();  $(this).siblings("#display").show().text($(this).val());
+				});
+
+				// init
+				if ($("#arg-list-{{rule.id}} li").length > 1) {
+						$("div[rule-id={{rule.id}}] .email-instruction").css("text-decoration", "line-through");
+				}
+
+				$(document).ready(function () {
+					debugger;
+					
 				});
 			</script>
 			

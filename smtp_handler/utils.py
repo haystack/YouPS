@@ -832,6 +832,65 @@ def encoded_str_to_utf8_str(encoded_str, original_encoding=None):
 
     return unicode(encoded_str, original_encoding, 'replace').encode('utf8', 'replace')
 
+def get_valid_time_entity(time_entities, t):
+    a = []
+    values = []
+
+    for e in time_entities:
+        try: 
+            if e["dim"] not in ["time", "interval"]: # extract url?
+                continue
+            if "grain" in e["value"] and (e["value"]["grain"] in ["year", "month"]):
+                continue
+            
+            if "body" in e and e["body"].lower().strip() in ["now", "spring", "summer", "fall", "winter"]:
+                continue
+
+            if "body" in e and len(e["body"]) >= 3 and e['value'] not in values:
+                logger.debug(e)
+                body = t[max(e["start"]-20, 0):min(e["end"]+20, len(t))].replace(e["body"], "*%s*" % e["body"]).replace("\n", " ")
+                start = end = ""
+
+                if len(e["value"]["values"]) > 0:
+                    if "type" in e["value"]["values"][0] and e["value"]["values"][0]["type"] == "interval":
+                        start = e["value"]["values"][0]["from"]["value"]
+                        end = e["value"]["values"][0]["to"]["value"]
+                    else:
+                        start = e["value"]["values"][0]["value"]
+
+                        logger.info(e["value"]["values"][0]["value"])
+                else:
+                    if "from" in e["value"]:
+                        start = e["value"]["from"]["value"]
+                        logger.info(e["value"]["from"]["value"])
+
+                    else:
+                        end = e["value"]["to"]["value"]
+                        logger.info(e["value"]["to"]["value"])
+
+                if start or end:
+                    # if the extracted date is too old or too far future, jump
+                    if start:
+                        # parse start
+                        # e.g., 1980-01-01T00:00:00.000Z
+                        start = start.split(".")[0]
+                        start = datetime.strptime(start, '%Y-%m-%dT%H:%M:%S')
+                        if start.year < datetime.today().year or start.year > (datetime.today().year +1):
+                            continue
+
+                    if end:
+                        end = end.split(".")[0]
+                        end = datetime.strptime(end, '%Y-%m-%dT%H:%M:%S')
+                        if end.year < datetime.today().year or end.year > (datetime.today().year +1):
+                            continue
+                    
+                    a.append({"body": ".. %s .." % body, "start": start, "end": end}) # TODO only take duration of event start, end, m
+                    values.append(e['value'])
+        except Exception as e:
+            logger.exception(str(e))   
+
+    return a
+
 def utf8_str_to_utf8_unicode(encoded_str):
     """Convert a utf8 encoded string into a utf8 encoded unicode object.
 
