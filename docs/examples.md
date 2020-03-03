@@ -4,7 +4,7 @@ The object you will be interacting with most commonly is the `Message` object. R
 
 A key thing to keep in mind about email messages is that they are mostly immutable. The only part of an email message that is mutable for most email systems is the flags and the folder that it is stored in. 
 
-The `Message` object contains useful names for properties you would expect to find on an email, such as `to`, `from`, `bcc`, `cc`, `date` etc.... You can find documentation about these properties in the [api documentation](TODO insert link). 
+The `Message` object contains useful names for properties you would expect to find on an email, such as `to`, `from`, `bcc`, `cc`, `date` etc.... You can find documentation about these properties in the [api documentation](/docs). 
 
 Because most of these properties are immutable they return data. So to get the list of people a `Message` is sent to you can use `people = message.to`.  To add flags or remove flags you can use `message.add_flags(['your', 'flags']` and `message.remove_flags(['your', 'flags'])`. Using these methods will keep you completely compatible with most existing email software.
 
