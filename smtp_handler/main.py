@@ -59,9 +59,6 @@ def START(message, address=None, host=None):
         ers = EmailRule.objects.filter(imap_account=imapAccount, type='shortcut')
         for er in ers:
             tmp = er.name.replace(" ", "_")
-            logger.info(er.get_forward_addr().lower()[:len(tmp)])
-            logger.info(address.lower()[:len(tmp)])
-
             if er.get_forward_addr().lower()[:len(tmp)] == address.lower()[:len(tmp)]:
                 er_to_execute = er
                 break
@@ -77,6 +74,8 @@ def START(message, address=None, host=None):
             new_message = create_response(arrived_message, addr,arrived_message["message-id"], body, host)
             relay.deliver(new_message)
             return
+
+        logger.info("running rule %s" % er_to_execute.name)
 
         # if a corresponding er is found, run it  
         auth_res = authenticate( imapAccount )
@@ -158,13 +157,16 @@ def START(message, address=None, host=None):
                         try:
                             extracted_time = []         
                             if code_body:
+                                import commands
+                                logger.info(commands.getstatusoutput("/bin/sh -c ( cd /home/ubuntu/production/mailx ; /usr/bin/python manage.py cron_task duckling" ))
                                 # TODO extract time entity
-                                now = datetime.now()
-                                time_entity_extractor = Duckling()
-                                time_entity_extractor.load()
-                                extracted_time = time_entity_extractor.parse(code_body, reference_time=str(now))
+                                # now = datetime.now()
+                                # time_entity_extractor = Duckling()
+                                # time_entity_extractor.load()
+                                # extracted_time = time_entity_extractor.parse(code_body, reference_time=str(now))
 
                             d = get_valid_time_entity(extracted_time, code_body)
+                            logger.info(extracted_time)
                             if len(d) > 0:
                                 d = tz('US/Eastern').localize(d[0]["start"])
                                 d = timezone.localtime(d)

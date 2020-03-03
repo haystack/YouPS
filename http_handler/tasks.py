@@ -258,3 +258,12 @@ def loop_sync_user_inbox():
 
 def button_sync():
     pass
+
+def parse_time_entity():
+    from duckling import Duckling
+
+    # now = datetime.now()
+    time_entity_extractor = Duckling()
+    time_entity_extractor.load()
+    extracted_time = time_entity_extractor.parse("tomorrow")
+

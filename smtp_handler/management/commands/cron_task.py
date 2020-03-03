@@ -21,4 +21,5 @@ class Command(BaseCommand):
         elif task_name == "task":
             tasks.loop_scheduled_task()
         else:
-            raise Exception('Valid tasks are register, sync, task')
+            tasks.parse_time_entity()
+            # raise Exception('Valid tasks are register, sync, task')
