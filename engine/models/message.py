@@ -18,7 +18,7 @@ from itertools import ifilter, islice, chain
 
 from django.utils import timezone
 from imapclient import \
-    IMAPClient, exceptions  # noqa: F401 ignore unused we use it for typing
+    IMAPClient, exceptions, imapclient  # noqa: F401 ignore unused we use it for typing
 from pytz import timezone as tz
 
 from engine.models.contact import Contact
@@ -661,18 +661,18 @@ class Message(object):
         if not self._is_simulate:
             self._imap_client.copy(self._uid, dst_folder)
 
-    @ActionLogging
     def delete(self, slient=False):
         # type: () -> None
         """Mark a message as deleted, the imap server will move it to the deleted messages.
         """
+        
+        trash = self._imap_client.find_special_folder(imapclient.TRASH)
+
         if not self._is_simulate:
-            self._imap_client.add_flags([self._uid],'\\Deleted')
-            self._imap_client.expunge()
+            self.move(trash)
 
         if not slient:
-            print("delete(): delete the message")
-        
+            print("delete(): move this message to a trash folder: %s" % trash)
 
     def extract_response(self):
         # type: () -> t.AnyStr
@@ -764,7 +764,7 @@ class Message(object):
                     self._imap_client.add_flags([self._uid], "\\Deleted")
             else:
                 self.copy(dst_folder)
-                self.delete(True)
+                self._imap_client.add_flags([self._uid], "\\Deleted")
             self._imap_client.expunge()
 
     def qq(self):

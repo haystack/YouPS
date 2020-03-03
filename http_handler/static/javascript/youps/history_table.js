@@ -128,10 +128,12 @@ function append_log( msg_log, is_error ) {
             
         });
 
+        // recent msg at top
+        $("#console-table").DataTable().order([0, 'des']).draw(); 
+
         filterNoop($("[name='historyTableFilter']").get(0));
 
-        // recent msg at top
-        $("#console-table").DataTable().order([0, 'des']).draw();   
+          
 
     // var datetime = format_date();
     // $( "<p>{0}</p>".format(datetime)).prependTo( "#console-output" ).addClass("info");

@@ -79,17 +79,18 @@ def interpret_bypass_queue(mailbox, extra_info):
 
             try:
                 user_environ['new_message'] = new_message
+                logger.info("select folder")
                 mailbox._imap_client.select_folder(message_schema.folder.name)
 
                 # clear the property log at the last possible moment
-                
+                logger.info("test")
                 mailbox._imap_client.user_property_log = []
                 if hasattr(mailbox._imap_client, 'nested_log'):
                     delattr(mailbox._imap_client, 'nested_log')
                 # execute the user's code
                 if "on_message" in code:
                     exec(code + "\non_message(new_message)", user_environ)    
-
+                
                 elif "on_flag_change" in code:
                     user_environ['new_flag'] = 'test-flag'
                     exec(code + "\non_flag_change(new_message, new_flag)", user_environ)    
@@ -129,6 +130,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 res['appended_log'][message_schema.id] = msg_log
 
                 if not mailbox.is_simulate:
+                    
                     msg_log2 = print_execution_log(new_message)
                     msg_log2.update( copy.deepcopy(msg_log) )
                     logger.debug(msg_log2)

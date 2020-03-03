@@ -201,7 +201,7 @@ class Folder(object):
         max_uid = max_uid['uid__max']
         if max_uid is None:
             max_uid = 0
-        if self._last_seen_uid != max_uid:
+        if self._last_seen_uid < max_uid:
             self._last_seen_uid = max_uid
             logger.debug('%s updated max_uid %d' % (self, max_uid))
 
@@ -543,6 +543,10 @@ class Folder(object):
                     self, self._last_seen_uid, last_seen_uid))
                 logger.critical("number of messages returned %d" %
                                 (len(fetch_data)))
+    
+                # ignore the message we can't save 
+                if self._last_seen_uid < uid:
+                    self._last_seen_uid = uid
 
                 # to prevent dup saved email
                 continue

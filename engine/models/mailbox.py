@@ -291,8 +291,6 @@ class MailBox(object):
             # TODO maybe fire if the flags have changed
             folder.flags = flags
 
-            # TODO add duckling here that come down from previous level? 
-
             # assume there are children unless specifically told otherwise
             recurse_children = True
 
