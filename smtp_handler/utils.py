@@ -21,6 +21,7 @@ import pickle
 import chardet
 import logging
 import new
+from engine.models.helpers.message_helpers import _get_text_from_python_message
 
 '''
 Murmur Mail Utils and Constants
@@ -317,20 +318,34 @@ def get_attachments(email_message):
 def get_body(email_message):
 
     res = {'html' : '', 'plain' : ''}
+    text = ""
+    html = ""
+    extra = {}
 
     for part in email_message.walk():
-        if part.get_content_maintype() == 'text':
+        if part.is_multipart():
+            continue
 
-            body = part.get_payload(decode=True)
+        sub_type = part.get_content_subtype()
 
-            subtype = part.get_content_subtype()
-            if subtype == 'plain':
-                res['plain'] += remove_plain_ps(body)
-            elif subtype == 'html':
-                res['html'] += remove_html_ps(body)
+        text_contents = _get_text_from_python_message(part)
 
+        if text_contents is not None:
+            text += text_contents if sub_type == "plain" else ""
+            html += text_contents if sub_type == "html" else ""
+        # extract calendar
+        elif sub_type == "calendar":
+            if sub_type not in extra:
+                extra[sub_type] = ""
+            extra[sub_type] += text_contents
+        # fail otherwise
+        else:
+            logger.info("unsupported sub type %s" % (sub_type))
 
-    return res
+        extra['text'] = text
+        extra['html'] = html
+
+    return extra
 
 
 def remove_html_ps(body):

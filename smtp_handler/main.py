@@ -157,23 +157,21 @@ def START(message, address=None, host=None):
                         try:
                             extracted_time = []         
                             if code_body:
-                                import commands
-                                logger.info(commands.getstatusoutput("/bin/sh -c ( cd /home/ubuntu/production/mailx ; /usr/bin/python manage.py cron_task duckling" ))
-                                # TODO extract time entity
                                 from django.core.management import call_command
                                 from StringIO import StringIO
                                 out = StringIO()
                                 call_command('cron_task', "duckling", code_body["plain"] or code_body["html"],stdout=out)
 
+                                logger.info(out.getvalue())
                                 import json
                                 extracted_time = json.loads( out.getvalue() )
                                 # now = datetime.now()
                                 # time_entity_extractor = Duckling()
                                 # time_entity_extractor.load()
                                 # extracted_time = time_entity_extractor.parse(code_body, reference_time=str(now))
-                            logger.info(extracted_time)
-                            d = get_valid_time_entity(extracted_time, code_body)
                             
+                            d = get_valid_time_entity(extracted_time, code_body["plain"] or code_body["html"])
+                            logger.info(d)
                             if len(d) > 0:
                                 d = tz('US/Eastern').localize(d[0]["start"])
                                 d = timezone.localtime(d)
