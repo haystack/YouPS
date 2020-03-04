@@ -195,6 +195,7 @@ def interpret(mailbox, mode):
     # execute user code
     try:
         # set the stdout to a string
+        stdout_original = sys.stdout
         sys.stdout = user_std_out
 
         # set the user logger to
@@ -264,65 +265,72 @@ def interpret(mailbox, mode):
 
                 for rule in email_rules:
                     code = rule.code
-                    if event_class_name in ["ThreadArrivalData", "ContactArrivalData"]:
-                        code = codeobject_loads(json.loads(code))
-                        code = type(codeobject_loads)(code, user_environ)
+                    try:
+                        if event_class_name in ["ThreadArrivalData", "ContactArrivalData"]:
+                            code = codeobject_loads(json.loads(code))
+                            code = type(codeobject_loads)(code, user_environ)
 
-                        logger.exception(mailbox.new_message_handler.getHandlerCount())
-                        handler.handle(code)
-
-                        logger.exception(mailbox.new_message_handler.getHandlerCount())
-                    else:
-                        valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
-                        logger.info(valid_folders)
-                        for v in valid_folders:
-                            logger.exception(v.name)
-                        if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
-                            user_environ["new_message"] = event_data.message
-                            event_data.message._imap_client.select_folder(event_data.message.folder.name)
-                            exec(code + "\n%s(%s)" % (call_back, "new_message"), user_environ)
+                            # logger.exception(mailbox.new_message_handler.getHandlerCount()) 
+                            # mailbox.new_message_handler.env = user_environ
                             # handler.handle(code)
+                            code(event_data.message)
+                            # exec(code(event_data.message), user_environ)
+                        else:
+                            valid_folders = FolderSchema.objects.filter(imap_account=mailbox._imap_account, rules=rule)
+                            logger.info(valid_folders)
+                            for v in valid_folders:
+                                logger.exception(v.name)
+                            if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
+                                user_environ["new_message"] = event_data.message
+                                event_data.message._imap_client.select_folder(event_data.message.folder.name)
+                                exec(code + "\n%s(%s)" % (call_back, "new_message"), user_environ)
+                                # handler.handle(code)
+                                # handler.env = user_environ
+                                # exec(code + "\nhandler.handle(%s)" % call_back, user_environ.update({'handler': handler}))
 
-                event_data.fire_event(handler)
+                    except Exception as e:
+                        # Get error message for users if occurs
+                        # print out error messages for user
+                        # if len(inspect.trace()) < 2:
+                        #     logger.exception("System error during running user code")
+
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        logger.exception(sys.exc_info())
+                        logger.exception("failure running user %s code" % mailbox._imap_account.email)
+                        logger.info(traceback.format_tb(exc_tb))
+                        error_msg = str(e) + traceback.format_tb(exc_tb)[-1]
+                        try:
+                            send_email("failure running user %s code" % mailbox._imap_account.email, "youps.help@youps.csail.mit.edu", "youps.help@gmail.com", error_msg.decode('utf-8'), error_msg.decode('utf-8'))
+                        except Exception:
+                            logger.exception("Can't send error emails to admin :P")
+                        copy_msg["log"] = error_msg
+                        copy_msg["error"] = True     
+
+                    if handler is not None:
+                        copy_msg.update(print_execution_log(event_data.message))
+                        # logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
+                        copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
+                        # logger.critical(user_std_out.getvalue())
+                        copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
+                                    
+                        dump_execution_log(mailbox._imap_account, {copy_msg["timestamp"]: copy_msg}, mailbox._imap_client.user_property_log)
+
+                    # flush buffer
+                    user_std_out = StringIO()
+
+                    # set the stdout to a string
+                    sys.stdout = user_std_out
+
+                    # set the user logger to
+                    userLoggerStream = user_std_out
+
+                    mailbox.new_message_handler.removeAllHandles()
+                    mailbox.added_flag_handler.removeAllHandles()
+                    mailbox.deadline_handler.removeAllHandles()
             except Exception as e:
-                # Get error message for users if occurs
-                # print out error messages for user
-                # if len(inspect.trace()) < 2:
-                #     logger.exception("System error during running user code")
+                logger.critical(e)
 
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                logger.exception(sys.exc_info())
-                logger.exception("failure running user %s code" % mailbox._imap_account.email)
-                logger.info(traceback.format_tb(exc_tb))
-                error_msg = str(e) + traceback.format_tb(exc_tb)[-1]
-                try:
-                    send_email("failure running user %s code" % mailbox._imap_account.email, "youps.help@youps.csail.mit.edu", "youps.help@gmail.com", error_msg.decode('utf-8'), error_msg.decode('utf-8'))
-                except Exception:
-                    logger.exception("Can't send error emails to admin :P")
-                copy_msg["log"] = error_msg
-                copy_msg["error"] = True     
-
-            if handler is not None:
-                copy_msg.update(print_execution_log(event_data.message))
-                logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
-                copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")
-
-                copy_msg["log"] = "%s\n%s" % (user_std_out.getvalue(), copy_msg["log"] if "log" in copy_msg else "")
-                            
-                dump_execution_log(mailbox._imap_account, {copy_msg["timestamp"]: copy_msg}, mailbox._imap_client.user_property_log)
-
-            # flush buffer
-            user_std_out = StringIO()
-
-            # set the stdout to a string
-            sys.stdout = user_std_out
-
-            # set the user logger to
-            userLoggerStream = user_std_out
-
-            mailbox.new_message_handler.removeAllHandles()
-            mailbox.added_flag_handler.removeAllHandles()
-            mailbox.deadline_handler.removeAllHandles()
+        sys.stdout = stdout_original
 
         '''
             Task manager: Dynamic event handler. Could be triggered by a definite time or events 
@@ -444,7 +452,7 @@ def interpret(mailbox, mode):
         logger.exception("failure running user %s code" % mailbox._imap_account.email)
     finally:
         # set the stdout back to what it was
-        sys.stdout = sys.__stdout__
+        sys.stdout = stdout_original
         userLoggerStream = sys.__stdout__
 
         # if it is simulate don't save to db

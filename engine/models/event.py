@@ -24,8 +24,9 @@ class Event:
         > watcher.watchFiles()
     """
 
-    def __init__(self):
+    def __init__(self, env=None):
         self.handlers = set()
+        self.env = env
 
     def handle(self, handler):
         self.handlers.add(handler)
@@ -40,7 +41,8 @@ class Event:
 
     def fire(self, *args, **kwargs):
         for handler in self.handlers:
-            handler(*args, **kwargs)
+            exec(handler(*args, **kwargs), self.env)
+            
 
     def removeAllHandles(self):
         self.handlers = set()
