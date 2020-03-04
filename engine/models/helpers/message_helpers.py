@@ -37,7 +37,7 @@ def _open_rfc822(message):
     # check if the message is initially read
     initially_unread = message.is_unread
     try:
-        logger.info(message._uid)
+        logger.debug("msg uid %d at %s" % (message._uid, message.folder.name))
         response = message._imap_client.fetch(
             message._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
         if message._uid not in response:

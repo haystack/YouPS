@@ -1,5 +1,5 @@
 from __future__ import unicode_literals, print_function, division
-from imapclient import IMAPClient  # noqa: F401 ignore unused we use it for typing
+from imapclient import IMAPClient, exceptions  # noqa: F401 ignore unused we use it for typing
 from event import Event
 import logging
 import datetime
@@ -394,7 +394,15 @@ class MailBox(object):
         if not self.is_simulate: 
             if "csail" in self._imap_account.host:
                 folder_name = "INBOX." + folder_name
-            self._imap_client.create_folder( folder_name )
+            try:
+                self._imap_client.create_folder( folder_name )
+            except exceptions.IMAPClientError:
+                print("create_folder(): %s folder already exist")
+                return
+            except Exception as e:
+                logger.critical(e)
+                raise Exception("create_folder(): can't create folder")
+
 
         print("create_folder(): A new folder %s has been created" % folder_name)
 

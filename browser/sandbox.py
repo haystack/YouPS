@@ -278,7 +278,9 @@ def interpret(mailbox, mode):
                         for v in valid_folders:
                             logger.exception(v.name)
                         if not event_class_name == "MessageArrivalData" or event_data.message._schema.folder in valid_folders:
-                            exec(code + "(%s)" % "new_message", user_environ.update({'handler': handler, 'new_message': event_data.message}))
+                            user_environ["new_message"] = event_data.message
+                            event_data.message._imap_client.select_folder(event_data.message.folder.name)
+                            exec(code + "\n%s(%s)" % (call_back, "new_message"), user_environ)
                             # handler.handle(code)
 
                 event_data.fire_event(handler)
@@ -300,7 +302,7 @@ def interpret(mailbox, mode):
                 copy_msg["log"] = error_msg
                 copy_msg["error"] = True     
 
-            if handler and handler.getHandlerCount():
+            if handler is not None:
                 copy_msg.update(print_execution_log(event_data.message))
                 logger.debug("handling fired %s %s" % (rule.name, event_data.message.subject))
                 copy_msg["trigger"] = rule.name or (rule.type.replace("_", " ") + " untitled")

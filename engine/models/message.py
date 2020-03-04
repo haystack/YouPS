@@ -67,7 +67,7 @@ class Message(object):
         self._nylas_message = None
 
         self._imap_client.select_folder(self.folder.name)
-
+        logger.critical(self.folder.name)
         self.time_entity_extractor = None
 
         logger.debug('caller name: %s' % inspect.stack()[1][3])
