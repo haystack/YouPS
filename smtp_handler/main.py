@@ -137,7 +137,7 @@ def START(message, address=None, host=None):
             entire_body = get_body(entire_message)
 
             try:
-                code_body = EmailReplyParser.parse_reply(entire_body["text"] or entire_body["html"])
+                code_body = {"text": EmailReplyParser.parse_reply(entire_body["text"] or entire_body["html"]), "html": ""}
             except:
                 code_body = entire_body
 
@@ -160,7 +160,7 @@ def START(message, address=None, host=None):
                                 from django.core.management import call_command
                                 from StringIO import StringIO
                                 out = StringIO()
-                                call_command('cron_task', "duckling", code_body["plain"] or code_body["html"],stdout=out)
+                                call_command('cron_task', "duckling", code_body["text"] or code_body["html"],stdout=out)
 
                                 logger.info(out.getvalue())
                                 import json
@@ -170,7 +170,7 @@ def START(message, address=None, host=None):
                                 # time_entity_extractor.load()
                                 # extracted_time = time_entity_extractor.parse(code_body, reference_time=str(now))
                             
-                            d = get_valid_time_entity(extracted_time, code_body["plain"] or code_body["html"])
+                            d = get_valid_time_entity(extracted_time, code_body["text"] or code_body["html"])
                             logger.info(d)
                             if len(d) > 0:
                                 d = tz('US/Eastern').localize(d[0]["start"])

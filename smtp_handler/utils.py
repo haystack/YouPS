@@ -342,8 +342,8 @@ def get_body(email_message):
         else:
             logger.info("unsupported sub type %s" % (sub_type))
 
-        extra['text'] = text
-        extra['html'] = html
+    extra['text'] = text
+    extra['html'] = html
 
     return extra
 
