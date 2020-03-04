@@ -160,6 +160,13 @@ def START(message, address=None, host=None):
                                 import commands
                                 logger.info(commands.getstatusoutput("/bin/sh -c ( cd /home/ubuntu/production/mailx ; /usr/bin/python manage.py cron_task duckling" ))
                                 # TODO extract time entity
+                                from django.core.management import call_command
+                                from StringIO import StringIO
+                                out = StringIO()
+                                call_command('cron_task', "duckling", code_body,stdout=out)
+
+                                import json
+                                extracted_time = json.loads( out.getvalue() )
                                 # now = datetime.now()
                                 # time_entity_extractor = Duckling()
                                 # time_entity_extractor.load()

@@ -20,6 +20,7 @@ class Command(BaseCommand):
             tasks.loop_sync_user_inbox()
         elif task_name == "task":
             tasks.loop_scheduled_task()
+        elif task_name == "duckling":
+            return tasks.parse_time_entity(args[1])
         else:
-            tasks.parse_time_entity()
-            # raise Exception('Valid tasks are register, sync, task')
+            raise Exception('Valid tasks are register, sync, task')
