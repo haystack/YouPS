@@ -9,7 +9,7 @@ class Command(BaseCommand):
     args = '<task_name>'
 
     def handle(self, *args, **options):
-        if len(args) != 1:
+        if len(args) == 0:
             raise Exception('You must specify one task name')
 
         task_name = args[0]

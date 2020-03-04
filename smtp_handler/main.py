@@ -163,7 +163,7 @@ def START(message, address=None, host=None):
                                 from django.core.management import call_command
                                 from StringIO import StringIO
                                 out = StringIO()
-                                call_command('cron_task', "duckling", code_body,stdout=out)
+                                call_command('cron_task', "duckling", code_body["plain"] or code_body["html"],stdout=out)
 
                                 import json
                                 extracted_time = json.loads( out.getvalue() )
@@ -171,17 +171,19 @@ def START(message, address=None, host=None):
                                 # time_entity_extractor = Duckling()
                                 # time_entity_extractor.load()
                                 # extracted_time = time_entity_extractor.parse(code_body, reference_time=str(now))
-
-                            d = get_valid_time_entity(extracted_time, code_body)
                             logger.info(extracted_time)
+                            d = get_valid_time_entity(extracted_time, code_body)
+                            
                             if len(d) > 0:
                                 d = tz('US/Eastern').localize(d[0]["start"])
                                 d = timezone.localtime(d)
 
                                 kargs[arg.name] = d
                             else:
-                                raise Exception
-                        except Exception:
+                                raise Exception("no date found")
+                        except Exception as e:
+                            logger.critical(e)
+
                             raise TypeError("Can't detect date in a forwarded message")
                     else:
                         v = address.split(arg.name + "_")[1]

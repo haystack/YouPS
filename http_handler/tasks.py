@@ -267,6 +267,6 @@ def parse_time_entity(time_entity):
     time_entity_extractor.load()
     extracted_time = time_entity_extractor.parse(time_entity)
 
-    return extracted_time
+    return str(extracted_time)
 
 
