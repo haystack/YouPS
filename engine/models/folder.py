@@ -552,19 +552,20 @@ class Folder(object):
             if event_data_list is not None:
                 assert new_message_ids is not None
                 if metadata['message-id'] in new_message_ids:
-                    m = Message(new_message, self._imap_client)
-                    te = self._get_time_entity_extractor()
-                    t = m.extract_response()
-                    t = m.subject +" "+ t
-                    time_entities = te.parse(t, reference_time=str(base_message.date))
+                    if not base_message.extracted_time:
+                        m = Message(new_message, self._imap_client)
+                        te = self._get_time_entity_extractor()
+                        t = m.extract_response()
+                        t = m.subject +" "+ t
+                        time_entities = te.parse(t, reference_time=str(base_message.date))
 
-                    
-                    a = get_valid_time_entity(time_entities, t)
-                     
                         
-                    logger.info(a)
-                    base_message.extracted_time = json.dumps(a,cls=DjangoJSONEncoder)
-                    base_message.save()
+                        a = get_valid_time_entity(time_entities, t)
+                        
+                            
+                        logger.info(a)
+                        base_message.extracted_time = json.dumps(a,cls=DjangoJSONEncoder)
+                        base_message.save()
 
                     # Check thread arrival event
                     if self._imap_account.nylas_access_token:
