@@ -1274,7 +1274,8 @@ class Message(object):
 
 
     def _get_from_friendly(self):
-        if self.from_._schema:
+
+        if self.from_ and self.from_._schema: 
             return {
                 "name": self.from_.name,
                 "email": self.from_.email,

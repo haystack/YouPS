@@ -66,6 +66,7 @@ PROTOCOL = _get_protocol()
 CLIENT_ID = ''
 CLIENT_SECRET = ''
 IMAP_SECRET = ''
+INVITE_ONLY = False
 PRETEST_EMAIL = []
 NYLAS_ID = ""
 NYLAS_SECRET = ""

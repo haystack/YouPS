@@ -19,7 +19,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-from http_handler.settings import WEBSITE, PRETEST_EMAIL, DEBUG
+from http_handler.settings import WEBSITE, INVITE_ONLY, PRETEST_EMAIL, DEBUG
 
 import logging
 
@@ -54,8 +54,8 @@ class RegistrationForm(forms.Form):
         
         """
         if 'email' in self.cleaned_data:
-            if False and self.cleaned_data['email'] not in PRETEST_EMAIL:
-                raise forms.ValidationError(_("YouPS is currently only open for pre-testers. We are working hard to release YouPS soon! Sorry!"))
+            if INVITE_ONLY and self.cleaned_data['email'] not in PRETEST_EMAIL:
+                raise forms.ValidationError(_("YouPS is currently only open for invite. We are working hard to release YouPS soon!"))
                 
         if 'password1' in self.cleaned_data and 'password2' in self.cleaned_data:
             if self.cleaned_data['password1'] != self.cleaned_data['password2']:

@@ -552,8 +552,9 @@ class Folder(object):
             if event_data_list is not None:
                 assert new_message_ids is not None
                 if metadata['message-id'] in new_message_ids:
+                    m = Message(new_message, self._imap_client)
                     if not base_message.extracted_time:
-                        m = Message(new_message, self._imap_client)
+                        
                         te = self._get_time_entity_extractor()
                         t = m.extract_response()
                         t = m.subject +" "+ t

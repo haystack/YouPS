@@ -244,8 +244,8 @@ def interpret(mailbox, mode):
                     handler = mailbox.new_message_handler
                     call_back = "on_message"              
                     email_rules = EmailRule.objects.filter(mode=mode, type__startswith=rule_type_to_search)
-                    logger.exception(mode.id)
-                    logger.exception(email_rules.values())
+                    logger.info(mode.id)
+                    logger.info(email_rules.values())
                 elif event_class_name == "NewFlagsData":
                     rule_type_to_search = "flag-change"
                     handler = mailbox.added_flag_handler
@@ -259,7 +259,6 @@ def interpret(mailbox, mode):
                 elif event_class_name == "MessageMovedData":
                     continue
 
-                logger.exception("here")
                 if handler is None:
                     continue
 

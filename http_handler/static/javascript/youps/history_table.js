@@ -203,7 +203,7 @@ function fetch_log(from_id=null, to_id=null) {
                 fetch_log(log_max_id+1, null);
             }, 2000) // 2 second
         }
-    ).fail(function(res) {
+).fail(function(res) {
         alert("Please refresh the page!");
     });
 }
@@ -213,7 +213,8 @@ function filterNoop(cb) {
     if(cb.checked) {
         $("#console-table tbody tr").hide();
         $("#console-table tbody tr").each(function(k, v) {
-            if($.trim($(v).find("td:nth-child(5)").html() + $(v).find("td:nth-child(6)").html()))
+            var log = $(v).find("td:nth-child(5)").html() + $(v).find("td:nth-child(6)").html();
+            if($.trim(log.replace(/(?:<br>|<br\/>)/g, '')))
                 $(this).show();
         })
         // $("#console-table tbody tr").show();
