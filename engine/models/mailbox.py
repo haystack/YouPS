@@ -1,5 +1,5 @@
 from __future__ import unicode_literals, print_function, division
-from imapclient import IMAPClient, exceptions  # noqa: F401 ignore unused we use it for typing
+from imapclient import IMAPClient, exceptions, imapclient  # noqa: F401 ignore unused we use it for typing
 from event import Event
 import logging
 import datetime
@@ -354,7 +354,7 @@ class MailBox(object):
     
         return new_message
 
-    def create_draft(self, subject="", to="", cc="", bcc="", content="", draft_folder=None):
+    def create_draft(self, subject="", to="", cc="", bcc="", content=""):
         """Create a draft message and save it to user's draft folder
 
             Args:
@@ -362,17 +362,14 @@ class MailBox(object):
                 to (a single instance|list of string|Contact): addresses that go in to field \n
                 cc (a single instance|list of string|Contact): addresses that go in cc field \n
                 bcc (a single instance|list of string|Contact): addresses that go in bcc field \n
-                content (string): content of the draft message \n
-                draft_folder (string): a name of draft folder 
+                content (string): content of the draft message
         """
         
         new_message = self._create_message_wrapper(subject, to, cc, bcc, content)
-            
+
         if not self.is_simulate:
             try:
-                if draft_folder is not None:
-                    self._imap_client.append(draft_folder, str(new_message))
-                elif self._imap_account.is_gmail:
+                if self._imap_account.is_gmail:
                     self._imap_client.append('[Gmail]/Drafts', str(new_message))
                 else:
                     import imapclient

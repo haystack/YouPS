@@ -503,8 +503,6 @@ class Message(object):
         # type: () -> Contact
         """Get the Contact the message is addressed from
 
-        See also Message.from_
-
         Returns:
             Contact: The contact in the from field of the message
         """
@@ -663,7 +661,7 @@ class Message(object):
 
     def delete(self, slient=False):
         # type: () -> None
-        """Mark a message as deleted, the imap server will move it to the deleted messages.
+        """Move this message to your trash folder
         """
         
         trash = self._imap_client.find_special_folder(imapclient.TRASH)
@@ -689,7 +687,7 @@ class Message(object):
         """return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP 
             
             Returns:
-                t.List[t.AnyStr]: list of {"body": "~", "start": "~", "end": "~"}
+                t.List[t.AnyStr]: list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}
         """
         return self._schema.base_message.extracted_time
 
@@ -1026,8 +1024,10 @@ class Message(object):
 
     def see_later(self, later_at=60, hide_in='YouPS see later'):
         """Hide a message to a folder and move it back to a original folder
-
-        my_message.on_time(now+later_at, f(message){ message.move('original_location') })
+        this function is equivalent to following: \n
+        def f(msg):
+            msg.move('original_location')
+        my_message.on_time(now+later_at, f)
 
         Args:
             later_at (int): when to move this message back to inbox (in minutes)
