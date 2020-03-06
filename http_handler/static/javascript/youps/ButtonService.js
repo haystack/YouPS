@@ -14,8 +14,13 @@ class ButtonService extends React.Component {
         const url = '/fetch_upcoming_events';
         return axios.get(url, {withCredentials: true}).then(response => response.data);
     }  
-    getCustomer(pk) {
-        const url = `/fetch_watch_message`;
+    deleteOnResponse(message) {
+        const url = `/remove_on_response_event/${message.msg_id}`;
+        console.log(url)
+        return axios.post(url);
+    }
+    deleteOnTime(message) {
+        const url = `/remove_on_time_event/${message.msg_id}`;
         return axios.post(url).then(response => response.data);
     }
     deleteCustomer(customer){

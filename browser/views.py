@@ -396,11 +396,37 @@ def login_imap(request):
 def apply_button_rule(request):
 	try:
 		user = get_object_or_404(UserProfile, email=request.user.email)
-		 
+		
 		msg_schema_id = request.POST['msg_id']
 		er_id = request.POST['er_id']
 		kargs = json.loads(request.POST.get('kargs'))
 		res = engine.main.apply_button_rule(user, request.user.email, er_id, msg_schema_id, kargs)
+		
+		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
+	except Exception as e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def remove_on_response_event(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		logger.critical(request.POST)
+		msg_schema_id = request.POST['msg_id']
+		res = engine.main.remove_on_response_event(user, request.user.email, msg_schema_id)
+		
+		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
+	except Exception as e:
+		logger.exception(e)
+		return HttpResponse(request_error, content_type="application/json")
+
+@login_required
+def remove_on_time_event(request):
+	try:
+		user = get_object_or_404(UserProfile, email=request.user.email)
+		logger.critical(request.POST)
+		msg_schema_id = request.POST['msg_id']
+		res = engine.main.remove_on_time_event(user, request.user.email, msg_schema_id)
 		
 		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
 	except Exception as e:

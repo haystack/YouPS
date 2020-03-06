@@ -427,9 +427,15 @@ $("#editor-container").on("click", ".panel-heading", function (e) {
 
 // add a new editor
 $("#editor-container").on("click", ".btn-new-editor", function() {
-    trackOutboundLink('new editor -' + $(this).attr("type"));
-    var $container = $( $(this).siblings("[type='{0}']".format($(this).attr("type"))) );
-    var editor_elem = load_rule(false, $(this).attr("type"), $container);
+    var type = $(this).parents('.panel-title').find("option:selected").val();
+    if(!type) type="shortcut";
+    debugger;
+    trackOutboundLink('new editor -' + type);
+    
+    var $container = $( $(this).parents(".tab-content").find(".editable-container[type='{0}']".format(type)) );
+    if(type == "shortcut")
+        $container = $(".editable-container");
+    var editor_elem = load_rule(false, type, $container);
 });
 
 // remove / revive an editor

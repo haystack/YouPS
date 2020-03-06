@@ -122,7 +122,7 @@ class BaseMessage(models.Model):
     _thread = models.ForeignKey(
         'ThreadSchema', related_name='baseMessages', blank=True, null=True)
     # contains relevant events attached to this message 
-    events = models.ForeignKey('EventManager', related_name="message_events", blank=True, null=True)  # type: EventManager
+    events = models.ManyToManyField('EventManager', related_name="message_events", blank=True, null=True)  # type: EventManager
 
     @property
     def references(self):
@@ -235,7 +235,7 @@ class ThreadSchema(models.Model):
     # gmail threads have a gm_thread_id which ties them all together
     gm_thread_id = models.CharField(max_length=191, blank=True)
     # contains relevant events attached to this message 
-    events = models.ForeignKey('EventManager', related_name="thread_events", null=True, blank=True)  # type: EventManager
+    events = models.ManyToManyField('EventManager', related_name="thread_events", null=True, blank=True)  # type: EventManager
     # nylas thread id
     nylas_id = models.CharField('nylas_thread_id', max_length=200, unique=True)
 

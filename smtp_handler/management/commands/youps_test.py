@@ -110,7 +110,7 @@ class Command(BaseCommand):
                     {
                         'code': 'print("True" if "test email " in my_message.subject else "") ',
                         'expected': 'True'
-                    }, 
+                    },
                 ],
                 [
                     {
@@ -146,7 +146,7 @@ class Command(BaseCommand):
                         'expected': 'True'
                     },
                     {
-                        'code': """my_message.mark_unread()\n\tprint (my_message.is_read)""",
+                        'code': """my_message._mark_unread(True)\n\tprint (my_message.is_read)""",
                         'expected': 'False'
                     }
                 ]

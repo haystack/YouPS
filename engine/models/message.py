@@ -577,6 +577,8 @@ class Message(object):
         """
         
         try:
+            # move to the folder where the message is in
+            self._imap_client.select_folder(self.folder.name)
             c = message_helpers.get_content_from_message(self)
         except:
             raise Exception("This message is currently not in this folder due to the delay of IMAP.")
@@ -812,7 +814,7 @@ class Message(object):
             to (str): 
             cc (str): 
             bcc (str): 
-            subject (str): 
+            subject (str): if none is given, it will be "Fwd: 'original subject'"
             content (str): You can add additional content on a body of this forwarded message
         """
         to = format_email_address(to)
@@ -970,6 +972,8 @@ class Message(object):
             e = EventManager(thread=thread_schema, email_rule=er)
             e.save()
 
+            thread_schema.events.add(e)
+
         print("on_response(): The handler will be executed when a new message arrives on this thread")
 
     @ActionLogging
@@ -979,7 +983,7 @@ class Message(object):
         pass
 
     def on_time(self, handler, later_at=60):
-        """The number of minutes to wait before executing the code. If omitted, the value 0 is used
+        """The number of minutes to wait before executing the code. If omitted, the value 60 is used
 
         Args:
             handler (function): A function that will be executed. The function provides the newly arrived message as an argument \n
@@ -1012,6 +1016,8 @@ class Message(object):
 
             e = EventManager(base_message=self._schema.base_message, date=later_at, email_rule=er)
             e.save()
+
+            self._schema.base_message.events.add(e)
 
         print("on_time(): The handler will be executed at %s " % prettyPrintTimezone(later_at))
 
@@ -1138,19 +1144,6 @@ class Message(object):
         # check if the message is initially read
         initially_read = self.is_read
         try:
-            # fetch the data its a dictionary from uid to data so extract the data
-            response = self._imap_client.fetch(
-                self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
-            if self._uid not in response:
-                raise RuntimeError('This message is not currently in this folder. It takes some time due to IMAP delay')
-            response = response[self._uid]
-
-            if 'RFC822' not in response:
-                logger.critical('%s:%s response: %s' %
-                                (self.folder, self, pprint.pformat(response)))
-                logger.critical("%s did not return RFC822" % self)
-                raise RuntimeError("Could not find RFC822")
-
             # text content
             new_message = MIMEMultipart('alternative')
 
@@ -1185,6 +1178,19 @@ class Message(object):
             new_message.attach(part1)
             new_message.attach(part2)
 
+            # fetch the data its a dictionary from uid to data so extract the data
+            response = self._imap_client.fetch(
+                self._uid, ['RFC822'])  # type: t.Dict[t.AnyStr, t.Any]
+            if self._uid not in response:
+                raise RuntimeError('This message is not currently in this folder. It takes some time due to IMAP delay')
+            response = response[self._uid]
+
+            if 'RFC822' not in response:
+                logger.critical('%s:%s response: %s' %
+                                (self.folder, self, pprint.pformat(response)))
+                logger.critical("%s did not return RFC822" % self)
+                raise RuntimeError("Could not find RFC822")
+
             # get attachments
             rfc_contents = email.message_from_string(
                 response.get('RFC822'))  # type: email.message.Message
@@ -1214,7 +1220,7 @@ class Message(object):
         finally:
             # mark the message unread if it is unread
             if not initially_read:
-                self.mark_unread()
+                self._mark_unread(True)
 
         return new_message_wrapper
 

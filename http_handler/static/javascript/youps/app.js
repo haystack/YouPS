@@ -140,6 +140,46 @@ class RuleSelector extends React.Component {
     })
   }
 
+  removeOnresponse(e) {
+    var params = {"msg_id": $("input[name='watched_message']:checked").parents('tr').attr("message-index")};
+
+    $.post('/remove_on_response_event', params,
+    function(res) {
+        console.log(res);
+        
+        // Create success
+        if (res.status) {
+            console.log("remove success");
+            $("input[name='watched_message']:checked").parents('tbody').removeAttr('on_response');
+            res['code'] = "on_response() event has been removed";
+            notify(res, true);
+        }
+        else {
+            notify(res, false);
+        }
+    });
+  }
+
+  removeOntime(e) {
+    var params = {"msg_id": $("input[name='watched_message']:checked").parents('tr').attr("message-index")};
+
+    $.post('/remove_on_time_event', params,
+    function(res) {
+        console.log(res);
+        
+        // Create success
+        if (res.status) {
+            console.log("remove success");
+            $("input[name='watched_message']:checked").parents('tbody').removeAttr('on_time');
+            res['code'] = "on_time() event has been removed";
+            notify(res, true);
+        }
+        else {
+            notify(res, false);
+        }
+    });
+  }
+
   handleSelect(e, er_id) {
     $("#rule-selector-table tr").css("opacity", 0.5)
     $("[er-id=" + er_id + "]").parents("tr").css("opacity", 1)
@@ -179,13 +219,42 @@ class RuleSelector extends React.Component {
 
   render() {
     var table_style = {background: "aliceblue", width:"100%"};
+    var hide_style = {display: "none"};
     var row_style={"margin-top": "10px", "padding-bottom": "5px", "border-bottom": "1px solid"}
     return (
       <div class="container" style={table_style} id="rule-selector-table">
+        <div class="row on-response-rule" style={Object.assign({}, hide_style, row_style)} >
+          <div class="col-md-9">
+              Remove <code>on_response()</code> event from this thread<span data-toggle="tooltip" data-placement="bottom" data-html="true" title="current on_response() event won't be triggered from now on" class="glyphicon glyphicon-info-sign"></span>
+            </div>
+            <div class="col-md-2">
+                <ul>
+                </ul>
+            </div>
+            <div class="col-md-1">
+                <button className='btn btn-info rule-select-btn' onClick={(e)=>  this.removeOnresponse(e) }>Run</button>
+          </div>
+        </div>
+        <div class="row on-time-rule" style={Object.assign({}, hide_style, row_style)}>
+          <div class="col-md-9">
+              Remove <code>on_time()</code> event from this message<span data-toggle="tooltip" data-placement="bottom" data-html="true" title="current on_time() event won't be triggered from now on" class="glyphicon glyphicon-info-sign"></span>
+            </div>
+            <div class="col-md-2">
+                <ul>
+                </ul>
+            </div>
+            <div class="col-md-1">
+                <button className='btn btn-info rule-select-btn' onClick={(e)=>  this.removeOntime(e) }>Run</button>
+          </div>
+        </div>
         {this.state.rules.map( er  =>
           <div class="row" style={row_style}>
             <div class="col-md-9">
-            { er.name }<span data-toggle="tooltip" data-placement="bottom" data-html="true" title={["<div style='position:relative;overflow:auto;'><p>" + er.code.replace(/ /gi, '&nbsp;').replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;").replace(/\n/g, "<br>") + "</p></div>"].join()} class="glyphicon glyphicon-info-sign"></span> &lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt; 
+            { er.name }<span data-toggle="tooltip" data-placement="bottom" data-html="true" title={["<div style='position:relative;overflow:auto;'><p>" + er.code.replace(/ /gi, '&nbsp;').replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;").replace(/\n/g, "<br>") + "</p></div>"].join()} class="glyphicon glyphicon-info-sign"></span> 
+              {
+                er.params.length <= 1 &&
+                  <span>&lt;<a href={["mailto:", er.email, "?Subject=YouPS%20"].join()} target="_top">{ er.email }</a>&gt;</span>
+              } 
             </div>
             <div class="col-md-2">
               <ul>
@@ -226,6 +295,20 @@ $(document).ready(function() {
       });
     };
   }
+
+  // TODO as go to different tools 
+  $(".message-parameter-table").on('change', 'input', function() {
+    // change children's value
+    $(".on-response-rule").hide();
+    $(".on-time-rule").hide();
+
+    if($(this).parents('tbody').attr('on_response'))
+      $(".on-response-rule").show();
+
+    if($(this).parents('tbody').attr('on_time'))
+      $(".on-time-rule").show();
+  });
+  
 
   if(is_authenticated) 
     fetch_log();

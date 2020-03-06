@@ -25,7 +25,9 @@ function fetch_watch_message(container="body") {
                   $.each(res['message_rows'], function(i, message) {
                     if( watched_message.indexOf( res['contexts'][i]['base_message_id'] ) == -1 ) {
                       $(container+ " .message-parameter-table").prepend( message );
-                      
+                      if(res['contexts'][i]['on_time']) $(container+ " .message-parameter-table tbody:first").attr('on_time', '1');
+                      if(res['contexts'][i]['on_response']) $(container+ " .message-parameter-table tbody:first").attr('on_response', '1');
+
                       watched_message.push( res['contexts'][i]['base_message_id'] );
                     }
                   })

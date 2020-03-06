@@ -92,7 +92,9 @@ shared_patterns = [
     url(r'^email_rule_meta', 'browser.views.get_email_rule_meta'),
     url(r'^fetch_upcoming_events', 'browser.views.fetch_upcoming_events'),
                     
-    url(r'^apply_button_rule', 'browser.views.apply_button_rule'),                
+    url(r'^apply_button_rule', 'browser.views.apply_button_rule'), 
+    url(r'^remove_on_response_event', 'browser.views.remove_on_response_event'), 
+    url(r'^remove_on_time_event', 'browser.views.remove_on_time_event'),                
     url(r'^create_mailbot_mode', 'browser.views.create_mailbot_mode'),
     url(r'^delete_mailbot_mode', 'browser.views.delete_mailbot_mode'),
     url(r'^fetch_execution_log', 'browser.views.fetch_execution_log'),

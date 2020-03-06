@@ -204,6 +204,47 @@ def apply_button_rule(user, email, er_id, msg_schema_id, kargs):
 	    res['code'] = msg_code['UNKNOWN_ERROR']
 	return res
     
+def remove_on_response_event(user, email, msg_schema_id):
+    res = {'status' : False}
+    
+    try:
+		imapAccount = ImapAccount.objects.get(email=email)
+
+
+		msg = MessageSchema.objects.get(id=msg_schema_id)
+		msg.base_message._thread.events.clear()
+
+		# logger.info(res)
+		res['status'] = True	    
+    except ImapAccount.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+    except TypeError as e:
+	    res['code'] = "Datetime %s is in wrong format!" % e
+    except Exception as e:
+	    logger.exception(e)
+	    res['code'] = msg_code['UNKNOWN_ERROR']
+    return res
+
+def remove_on_time_event(user, email, msg_schema_id):
+    res = {'status' : False}
+    
+    try:
+		imapAccount = ImapAccount.objects.get(email=email)
+
+		msg = MessageSchema.objects.get(id=msg_schema_id)
+		msg.base_message.events.clear()
+
+		# logger.info(res)
+		res['status'] = True	    
+    except ImapAccount.DoesNotExist:
+	    res['code'] = "Error during deleting the mode. Please refresh the page."
+    except TypeError as e:
+	    res['code'] = "Datetime %s is in wrong format!" % e
+    except Exception as e:
+	    logger.exception(e)
+	    res['code'] = msg_code['UNKNOWN_ERROR']
+    return res
+
 def create_mailbot_mode(user, email, push=True):
 	res = {'status' : False}
 	
@@ -313,7 +354,19 @@ def fetch_watch_message(user, email, watched_message):
                             except:
                                 logger.exception("parsing arrival date fail; skipping parsing")
 
-                            res['contexts'].append( {'base_message_id': r.base_message.id,'sender': res['sender']["name"] or res['sender']["email"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
+                            on_time = False
+                            on_response = False
+                            if r.base_message._thread:
+                                if r.base_message._thread.events.all():
+                                    on_response = True
+                            
+                            if r.base_message.events.all():
+                                on_time = True
+                                
+
+                            # 'message_events': r.base_message.events, 
+                            # Contact(contact_schema, self._imap_client, self._is_simulate) for contact_schema in self._schema.base_message.to.all()
+                            res['contexts'].append( {'on_time': int(on_time), "on_response": int(on_response),'base_message_id': r.base_message.id,'sender': res['sender']["name"] or res['sender']["email"], "subject": res['message']['subject'], "date": res["message"]["date"], "message_id": r.id} )
 
                         # if there is update, send it to the client immediatly 
                         if 'message' in res:
