@@ -342,7 +342,7 @@
             },
             {
                 "name": "on_time",
-                "params": "when, handler",
+                "params": "handler, when",
                 "description": "Run the handler when the time is up.",
                 "example": ""
             },
