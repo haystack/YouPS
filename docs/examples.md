@@ -176,17 +176,22 @@ Tags: []
 ```python
 # fired when a message arrives
 import time 
-def on_message(msg):
-    if 'urgent' in msg.flags:
-	msg.move(inbox)
-	msg.ontime(remindme, 360)
-	remindMe(msg)
+def on_message(my_message):
+    import datetime
+    if 'urgent' in my_message.flags:
+	my_message.move("inbox")
+	my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)
      else:
-	msg.move(anotherFolder)
+	my_message.move("anotherFolder")
 
-def remindMe(msg): 
-	msg.forward(to=['myEmail@example.com'])
-
+# fired when a message.deadline is up
+def on_deadline(my_message):
+    import datetime
+    if 'urgent' in my_message.flags:
+        # if still urgent, update deadline to 6 hours later
+	my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)        
+    else:
+	my_message.move("anotherFolder")
 								
 ```
 
