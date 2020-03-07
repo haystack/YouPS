@@ -240,6 +240,24 @@
         ],
         "method": [
             {
+                "name": "add_labels",
+                "params": "labels",
+                "description": "Add each of the label in a list of flags to the message",
+                "example": ""
+            },
+            {
+                "name": "has_label",
+                "params": "label",
+                "description": "Check if the message has a given label",
+                "example": ""
+            },
+            {
+                "name": "remove_labels",
+                "params": "labels",
+                "description": "Remove each of the flags in a list of labels from the message",
+                "example": ""
+            },
+            {
                 "name": "aggregate_response",
                 "params": "",
                 "description": "Aggregate response of messages in this thread and return a list of pairs of sender and their response",
