@@ -536,6 +536,11 @@ class Message(object):
         # type: () -> t.List[Contact]
         """Get the Contacts the message is bcced to
 
+        Examples:
+            my_message.bcc
+            >>> [Contact object: someone1@mail.com, Contact object: someone2@mail.com]
+
+
         Returns:
             t.List[Contact]: The contacts in the bcc field of the message
         """
@@ -586,24 +591,28 @@ class Message(object):
         return c
 
 
-    def _has_flag(self, flag):
+    def has_label(self, label):
         # type: (t.AnyStr) -> bool
-        """Check if the message has a given flag
+        """Check if the message has a given label
 
         Returns:
             bool: True if the flag is on the message else false
         """
-        return flag in self.flags
+        return label in self.flags
 
-    def _add_flags(self, flags):
+    def add_labels(self, labels):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
-        """Add each of the flags in a list of flags to the message
+        """Add each of the label in a list of flags to the message
+
+        Examples:
+            my_message.add_labels(["Todo", "Family"])
 
         Args: 
-            flags (string[]): a list of flags to be added
+            labels (string[]): a list of flags to be added
 
         This method can also optionally take a single string as a flag.
         """
+        flags = labels # just rename
         if not isinstance(flags, list):
             flags = [flags]
 
@@ -614,11 +623,16 @@ class Message(object):
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
 
         self._flags = list(set(self.flags + flags))
+        print ("add_labels(): add %s" % flags)
         # message_helpers._save_flags(self, list(set(self.flags + flags)))
 
     def aggregate_response(self):
         # type: None -> t.List[(Contact, t.AnyStr)]
         """Aggregate responses of messages in this thread and return a list of pairs of sender and their response
+
+        Examples:
+            my_message.aggregate_response()
+            >>> [(Contact object: someone1@mail.com, "Hi all ..."), (Contact object: someone2@mail.com, "Dear all, ...")]
 
         Returns:
             t.List[(Contact, t.AnyStr)]: pairs of sender and their response
@@ -631,12 +645,16 @@ class Message(object):
 
         return a
 
-    def _remove_flags(self, flags):
+    def remove_labels(self, labels):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
-        """Remove each of the flags in a list of flags from the message
+        """Remove each of the flags in a list of labels from the message
 
-        This method can also optionally take a single string as a flag.
+        Args: 
+            labels (string[]): a list of labels to be added
+
+        This method can also optionally take a single string as a label.
         """
+        flags = labels
         if not isinstance(flags, list):
             flags = [flags]
 
@@ -648,6 +666,7 @@ class Message(object):
         # update the local flags
         self._flags = list(set(self.flags) - set(flags))
         # message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
+        print ("remove_labels(): remove %s" % flags)
 
     def copy(self, dst_folder):
         # type: (t.AnyStr) -> None
@@ -921,6 +940,11 @@ class Message(object):
 
     def on_response(self, handler):
         """add an event handler that is triggered everytime when there is a new message arrived at its thread
+
+        Examples:
+            def f(msg):
+                msg.mark_read() # Replies of this message will be marked read
+            my_message.on_response(f)
 
         Args:
             handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument

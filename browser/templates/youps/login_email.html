@@ -398,6 +398,7 @@ print get_sender()
 		var user_email="{{ user.email }}",
 			is_authenticated = {{ user.is_authenticated|yesno:"true,false" }},
 			is_imap_authenticated = {{ imap_authenticated|yesno:"true,false" }},
+			is_gmail = {{ is_gmail|yesno:"true,false" }},
 			is_test = {{ is_test|yesno:"true,false" }},
 			IS_RUNNING = {{ is_running|yesno:"true,false" }},
 			IS_INITIALIZED = {{ is_running|yesno:"true,false" }},

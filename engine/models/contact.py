@@ -129,6 +129,10 @@ class Contact(object):
     def messages_from_date(self, from_date=None, to_date=None):
         """Get the Messages which are from this contact
 
+        Args:
+            from_date (datetime): Searching messages from this date
+            to_date (datetime): to this date
+
         Returns:
             t.List[Message]: The messages where this contact is listed in the from field
         """

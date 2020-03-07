@@ -302,6 +302,13 @@ document.addEventListener("mv-load", function(e){
     // Init editor & its autocomplete
     if(e.srcElement.id != "apis-container") return;
 
+    if(!is_gmail) {
+        // remove add_labels, has_label, remove_labels
+        $("#add_labels").remove();
+        $("#has_label").remove();
+        $("#remove_labels").remove();
+    }
+
     // Editor autocomplete
     var global_method = [];
     document.querySelectorAll('#apis-container div[property="folder"] h4').forEach(function(element) {

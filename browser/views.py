@@ -148,6 +148,7 @@ def login_imap_view(request):
 	folders = []
 	email_rule_folder = []
 	rules = []
+	is_gmail = False
 
 	try: 
 		if request.user.id != None:
@@ -164,7 +165,7 @@ def login_imap_view(request):
 					is_test = imap[0].is_test
 					is_running = imap[0].is_running
 					is_initialized = imap[0].is_initialized
-
+					is_gmail = imap[0].is_gmail
 					current_mode = imap[0].current_mode
 
 					modes = MailbotMode.objects.filter(imap_account=imap[0])
@@ -185,7 +186,7 @@ def login_imap_view(request):
 							for f in rule.folders.all():
 								email_rule_folder.append( [f.name.encode('utf8', 'replace'), int(rule.id)]  )
 
-		return {'user': request.user, 'username': username,'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+		return {'user': request.user, 'username': username,'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized, 'is_gmail': is_gmail, 
 			'folders': folders, 'rule_folder': email_rule_folder,'mode_exist': mode_exist, 'modes': modes, 'rules':rules, 'current_mode': current_mode,
 			'imap_authenticated': imap_authenticated, 'website': WEBSITE, 'shortcuts': shortcuts}
 	except Exception as e:
