@@ -70,6 +70,7 @@ def ActionLogging(f):
             "mark_unread": "action", 
             "_on_response": "schedule",
             "_on_time": "schedule",
+            "_on_message": "schedule",
             "_see_later": "schedule",
             "_move": "action",
             "delete": "send",

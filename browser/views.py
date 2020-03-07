@@ -110,6 +110,7 @@ def shortcut_editor(request):
 	current_mode = None
 	shortcuts = ''
 	is_initialized = False 
+	is_gmail = False
 	folders = []
 	email_rule_folder = []
 
@@ -118,7 +119,7 @@ def shortcut_editor(request):
 			imap = ImapAccount.objects.filter(email=request.user.email)
 			
 			if imap.exists():
-				
+				is_gmail = imap[0].is_gmail
 
 				if (imap[0].is_oauth and imap[0].access_token != "") or (not imap[0].is_oauth and imap[0].password != ""):
 					imap_authenticated = True
@@ -128,7 +129,7 @@ def shortcut_editor(request):
 
 					current_mode = imap[0].current_mode
 
-		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized,
+		return {'user': request.user, 'is_test': is_test, 'is_running': is_running, 'is_initialized': is_initialized, 'is_gmail': is_gmail,
 			'imap_authenticated': imap_authenticated, 'website': WEBSITE}
 	except Exception as e:
 		logger.exception(e)

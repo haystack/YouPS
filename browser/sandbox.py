@@ -88,7 +88,10 @@ def interpret_bypass_queue(mailbox, extra_info):
                 if hasattr(mailbox._imap_client, 'nested_log'):
                     delattr(mailbox._imap_client, 'nested_log')
                 # execute the user's code
-                if "on_message" in code:
+                if "on_command" in code:
+                    user_environ['kargs'] = extra_info['shortcut']
+                    exec(code + "\non_command(new_message, kargs)", user_environ)
+                elif "on_message" in code:
                     exec(code + "\non_message(new_message)", user_environ)    
 
                 elif "on_flag_change" in code:
@@ -235,7 +238,7 @@ def interpret(mailbox, mode):
                     
                     email_rules = [e.email_rule for e in EventManager.objects.filter(thread=event_data.message._schema.base_message._thread, email_rule__type__startswith=rule_type_to_search)]
                 elif event_class_name ==  "ContactArrivalData":
-                    rule_type_to_search = call_back = "on_response"
+                    rule_type_to_search = call_back = "on_message"
                     handler = mailbox.new_message_handler
                     
                     email_rules = [e.email_rule for e in EventManager.objects.filter(contact=event_data.message._schema.base_message.from_m, email_rule__type__startswith=rule_type_to_search)]
@@ -272,6 +275,7 @@ def interpret(mailbox, mode):
                             # logger.exception(mailbox.new_message_handler.getHandlerCount()) 
                             # mailbox.new_message_handler.env = user_environ
                             # handler.handle(code)
+                            event_data.message._imap_client.select_folder(event_data.message.folder.name)
                             code(event_data.message)
                             # exec(code(event_data.message), user_environ)
                         else:

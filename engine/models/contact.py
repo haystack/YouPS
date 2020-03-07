@@ -180,22 +180,22 @@ class Contact(object):
         return [Message(message_schema, self._imap_client) for message_schema in self._schema.cc_messages.all()]
 
     @ActionLogging
-    def _on_response(self, email_rule_id):
-        """helper function for on_response() for logging and undo
+    def _on_message(self, email_rule_id):
+        """helper function for on_message() for logging and undo
         """
         pass
 
-    def on_response(self, handler):
+    def on_message(self, handler):
         """add an event handler that is triggered everytime when there is a new message arrived from this contact
 
         Args:
             handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument
         """
         if not handler or type(handler).__name__ != "function":
-            raise Exception('on_response(): requires callback function but it is %s ' % type(handler).__name__)
+            raise Exception('on_message(): requires callback function but it is %s ' % type(handler).__name__)
 
         if handler.func_code.co_argcount != 1:
-            raise Exception('on_response(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
+            raise Exception('on_message(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
 
         a = codeobject_dumps(handler.func_code)
         if self._is_simulate:
@@ -207,19 +207,19 @@ class Contact(object):
             from browser.sandbox_helpers import get_default_user_environment
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
-            print("on_response(): Simulating callback function..:")
+            print("on_message(): Simulating callback function..:")
             g(self.messages_from[0])
         else: 
             # add EventManager attached to it
-            er = EmailRule(imap_account=self._schema.imap_account, name='on response', type='on_response', code=json.dumps(a))
+            er = EmailRule(imap_account=self._schema.imap_account, name='on message', type='on_message', code=json.dumps(a))
             er.save()
 
-            self._on_response(er.id)
+            self._on_message(er.id)
 
             e = EventManager(contact=self._schema, email_rule=er)
             e.save()
 
-        print("on_response(): The handler will be executed when a new message arrives from this contact")
+        print("on_message(): The handler will be executed when a new message arrives from this contact")
 
     @ActionLogging
     def _on_time(self, email_rule_id):
