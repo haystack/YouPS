@@ -63,8 +63,6 @@ def ActionLogging(f):
         parsed_args = [str(args[i]) for i in range(len(args))]
 
         types_of_action = {
-            "add_flags": "action",
-            "remove_flags": "action",
             "forward": "send",
             "reply": "send", 
             "reply_all": "send",
@@ -74,7 +72,9 @@ def ActionLogging(f):
             "_on_time": "schedule",
             "_see_later": "schedule",
             "_move": "action",
-            "delete": "send"
+            "delete": "send",
+            "add_labels": "action",
+            "remove_labels": "action"
         }
 
         info = {
@@ -84,6 +84,8 @@ def ActionLogging(f):
             "args": parsed_args,
             "schema_id": obj._schema.base_message.id if class_name == "Message" else obj._schema.id 
         }
+
+        _get_logger().critical(obj._schema.base_message.id if class_name == "Message" else obj._schema.id )
         # u"get {c}.{p}\t{v}".format(
         #     c=class_name, p=function_name, v=args)
         _set_in_log(obj, False)
@@ -142,9 +144,11 @@ class CustomProperty(object):
         
         call_trace = inspect.stack()
         ln = None
-        for i in range(len(call_trace)):
-            
-            if i<3 and call_trace[i][3] in ["on_message", "on_deadline", "on_command"]:
+        for i in range(len(call_trace)):     
+            bound = 3
+            if property_name == "flags":
+                bound = 4
+            if i<bound and call_trace[i][3] in ["on_message", "on_deadline", "on_command"]:
                 # _get_logger().critical(property_name)
                 # _get_logger().critical(call_trace)
                 ln = call_trace[i][2]
@@ -155,7 +159,7 @@ class CustomProperty(object):
                 "class_name": class_name,
                 "function_name": property_name,
                 "args": [str(log_value)],
-                "schema_id": obj._schema.id,
+                "schema_id": obj._schema.base_message.id if class_name == "Message" else obj._schema.id, 
                 "line_number":ln            
             }
             # _get_logger().info(inspect.stack()[1])

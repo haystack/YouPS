@@ -826,10 +826,12 @@ def undo(user, email, logschema_id):
 
     try:
         # Redo actions reverse to undo
+        logger.critical(actions)
         for action in reversed(actions):
             target_class = None
             if action["class_name"] == "Message":
                 message_schema = MessageSchema.objects.filter(base_message__id=action["schema_id"])
+                logger.critical(action["schema_id"])
                 if not message_schema.exists():
                     raise MessageSchema.DoesNotExist
 
@@ -851,7 +853,7 @@ def undo(user, email, logschema_id):
                 er.delete()
 
             elif action["type"] == "action":
-                reverse_action = [("add_flags", "remove_flags"), ("mark_read", "mark_unread"), ("_move", "_move")]
+                reverse_action = [("add_labels", "remove_labels"), ("mark_read", "mark_unread"), ("_move", "_move")]
                 
                 for r in reverse_action:
                     if action["function_name"] in r:

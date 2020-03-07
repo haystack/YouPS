@@ -600,6 +600,7 @@ class Message(object):
         """
         return label in self.flags
 
+    @ActionLogging
     def add_labels(self, labels):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Add each of the label in a list of flags to the message
@@ -622,8 +623,11 @@ class Message(object):
         if not self._is_simulate:
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.add_gmail_labels, self._imap_client.add_flags)
 
-        self._flags = list(set(self.flags + flags))
+        self._flags = list(set(self._flags + flags))
+        self.flags # trigger for line logging
         print ("add_labels(): add %s" % flags)
+
+        logger.critical(self._schema.base_message.id)
         # message_helpers._save_flags(self, list(set(self.flags + flags)))
 
     def aggregate_response(self):
@@ -645,6 +649,7 @@ class Message(object):
 
         return a
 
+    @ActionLogging
     def remove_labels(self, labels):
         # type: (t.Union[t.Iterable[t.AnyStr], t.AnyStr]) -> None
         """Remove each of the flags in a list of labels from the message
@@ -664,7 +669,8 @@ class Message(object):
             message_helpers._flag_change_helper(self, self._uid, flags, self._imap_client.remove_gmail_labels, self._imap_client.remove_flags)
 
         # update the local flags
-        self._flags = list(set(self.flags) - set(flags))
+        self._flags = list(set(self._flags) - set(flags))
+        self.flags # trigger for line logging
         # message_helpers._save_flags(self, list(set(self.flags) - set(flags)))
         print ("remove_labels(): remove %s" % flags)
 
@@ -762,8 +768,8 @@ class Message(object):
     def _move(self, src_folder, dst_folder):
         """helper function for move() for logging and undo
         """
-        # logger.exception(src_folder)
-        # logger.exception(dst_folder)
+        logger.exception(src_folder)
+        logger.exception(dst_folder)
         try:
             if self._imap_account.is_gmail:
                 raise exceptions.CapabilityError
@@ -771,9 +777,9 @@ class Message(object):
         except exceptions.CapabilityError:
             if self._imap_account.is_gmail:
                 if dst_folder.lower() == "inbox":
-                    logger.info("Hello world")
-                    custom_labels = list(filter(lambda l: not is_gmail_label(l), self._imap_client.get_gmail_labels())) 
-                    map(lambda x: self._imap_client.remove_gmail_labels([self._uid], x), custom_labels)
+                    #custom_labels = list(filter(lambda l: not is_gmail_label(l), self.flags)) 
+                    #map(lambda x: self._imap_client.remove_gmail_labels([self._uid], x), custom_labels)
+                    self.remove_labels(src_folder)
                     # self._imap_client.remove_gmail_labels([self._uid], "\\" + src_folder)
                     self._imap_client.move([self._uid], "INBOX")
                     #self._imap_client.move("INBOX")

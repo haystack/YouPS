@@ -510,6 +510,7 @@ class Folder(object):
                 )
 
                 base_message.save()
+                
                 if new_message_ids is not None:
                     new_message_ids.add(metadata['message-id'])
                 # create and save the message contacts
