@@ -424,15 +424,44 @@
             }
 
         ],
-        "method": [{
-            "name": "recent_messages",
+        "method": [
+            {
+            "name": "messages",
             "params": "N=3",
             "return_type": "Message []",
             "description": "Contact method- Return the messages where this contact is listed in the from/to/cc/bcc field",
             "example": []
         },
         {
-                "name": "on_response",
+            "name": "messages_bcc",
+            "params": "N=3",
+            "return_type": "Message []",
+            "description": "Contact method- Return the messages where this contact is listed in the bcc field",
+            "example": []
+        },
+            {
+            "name": "messages_cc",
+            "params": "N=3",
+            "return_type": "Message []",
+            "description": "Contact method- Return the messages where this contact is listed in the cc field",
+            "example": []
+        },
+        {
+            "name": "messages_from",
+            "params": "N=3",
+            "return_type": "Message []",
+            "description": "Contact method- Return the messages where this contact is listed in the from field",
+            "example": []
+        },
+        {
+            "name": "messages_to",
+            "params": "N=3",
+            "return_type": "Message []",
+            "description": "Contact method- Return the messages where this contact is listed in the to field",
+            "example": []
+        },
+        {
+                "name": "on_message",
                 "params": "handler",
                 "description": "Contact method- Run the handler when there is new response arrived from this contact",
                 "example": ""
