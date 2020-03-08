@@ -155,11 +155,16 @@ class CustomProperty(object):
                 ln = call_trace[i][2]
 
         if ln:
+            try: 
+                log_args = str(log_value)
+            except:
+                log_args = log_value.encode('ascii', 'ignore').decode('ascii')
+
             info_string = {
                 "type": "get",
                 "class_name": class_name,
                 "function_name": property_name,
-                "args": [str(log_value)],
+                "args": [log_args],
                 "schema_id": obj._schema.base_message.id if class_name == "Message" else obj._schema.id, 
                 "line_number":ln            
             }

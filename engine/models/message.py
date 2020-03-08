@@ -67,7 +67,7 @@ class Message(object):
         self._nylas_message = None
 
         self._imap_client.select_folder(self.folder.name)
-        logger.critical(self.folder.name)
+        logger.debug(self.folder.name)
         self.time_entity_extractor = None
 
         logger.debug('caller name: %s' % inspect.stack()[1][3])
@@ -103,7 +103,7 @@ class Message(object):
         return "Message %s" % self.subject
 
     def __repr__(self):
-        return repr('Message object "%s"' % str(self.subject))
+        return repr('Message object "%s"' % self.subject)
 
     def __eq__(self, other):
         """Overrides the default implementation"""
@@ -223,6 +223,23 @@ class Message(object):
         # type: (t.AnyStr) -> None
         self._schema.base_message.task = value
         self._schema.base_message.save()
+
+    @CustomProperty
+    def priority(self):
+        # type: () -> t.AnyStr
+        """Get the user-defined priority of the message (Mutable)
+
+        Returns:
+            str: The priority
+        """
+        return self._schema.base_message.priority
+
+    @priority.setter
+    def priority(self, value):
+        # type: (t.AnyStr) -> None
+        self._schema.base_message.priority = value
+        self._schema.base_message.save()
+
 
     @CustomProperty
     def subject(self):

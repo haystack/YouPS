@@ -104,29 +104,61 @@ class Contact(object):
         self._schema.geolocation = value
         self._schema.save()
 
-    @CustomProperty
-    def messages_to(self):
+    def messages_to(self, N=3):
         # type: () -> t.List[Message]
         """Get the Messages which are to this contact
+
+        Args:
+            N (int): a number of recent messages you want (max:50)
 
         Returns:
             t.List[Message]: The messages where this contact is listed in the to field
         """
-        from engine.models.message import Message
-        return [Message(message_schema, self._imap_client) for message_schema in MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__to=self._schema)]
+        if N>50:
+            raise Exception("N should be less or equal to 50")
 
-    @CustomProperty
-    def messages_from(self):
+        from engine.models.message import Message
+        m = []
+        cnt =0
+        for base_message in self._schema.to_messages.all():
+            for message_schema in base_message.messages.all():
+                cnt = cnt +1
+                m.append(Message(message_schema, self._imap_client))
+                break
+            if cnt >= N:
+                break
+
+        return m
+
+    def messages_from(self, N=3):
         # type: () -> t.List[Message]
         """Get the Messages which are from this contact
+
+        Args:
+            N (int): a number of recent messages you want (max:50)
 
         Returns:
             t.List[Message]: The messages where this contact is listed in the from field
         """
-        from engine.models.message import Message
-        return [Message(message_schema, self._imap_client) for message_schema in MessageSchema.objects.filter(imap_account=self._schema.imap_account, base_message__from_m=self._schema)]
+        if N>50:
+            raise Exception("N should be less or equal to 50")
 
-    def messages_from_date(self, from_date=None, to_date=None):
+        from engine.models.message import Message
+
+        m = []
+        cnt = 0
+        for base_message in self._schema.from_messages.all():
+            for message_schema in base_message.messages.all():
+                cnt = cnt +1
+                m.append(Message(message_schema, self._imap_client))
+                break
+            if cnt >= N:
+                break
+
+        return m
+
+
+    def _messages_from_date(self, from_date=None, to_date=None):
         """Get the Messages which are from this contact
 
         Args:
@@ -157,27 +189,57 @@ class Contact(object):
         logger.debug(message_schemas.values('id'))
         return [Message(message_schema, self._imap_client) for message_schema in message_schemas]
 
-    @CustomProperty
-    def messages_bcc(self):
+    def messages_bcc(self,  N=3):
         # type: () -> t.List[Message]
         """Get the Messages which are bcc this contact
+
+        Args:
+            N (int): a number of recent messages you want (max:50)
 
         Returns:
             t.List[Message]: The messages where this contact is listed in the bcc field
         """
+        if N>50:
+            raise Exception("N should be less or equal to 50")
+            
         from engine.models.message import Message
-        return [Message(message_schema, self._imap_client) for message_schema in self._schema.bcc_messages.all()]
+        m = []
+        cnt = 0
+        for base_message in self._schema.bcc_messages.all():
+            for message_schema in base_message.messages.all():
+                cnt = cnt +1
+                m.append(Message(message_schema, self._imap_client))
+                break
+            if cnt >= N:
+                break
 
-    @CustomProperty
-    def messages_cc(self):
+        return m
+
+    def messages_cc(self, N=3):
         # type: () -> t.List[Message]
         """Get the Messages which are cc this contact
+
+        Args:
+            N (int): a number of recent messages you want (max:50)
 
         Returns:
             t.List[Message]: The messages where this contact is listed in the cc field
         """
+        if N>50:
+            raise Exception("N should be less or equal to 50")
+
         from engine.models.message import Message
-        return [Message(message_schema, self._imap_client) for message_schema in self._schema.cc_messages.all()]
+        m = []
+        cnt = 0
+        for base_message in self._schema.cc_messages.all():
+            for message_schema in base_message.messages.all():
+                cnt = cnt +1
+                m.append(Message(message_schema, self._imap_client))
+                break
+            if cnt >= N:
+                break
+
+        return m
 
     @ActionLogging
     def _on_message(self, email_rule_id):
@@ -266,13 +328,21 @@ class Contact(object):
         print("on_time(): The handler will be executed at %s " % prettyPrintTimezone(later_at))
 
 
-    def recent_messages(self, N=3):
+    def messages(self, N=3):
         # type: (t.integer) -> t.List[Message]
         """Get the N Messages which are exchanged with this contact
+        Examples:
+            >>> my_message.sender.messages()
+            >>> [Message object "Hello!", Message object "other message", Message object "another messages.."]
+
+        Args:
+            N (int): a number of recent messages you want (max:50)
 
         Returns:
             t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field
         """
+        if N>50:
+            raise Exception("N should be less or equal to 50")
         from engine.models.message import Message
 
         message_schemas = MessageSchema.objects.filter(imap_account=self._schema.imap_account).filter(Q(base_message__from_m=self._schema) | Q(base_message__to=self._schema) | Q(base_message__cc=self._schema) | Q(base_message__bcc=self._schema)).order_by("-base_message__date")[:N]

@@ -50,7 +50,6 @@
   
   
   
- 
 </div>
 </div>
 <div class="documentwrapper">
@@ -970,10 +969,29 @@ hide_in (string): a name of folder to hide this message temporarily</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="Contact.Contact.messages">
+<code class="sig-name descname">messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the N Messages which are exchanged with this contact
+Examples:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_message</span><span class="o">.</span><span class="n">sender</span><span class="o">.</span><span class="n">messages</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">Message</span> <span class="nb">object</span> <span class="s2">&quot;Hello!&quot;</span><span class="p">,</span> <span class="n">Message</span> <span class="nb">object</span> <span class="s2">&quot;other message&quot;</span><span class="p">,</span> <span class="n">Message</span> <span class="nb">object</span> <span class="s2">&quot;another messages..&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
+<dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="Contact.Contact.messages_bcc">
-<em class="property">property </em><code class="sig-name descname">messages_bcc</code><a class="headerlink" href="#Contact.Contact.messages_bcc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">messages_bcc</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages_bcc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the Messages which are bcc this contact</p>
 <dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the bcc field</p>
 </dd>
 </dl>
@@ -981,9 +999,11 @@ hide_in (string): a name of folder to hide this message temporarily</p>
 
 <dl class="method">
 <dt id="Contact.Contact.messages_cc">
-<em class="property">property </em><code class="sig-name descname">messages_cc</code><a class="headerlink" href="#Contact.Contact.messages_cc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">messages_cc</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages_cc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the Messages which are cc this contact</p>
 <dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the cc field</p>
 </dd>
 </dl>
@@ -991,21 +1011,10 @@ hide_in (string): a name of folder to hide this message temporarily</p>
 
 <dl class="method">
 <dt id="Contact.Contact.messages_from">
-<em class="property">property </em><code class="sig-name descname">messages_from</code><a class="headerlink" href="#Contact.Contact.messages_from" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">messages_from</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages_from" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the Messages which are from this contact</p>
 <dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="Contact.Contact.messages_from_date">
-<code class="sig-name descname">messages_from_date</code><span class="sig-paren">(</span><em class="sig-param">from_date=None</em>, <em class="sig-param">to_date=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages_from_date" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Messages which are from this contact</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>from_date (datetime): Searching messages from this date
-to_date (datetime): to this date</p>
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
 </dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
 </dd>
@@ -1014,9 +1023,11 @@ to_date (datetime): to this date</p>
 
 <dl class="method">
 <dt id="Contact.Contact.messages_to">
-<em class="property">property </em><code class="sig-name descname">messages_to</code><a class="headerlink" href="#Contact.Contact.messages_to" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">messages_to</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages_to" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the Messages which are to this contact</p>
 <dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the to field</p>
 </dd>
 </dl>
@@ -1038,16 +1049,6 @@ to_date (datetime): to this date</p>
 <dd><p>Get the organization of this contact (mutable)</p>
 <dl class="simple">
 <dt>Returns:</dt><dd><p>str: The organization associated with this contact</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="Contact.Contact.recent_messages">
-<code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.recent_messages" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the N Messages which are exchanged with this contact</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1091,9 +1092,28 @@ to_date (datetime): to this date</p>
 
 <dl class="method">
 <dt>
-<em class="property">property </em><code class="sig-name descname">messages_bcc</code></dt>
+<code class="sig-name descname">messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
+<dd><p>Get the N Messages which are exchanged with this contact
+Examples:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_message</span><span class="o">.</span><span class="n">sender</span><span class="o">.</span><span class="n">messages</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">Message</span> <span class="nb">object</span> <span class="s2">&quot;Hello!&quot;</span><span class="p">,</span> <span class="n">Message</span> <span class="nb">object</span> <span class="s2">&quot;other message&quot;</span><span class="p">,</span> <span class="n">Message</span> <span class="nb">object</span> <span class="s2">&quot;another messages..&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
+<dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="sig-name descname">messages_bcc</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the Messages which are bcc this contact</p>
 <dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the bcc field</p>
 </dd>
 </dl>
@@ -1101,9 +1121,11 @@ to_date (datetime): to this date</p>
 
 <dl class="method">
 <dt>
-<em class="property">property </em><code class="sig-name descname">messages_cc</code></dt>
+<code class="sig-name descname">messages_cc</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the Messages which are cc this contact</p>
 <dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the cc field</p>
 </dd>
 </dl>
@@ -1111,21 +1133,10 @@ to_date (datetime): to this date</p>
 
 <dl class="method">
 <dt>
-<em class="property">property </em><code class="sig-name descname">messages_from</code></dt>
+<code class="sig-name descname">messages_from</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the Messages which are from this contact</p>
 <dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">messages_from_date</code><span class="sig-paren">(</span><em class="sig-param">from_date=None</em>, <em class="sig-param">to_date=None</em><span class="sig-paren">)</span></dt>
-<dd><p>Get the Messages which are from this contact</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>from_date (datetime): Searching messages from this date
-to_date (datetime): to this date</p>
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
 </dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
 </dd>
@@ -1134,9 +1145,11 @@ to_date (datetime): to this date</p>
 
 <dl class="method">
 <dt>
-<em class="property">property </em><code class="sig-name descname">messages_to</code></dt>
+<code class="sig-name descname">messages_to</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the Messages which are to this contact</p>
 <dl class="simple">
+<dt>Args:</dt><dd><p>N (int): a number of recent messages you want (max:50)</p>
+</dd>
 <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the to field</p>
 </dd>
 </dl>
@@ -1158,16 +1171,6 @@ to_date (datetime): to this date</p>
 <dd><p>Get the organization of this contact (mutable)</p>
 <dl class="simple">
 <dt>Returns:</dt><dd><p>str: The organization associated with this contact</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
-<dd><p>Get the N Messages which are exchanged with this contact</p>
-<dl class="simple">
-<dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from/to/cc/bcc field</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1352,7 +1355,6 @@ Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
 <a href="_sources/index2.rst.txt"
     rel="nofollow">Page source</a>
 </div>
-  
   
 
     {% endblock %}
