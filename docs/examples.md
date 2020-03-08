@@ -29,7 +29,7 @@ def on_message(my_message):
 
 ----------
 
-#### Set a deadline for a certain message using YoUPS shortcut
+#### Set a deadline for a certain message using YouPS shortcut
 
 Set a deadline of a message within your email interface. Forward a message you want to add a deadline with a content. Then, YouPS parse the content with a NLP library. 
 
