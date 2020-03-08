@@ -12,22 +12,54 @@ The `Message` object contains useful names for properties you would expect to fi
 
 ## Examples
 
+#### Archive Unimportant Messages
+
+When a  message arrives you can archive it immediately. You want to make sure that this rule is running on inbox and important at the very least.
+
+Tags: [archive, inbox zero]
+
+```python
+# fired when a message arrives
+def on_message(my_message):
+    if my_message.sender == "someone_spammy@example.com":
+        print('archiving', my_message)
+        my_message.delete()
+								
+```
+
+----------
+
+#### Set a deadline for a certain message using YoUPS shortcut
+
+Set a deadline of a message within your email interface. Forward a message you want to add a deadline with a content. Then, YouPS parse the content with a NLP library. 
+
+Tags: [YouPS command]
+
+
+```python
+# fired when you forward a message to YoUPS. 
+def on_command(my_message, kargs):
+    # you should set a datetime type argument
+    my_message.deadline = kargs['deadline']
+```
+
+----------
+
 #### Highlight Emails from Friends or Family
 
 This example is useful for marking emails from a group of people, i.e. your coworkers, people working on a project, etc...
 
-Tags: []
+Tags: [gmail]
 
 ```python
-
 # fired when a message arrives
-def on_message(msg):
+def on_message(my_message):
     friends = ["soya@example.com", "karger@example.com", "Amy Zhang"]
-    if msg.sender in friends:
-        msg.add_flags('MIT Friends')
+    if my_message.sender in friends:
+        my_message.add_labels('MIT Friends')
     family = ["brother@example.com", "father@example.com", "mother@example.com"]
-    if msg.sender in family:
-        msg.add_flags(['Family', 'Important'])
+    if my_message.sender in family:
+        my_message.add_labels(['Family', 'Important'])
 ```
 
 ----------
@@ -38,21 +70,20 @@ def on_message(msg):
 
 Useful for processing emails, shows how to access message contents and can be extended to do things like natural language processing.
 
-Tags: []
+Tags: [gmail]
 
 
 ```python
 # fired when a message arrives
-def on_message(msg):
+def on_message(my_message):
     keywords = [ "NIH", "NSF", "OSP", "ISCB", "Proposal", "Review requests", "AAAS", "IEEE"]
-    content = msg.content["text"]
-    if any(keyword in content for keyword in keywords):
-        msg.add_flags(["urgent", "work"])
+    if any(my_message.contains(keyword) for keyword in keywords):
+        my_message.add_labels(["urgent", "work"])
 ```
 
 ----------
 
-#### Mark an email as low priority if you have not read the last five emails from that sender and it is addressed to more than 10 people
+#### Mark an email read if you have not read the last five emails from that sender and it is addressed to more than 10 people
 
 This is useful for filtering out emails that come from mass mailing lists without missing out on the mailing lists you are actually interested in
 
@@ -61,12 +92,11 @@ Tags: []
 
 ```python
 # fired when a message arrives
-def on_message(msg):
-    sender = message.from_
-    prev_msgs = sender.recent_messages(5)
-    recipients = message.to + msg.cc + msg.bcc
-    if len(recipients) > 10 and all(not prev_msg.is_read):
-        msg.add_flags = 'low priority'
+def on_message(my_message):
+    prev_msgs = my_message.sender.recent_messages(5)
+    if len(my_message.recipients) > 10 and all(not p.is_read for p in prev_msgs):
+        my_message.mark_read()
+	my_message.add_labels("low priority") # if gmail
 ```
 
 ----------
@@ -75,14 +105,14 @@ def on_message(msg):
 
 This example is useful for maintaining a clean inbox. On gmail using the delete flag will simply archive the email. This rule requires that you set the delay for the on_message rule to three days
 
-Tags: []
+Tags: [inbox zero, gmail]
 
 
 ```python
 # fired when a message arrives
-def on_message(msg):
-    if msg.has_flag('low priority') and not msg.is_read:
-        msg.delete()
+def on_message(my_message):
+    if my_message.has_label('low priority') and not my_message.is_read:
+        my_message.delete()
 ```
 
 ----------
@@ -91,38 +121,17 @@ def on_message(msg):
 
 This is helpful when you have a long email thread and want to make sure you are getting updates
 
-Tags: []
+Tags: [priority]
 
 
 ```python
 # fired when a message arrives
-def on_message(msg):
-    sender = message.from_
-    last_ten_messages = sender.recent_messages(10)
-    if all(m.date().date() == datetime.today().date() for m in last_ten_messages):
-        m.priority = "urgent"
+def on_message(my_message):
+    from datetime import datetime
+    last_ten_messages = my_message.sender.recent_messages(10)
+    if all(my_message.date.date() == datetime.today().date() for m in last_ten_messages):
+        my_message.priority = "urgent"
 ```
-
-----------
-
-#### Set a deadline for a certain message using YoUPS shortcut
-
-Set a deadline of a message within your email interface. Forward a message you want to add a deadline with a content "DEADLINE yyyy/mm/dd (e.g., DEADLINE 2019/05/01)"
-
-Tags: []
-
-
-```python
-# fired when you forward a message to YoUPS. 
-import re, datetime
-def on_command(my_message, content):
-    # DEADLINE yyyy/mm/dd => add Deadline yyyy/mm/dd to this message
-    m = re.search('(?<=DEADLINE )(.*)', content)
-    yy, mm, dd= m.groups()[0].split("/")
-    
-    my_message.deadline = datetime.datetime.strptime(" ".join([yy,mm,dd]), "%Y %m %d")
-```
-
 
 ----------
 
@@ -146,23 +155,6 @@ def on_message(my_message):
     # this archives any message which contains tonight in the subject
     if "[tonight]" in my_message.subject.lower():
         archive_gmail(my_message, True)		
-```
-
-----------
-
-#### Archive Gmail Message
-
-When a gmail message arrives you can archive it immediately. You want to make sure that this rule is running on inbox and important at the very least.
-
-Tags: [gmail, archive, inbox zero]
-
-```python
-# fired when a message arrives
-def on_message(msg):
-    if msg.sender == "someone_spammy@example.com":
-        print('archiving', msg)
-        msg.archive_gmail()
-								
 ```
 
 ----------
