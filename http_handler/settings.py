@@ -70,6 +70,11 @@ INVITE_ONLY = False
 PRETEST_EMAIL = []
 NYLAS_ID = ""
 NYLAS_SECRET = ""
+BASE_URL = ""
+try:
+    exec(open(SITE_ROOT + '/../private.py').read())
+except IOError:
+    print ("Unable to open configuration file!")
 
 if ENV == 'prod':
     if WEBSITE == 'murmur':
@@ -78,17 +83,11 @@ if ENV == 'prod':
         BASE_URL = 'squadbox.csail.mit.edu'
     MYSQL = MYSQL_PROD
 elif ENV == 'staging':
-    BASE_URL = 'youps.csail.mit.edu'
+    BASE_URL = BASE_URL or 'youps.csail.mit.edu'
     MYSQL = MYSQL_DEV
 else:
     BASE_URL = 'localhost:8000'
     MYSQL = MYSQL_LOCAL
-
-try:
-    exec(open(SITE_ROOT + '/../private.py').read())
-except IOError:
-    print ("Unable to open configuration file!")
-
 
 TEMPLATE_DEBUG = DEBUG
 
