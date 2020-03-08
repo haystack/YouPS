@@ -372,7 +372,6 @@ class MailBox(object):
                 if self._imap_account.is_gmail:
                     self._imap_client.append('[Gmail]/Drafts', str(new_message))
                 else:
-                    import imapclient
                     drafts = self._imap_client.find_special_folder(imapclient.DRAFTS)
                     if drafts is not None:
                         self._imap_client.append(drafts, str(new_message))
@@ -404,27 +403,37 @@ class MailBox(object):
         print("create_folder(): A new folder %s has been created" % folder_name)
 
     def get_email_mode(self):
-        """Get uid of the your current mode
+        """Get name and uid of the your current mode
 
-            Args:
-                folder_name (string): a name of a new folder
+        Examples:
+            get_email_mode()
+            >>> ("my meeting mode", 172)
         """
         if self._imap_account.current_mode:
-            return self._imap_account.current_mode.uid
+            return self._imap_account.current_mode.name, self._imap_account.current_mode.uid
         else:
-            return None
+            return None, None
 
     def set_email_mode(self, uid):
-        """Get uid of the your current mode
+        """Set your current mode to the given mode
 
-            Returns:
-                uid (int): 
+            Args:
+                uid (int): uid of one of your email mode
         """
-        if not self.is_simulate: 
-            self._imap_account.current_mode = MailbotMode.objects.get(imap_account=self._imap_account, uid=uid)
-            self._imap_account.save()
+        try:
+            mode = MailbotMode.objects.get(imap_account=self._imap_account, id=uid)
+        except Exception as e:
+            raise Exception("set_email_mode(): There is no mode with uid %d" % uid)
 
-        print ("Change a current email mode to %s (%d)" % (self._imap_account.current_mode.name, self._imap_account.current_mode.uid))
+        if self._imap_account.current_mode == mode:
+            print("set_email_mode(): uid %d is already your current mode; skip" % uid)
+            return
+        else:
+            if not self.is_simulate: 
+                self._imap_account.current_mode = mode
+                self._imap_account.save()
+            
+        print ("set_email_mode(): Change a current email mode to %s (%d)" % (self._imap_account.current_mode.name, self._imap_account.current_mode.id))
 
     def rename_folder(self, old_name, new_name):
         """Rename a folder 
@@ -459,7 +468,7 @@ class MailBox(object):
             # send_email(subject, self._imap_account.email, to, body)
             self._send_message( msg_wrapper )
 
-        print("send(): sent a message to  %s" % str(to))
+        print("send(): sent a message to %s %s %s" % (str(to), str(cc), str(bcc)))
 
     def _send_message(self, new_message_wrapper):
         # type: (MIMEMultipart) -> None

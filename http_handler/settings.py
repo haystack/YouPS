@@ -71,11 +71,6 @@ PRETEST_EMAIL = []
 NYLAS_ID = ""
 NYLAS_SECRET = ""
 
-try:
-    exec(open(SITE_ROOT + '/../private.py').read())
-except IOError:
-    print ("Unable to open configuration file!")
-
 if ENV == 'prod':
     if WEBSITE == 'murmur':
         BASE_URL = 'murmur.csail.mit.edu'
@@ -88,6 +83,12 @@ elif ENV == 'staging':
 else:
     BASE_URL = 'localhost:8000'
     MYSQL = MYSQL_LOCAL
+
+try:
+    exec(open(SITE_ROOT + '/../private.py').read())
+except IOError:
+    print ("Unable to open configuration file!")
+
 
 TEMPLATE_DEBUG = DEBUG
 

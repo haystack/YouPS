@@ -168,6 +168,7 @@ def create_mailbot_mode(request):
 			c[component] = template.render(Context({}))
 
 		res = engine.main.create_mailbot_mode(user, request.user.email)
+        
 		c["mode_id"] = res["mode-id"]
 		logger.debug(c)
 

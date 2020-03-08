@@ -184,12 +184,7 @@ def START(message, address=None, host=None):
 
                             raise TypeError("Can't detect date in a forwarded message")
                     else:
-                        v = address.split(arg.name + "_")[1]
-                        for a in args:
-                            v=v.split(arg.name + "_")[0]
-                        v = v.replace("_", " ")
-
-                        kargs[arg.name] = v
+                        kargs[arg.name] = code_body['text'] or code_body['html']
 
                 res, body = run_shortcut(er_to_execute, mailbox, original_message_schema, kargs)
 

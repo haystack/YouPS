@@ -716,7 +716,7 @@ class Message(object):
             Returns:
                 t.List[t.AnyStr]: list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}
         """
-        return self._schema.base_message.extracted_time
+        return json.loads(self._schema.base_message.extracted_time)
 
     @ActionLogging
     def mark_read(self):

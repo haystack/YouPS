@@ -202,6 +202,8 @@
 									{% else %}
 										<div class="tab-pane" id="tab_{{mode.id}}">
 									{% endif %}
+									<span style='font-size:18px;'>Mode UID = {{mode.id}}</span><br>
+									Try  <a href="/docs/#mailbox.MailBox.set_email_mode"><code>set_email_mode({{mode.id}})</code></a>  to dynamically switch to this mode
 											<div class='editable-container' type='new-message'>
 												<!-- This will be filled with Django templates -->
 											</div>
