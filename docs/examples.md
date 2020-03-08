@@ -1,6 +1,6 @@
 # Overview of the API
 
-The object you will be interacting with most commonly is the `Message` object. Rules generally are run on one `Message` at a time, for example when a `Message` arrives in your inbox, or when a `Message` has a flag change.
+The object you will be interacting with most commonly is the `Message` object. Rules generally are run on one `Message` at a time, for example when a `Message` arrives in your inbox, or when a `Message`'s deadline is up. 
 
 The `Message` object contains useful names for properties you would expect to find on an email, such as `to`, `from`, `bcc`, `cc`, `date`, `deadline` etc.... You can find documentation about these properties in the [api documentation](/docs). 
 
