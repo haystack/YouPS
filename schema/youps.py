@@ -2,6 +2,7 @@ from django.db import models
 import json
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import logging
+from http_handler.settings import BASE_URL
 
 logger = logging.getLogger('youps')  # type: logging.Logger
 
@@ -310,7 +311,7 @@ class EmailRule(models.Model):
         #     else:
         #         email_addr += "_" + e.name + "_XXX"
 
-        return email_addr + "@youps.csail.mit.edu"
+        return email_addr + "@" + BASE_URL
 
 class EmailRule_Args(models.Model):
     id = models.AutoField(primary_key=True)

@@ -12,7 +12,7 @@ from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
 from django.utils import timezone
 from pytz import timezone as tz
 from calendar import timegm
-from http_handler.settings import NYLAS_ID, NYLAS_SECRET
+from http_handler.settings import BASE_URL, NYLAS_ID, NYLAS_SECRET
 
 if t.TYPE_CHECKING:
     from engine.models.message import Message
@@ -116,7 +116,7 @@ def auth_to_nylas(imapAccount):
     if not nylas_authorize_resp.ok:
         message = nylas_authorize_resp.json()["message"]
         logger.exception(message)
-        raise Exception("You need to log in to add-on in order to use this function. Log in here: https://youps.csail.mit.edu/%s" % "settings")
+        raise Exception("You need to log in to add-on in order to use this function. Log in here: https://%s/%s" % (BASE_URL, "settings"))
 
     nylas_code = nylas_authorize_resp.json()["code"]
 

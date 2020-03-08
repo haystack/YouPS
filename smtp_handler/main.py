@@ -5,7 +5,7 @@ from config.settings import relay
 from http_handler.settings import WEBSITE
 from django.contrib.sites.models import Site
 from django.utils import timezone
-from http_handler.settings import PROTOCOL
+from http_handler.settings import BASE_URL, PROTOCOL
 
 from email.utils import *
 from email import message_from_string, header, message
@@ -266,7 +266,7 @@ def START(message, address=None, host=None):
             # Log out after after conduct required action
             imap.logout()
 
-def create_response(arrived_message, to, in_reply_to=None, body={"text":"", "body":""}, host="youps.csail.mit.edu"):
+def create_response(arrived_message, to, in_reply_to=None, body={"text":"", "body":""}, host=BASE_URL):
     new_message = MIMEMultipart('alternative')
     new_message["Subject"] = "Re: " + arrived_message["subject"]
     new_message["From"] = WEBSITE+"@" + host
