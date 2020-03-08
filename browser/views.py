@@ -223,7 +223,7 @@ def login_imap_callback(request):
 def docs_view(request):
 	is_gmail = True
 
-	if request.user.email:
+	if hasattr(request.user, "email"):
 		imap_account = ImapAccount.objects.filter(email=request.user.email)
 		if imap_account.exists():
 			is_gmail = imap_account[0].is_gmail

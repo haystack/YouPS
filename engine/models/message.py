@@ -537,9 +537,8 @@ class Message(object):
         """Get the Contacts the message is bcced to
 
         Examples:
-            my_message.bcc \n
+            >>> my_message.bcc 
             >>> [Contact object: someone1@mail.com, Contact object: someone2@mail.com]
-
 
         Returns:
             t.List[Contact]: The contacts in the bcc field of the message
@@ -606,7 +605,7 @@ class Message(object):
         """Add each of the label in a list of flags to the message
 
         Examples:
-            my_message.add_labels(["Todo", "Family"])
+            >>> my_message.add_labels(["Todo", "Family"])
 
         Args: 
             labels (string[]): a list of flags to be added
@@ -635,7 +634,7 @@ class Message(object):
         """Aggregate responses of messages in this thread and return a list of pairs of sender and their response
 
         Examples:
-            my_message.aggregate_response() \n
+            >>> my_message.aggregate_response()
             >>> [(Contact object: someone1@mail.com, "Hi all ..."), (Contact object: someone2@mail.com, "Dear all, ...")]
 
         Returns:
@@ -714,7 +713,7 @@ class Message(object):
         """return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP 
             
             Returns:
-                t.List[t.AnyStr]: list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}
+                t.List["body": t.AnyStr, "start": datetime, "end": datetime]: list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}
         """
         return json.loads(self._schema.base_message.extracted_time)
 
@@ -948,9 +947,9 @@ class Message(object):
         """add an event handler that is triggered everytime when there is a new message arrived at its thread
 
         Examples:
-            def f(msg):
-                msg.mark_read() # Replies of this message will be marked read
-            my_message.on_response(f)
+            >>> def f(msg):
+            >>>    msg.mark_read() # Replies of this message will be marked read
+            >>> my_message.on_response(f)
 
         Args:
             handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument

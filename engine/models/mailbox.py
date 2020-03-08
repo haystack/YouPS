@@ -6,14 +6,16 @@ import datetime
 import smtplib
 import traceback
 import typing as t  # noqa: F401 ignore unused we use it for typing
-from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
+from schema.youps import ImapAccount, BaseMessage, ContactSchema, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
 from engine.utils import get_calendar_range
 from smtp_handler.utils import format_email_address, send_email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from engine.models.contact import Contact
 from engine.models.event_data import NewMessageDataDue
+from engine.models.helpers import CustomProperty 
 
 from browser.imap import decrypt_plain_password
 from engine.google_auth import GoogleOauth2
@@ -407,20 +409,26 @@ class MailBox(object):
         """Get calendar events happening right now, if any
 
         Examples:
-            get_current_events() \n
-            >>> [{"name": "my event", "start": datetime.datetime(2020, 3, 8, 7, 30), "end": datetime.datetime(2020, 3, 8, 8, 30), 
-                "start_text": "2020-03-08 07:30", "end_text": "2020-03-08 08:30"}, ..] # a list of events happening right now
+            >>> get_current_events()
+            >>> [{"name": "my event", "start": datetime.datetime(2020, 3, 8, 7, 30), "end": datetime.datetime(2020, 3, 8, 8, 30), \
+                    "start_text": "2020-03-08 07:30", "end_text": "2020-03-08 08:30"}, ..] # a list of events happening right now
 
+        Returns:   
+            t.List[{"name": t.AnyStr, "start": datetime, "end": datetime, "start_text": t.AnyStr, "end_text": t.AnyStr}]: a list of event information
         """
         now = datetime.datetime.now()
         return get_calendar_range(self._imap_account, now, now)
+    
     
     def get_upcoming_events(self):
         """Get upcoming calendar events, if any
 
         Examples:
-            get_upcoming_events() \n
+            >>> get_upcoming_events()
             >>> [] # no upcoming events
+
+        Returns:   
+            t.List[{"name": t.AnyStr, "start": datetime, "end": datetime, "start_text": t.AnyStr, "end_text": t.AnyStr}]: a list of event information
 
         """
         now = datetime.datetime.now()
@@ -431,7 +439,7 @@ class MailBox(object):
         """Get name and uid of the your current mode
 
         Examples:
-            get_email_mode() \n
+            >>> get_email_mode()
             >>> ("my meeting mode", 172)
         """
         if self._imap_account.current_mode:
@@ -471,6 +479,20 @@ class MailBox(object):
             self._imap_client.rename_folder( old_name, new_name )
 
         print("rename_folder(): Rename a folder %s to %s" % (old_name, new_name))
+
+    @CustomProperty
+    def ME(self):
+        """Return my Contact object
+
+            Examples:
+                >>> ME 
+                >>> Contact object: myemail@mail.com
+
+            Returns:
+                Contact: The contact in the from field of the message
+        """
+        
+        return Contact(ContactSchema.objects.get(imap_account=self._imap_account, email=self._imap_account.email), self._imap_client, self.is_simulate)
 
     def send(self, subject="", to="", cc="", bcc="", body="", body_html="", smtp=""):
         """Send a message

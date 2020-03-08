@@ -3,7 +3,7 @@
     margin-top: 60px;
   }
 
-  #message-object, .toctree-l2:first-child {
+#contact-object, .toctree-l2:nth-child(2) {
   background: lightgray;
 }
 
