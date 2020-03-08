@@ -65,7 +65,14 @@
         ]
     },
     "folder": {
-        "attribute": [{
+        "attribute": [
+            {
+                "name": "ME",
+                "return_type": "Contact",
+                "description": "Return my Contact object",
+                "example": ""
+            },
+            {
                 "name": "create_draft",
                 "return_type": "",
                 "return_href": "",
@@ -89,6 +96,20 @@
                 "description": "Delete a folder folder_name",
                 "example": ""
 
+            },
+            {
+                "name": "get_current_events",
+                "return_type": "list",
+                "params": "",
+                "description": "Get calendar events happening right now, if any",
+                "example": ""
+            },
+            {
+                "name": "get_upcoming_events",
+                "return_type": "list",
+                "params": "",
+                "description": "Get upcoming calendar events, if any",
+                "example": ""
             },
             {
                 "name": "get_email_mode",
