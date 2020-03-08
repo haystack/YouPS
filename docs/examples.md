@@ -93,7 +93,7 @@ Tags: []
 ```python
 # fired when a message arrives
 def on_message(my_message):
-    prev_msgs = my_message.sender.recent_messages(5)
+    prev_msgs = my_message.sender.messages_from(5)
     if len(my_message.recipients) > 10 and all(not p.is_read for p in prev_msgs):
         my_message.mark_read()
 	my_message.add_labels("low priority") # if gmail
@@ -128,7 +128,7 @@ Tags: [priority]
 # fired when a message arrives
 def on_message(my_message):
     from datetime import datetime
-    last_ten_messages = my_message.sender.recent_messages(10)
+    last_ten_messages = my_message.sender.messages(10)
     if all(my_message.date.date() == datetime.today().date() for m in last_ten_messages):
         my_message.priority = "urgent"
 ```
