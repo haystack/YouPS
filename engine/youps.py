@@ -20,7 +20,7 @@ from browser.imap import GoogleOauth2, authenticate
 from engine.models.mailbox import MailBox
 from browser.sandbox import interpret_bypass_queue 
 from engine.constants import msg_code
-from engine.utils import turn_on_youps, prettyPrintTimezone, print_execution_log
+from engine.utils import get_calendar_range, turn_on_youps, prettyPrintTimezone, print_execution_log
 from http_handler.settings import IMAP_SECRET
 from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
 from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
@@ -420,42 +420,8 @@ def fetch_upcoming_events(user, email):
     try:
         imapAccount = ImapAccount.objects.get(email=email)
 
-        try:
-            auth_to_nylas(imapAccount)
-        except :
-            logger.exception("Can't log into Nylas")
 
-        if imapAccount.nylas_access_token:
-            nylas = APIClient(
-                NYLAS_ID,
-                NYLAS_SECRET,
-                imapAccount.nylas_access_token
-            )
-
-            a = []
-
-            from calendar import timegm
-            now = datetime.datetime.now()
-            now_timestamp = timegm(now.timetuple())
-            now_timestamp = int(now_timestamp) + 300 * 60
-
-            # get upcoming events 
-            for e in nylas.events.where(limit=3, starts_after=now_timestamp):
-                start = datetime.datetime.fromtimestamp(e.when["start_time"])
-                start = tz('US/Eastern').localize(start)
-                start = timezone.localtime(start)
-                start = start.strftime("%Y-%m-%d %H:%M")
-
-                end = datetime.datetime.fromtimestamp(e.when["end_time"])
-                end = tz('US/Eastern').localize(end)
-                end = timezone.localtime(end)
-                end = end.strftime("%Y-%m-%d %H:%M")
-
-                a.append({"name": e.title, "start": start, "end": end})
-
-            logger.info(a)
-
-            res["events"] = a
+        res["events"] = get_calendar_range(imapAccount, start=datetime.datetime.now())
 
         res['status'] = True
 

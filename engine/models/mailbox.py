@@ -8,6 +8,7 @@ import traceback
 import typing as t  # noqa: F401 ignore unused we use it for typing
 from schema.youps import ImapAccount, BaseMessage, FolderSchema, MailbotMode, EmailRule  # noqa: F401 ignore unused we use it for typing
 from folder import Folder
+from engine.utils import get_calendar_range
 from smtp_handler.utils import format_email_address, send_email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -402,11 +403,35 @@ class MailBox(object):
 
         print("create_folder(): A new folder %s has been created" % folder_name)
 
+    def get_current_events(self):
+        """Get calendar events happening right now, if any
+
+        Examples:
+            get_current_events() \n
+            >>> [{"name": "my event", "start": datetime.datetime(2020, 3, 8, 7, 30), "end": datetime.datetime(2020, 3, 8, 8, 30), 
+                "start_text": "2020-03-08 07:30", "end_text": "2020-03-08 08:30"}, ..] # a list of events happening right now
+
+        """
+        now = datetime.datetime.now()
+        return get_calendar_range(self._imap_account, now, now)
+    
+    def get_upcoming_events(self):
+        """Get upcoming calendar events, if any
+
+        Examples:
+            get_upcoming_events() \n
+            >>> [] # no upcoming events
+
+        """
+        now = datetime.datetime.now()
+        return get_calendar_range(self._imap_account, now)
+        
+
     def get_email_mode(self):
         """Get name and uid of the your current mode
 
         Examples:
-            get_email_mode()
+            get_email_mode() \n
             >>> ("my meeting mode", 172)
         """
         if self._imap_account.current_mode:

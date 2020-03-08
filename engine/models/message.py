@@ -537,7 +537,7 @@ class Message(object):
         """Get the Contacts the message is bcced to
 
         Examples:
-            my_message.bcc
+            my_message.bcc \n
             >>> [Contact object: someone1@mail.com, Contact object: someone2@mail.com]
 
 
@@ -635,7 +635,7 @@ class Message(object):
         """Aggregate responses of messages in this thread and return a list of pairs of sender and their response
 
         Examples:
-            my_message.aggregate_response()
+            my_message.aggregate_response() \n
             >>> [(Contact object: someone1@mail.com, "Hi all ..."), (Contact object: someone2@mail.com, "Dear all, ...")]
 
         Returns:

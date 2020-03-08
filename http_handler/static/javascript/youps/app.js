@@ -78,8 +78,8 @@ class DatePicker extends React.Component {
           <ul class="dropdown-menu">
             <li><a onClick={(e)=>  this.handleSelect(e.target) } data-value={this.d_val}>tomorrow</a></li>
             {this.state.schedule.map( er  =>
-              <li><a onClick={(e)=>  this.handleSelect(e.target) } data-value={er.start}>{er.name} 
-                <span style={date_style}> {this.today_val.slice(0, 10) == er.start.slice(0, 10) ? er.start.slice(11):er.start} ~ {this.today_val.slice(0, 10) == er.end.slice(0, 10) ? er.end.slice(11):er.end}</span></a></li>
+              <li><a onClick={(e)=>  this.handleSelect(e.target) } data-value={er.start_text}>{er.name} 
+                <span style={date_style}> {this.today_val.slice(0, 10) == er.start_text.slice(0, 10) ? er.start_text.slice(11):er.start_text} ~ {this.today_val.slice(0, 10) == er.end_text.slice(0, 10) ? er.end_text.slice(11):er.end_text}</span></a></li>
             )}
              <li class='dropdown-toggle-skip'><a onClick={(e)=>  this.showDatePicker(e) } data-value={this.d_val}><input class="skip" ref={this.dateCustom} id={this.b} value='Select a date'/></a></li>
           </ul>
@@ -105,6 +105,14 @@ class RuleSelector extends React.Component {
 
   applyRule(e, er_id) {
     show_loader(true);
+    debugger;
+
+    if($("input[name='watched_message']:checked").length == 0) {
+      show_loader(false);
+      alert("You should select a message!");
+      return;
+    }
+    
     // Get selected messages
     $.each($("input[name='watched_message']:checked"), function(k, v) {
       var kargs = {};
@@ -112,7 +120,7 @@ class RuleSelector extends React.Component {
           if(!$(elem).attr("name")) return;
           kargs[$(elem).attr("name")] = $(elem).val();
       })
-  
+
       var params = {
         "er_id": er_id,
         "msg_id": parseInt($(v).parents('tr').attr("message-index")),

@@ -11,6 +11,7 @@ from datetime import (datetime,  # noqa: F401 ignore unused we use it for typing
                       timedelta)
 from django.utils import timezone
 from pytz import timezone as tz
+from calendar import timegm
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 
 if t.TYPE_CHECKING:
@@ -130,7 +131,57 @@ def auth_to_nylas(imapAccount):
 
     return ACCESS_TOKEN
 
+def get_calendar_range(imapAccount, start=None, end=None):
+    try:
+        auth_to_nylas(imapAccount)
+    except:
+        logger.exception("Can't log into Nylas")
 
+    a = []
+
+    if imapAccount.nylas_access_token:
+        nylas = APIClient(
+            NYLAS_ID,
+            NYLAS_SECRET,
+            imapAccount.nylas_access_token
+        )
+
+        events = None
+        if start:
+            start_timestamp = timegm(start.timetuple())
+            start_timestamp = int(start_timestamp) + 300 * 60
+
+        if end:
+            end_timestamp = timegm(end.timetuple())
+            end_timestamp = int(end_timestamp) + 300 * 60
+
+        if start and end:
+            events = nylas.events.where(starts_before=start_timestamp, ends_after=end_timestamp)
+        elif start:
+            events = nylas.events.where(limit=3, starts_after=start_timestamp)    
+
+        # logger.exception(start_timestamp)  
+        # logger.exception(end_timestamp)  
+
+        # get upcoming events 
+        for e in events:
+            #logger.info(e)
+            start = datetime.fromtimestamp(e.when["start_time"])
+            start = tz('US/Eastern').localize(start)
+            start = timezone.localtime(start)
+            #start = start.strftime("%Y-%m-%d %H:%M")
+
+            end = datetime.fromtimestamp(e.when["end_time"])
+            end = tz('US/Eastern').localize(end)
+            end = timezone.localtime(end)
+            #end = end.strftime("%Y-%m-%d %H:%M")
+            logger.info("%s %s" % (prettyPrintTimezone(start), prettyPrintTimezone(end)))
+
+            a.append({"name": e.title, "start": start, "end": end, "start_text":start.strftime("%Y-%m-%d %H:%M"), "end_text":end.strftime("%Y-%m-%d %H:%M")})
+
+        # logger.info(a)
+    
+    return a
 
 def get_datetime_from_now(later_at):
     if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):

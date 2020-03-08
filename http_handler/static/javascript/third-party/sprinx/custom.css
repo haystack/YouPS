@@ -6,3 +6,7 @@
   #message-object, .toctree-l2:first-child {
   background: lightgray;
 }
+
+dl pre {
+  padding-left: 5px;
+}

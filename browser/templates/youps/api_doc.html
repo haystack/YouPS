@@ -13,12 +13,19 @@
   
 
   {% block content %}
-  
   <div class="document">
       
         <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
           <div class="sphinxsidebarwrapper">
-
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3>Navigation</h3>
   <p class="caption"><span class="caption-text">Contents:</span></p>
   <ul class="current">
   <li class="toctree-l1 current"><a class="current reference internal" href="#">YouPS documentation</a><ul>
@@ -35,6 +42,7 @@
   <li class="toctree-l2"><a class="reference internal" href="#utility-methods">Utility methods</a></li>
   </ul>
   </li>
+  <li class="toctree-l1"><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
   </ul>
   
   <div class="relations">
@@ -74,10 +82,28 @@
   <dt id="Message.Message">
   <em class="property">class </em><code class="sig-prename descclassname">Message.</code><code class="sig-name descname">Message</code><span class="sig-paren">(</span><em class="sig-param">message_schema</em>, <em class="sig-param">imap_client</em>, <em class="sig-param">is_simulate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message" title="Permalink to this definition">¶</a></dt>
   <dd><dl class="method">
+  <dt id="Message.Message.add_labels">
+  <code class="sig-name descname">add_labels</code><span class="sig-paren">(</span><em class="sig-param">labels</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.add_labels" title="Permalink to this definition">¶</a></dt>
+  <dd><p>Add each of the label in a list of flags to the message</p>
+  <dl class="simple">
+  <dt>Examples:</dt><dd><p>my_message.add_labels([“Todo”, “Family”])</p>
+  </dd>
+  <dt>Args: </dt><dd><p>labels (string[]): a list of flags to be added</p>
+  </dd>
+  </dl>
+  <p>This method can also optionally take a single string as a flag.</p>
+  </dd></dl>
+  
+  <dl class="method">
   <dt id="Message.Message.aggregate_response">
   <code class="sig-name descname">aggregate_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.aggregate_response" title="Permalink to this definition">¶</a></dt>
   <dd><p>Aggregate responses of messages in this thread and return a list of pairs of sender and their response</p>
-  <dl class="simple">
+  <dl>
+  <dt>Examples:</dt><dd><p>my_message.aggregate_response()</p>
+  <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[(</span><span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone1</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">,</span> <span class="s2">&quot;Hi all ...&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone2</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">,</span> <span class="s2">&quot;Dear all, ...&quot;</span><span class="p">)]</span>
+  </pre></div>
+  </div>
+  </dd>
   <dt>Returns:</dt><dd><p>t.List[(Contact, t.AnyStr)]: pairs of sender and their response</p>
   </dd>
   </dl>
@@ -87,7 +113,12 @@
   <dt id="Message.Message.bcc">
   <em class="property">property </em><code class="sig-name descname">bcc</code><a class="headerlink" href="#Message.Message.bcc" title="Permalink to this definition">¶</a></dt>
   <dd><p>Get the Contacts the message is bcced to</p>
-  <dl class="simple">
+  <dl>
+  <dt>Examples:</dt><dd><p>my_message.bcc</p>
+  <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone1</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">,</span> <span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone2</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">]</span>
+  </pre></div>
+  </div>
+  </dd>
   <dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the bcc field of the message</p>
   </dd>
   </dl>
@@ -119,7 +150,7 @@
   <dt id="Message.Message.content">
   <em class="property">property </em><code class="sig-name descname">content</code><a class="headerlink" href="#Message.Message.content" title="Permalink to this definition">¶</a></dt>
   <dd><p>Get the content of the message</p>
-  <p>See also Message.contains()</p>
+  <p>See also Message.contains</p>
   <dl class="simple">
   <dt>Returns:</dt><dd><p>dict {‘text’: t.AnyStr, ‘html’: t.AnyStr}: The content of the message</p>
   </dd>
@@ -158,8 +189,8 @@
   
   <dl class="method">
   <dt id="Message.Message.delete">
-  <code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param"></em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.delete" title="Permalink to this definition">¶</a></dt>
-  <dd><p>Mark a message as deleted, the imap server will move it to the deleted messages.</p>
+  <code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param">slient=False</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.delete" title="Permalink to this definition">¶</a></dt>
+  <dd><p>Move this message to your trash folder</p>
   </dd></dl>
   
   <dl class="method">
@@ -177,7 +208,7 @@
   <code class="sig-name descname">extract_time_entity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.extract_time_entity" title="Permalink to this definition">¶</a></dt>
   <dd><p>return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP</p>
   <dl class="simple">
-  <dt>Returns:</dt><dd><p>t.List[t.AnyStr]: a list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}</p>
+  <dt>Returns:</dt><dd><p>t.List[t.AnyStr]: list of {“body”: “text of the time entity” (string), “start”: “starting time” (datetime), “end”: “ending time” (datetime)}</p>
   </dd>
   </dl>
   </dd></dl>
@@ -210,8 +241,18 @@
   <dt>Args:</dt><dd><p>to (str): 
   cc (str): 
   bcc (str): 
-  subject (str): 
+  subject (str): if none is given, it will be “Fwd: ‘original subject’”
   content (str): You can add additional content on a body of this forwarded message</p>
+  </dd>
+  </dl>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt id="Message.Message.has_label">
+  <code class="sig-name descname">has_label</code><span class="sig-paren">(</span><em class="sig-param">label</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.has_label" title="Permalink to this definition">¶</a></dt>
+  <dd><p>Check if the message has a given label</p>
+  <dl class="simple">
+  <dt>Returns:</dt><dd><p>bool: True if the flag is on the message else false</p>
   </dd>
   </dl>
   </dd></dl>
@@ -331,6 +372,17 @@
   </dd></dl>
   
   <dl class="method">
+  <dt id="Message.Message.remove_labels">
+  <code class="sig-name descname">remove_labels</code><span class="sig-paren">(</span><em class="sig-param">labels</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.remove_labels" title="Permalink to this definition">¶</a></dt>
+  <dd><p>Remove each of the flags in a list of labels from the message</p>
+  <dl class="simple">
+  <dt>Args: </dt><dd><p>labels (string[]): a list of labels to be added</p>
+  </dd>
+  </dl>
+  <p>This method can also optionally take a single string as a label.</p>
+  </dd></dl>
+  
+  <dl class="method">
   <dt id="Message.Message.reply">
   <code class="sig-name descname">reply</code><span class="sig-paren">(</span><em class="sig-param">to=[]</em>, <em class="sig-param">cc=[]</em>, <em class="sig-param">bcc=[]</em>, <em class="sig-param">content=''</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.reply" title="Permalink to this definition">¶</a></dt>
   <dd><p>Reply to the sender of this message</p>
@@ -444,9 +496,27 @@
   <em class="property">class </em><code class="sig-prename descclassname">Message.</code><code class="sig-name descname">Message</code><span class="sig-paren">(</span><em class="sig-param">message_schema</em>, <em class="sig-param">imap_client</em>, <em class="sig-param">is_simulate=False</em><span class="sig-paren">)</span></dt>
   <dd><dl class="method">
   <dt>
+  <code class="sig-name descname">add_labels</code><span class="sig-paren">(</span><em class="sig-param">labels</em><span class="sig-paren">)</span></dt>
+  <dd><p>Add each of the label in a list of flags to the message</p>
+  <dl class="simple">
+  <dt>Examples:</dt><dd><p>my_message.add_labels([“Todo”, “Family”])</p>
+  </dd>
+  <dt>Args: </dt><dd><p>labels (string[]): a list of flags to be added</p>
+  </dd>
+  </dl>
+  <p>This method can also optionally take a single string as a flag.</p>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt>
   <code class="sig-name descname">aggregate_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
   <dd><p>Aggregate responses of messages in this thread and return a list of pairs of sender and their response</p>
-  <dl class="simple">
+  <dl>
+  <dt>Examples:</dt><dd><p>my_message.aggregate_response()</p>
+  <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[(</span><span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone1</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">,</span> <span class="s2">&quot;Hi all ...&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone2</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">,</span> <span class="s2">&quot;Dear all, ...&quot;</span><span class="p">)]</span>
+  </pre></div>
+  </div>
+  </dd>
   <dt>Returns:</dt><dd><p>t.List[(Contact, t.AnyStr)]: pairs of sender and their response</p>
   </dd>
   </dl>
@@ -456,7 +526,12 @@
   <dt>
   <em class="property">property </em><code class="sig-name descname">bcc</code></dt>
   <dd><p>Get the Contacts the message is bcced to</p>
-  <dl class="simple">
+  <dl>
+  <dt>Examples:</dt><dd><p>my_message.bcc</p>
+  <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone1</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">,</span> <span class="n">Contact</span> <span class="nb">object</span><span class="p">:</span> <span class="n">someone2</span><span class="nd">@mail</span><span class="o">.</span><span class="n">com</span><span class="p">]</span>
+  </pre></div>
+  </div>
+  </dd>
   <dt>Returns:</dt><dd><p>t.List[Contact]: The contacts in the bcc field of the message</p>
   </dd>
   </dl>
@@ -528,7 +603,7 @@
   <dl class="method">
   <dt>
   <code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param">slient=False</em><span class="sig-paren">)</span></dt>
-  <dd><p>Mark a message as deleted, the imap server will move it to the deleted messages.</p>
+  <dd><p>Move this message to your trash folder</p>
   </dd></dl>
   
   <dl class="method">
@@ -546,7 +621,7 @@
   <code class="sig-name descname">extract_time_entity</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
   <dd><p>return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP</p>
   <dl class="simple">
-  <dt>Returns:</dt><dd><p>t.List[t.AnyStr]: list of {“body”: “~”, “start”: “~”, “end”: “~”}</p>
+  <dt>Returns:</dt><dd><p>t.List[t.AnyStr]: list of {“body”: “text of the time entity” (string), “start”: “starting time” (datetime), “end”: “ending time” (datetime)}</p>
   </dd>
   </dl>
   </dd></dl>
@@ -579,8 +654,18 @@
   <dt>Args:</dt><dd><p>to (str): 
   cc (str): 
   bcc (str): 
-  subject (str): 
+  subject (str): if none is given, it will be “Fwd: ‘original subject’”
   content (str): You can add additional content on a body of this forwarded message</p>
+  </dd>
+  </dl>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt>
+  <code class="sig-name descname">has_label</code><span class="sig-paren">(</span><em class="sig-param">label</em><span class="sig-paren">)</span></dt>
+  <dd><p>Check if the message has a given label</p>
+  <dl class="simple">
+  <dt>Returns:</dt><dd><p>bool: True if the flag is on the message else false</p>
   </dd>
   </dl>
   </dd></dl>
@@ -701,6 +786,17 @@
   
   <dl class="method">
   <dt>
+  <code class="sig-name descname">remove_labels</code><span class="sig-paren">(</span><em class="sig-param">labels</em><span class="sig-paren">)</span></dt>
+  <dd><p>Remove each of the flags in a list of labels from the message</p>
+  <dl class="simple">
+  <dt>Args: </dt><dd><p>labels (string[]): a list of labels to be added</p>
+  </dd>
+  </dl>
+  <p>This method can also optionally take a single string as a label.</p>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt>
   <code class="sig-name descname">reply</code><span class="sig-paren">(</span><em class="sig-param">to=[]</em>, <em class="sig-param">cc=[]</em>, <em class="sig-param">bcc=[]</em>, <em class="sig-param">content=''</em><span class="sig-paren">)</span></dt>
   <dd><p>Reply to the sender of this message</p>
   <dl class="simple">
@@ -816,7 +912,13 @@
   <dt id="Message.Message.on_response">
   <code class="sig-name descname">on_response</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.on_response" title="Permalink to this definition">¶</a></dt>
   <dd><p>add an event handler that is triggered everytime when there is a new message arrived at its thread</p>
-  <dl class="simple">
+  <dl>
+  <dt>Examples:</dt><dd><dl class="simple">
+  <dt>def f(msg):</dt><dd><p>msg.mark_read() # Replies of this message will be marked read</p>
+  </dd>
+  </dl>
+  <p>my_message.on_response(f)</p>
+  </dd>
   <dt>Args:</dt><dd><p>handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument</p>
   </dd>
   </dl>
@@ -909,6 +1011,9 @@
   <code class="sig-name descname">messages_from_date</code><span class="sig-paren">(</span><em class="sig-param">from_date=None</em>, <em class="sig-param">to_date=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.messages_from_date" title="Permalink to this definition">¶</a></dt>
   <dd><p>Get the Messages which are from this contact</p>
   <dl class="simple">
+  <dt>Args:</dt><dd><p>from_date (datetime): Searching messages from this date
+  to_date (datetime): to this date</p>
+  </dd>
   <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
   </dd>
   </dl>
@@ -930,6 +1035,16 @@
   <dd><p>Get the name associated with this contact</p>
   <dl class="simple">
   <dt>Returns:</dt><dd><p>str: The name associated with this contact</p>
+  </dd>
+  </dl>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt id="Contact.Contact.on_message">
+  <code class="sig-name descname">on_message</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.on_message" title="Permalink to this definition">¶</a></dt>
+  <dd><p>add an event handler that is triggered everytime when there is a new message arrived from this contact</p>
+  <dl class="simple">
+  <dt>Args:</dt><dd><p>handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument</p>
   </dd>
   </dl>
   </dd></dl>
@@ -1026,6 +1141,9 @@
   <code class="sig-name descname">messages_from_date</code><span class="sig-paren">(</span><em class="sig-param">from_date=None</em>, <em class="sig-param">to_date=None</em><span class="sig-paren">)</span></dt>
   <dd><p>Get the Messages which are from this contact</p>
   <dl class="simple">
+  <dt>Args:</dt><dd><p>from_date (datetime): Searching messages from this date
+  to_date (datetime): to this date</p>
+  </dd>
   <dt>Returns:</dt><dd><p>t.List[Message]: The messages where this contact is listed in the from field</p>
   </dd>
   </dl>
@@ -1047,6 +1165,16 @@
   <dd><p>Get the name associated with this contact</p>
   <dl class="simple">
   <dt>Returns:</dt><dd><p>str: The name associated with this contact</p>
+  </dd>
+  </dl>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt>
+  <code class="sig-name descname">on_message</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span></dt>
+  <dd><p>add an event handler that is triggered everytime when there is a new message arrived from this contact</p>
+  <dl class="simple">
+  <dt>Args:</dt><dd><p>handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument</p>
   </dd>
   </dl>
   </dd></dl>
@@ -1080,16 +1208,6 @@
   <dt>
   <em class="property">class </em><code class="sig-prename descclassname">Contact.</code><code class="sig-name descname">Contact</code><span class="sig-paren">(</span><em class="sig-param">contact_schema</em>, <em class="sig-param">imap_client</em>, <em class="sig-param">is_simulate=False</em><span class="sig-paren">)</span></dt>
   <dd><dl class="method">
-  <dt id="Contact.Contact.on_response">
-  <code class="sig-name descname">on_response</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.on_response" title="Permalink to this definition">¶</a></dt>
-  <dd><p>add an event handler that is triggered everytime when there is a new message arrived from this contact</p>
-  <dl class="simple">
-  <dt>Args:</dt><dd><p>handler (function): A function to execute each time when there are messaged arrvied to this thread. The function provides the newly arrived message as an argument</p>
-  </dd>
-  </dl>
-  </dd></dl>
-  
-  <dl class="method">
   <dt id="Contact.Contact.on_time">
   <code class="sig-name descname">on_time</code><span class="sig-paren">(</span><em class="sig-param">handler</em>, <em class="sig-param">later_at=60</em><span class="sig-paren">)</span><a class="headerlink" href="#Contact.Contact.on_time" title="Permalink to this definition">¶</a></dt>
   <dd><p>The number of minutes to wait before executing the handler.</p>
@@ -1134,11 +1252,40 @@
   </dd></dl>
   
   <dl class="method">
+  <dt id="mailbox.MailBox.get_current_events">
+  <code class="sig-name descname">get_current_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mailbox.MailBox.get_current_events" title="Permalink to this definition">¶</a></dt>
+  <dd><p>Get calendar events happening right now, if any</p>
+  <dl>
+  <dt>Examples:</dt><dd><p>get_current_events()</p>
+    <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;my event&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>                 <span class="s2">&quot;start_text&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-03-08 07:30&quot;</span><span class="p">,</span> <span class="s2">&quot;end_text&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-03-08 08:30&quot;</span><span class="p">},</span> <span class="o">..</span><span class="p">]</span> <span class="c1"># a list of events happening right now</span>
+    </pre></div>
+  </div>
+  </dd>
+  </dl>
+  </dd></dl>
+  
+  <dl class="method">
   <dt id="mailbox.MailBox.get_email_mode">
   <code class="sig-name descname">get_email_mode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mailbox.MailBox.get_email_mode" title="Permalink to this definition">¶</a></dt>
-  <dd><p>Get uid of the your current mode</p>
-  <dl class="simple">
-  <dt>Args:</dt><dd><p>folder_name (string): a name of a new folder</p>
+  <dd><p>Get name and uid of the your current mode</p>
+  <dl>
+  <dt>Examples:</dt><dd><p>get_email_mode()</p>
+  <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="s2">&quot;my meeting mode&quot;</span><span class="p">,</span> <span class="mi">172</span><span class="p">)</span>
+  </pre></div>
+  </div>
+  </dd>
+  </dl>
+  </dd></dl>
+  
+  <dl class="method">
+  <dt id="mailbox.MailBox.get_upcoming_events">
+  <code class="sig-name descname">get_upcoming_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mailbox.MailBox.get_upcoming_events" title="Permalink to this definition">¶</a></dt>
+  <dd><p>Get upcoming calendar events, if any</p>
+  <dl>
+  <dt>Examples:</dt><dd><p>get_upcoming_events()</p>
+  <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[]</span> <span class="c1"># no upcoming events</span>
+  </pre></div>
+  </div>
   </dd>
   </dl>
   </dd></dl>
@@ -1173,9 +1320,9 @@
   <dl class="method">
   <dt id="mailbox.MailBox.set_email_mode">
   <code class="sig-name descname">set_email_mode</code><span class="sig-paren">(</span><em class="sig-param">uid</em><span class="sig-paren">)</span><a class="headerlink" href="#mailbox.MailBox.set_email_mode" title="Permalink to this definition">¶</a></dt>
-  <dd><p>Get uid of the your current mode</p>
+  <dd><p>Set your current mode to the given mode</p>
   <dl class="simple">
-  <dt>Returns:</dt><dd><p>uid (int):</p>
+  <dt>Args:</dt><dd><p>uid (int): uid of one of your email mode</p>
   </dd>
   </dl>
   </dd></dl>
@@ -1212,6 +1359,7 @@
             rel="nofollow">Page source</a>
       </div>
   
+  
 
     {% endblock %}
 
@@ -1230,6 +1378,8 @@
     <script type="text/javascript" src="/static/javascript/third-party/sprinx/language_data.js"></script>
     
     <script type="text/javascript">
+      var is_gmail = {{ is_gmail|yesno:"true,false" }};
+
       $( document ).ready(function() {
         // Hide class description
         $("dl.class").children("dt").remove();
@@ -1259,6 +1409,13 @@
         $(".simple dd p").each(function(k, v) {
           $(v).html($(v).html().replace("Contact", "<a href='#contact-object'>Contact</a>"));
         })
+
+        if(!is_gmail) {
+          var l = ["Message.Message.add_labels", "Message.Message.has_label", "Message.Message.remove_labels"];
+          $.each(l, function(k, v) {
+            $(document.getElementById(v)).parent().remove();
+          })
+        }
         
     });
     </script>

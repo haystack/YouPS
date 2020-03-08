@@ -31,6 +31,8 @@ def get_default_user_environment(mailbox, fakeprint):
         'get_email_mode': mailbox.get_email_mode,
         'set_email_mode': mailbox.set_email_mode,
         'send': mailbox.send,
+        'get_current_events': mailbox.get_current_events,
+        'get_upcoming_events': mailbox.get_upcoming_events,
         'handle_on_message': lambda f: mailbox.new_message_handler.handle(f),
         'handle_on_flag_added': lambda f: mailbox.added_flag_handler.handle(f),
         'handle_on_flag_removed': lambda f: mailbox.removed_flag_handler.handle(f),

@@ -221,7 +221,15 @@ def login_imap_callback(request):
 # @render_to(WEBSITE+"/docs.html")
 @render_to(WEBSITE+"/api_doc.html")
 def docs_view(request):
-	return {'website': WEBSITE}
+	is_gmail = True
+
+	if request.user.email:
+		imap_account = ImapAccount.objects.filter(email=request.user.email)
+		if imap_account.exists():
+			is_gmail = imap_account[0].is_gmail
+
+
+	return {'website': WEBSITE, 'is_gmail': is_gmail}
 
 @render_to(WEBSITE+"/about.html")
 def about_view(request):
@@ -301,7 +309,7 @@ def fetch_upcoming_events(request):
 
 		res = engine.main.fetch_upcoming_events(request.user, request.user.email)
 		
-		return HttpResponse(json.dumps(res), content_type="application/json")
+		return HttpResponse(json.dumps(res, cls=DjangoJSONEncoder), content_type="application/json")
 	except ImapAccount.DoesNotExist:
 		return {'website': WEBSITE, 'imap_authenticated': False}
 	except Exception as e:
