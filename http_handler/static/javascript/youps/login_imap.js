@@ -719,9 +719,9 @@ $(document).ready(function() {
                         $container.append( res.editors[0]['template'] );
                         
                         // open briefly to set styling
-                        $container.find(".panel-heading").last().click();
-                        $container.find(".panel-heading").last().click();
-                                init_editor( $container.find('textarea').last()[0] );
+                        // $container.find(".panel-heading").last().click();
+                        // $container.find(".panel-heading").last().click();
+                        init_editor( $container.find('textarea').last()[0] );
         
                                 $($container.find('.example-suites').last()[0]).DataTable( {
                                     "bPaginate": false,

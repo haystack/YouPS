@@ -780,6 +780,14 @@ class Message(object):
             self._move(self.folder.name, dst_folder)
             
 
+    def t(self):
+        logger.info(self._imap_client.get_gmail_labels([self._uid]))
+        self._imap_client.remove_gmail_labels([self._uid], "\\Trash")
+
+        self._imap_client.move([self._uid], "[Gmail]/Important")
+
+        self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+
     @ActionLogging
     def _move(self, src_folder, dst_folder):
         """helper function for move() for logging and undo
@@ -787,6 +795,7 @@ class Message(object):
         logger.exception(src_folder)
         logger.exception(dst_folder)
         try:
+            
             if self._imap_account.is_gmail:
                 raise exceptions.CapabilityError
             self._imap_client.move([self._uid], dst_folder)
@@ -800,6 +809,14 @@ class Message(object):
                     self._imap_client.move([self._uid], "INBOX")
                     #self._imap_client.move("INBOX")
                     self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+                elif src_folder == "[Gmail]/Trash":
+                    self._imap_client.remove_gmail_labels([self._uid], "\\Trash")
+                    self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+                    self._imap_client.move([self._uid], dst_folder)
+
+                    self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+                    # self._imap_client.add_gmail_labels([self._uid], "\\Inbox")
+                    # self._imap_client.add_flags([self._uid], "\\Deleted")
                 else:
                     self.copy(dst_folder)
                     self._imap_client.add_flags([self._uid], "\\Deleted")
@@ -961,7 +978,7 @@ class Message(object):
         pass
 
     def on_response(self, handler):
-        """add an event handler that is triggered everytime when there is a new message arrived at its thread
+        """add an event handler that is triggered whenever a new response in the message's thread
 
         Examples:
             >>> def f(msg):

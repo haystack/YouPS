@@ -270,7 +270,11 @@ class Contact(object):
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
             print("on_message(): Simulating callback function..:")
-            g(self.messages_from[0])
+            messages_from_this_contact = self.messages_from(1)
+            if len(messages_from_this_contact):
+                g(messages_from_this_contact[0])
+            else:
+                print("on_message(): no message from this contact to simulate on")
         else: 
             # add EventManager attached to it
             er = EmailRule(imap_account=self._schema.imap_account, name='on message', type='on_message', code=json.dumps(a))
@@ -311,7 +315,8 @@ class Contact(object):
 
             from browser.sandbox_helpers import get_default_user_environment
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
-            g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
+            mailbox = MailBox(self._schema.imap_account, self._imap_client, is_simulate=True)
+            g = type(codeobject_loads)(code_object, get_default_user_environment(mailbox, print))
             print("on_time(): Simulating callback function..:")
             
             g(self)

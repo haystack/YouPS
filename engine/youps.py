@@ -22,8 +22,8 @@ from browser.sandbox import interpret_bypass_queue
 from engine.constants import msg_code
 from engine.utils import get_calendar_range, turn_on_youps, prettyPrintTimezone, print_execution_log
 from http_handler.settings import IMAP_SECRET
-from schema.youps import (FolderSchema, ImapAccount, MailbotMode, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
-from engine.models.message import Message  # noqa: F401 ignore unused we use it for typing
+from schema.youps import (FolderSchema, ImapAccount, MailbotMode, ContactSchema, MessageSchema, EmailRule, EmailRule_Args, ButtonChannel, LogSchema)
+from engine.models.message import Message, Contact  # noqa: F401 ignore unused we use it for typing
 
 from http_handler.settings import NYLAS_ID, NYLAS_SECRET
 from nylas import APIClient
@@ -796,13 +796,27 @@ def undo(user, email, logschema_id):
         for action in reversed(actions):
             target_class = None
             if action["class_name"] == "Message":
-                message_schema = MessageSchema.objects.filter(base_message__id=action["schema_id"])
+                if action["function_name"] == "_move":
+                    logger.info("folder %s" % action["args"][1])
+                    message_schema = MessageSchema.objects.filter(base_message__id=action["schema_id"], folder__name=action["args"][1])
+                    #target_class._imap_client.select_folder(target_class.folder.name)
+                else:
+                    message_schema = MessageSchema.objects.filter(base_message__id=action["schema_id"])
+    
                 logger.critical(action["schema_id"])
                 if not message_schema.exists():
                     raise MessageSchema.DoesNotExist
 
                 message_schema = message_schema[0]
                 target_class = Message(message_schema, imap_client=imap)
+            elif action["class_name"] == "Contact":
+                contact_schema = ContactSchema.objects.filter(id=action["schema_id"])
+                logger.critical(action["schema_id"])
+                if not contact_schema.exists():
+                    raise ContactSchema.DoesNotExist
+
+                contact_schema = contact_schema[0]
+                target_class = Contact(contact_schema, imap_client=imap)
 
             if action["type"] == "send":
                 logger.info("unreversable action")
