@@ -55,19 +55,19 @@ Tags: []
 def on_message(my_message):
     import datetime
     if my_message.has_label('urgent'):
-    	my_message.move("inbox")
-	my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)
-     else:
-     	my_message.move("anotherFolder")
+        my_message.move("inbox")
+        my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)
+    else:
+        my_message.move("anotherFolder")
 
 # fired when a message.deadline is up
 def on_deadline(my_message):
     import datetime
     if my_message.has_label('urgent'):
-    	# if still urgent, update deadline to 6 hours later
-	my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)        
+        # if still urgent, update deadline to 6 hours later
+        my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)        
     else:
-    	my_message.move("anotherFolder")								
+        my_message.move("anotherFolder")								
 ```
 
 ----------
