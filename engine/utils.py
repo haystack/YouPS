@@ -185,7 +185,7 @@ def get_calendar_range(imapAccount, start=None, end=None):
 
 def get_datetime_from_now(later_at):
     if not isinstance(later_at, datetime) and not isinstance(later_at, (int, long, float)):
-        raise TypeError("see_later(): later_at " +
+        raise TypeError("later_at " +
             later_at + " is not number or datetime")
 
     if isinstance(later_at, (int, long, float)):

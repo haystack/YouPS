@@ -732,7 +732,27 @@ class Message(object):
             Returns:
                 t.List["body": t.AnyStr, "start": datetime, "end": datetime]: list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}
         """
-        return json.loads(self._schema.base_message.extracted_time)
+        if self._schema.base_message.extracted_time:
+            entities = json.loads(self._schema.base_message.extracted_time)
+            new_e = []
+            from datetime import datetime
+            #new_e[-1]['start'] = datetime.strptime(e['start'], '%Y-%m-%dT%H:%M:%S')
+            # logger.critical(entities[0]['start'])
+            # logger.critical(datetime.strptime(entities[0]['start'], '%Y-%m-%dT%H:%M:%S'))
+            from datetime import datetime
+            for e in entities:
+                new_e.append(e)
+                
+                new_e[-1]['start'] = datetime.strptime(e['start'], '%Y-%m-%dT%H:%M:%S')
+                logger.critical(type(new_e[-1]['start']))
+                logger.critical(new_e[-1]['end'])
+                if e['end']:
+                    new_e[-1]['end'] = datetime.strptime(e['end'], '%Y-%m-%dT%H:%M:%S')
+                #logger.critical(isinstance(new_e[-1]['start'], datetime))
+                #logger.info(new_e[-1]['start'])
+            return new_e
+        else:
+            return []
 
     @ActionLogging
     def mark_read(self):
@@ -1050,7 +1070,7 @@ class Message(object):
 
         Args:
             handler (function): A function that will be executed. The function provides the newly arrived message as an argument \n
-            later_at (int): when to execute the handler (in minutes)
+            later_at (int or datetime): when to execute the handler (in minutes). You can also send datetime to set an absolute time
         """
         if not handler or type(handler).__name__ != "function":
             raise Exception('on_time(): requires callback function but it is %s ' % type(handler).__name__)
@@ -1099,7 +1119,7 @@ class Message(object):
         my_message.on_time(now+later_at, f)
 
         Args:
-            later_at (int): when to move this message back to inbox (in minutes)
+            later_at (int or datetime): when to move this message back to inbox (in minutes). You can also send datetime to set an absolute time \n
             hide_in (string): a name of folder to hide this message temporarily
         """
         later_at = get_datetime_from_now(later_at)

@@ -49,7 +49,8 @@
   
   
   
-  
+ 
+
 </div>
 </div>
 <div class="documentwrapper">
@@ -330,6 +331,16 @@ content (str): You can add additional content on a body of this forwarded messag
 </dd></dl>
 
 <dl class="method">
+<dt id="Message.Message.priority">
+<em class="property">property </em><code class="sig-name descname">priority</code><a class="headerlink" href="#Message.Message.priority" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the user-defined priority of the message (Mutable)</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>str: The priority</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="Message.Message.recent_messages">
 <code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.recent_messages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the N Messages of this thread</p>
@@ -420,9 +431,9 @@ this function is equivalent to following:</p>
 </dd>
 </dl>
 <p>my_message.on_time(now+later_at, f)</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>later_at (int): when to move this message back to inbox (in minutes)
-hide_in (string): a name of folder to hide this message temporarily</p>
+<dl>
+<dt>Args:</dt><dd><p>later_at (int or datetime): when to move this message back to inbox (in minutes). You can also send datetime to set an absolute time</p>
+<p>hide_in (string): a name of folder to hide this message temporarily</p>
 </dd>
 </dl>
 </dd></dl>
@@ -746,6 +757,16 @@ content (str): You can add additional content on a body of this forwarded messag
 
 <dl class="method">
 <dt>
+<em class="property">property </em><code class="sig-name descname">priority</code></dt>
+<dd><p>Get the user-defined priority of the message (Mutable)</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>str: The priority</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt>
 <code class="sig-name descname">recent_messages</code><span class="sig-paren">(</span><em class="sig-param">N=3</em><span class="sig-paren">)</span></dt>
 <dd><p>Get the N Messages of this thread</p>
 <dl class="simple">
@@ -835,9 +856,9 @@ this function is equivalent to following:</p>
 </dd>
 </dl>
 <p>my_message.on_time(now+later_at, f)</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>later_at (int): when to move this message back to inbox (in minutes)
-hide_in (string): a name of folder to hide this message temporarily</p>
+<dl>
+<dt>Args:</dt><dd><p>later_at (int or datetime): when to move this message back to inbox (in minutes). You can also send datetime to set an absolute time</p>
+<p>hide_in (string): a name of folder to hide this message temporarily</p>
 </dd>
 </dl>
 </dd></dl>
@@ -903,7 +924,7 @@ hide_in (string): a name of folder to hide this message temporarily</p>
 <dd><dl class="method">
 <dt id="Message.Message.on_response">
 <code class="sig-name descname">on_response</code><span class="sig-paren">(</span><em class="sig-param">handler</em><span class="sig-paren">)</span><a class="headerlink" href="#Message.Message.on_response" title="Permalink to this definition">¶</a></dt>
-<dd><p>add an event handler that is triggered everytime when there is a new message arrived at its thread</p>
+<dd><p>add an event handler that is triggered whenever a new response in the message’s thread</p>
 <dl>
 <dt>Examples:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
 <span class="gp">&gt;&gt;&gt; </span>   <span class="n">msg</span><span class="o">.</span><span class="n">mark_read</span><span class="p">()</span> <span class="c1"># Replies of this message will be marked read</span>
@@ -922,7 +943,7 @@ hide_in (string): a name of folder to hide this message temporarily</p>
 <dd><p>The number of minutes to wait before executing the code. If omitted, the value 60 is used</p>
 <dl>
 <dt>Args:</dt><dd><p>handler (function): A function that will be executed. The function provides the newly arrived message as an argument</p>
-<p>later_at (int): when to execute the handler (in minutes)</p>
+<p>later_at (int or datetime): when to execute the handler (in minutes). You can also send datetime to set an absolute time</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1199,7 +1220,7 @@ Examples:</p>
 <dd><p>The number of minutes to wait before executing the handler.</p>
 <dl>
 <dt>Args:</dt><dd><p>handler (function): A function that will be executed. The function provides the contact object as an argument</p>
-<p>later_at (int): when to execute the handler (in minutes)</p>
+<p>later_at (int or datetime): when to execute the handler (in minutes). You can also send datetime to set an absolute time</p>
 </dd>
 </dl>
 </dd></dl>

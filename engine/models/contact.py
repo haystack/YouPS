@@ -298,7 +298,7 @@ class Contact(object):
 
         Args:
             handler (function): A function that will be executed. The function provides the contact object as an argument \n
-            later_at (int): when to execute the handler (in minutes)
+            later_at (int or datetime): when to execute the handler (in minutes). You can also send datetime to set an absolute time
         """
         if not handler or type(handler).__name__ != "function":
             raise Exception('on_time(): requires callback function but it is %s ' % type(handler).__name__)
