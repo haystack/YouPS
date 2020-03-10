@@ -135,6 +135,34 @@ def on_message(my_message):
 
 ----------
 
+#### Set a reminder for urgent messages
+
+When a message arrives, if the message is urgent (a message with an urgent flag), move it to the Inbox folder, and send me a reminder of it every 6 house. Otherwise, move the message to my otherEmails folder.
+
+Tags: []
+
+```python
+# fired when a message arrives
+def on_message(my_message):
+    import datetime
+    if 'urgent' in my_message.flags:
+	my_message.move("inbox")
+	my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)
+     else:
+	my_message.move("anotherFolder")
+
+# fired when a message.deadline is up
+def on_deadline(my_message):
+    import datetime
+    if 'urgent' in my_message.flags:
+        # if still urgent, update deadline to 6 hours later
+	my_message.deadline = datetime.datetime.now() + datetime.timedelta(hours=6)        
+    else:
+	my_message.move("anotherFolder")								
+```
+
+----------
+
 
 ### Add Your Own Examples
 
