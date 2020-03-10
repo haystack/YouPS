@@ -160,7 +160,36 @@ def on_deadline(my_message):
     else:
 	my_message.move("anotherFolder")								
 ```
+----------
 
+#### Aggregate Messages
+
+Aggregate all messages with event dates into a one message with the date and subject of each message.
+
+Tags: []
+
+```python
+# fired when a message arrives
+def on_message(my_message):
+    msg_subject = 'my current schedule'
+    msgs = []
+    if my_message.extract_time_entity():
+       	msgs = ME.messages_from()
+        print(msgs)
+        
+    	old_msg = None
+    	msgs.reverse()
+    	for m in msgs:
+     		if m.subject == msg_subject:
+           		old_msg = m
+           		break
+        # append a new schedule
+    	new_content = "%s: %s \n" %(my_message.subject,my_message.extract_time_entity()[0]['start']) 	
+        if old_msg:
+            new_content += old_msg.content['text']
+    	send(to=ME, subject=msg_subject, body=new_content)
+							
+```
 ----------
 
 
