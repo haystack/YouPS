@@ -60,7 +60,20 @@ def ActionLogging(f):
         class_name = _get_class_name(obj)
         #_get_logger().info(obj)
         function_name = _get_method_name(f)
-        parsed_args = [str(args[i]) for i in range(len(args))]
+
+        try: 
+            parsed_args = [str(args[i]) for i in range(len(args))]
+        except:
+            parsed_args = []
+            for i in range(len(args)):
+                for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+                    try:
+                        args[i].encode(body_charset)
+                    except UnicodeEncodeError:
+                        pass
+                    else:
+                        break
+                parsed_args.append(args[i].encode(body_charset))
 
         types_of_action = {
             "forward": "send",
@@ -158,7 +171,14 @@ class CustomProperty(object):
             try: 
                 log_args = str(log_value)
             except:
-                log_args = log_value.encode('ascii', 'ignore').decode('ascii')
+                for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+                    try:
+                        log_value.encode(body_charset)
+                    except UnicodeEncodeError:
+                        pass
+                    else:
+                        break
+                log_args = log_value.encode(body_charset)
 
             info_string = {
                 "type": "get",

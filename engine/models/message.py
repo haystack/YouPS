@@ -717,7 +717,7 @@ class Message(object):
 
     def extract_response(self):
         # type: () -> t.AnyStr
-        """For the thread messages, only take out a body of *this message* without previous headers and contetns
+        """For the thread messages, only take out a body of *this message* without previous headers and contents
             
             Returns:
                 t.AnyStr: extracted contents without previous messages contents in the thread
@@ -729,16 +729,13 @@ class Message(object):
         # type: () -> t.List[t.AnyStr]
         """return any time entity (e.g., tomorrow, 3/24 2pm) mentioned in this message body using NLP 
             
+            
             Returns:
                 t.List["body": t.AnyStr, "start": datetime, "end": datetime]: list of {"body": "text of the time entity" (string), "start": "starting time" (datetime), "end": "ending time" (datetime)}
         """
         if self._schema.base_message.extracted_time:
             entities = json.loads(self._schema.base_message.extracted_time)
             new_e = []
-            from datetime import datetime
-            #new_e[-1]['start'] = datetime.strptime(e['start'], '%Y-%m-%dT%H:%M:%S')
-            # logger.critical(entities[0]['start'])
-            # logger.critical(datetime.strptime(entities[0]['start'], '%Y-%m-%dT%H:%M:%S'))
             from datetime import datetime
             for e in entities:
                 new_e.append(e)

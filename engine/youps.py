@@ -329,7 +329,7 @@ def fetch_watch_message(user, email, watched_message):
                         continue
 
                     # logger.info("refresh flags")
-
+                    # logger.critical(folder.name)
                     msgs = folder._refresh_flag_changes(highest_mod_seq)
 
                     if msgs:
@@ -802,7 +802,7 @@ def undo(user, email, logschema_id):
                     #target_class._imap_client.select_folder(target_class.folder.name)
                 else:
                     message_schema = MessageSchema.objects.filter(base_message__id=action["schema_id"])
-    
+
                 logger.critical(action["schema_id"])
                 if not message_schema.exists():
                     raise MessageSchema.DoesNotExist
