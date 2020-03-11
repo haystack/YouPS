@@ -259,7 +259,7 @@ $(document).ready(function() {
             $("#password-container").show();
             toggle_login_mode();
 
-            if( email_addr.includes("gmail")) {
+            if( email_addr.includes("gmail") || (!email_addr.includes("mit.edu"))) {
                 $("#input-host").val("imap.gmail.com");
                 $("#link-less-secure").attr('href', "https://myaccount.google.com/lesssecureapps");
                 $("#rdo-oauth").removeAttr('disabled');

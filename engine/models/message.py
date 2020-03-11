@@ -1066,7 +1066,7 @@ class Message(object):
         """The number of minutes to wait before executing the code. If omitted, the value 60 is used
 
         Args:
-            handler (function): A function that will be executed. The function provides the newly arrived message as an argument \n
+            handler (function): A function that will be executed. The function provides this message instance as an argument \n
             later_at (int or datetime): when to execute the handler (in minutes). You can also send datetime to set an absolute time
         """
         if not handler or type(handler).__name__ != "function":
