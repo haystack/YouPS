@@ -138,8 +138,13 @@ Tags: [inbox zero, gmail]
 ```python
 # fired when a message arrives
 def on_message(my_message):
-    if my_message.has_label('low priority') and not my_message.is_read:
-        my_message.delete()
+    def checkImportance(msg):
+        if msg.has_label('low priority'):
+            msg.delete()
+            
+    import datetime
+    later = datetime.datetime.now() + datetime.timedelta(days=3)
+    my_message.on_time(checkImportance, later)
 ```
 
 ----------
