@@ -369,7 +369,6 @@ class MailBox(object):
         """
         
         new_message = self._create_message_wrapper(subject, to, cc, bcc, content)
-
         if not self.is_simulate:
             try:
                 if self._imap_account.is_gmail:

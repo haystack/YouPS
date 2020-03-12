@@ -273,7 +273,13 @@ class Message(object):
             FIVE_MIN = 3 * 60 *60 *10 # -> 10hrs
 
             # search a broard time range in order to locate the email
-            for m in nylas.messages.where(received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, from_=self.from_.email, subject=self.subject.replace("\r\n", ""), view='expanded'):
+            messages = None
+            if self.from_:
+                messages = nylas.messages.where(received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, from_=self.from_.email, subject=self.subject.replace("\r\n", ""), view='expanded')
+            else:
+                messages = nylas.messages.where(received_after=timestamp- FIVE_MIN, received_before=timestamp+FIVE_MIN, subject=self.subject.replace("\r\n", ""), view='expanded')
+
+            for m in messages:
                 if self._message_id == m.headers['Message-Id'].replace("<", "").replace(">", ""):
                     self._nylas_message = m
                     return m
@@ -723,7 +729,7 @@ class Message(object):
                 t.AnyStr: extracted contents without previous messages contents in the thread
         """
         content = self.content
-        return EmailReplyParser.parse_reply(content['text'] or content['html'])
+        return EmailReplyParser.parse_reply(content['text'] or content['html'] or "")
 
     def extract_time_entity(self):
         # type: () -> t.List[t.AnyStr]

@@ -4,6 +4,7 @@ import heapq
 import logging
 import typing as t  # noqa: F401 ignore unused we use it for typing
 import json
+import random, string
 from datetime import datetime
 from email.header import decode_header
 from email.utils import getaddresses
@@ -13,7 +14,7 @@ from engine.parser.header_parser import parse_msg_data, parse_flags
 from django.db.models import Max
 from django.core.serializers.json import DjangoJSONEncoder
 from imapclient import \
-    IMAPClient  # noqa: F401 ignore unused we use it for typing
+    IMAPClient, imapclient  # noqa: F401 ignore unused we use it for typing
 from imapclient.response_types import \
     Address  # noqa: F401 ignore unused we use it for typing
 
@@ -483,14 +484,23 @@ class Folder(object):
             message_data = parse_msg_data(message_data)
             metadata = message_data[Message._header_fields_key]
 
+            draft_message_id = metadata.get('message-id')
+
             # TODO currently have a bug with parsing, if encoding fails we return None
-            if metadata.get('message-id') is None:
-                logger.critical("%s::%s::%s missing message-id", self._imap_account.email, self.name, uid)
-                continue
+            if draft_message_id is None:
+                draft_folder = '[Gmail]/Drafts' if self._imap_account.is_gmail else self._imap_client.find_special_folder(imapclient.DRAFTS)
+                logger.critical("draft %d %s" %(uid, metadata.get('subject', '')))
+                if self.name == draft_folder:
+                    letters = string.ascii_lowercase
+                    draft_message_id = "draft--%d@%s" % \
+                        (uid, self._imap_account.email.split("@")[1])
+                else:
+                    logger.critical("%s::%s::%s missing message-id", self._imap_account.email, self.name, uid)
+                    continue
 
             try:
                 base_message = BaseMessage.objects.get(
-                    imap_account=self._imap_account, message_id=metadata['message-id'])  # type: BaseMessage
+                    imap_account=self._imap_account, message_id=draft_message_id)  # type: BaseMessage
             except BaseMessage.DoesNotExist:
                 internal_date = message_data.get('INTERNALDATE', '')
                 assert internal_date is not None
@@ -499,7 +509,7 @@ class Folder(object):
                 
                 base_message = BaseMessage(
                     imap_account=self._imap_account,
-                    message_id=metadata['message-id'],
+                    message_id=draft_message_id,
                     in_reply_to=metadata.get('in-reply-to', []),
                     references=metadata.get('references', []),
                     date=date,
@@ -512,7 +522,7 @@ class Folder(object):
                 base_message.save()
                 
                 if new_message_ids is not None:
-                    new_message_ids.add(metadata['message-id'])
+                    new_message_ids.add(draft_message_id)
                 # create and save the message contacts
                 if "reply-to" in metadata:
                     base_message.reply_to.add(
@@ -552,7 +562,7 @@ class Folder(object):
             # during normal sync, not initialization
             if event_data_list is not None:
                 assert new_message_ids is not None
-                if metadata['message-id'] in new_message_ids:
+                if draft_message_id in new_message_ids:
                     m = Message(new_message, self._imap_client)
                     if not base_message.extracted_time:
                         
