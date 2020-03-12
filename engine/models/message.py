@@ -386,8 +386,8 @@ class Message(object):
         
 
     def q(self):
-        return self._imap_client.get_flags([self._uid]), self._imap_client.get_gmail_labels([self._uid])
-        # self._imap_client.remove_gmail_labels([self._uid], "\\Inbox")
+        print(self._imap_client.get_gmail_labels([self._uid]))
+        self._imap_client.remove_gmail_labels([self._uid], "\\Inbox")
 
     def w(self):
         self._imap_client.add_flags([self._uid], "Inbox")

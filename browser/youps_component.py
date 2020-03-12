@@ -22,7 +22,7 @@ def get_base_code(rule_type):
     # my_message is a Message instance of a newly arrived message
     # You can choose to run this rule only if the message is arrived in certain folders by selecting them at the left panel
     print(my_message.recipients)
-    if my_message.sender not in ['me@email.com', 'advisor@email.com']:
+    if my_message.sender in ['stranger@email.com', 'spam@email.com']:
         my_message.see_later()""",
         "deadline": """def on_deadline(my_message):
     # my_message is a Message instance 

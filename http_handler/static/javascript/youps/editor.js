@@ -288,9 +288,6 @@ function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_i
                     $("#jsonpanel-" + json_panel_id + " .val-inner").text( preview_msg );
                   });      
             }
-
-            // Save the code as well    
-            run_code( $('#test-mode[type=checkbox]').is(":checked"), $("#btn-code-submit") ? $("#btn-code-submit").hasClass('active'): true, true ); 
         }
     );
 }

@@ -715,7 +715,7 @@ $(document).ready(function() {
                         } );
                     } 
 
-                    else {
+                    else { // create a new rule
                         $container.append( res.editors[0]['template'] );
                         
                         // open briefly to set styling
@@ -756,7 +756,12 @@ $(document).ready(function() {
                                 //             run_simulate_on_messages([elem.value], 5, $($container.find('div[rule-id]').last()[0]));
                                 //     }
                                 // })
+
+                        res['code'] = "Saved!"
+                        notify(res, true);
                     }
+
+                    
                 }
                 else {                        
                     notify(res, true);
