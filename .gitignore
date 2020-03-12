@@ -39,3 +39,5 @@ scripts/imap_interact.ini
 \.pytest_cache/
 
 *.ini
+
+user_scripts/
