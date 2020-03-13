@@ -197,6 +197,96 @@ def on_message(my_message):
 ```
 ----------
 
+#### Aggregate Messages
+
+Aggregate all messages with event dates into a one message with the date and subject of each message.
+
+Tags: []
+
+```python
+# fired when a message arrives
+def on_message(my_message):
+    msg_subject = 'my current schedule'
+    msgs = []
+    if my_message.extract_time_entity():
+       	msgs = ME.messages_from()
+        print(msgs)
+        
+    	old_msg = None
+    	msgs.reverse()
+    	for m in msgs:
+     		if m.subject == msg_subject:
+           		old_msg = m
+           		break
+        # append a new schedule
+    	new_content = "%s: %s \n" %(my_message.subject,my_message.extract_time_entity()[0]['start']) 	
+        if old_msg:
+            new_content += old_msg.content['text']
+    	send(to=ME, subject=msg_subject, body=new_content)
+							
+```
+
+----------
+
+#### Moving specific messages after a week
+
+Any message that arrives from the cs-staff list should be moved to the CS folder after a week
+
+Tags: []
+
+```python
+# fired when a message arrives
+def on_command(msg):
+    if msg.sender == "cs-staff@mit.edu":
+    	msg.on_time(f,10080) #in a week
+
+     def f(msg):
+	msg.move(CS)
+								
+```
+
+----------
+
+#### Move messeges with specific words in their subject to spam
+
+Move messeges that contains specific words in the subject to the spam folder
+
+
+Tags: []
+
+```python
+# fired when a message arrives
+def on_message(msg):
+    subject  = msg.subject
+    words = ['skin', 'tags', 'shark tank', 'keto']
+    if any(word in subject for word in words):
+    	msg.move(spam)
+
+								
+```
+
+----------
+
+#### Automatically reply to senders who have been assigned to a specific category
+
+When a messege arrrives from a sender that I have assigned to the category "persistent spammers", reply to them with the following messege "Please unsubscribe me from your mailing list" every 30 minutes.
+
+Tags: []
+
+```python
+# fired when a message arrives
+def on_message(msg):
+    if "persistent spammers" in msg.categories
+	msg.ontime(replyToSender, 30) 
+	replyToSender(msg)
+
+     def replyToSender(msg):
+	sender = message.from_
+	msg.reply(to=[sender], content='Please unsubscribe me from your mailing list')
+								
+```
+
+----------
 
 ### Add Your Own Examples
 
