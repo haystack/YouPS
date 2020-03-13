@@ -435,7 +435,7 @@ $("#editor-container").on("click", ".btn-new-editor", function() {
     debugger;
     trackOutboundLink('new editor -' + type);
     
-    var $container = $( $(this).parents(".tab-content").find(".editable-container[type='{0}']".format(type)) );
+    var $container = $( $(this).parents(".tab-pane").find(".editable-container[type='{0}']".format(type)) );
     if(type == "shortcut")
         $container = $(".editable-container");
     var editor_elem = load_rule(false, type, $container);
