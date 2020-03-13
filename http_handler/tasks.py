@@ -237,7 +237,10 @@ def loop_sync_user_inbox():
                     # TODO maybe we should email the user
                     continue
                 try:
-                    res = mailbox._run_user_code()
+                    if imapAccount.is_running:
+                        res = mailbox._run_user_code()
+                    else:
+                        logger.info("%s user tunred off their mailbot; skip" % imapAccount.email)
                 except Exception:
                     logger.exception("Mailbox run user code failed")
 
