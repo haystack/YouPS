@@ -60,7 +60,7 @@ def interpret_bypass_queue(mailbox, extra_info):
         userLoggerStream = user_std_out
 
         if mailbox.is_simulate:
-            print ("[Debugging mode: this only simulates your rule behavior and won't affect your messages]")
+            print ("(Debugging mode)")
 
         code = extra_info['code']
         message_schemas = MessageSchema.objects.filter(id=extra_info['msg-id'])
