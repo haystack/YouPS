@@ -30,6 +30,7 @@ class Command(BaseCommand):
         for user in ImapAccount.objects.filter():
             with open(path + user.email + "_" + currentDate + ".py", 'w') as f:
                 for e in EmailRule.objects.filter(mode__imap_account=user):
+                    f.write("# Rule: %s (%s)\n" % (e.name, e.type))
                     self.file_write(e.code, f)
                     f.write("\n\n")
 
