@@ -250,7 +250,7 @@ def create_mailbot_mode(user, email, push=True):
 	
 	try:
 	    imapAccount = ImapAccount.objects.get(email=email)
-	    mm = MailbotMode(imap_account=imapAccount)
+	    mm = MailbotMode(imap_account=imapAccount, name="My Email Mode")
 	    mm.save()
 	
 	    res["mode-id"] = mm.id

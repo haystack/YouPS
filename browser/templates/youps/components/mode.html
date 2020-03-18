@@ -1,13 +1,21 @@
 <div class='tab-pane' id='tab_{{mode_id}}'> 
-    <span style='font-size:18px;'>Mode UID = {{mode_id}}</span><br>
-    Try  <a href="/docs/#mailbox.MailBox.set_email_mode"><code>set_email_mode({{mode_id}})</code></a>  to dynamically switch to this mode
+    {% if is_empty_mode %}
+        <h4>This is your email mode!</h4>
+        <p> Each mode can contain multiple <b>rules</b> where you can customize the behavior of your inbox. 
+            You can run one mode at a time. So, you can imagine your inbox behaving differently based on your current mode. 
+            For example, when it is afterwork time or you have a upcoming deadline, you might want to highlight or snooze certain messages.
+            <br><br>
+            Adding your rule in this mode down here:
+        </p>
+        
+    {% endif %}
     <div class='editable-container' type='new-message'></div>
     <div class='editable-container' type='repeat'></div>
     <div class='editable-container' type='flag-change'></div>
     <div class='editable-container' type='deadline'></div>
     <div class='editable-container' type='shortcut'></div>
 
-     <!-- add a rulle-add button -->
+     <!-- add a rule-add button -->
     {{ deadline }}
 </div>
 

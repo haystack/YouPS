@@ -176,6 +176,7 @@ def create_mailbot_mode(request):
 		res = engine.main.create_mailbot_mode(user, request.user.email)
         
 		c["mode_id"] = res["mode-id"]
+		c["is_empty_mode"] = True
 		logger.debug(c)
 
 		template = loader.get_template('youps/components/mode.html')

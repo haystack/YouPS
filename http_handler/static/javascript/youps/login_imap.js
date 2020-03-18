@@ -105,7 +105,9 @@ $(document).ready(function() {
      * 
      */
     
-    
+    $(".btn-mode-hint").click( function (e) {
+        $("li .add-tab").addClass("blink");
+    });
     
     // Switch to different tabs
     $(".nav-tabs").on("click", "a", function (e) {
@@ -135,6 +137,7 @@ $(document).ready(function() {
     });
 
     $('.add-tab').click(function (e) {
+        $(this).removeClass("blink");
         e.preventDefault();
         trackOutboundLink('addtab');
 
@@ -382,6 +385,7 @@ $(document).ready(function() {
                         
                 }
                 else {
+                    res = {"code": "Please log in to YouPS first!"};
                     notify(res, false);
                 }
             }
