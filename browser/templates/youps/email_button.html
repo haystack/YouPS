@@ -67,6 +67,7 @@
 						Give it a try and devise your own rules!
 						<br><br>
 					{% endif %}
+					<iframe width="560" height="315" src="https://www.youtube.com/embed/Sof7PP-dS8M?start=107" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 					<!-- <h4>1. Select a folder in which the message you want to handle then click "Watch"!</h4>
 					<img style="display: block" src="/static/images/select_folder.png" width="200"/>
 					<h4>2. Mark read and unread the message and allow upto 2 seconds until YouPS can detect.</h4>
@@ -94,6 +95,11 @@
 
 					$(document).ready(function () {
 						var visited = jQuery.cookie('visited');
+						{% if new_to_shortcut %}
+							openFancybox();
+							jQuery("#popuplink").fancybox({modal:true, maxWidth: 640, overlay : {closeClick : true}});
+							return;
+						{% endif %}
 						if (visited == 'yes') {
 							// second page load, cookie active
 						} else {
