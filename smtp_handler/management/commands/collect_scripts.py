@@ -37,5 +37,6 @@ class Command(BaseCommand):
                 f.write("\n\n#######command \n\n")
 
                 for e in EmailRule.objects.filter(imap_account=user, type='shortcut'):
+                    f.write("# Command: %s \n" % (e.name))
                     self.file_write(e.code, f)
                     f.write("\n\n")

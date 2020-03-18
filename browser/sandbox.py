@@ -119,7 +119,7 @@ def interpret_bypass_queue(mailbox, extra_info):
                 tb = traceback.format_tb(exc_tb)
                 logger.critical(tb)
                 
-                if type(e) == SyntaxError:
+                if type(e) == SyntaxError or type(e) == IndentationError:
                     print(str(e))
 
                 else:
