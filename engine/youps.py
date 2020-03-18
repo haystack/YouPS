@@ -531,6 +531,9 @@ def save_rules(user, email, old_ers, rules, mailbotMode=None, push=True):
         for value in rules:
             name = value['name'].encode('utf-8')
             code = value['code'].encode('utf-8')
+            # code = code.replace("\xa0", " ")
+            # logger.info(code.split("\n"))
+            
             folders = value['folders']
             logger.info(mailbotMode)
             er = None

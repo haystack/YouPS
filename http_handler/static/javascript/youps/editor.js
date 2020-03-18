@@ -40,6 +40,16 @@ function init_editor(editor_elem) {
       }
     })
 
+    // debugger;
+
+    // var node = document.createElement('div')
+    // var display = document.createElement('div')
+    // node.appendChild(display)
+    // display.innerText = editor.getValue().split("\n")[0];
+    // display.style.padding = '5px'
+    // var w = editor.addLineWidget(1, node);
+    // line_widgets.push(w);
+
     // Add debugging interfaces 
     editor.on("gutterClick", function(cm, n) {
         var line_number = n +1;
@@ -81,6 +91,7 @@ function init_editor(editor_elem) {
             $(this).parents('div[rule-id]').find('.CodeMirror')[0].CodeMirror.removeLineWidget(line_widgets[i]);
         }
         line_widgets = [];
+
 
         var logs = inspect[$(this).attr("msg-id")];
         for(var i = 0; i < logs.length;i++) {
@@ -129,7 +140,7 @@ function extract_rule_code(container) {
 
     $(container).find('.CodeMirror').each( function(index, elem) {
         if( $(elem).parents('.panel').hasClass('removed') ) return;
-        var code = elem.CodeMirror.getValue();
+        var code = elem.CodeMirror.getValue().replace(/\xa0/g, ' ');
         var $parent_container = $(elem).parents('.panel');
         var uid = $parent_container.attr('rule-id');
         var name = $parent_container.find('.panel-title input').val();
@@ -204,7 +215,7 @@ function run_simulate_on_messages(folder_name, N, editor_rule_container, extra_i
     var params = {
         'folder_name': folder_name,
         'N': N,
-        'user_code': $.trim( $(editor_rule_container).find('.CodeMirror')[0].CodeMirror.getValue() ),
+        'user_code': $.trim( $(editor_rule_container).find('.CodeMirror')[0].CodeMirror.getValue() ).replace(/\xa0/g, ' '),
         'extra_info': JSON.stringify(extra_info)
         // TODO if message_ids is not given, run simulation on recent messages on folders
         // 'message_ids': JSON.stringify(msgs_id)

@@ -83,7 +83,8 @@ def interpret_bypass_queue(mailbox, extra_info):
                 mailbox._imap_client.select_folder(message_schema.folder.name)
 
                 # clear the property log at the last possible moment
-                logger.info("test")
+                # code = code.replace("\xa0", " ")
+                logger.info(code)
                 mailbox._imap_client.user_property_log = []
                 if hasattr(mailbox._imap_client, 'nested_log'):
                     delattr(mailbox._imap_client, 'nested_log')
@@ -118,13 +119,21 @@ def interpret_bypass_queue(mailbox, extra_info):
                 tb = traceback.format_tb(exc_tb)
                 logger.critical(tb)
                 
-                tb_index = -1
-                for i in reversed(range(len(tb))):
-                    if "on_message" in tb[i] or "on_deadline" in tb[i] or "on_command" in tb[i]:
-                        tb_index = i
-                        break
+                if type(e) == SyntaxError:
+                    print(str(e))
 
-                print(str(e) + " " + (tb[tb_index] if len(tb) > 0 else ""))
+                else:
+                    tb_index = -1
+                    for i in reversed(range(len(tb))):
+                        logger.critical(tb[i])
+                        if "/home/ubuntu/production/mailx" in tb[i]:
+                            continue 
+
+                        if "on_message" in tb[i] or "on_deadline" in tb[i] or "on_command" in tb[i]:
+                            tb_index = i
+                            break
+
+                    print(str(e) + " " + (tb[tb_index] if len(tb) > 0 else ""))
             finally:
                 msg_log["log"] += user_std_out.getvalue()
                 msg_log["property_log"].extend(copy.deepcopy(mailbox._imap_client.user_property_log))
@@ -270,7 +279,8 @@ def interpret(mailbox, mode):
                     try:
                         if event_class_name in ["ThreadArrivalData", "ContactArrivalData"]:
                             code = codeobject_loads(json.loads(code))
-                            code = type(codeobject_loads)(code, user_environ)
+                            b = globals()
+                            code = type(codeobject_loads)(code, dict(user_environ, **b))
 
                             # logger.exception(mailbox.new_message_handler.getHandlerCount()) 
                             # mailbox.new_message_handler.env = user_environ

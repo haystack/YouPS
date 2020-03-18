@@ -19,18 +19,24 @@ request_error = json.dumps({'code': msg_code['REQUEST_ERROR'], 'status': False})
 def get_base_code(rule_type):
     d = {
         "new-message": """def on_message(my_message):
+    # Write your code below (do not edit this line)
+
     # my_message is a Message instance of a newly arrived message
     # You can choose to run this rule only if the message is arrived in certain folders by selecting them at the left panel
     print(my_message.recipients)
     if my_message.sender in ['stranger@email.com', 'spam@email.com']:
         my_message.see_later()""",
         "deadline": """def on_deadline(my_message):
+    # Write your code below (do not edit this line)
+
     # my_message is a Message instance 
     # this function executes at my_message.deadline
     # by default, Message instances does not have deadline otherwise you specify it
     pass""",
         "flag-change": "def on_flag_added(my_message, added_flags):\n    pass\n\ndef on_flag_removed(my_message, removed_flags):",
         "shortcut": """def on_command(my_message, kargs):
+    # Write your code below (do not edit this line)
+    
     # shortcut is a custom add-on feature. Create shortcuts and use them at %s://%s/button 
     # my_message is a Message instance 
     # kargs is a dictionary that contains arguments you specify at the left panel e.g., kargs['arg_name']

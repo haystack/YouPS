@@ -1017,7 +1017,11 @@ class Message(object):
         if handler.func_code.co_argcount != 1:
             raise Exception('on_response(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
 
-        a = codeobject_dumps(handler.func_code)
+        try:
+            a = codeobject_dumps(handler.func_code)
+        except:
+            raise Exception("on_response(): your callback function maybe include inner functions? Remove the inner functions and try again")
+
         if self._is_simulate:
             a=codeobject_loads(a)
             # s=exec(a)
@@ -1028,7 +1032,11 @@ class Message(object):
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
             print("on_response(): Simulating callback function..:")
-            g(self)
+
+            try:
+                g(self)
+            except:
+                raise Exception("on_response(): your callback function maybe include inner functions? Remove the inner functions and try again")
         else: 
             nylas_message = self._get_nylas_message()
             # create threadschema
@@ -1083,7 +1091,11 @@ class Message(object):
 
         later_at = get_datetime_from_now(later_at)
 
-        a = codeobject_dumps(handler.func_code)
+        try:
+            a = codeobject_dumps(handler.func_code)
+        except:
+            raise Exception("on_time(): your callback function maybe include inner functions? Remove the inner functions and try again")
+
         if self._is_simulate:
             a=codeobject_loads(a)
             code_object=a
@@ -1092,7 +1104,11 @@ class Message(object):
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
             g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
             print("on_time(): Simulating callback function..:")
-            g(self)
+            
+            try:
+                g(self)
+            except:
+                raise Exception("on_time(): your callback function maybe include inner functions? Remove the inner functions and try again")
         else:
             # add EventManager attached to it
             er = EmailRule(imap_account=self._imap_account, name='on time', type='on_time', code=json.dumps(a))

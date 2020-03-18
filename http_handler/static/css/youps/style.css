@@ -641,3 +641,8 @@ div[type='repeat'] {
 .CodeMirror-code > div:nth-of-type(1) pre {
   cursor: not-allowed;
 }
+
+/* Hide first line so users can't edit */
+/* .CodeMirror-code > div:nth-of-type(1){
+  display: none;
+} */

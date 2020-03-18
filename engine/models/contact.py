@@ -259,7 +259,10 @@ class Contact(object):
         if handler.func_code.co_argcount != 1:
             raise Exception('on_message(): your callback function should have only 1 argument, but there are %d argument(s)' % handler.func_code.co_argcount)
 
-        a = codeobject_dumps(handler.func_code)
+        try:
+            a = codeobject_dumps(handler.func_code)
+        except:
+            raise Exception("on_message(): your callback function maybe include inner functions? Remove the inner functions and try again")
         if self._is_simulate:
             a=codeobject_loads(a)
             # s=exec(a)
@@ -268,11 +271,16 @@ class Contact(object):
 
             from browser.sandbox_helpers import get_default_user_environment
             from engine.models.mailbox import MailBox  # noqa: F401 ignore unused we use it for typing
-            g = type(codeobject_loads)(code_object, get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print))
+            a = get_default_user_environment(MailBox(self._schema.imap_account, self._imap_client, is_simulate=True), print)
+            b = globals()
+            g = type(codeobject_loads)(code_object, dict(a, **b))
             print("on_message(): Simulating callback function..:")
             messages_from_this_contact = self.messages_from(1)
             if len(messages_from_this_contact):
-                g(messages_from_this_contact[0])
+                try:
+                    g(messages_from_this_contact[0])
+                except SystemError:
+                    raise Exception("on_message(): your callback function tries to use an unknown object that is not defined inside the function")
             else:
                 print("on_message(): no message from this contact to simulate on")
         else: 
@@ -308,7 +316,10 @@ class Contact(object):
 
         later_at = get_datetime_from_now(later_at)
 
-        a = codeobject_dumps(handler.func_code)
+        try:
+            a = codeobject_dumps(handler.func_code)
+        except:
+            raise Exception("on_time(): your callback function maybe include inner functions? Remove the inner functions and try again")
         if self._is_simulate:
             a=codeobject_loads(a)
             code_object=a
@@ -319,7 +330,10 @@ class Contact(object):
             g = type(codeobject_loads)(code_object, get_default_user_environment(mailbox, print))
             print("on_time(): Simulating callback function..:")
             
-            g(self)
+            try:
+                g(self)
+            except SystemError:
+                raise Exception("on_time(): your callback function tries to use an unknown object that is not defined inside the function")
         else:
             # add EventManager attached to it
             er = EmailRule(imap_account=self._schema.imap_account, name='on time', type='on_time', code=json.dumps(a))
