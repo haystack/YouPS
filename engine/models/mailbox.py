@@ -442,8 +442,9 @@ class MailBox(object):
             >>> ("my meeting mode", 172)
         """
         if self._imap_account.current_mode:
-            return self._imap_account.current_mode.name, self._imap_account.current_mode.uid
+            return self._imap_account.current_mode.name, self._imap_account.current_mode.id
         else:
+            print("get_email_mode(): your YouPS is currently off")
             return None, None
 
     def set_email_mode(self, uid):
