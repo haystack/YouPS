@@ -112,19 +112,19 @@
 			<h3>YouPS Rule Sandbox</h3>
 			<!-- <a href="/docs" style="float: right;margin-top: -30px;">View API docs</a> -->
 			<hr>
-
-			<form id="login-email-form">
-				<!-- <label for="input-email">Email address: </label>
-				<input id="input-email" type="email" style="box-sizing: border-box;"></input>
-				<br> -->
-				{% if user.is_authenticated %}
-					{% if imap_authenticated %}
-
-					{% else %}
+			{% if not user.is_authenticated %}
+				<a type="button" href="/accounts/login/?next=/editor" style="margin-top:10px;">Log in to YoUPS</a> or <a type="button" href="/accounts/register/?next=/editor" style="margin-top:10px;">Create a new YoUPS account</a> to start!
+			{% else %}
+				{% if not imap_authenticated %}			
+					<form id="login-email-form">
+					<!-- <label for="input-email">Email address: </label>
+					<input id="input-email" type="email" style="box-sizing: border-box;"></input>
+					<br> -->		
 						<div id="password-container">
-								<input type="radio" name="auth-mode" value="oauth" id="rdo-oauth"><label for="rdo-oauth">Oauth </label>
-								<input type="radio" name="auth-mode" value="plain" id="rdo-plain" checked><label for="rdo-plain">Plain password </label>
+								<input type="radio" name="auth-mode" value="oauth" id="rdo-oauth" checked><label for="rdo-oauth">Oauth </label>
+								<input type="radio" name="auth-mode" value="plain" id="rdo-plain"><label for="rdo-plain">Plain password </label>
 								<br>
+								<span class="oauth">If you are using a Gmail client for this email address, please log in with Oauth! </span><br>
 								<button type="button" class="btn btn-info btn-sm oauth" id="btn-google-access">
 									Get access code
 							   </button>
@@ -139,14 +139,14 @@
 								<input id="input-host" type="text" style="box-sizing: border-box;"></input>
 								<br><br>
 								<div style="diplay:none;color:red;" id="donotsend-msg"></div>
-								<p class="plain">Before you log in, go to <a id="link-less-secure">"Less secure apps" section of my Account.</a> And Enable less secure log in.</p>
+								<!-- <p class="plain">Before you log in, go to <a id="link-less-secure">"Less secure apps" section of my Account.</a> And Enable less secure log in.</p> -->
 						</div>
 						<button type="button" id="btn-login" style="margin-top:10px;">Log in to your email</button>
-					{% endif %}
-				{% else %}
-					<a type="button" href="/accounts/login/?next=/editor" style="margin-top:10px;">Log in to YoUPS</a> or <a type="button" href="/accounts/register/?next=/editor" style="margin-top:10px;">Create a new YoUPS account</a> to start!
+					</form>
 				{% endif %}
-			</form>
+			{% endif %}
+
+			{% if not user.is_authenticated or imap_authenticated %}
 			<div id="editor-container">
 					<div>
 					  <div class="card">
@@ -346,58 +346,61 @@ print get_sender()
 						  </div> -->
 			  </div>
 
-			  <div id="apis-container" style="display:none;" mv-app="api" mv-storage="https://github.com/haystack/YouPS">
-					<div property="folder" >
-						<div class='add-sidebar header' id="method"> <h3> Global Methods <a href="#folder-attr">¶</a></h3>   </div>
-						<div id="[name]" class='add-sidebar sub-header' property="attribute" mv-multiple>
-							<h4>[name] </h4>
-							<span>[description]</span>
-						</div>
-						<div id="[name]" class='add-sidebar sub-header' property="method" mv-multiple>
-							<h4>[name] ([params])</h4>
-							<span>[description]</span>
-						</div>
-					</div>
 
-					<div property="message">
-							<div class='add-sidebar sub-header' id="message-attr"> <h3> Attribute <a href="#message-attr">¶</a></h3>   </div>
-							<div id="[name]" class='value' property="attribute" mv-multiple>
-								<h4>[name]</h4>
-								<span>[description]</span>
-							</div>
-		
-							<div class='add-sidebar sub-header' id="message-method"> <h3> Method <a href="#message-method">¶</a></h3>   </div>
-							<div id="[name]" class='value' property="method" mv-multiple>
-									<h4>[name] ([params]) </h4>
-									<span>[description]</span>
-							</div>
-					</div>
-
-					<div property="contact">
-							<div id="contact-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#contact-attr">¶</a></h3>   </div>
-							<div id="[name]" class='value' property="attribute" mv-multiple>
-								<h4>[name]</h4>
-								<span>[description]</span>
-							</div>
-							<div id="contact-method" class='add-sidebar sub-header'> <h3> Method <a href="#contact-method">¶</a></h3>   </div>
-							<div id="[name]" class='value' property="method" mv-multiple>
-									<h4>[name] ([params]) </h4>
-									<span>[description]</span>
-							</div>
-					</div>
-
-					<div property="calendar">
-							<div id="calendar-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#calendar-attr">¶</a></h3>   </div>
-							<div id="[name]" class='value' property="attribute" mv-multiple>
-								<h4>[name] </h4>
-							</div>
-							<div id="calendar-method" class='add-sidebar sub-header'> <h3> Method <a href="#calendar-method">¶</a></h3>   </div>
-							<div id="[name]" class='value' property="method" mv-multiple>
-									<h4>[name] ([params])</h4>
-							</div>
-						</div>
-			  </div>
 			  <!-- END editor col -->
+		</div>
+		{% endif %}
+
+		<div id="apis-container" style="display:none;" mv-app="api" mv-storage="https://github.com/haystack/YouPS">
+			<div property="folder" >
+				<div class='add-sidebar header' id="method"> <h3> Global Methods <a href="#folder-attr">¶</a></h3>   </div>
+				<div id="[name]" class='add-sidebar sub-header' property="attribute" mv-multiple>
+					<h4>[name] </h4>
+					<span>[description]</span>
+				</div>
+				<div id="[name]" class='add-sidebar sub-header' property="method" mv-multiple>
+					<h4>[name] ([params])</h4>
+					<span>[description]</span>
+				</div>
+			</div>
+
+			<div property="message">
+					<div class='add-sidebar sub-header' id="message-attr"> <h3> Attribute <a href="#message-attr">¶</a></h3>   </div>
+					<div id="[name]" class='value' property="attribute" mv-multiple>
+						<h4>[name]</h4>
+						<span>[description]</span>
+					</div>
+			
+					<div class='add-sidebar sub-header' id="message-method"> <h3> Method <a href="#message-method">¶</a></h3>   </div>
+					<div id="[name]" class='value' property="method" mv-multiple>
+							<h4>[name] ([params]) </h4>
+							<span>[description]</span>
+					</div>
+			</div>
+
+			<div property="contact">
+					<div id="contact-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#contact-attr">¶</a></h3>   </div>
+					<div id="[name]" class='value' property="attribute" mv-multiple>
+						<h4>[name]</h4>
+						<span>[description]</span>
+					</div>
+					<div id="contact-method" class='add-sidebar sub-header'> <h3> Method <a href="#contact-method">¶</a></h3>   </div>
+					<div id="[name]" class='value' property="method" mv-multiple>
+							<h4>[name] ([params]) </h4>
+							<span>[description]</span>
+					</div>
+			</div>
+
+			<div property="calendar">
+					<div id="calendar-attr" class='add-sidebar sub-header'> <h3> Attribute <a href="#calendar-attr">¶</a></h3>   </div>
+					<div id="[name]" class='value' property="attribute" mv-multiple>
+						<h4>[name] </h4>
+					</div>
+					<div id="calendar-method" class='add-sidebar sub-header'> <h3> Method <a href="#calendar-method">¶</a></h3>   </div>
+					<div id="[name]" class='value' property="method" mv-multiple>
+							<h4>[name] ([params])</h4>
+					</div>
+			</div>
 		</div>
 	</div>
 	<script type="text/javascript">
