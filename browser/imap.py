@@ -74,18 +74,14 @@ def authenticate(imap_account):
 
     if res['status'] is False:
         # email to the user that there is error at authenticating email
-        if imap_account.is_oauth and len(imap_account.email) > 0:
+        if imap_account.is_oauth and len(imap_account.email) > 0 and len(imap_account.access_token) > 0:
             subject = "[" + WEBSITE + "] Authentication error occurs"
             body = "Authentication error occurs! \n" + str(res['imap_error'])
             body += "\nPlease log in again at " + BASE_URL + "/editor"
             send_email(subject, WEBSITE + "@" + BASE_URL, imap_account.email, body)
 
-        # TODO don't delete
-        # Delete this ImapAccount information so that it requires user to reauthenticate
-        # imap_account.password = ""
-        imap_account.access_token = ""
-
-        imap_account.save()
+            imap_account.access_token = ""
+            imap_account.save()
 
     return res
 

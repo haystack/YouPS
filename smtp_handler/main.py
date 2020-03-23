@@ -376,3 +376,4 @@ def send_account_info(message, address=None, host=None):
         msg_text = get_body(email_message)
         mail = MailResponse(From = NO_REPLY, To = message['To'], Subject = message['Subject'], Body = msg_text['plain'])
         relay.deliver(mail)
+
