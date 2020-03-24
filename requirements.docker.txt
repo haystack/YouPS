@@ -1,7 +1,7 @@
 amqp==1.4.9
 attrs==15.2.0
 beautifulsoup4==4.6.0
-bleach==1.4
+bleach==3.1.2
 boto==2.45.0
 chardet==3.0.4
 django==1.8
