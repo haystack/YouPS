@@ -596,9 +596,7 @@ def handle_imap_idle(request):
 @login_required
 def murmur_acct(request, acct_func=None, template_name=None):
 	user = get_object_or_404(UserProfile, email=request.user.email)
-	groups = Group.objects.filter(membergroup__member=user).values("name")
-	groups_links = get_groups_links_from_roles(user, groups)
 
-	context = {'groups': groups, 'groups_links' : groups_links, 'user': request.user, 'website' : WEBSITE, 'group_page' : True} 
+	context = {'user': request.user, 'website' : WEBSITE, 'group_page' : True} 
 	return acct_func(request, template_name=template_name, extra_context=context)
 
