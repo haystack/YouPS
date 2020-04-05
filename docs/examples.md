@@ -171,7 +171,7 @@ def on_message(my_message):
 
 Aggregate all messages with event dates into a one message with the date and subject of each message.
 
-Tags: []
+Tags: [nlp]
 
 ```python
 # fired when a message arrives
@@ -227,6 +227,38 @@ def on_message(my_message):
 ```
 ----------
 
+#### Process messages
+
+Use NLP libraries (nltk, spacy) to analyze your recipient's messages
+
+Tags: [nlp]
+
+```python
+# fired when a message arrives
+def on_message(my_message):
+    msgs = " ".join([m.content['text'] for m in my_message.sender.messages()])
+    
+    import nltk
+    t = nltk.Text( msgs.split() )
+    print(t.similar('schedule'))
+```
+
+----------
+
+#### Entity extraction
+
+
+Tags: [nlp]
+
+```python
+# fired when a message arrives
+def on_message(my_message):
+    import spacy
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(my_message.extract_response())
+    print([(ent.text, ent.label_) for ent in doc.ents])
+```
+----------
 
 ### Add Your Own Examples
 
