@@ -197,36 +197,6 @@ def on_message(my_message):
 ```
 ----------
 
-#### Make your email as chatbot
-
-Tags: [auto response, draft]
-
-
-```python
-# fired when a message arrives
-def on_message(my_message):
-    from chatterbot import ChatBot
-    from chatterbot.trainers import ListTrainer
-
-    chatterbot = ChatBot("My chatbot")
-    chatterbot.set_trainer(ListTrainer)
-    
-    chatterbot.train([
-        "Are you busy now?",
-        "I'm busy",
-    	"How are you?",
-    	"I am good.",
-    	"That is good to hear.",
-    	"Thank you",
-    	"You are welcome.",
-    ])
-    
-    r = chatterbot.get_response(my_message.extract_response())
-    print(str(r))
-    create_draft('Re: '+ my_message.subject, content=str(r))
-```
-----------
-
 #### Process messages
 
 Use NLP libraries (nltk, spacy) to analyze your recipient's messages
