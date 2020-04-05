@@ -600,3 +600,4 @@ def murmur_acct(request, acct_func=None, template_name=None):
 	context = {'user': request.user, 'website' : WEBSITE, 'group_page' : True} 
 	return acct_func(request, template_name=template_name, extra_context=context)
 
+ 

@@ -30,4 +30,5 @@ COPY tasks-cron-docker /etc/cron.d/tasks-cron
 RUN crontab /etc/cron.d/tasks-cron
 COPY requirements.docker.txt /home/ubuntu/production/mailx/requirements.txt
 RUN pip install -r requirements.txt --no-cache-dir
+RUN python -m spacy download en_core_web_sm
 # COPY . /home/ubuntu/production/mailx/

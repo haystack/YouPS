@@ -122,6 +122,9 @@ def interpret_bypass_queue(mailbox, extra_info):
                 if type(e) == SyntaxError or type(e) == IndentationError:
                     print(str(e))
 
+                elif type(e) == EOFError:
+                    print("\nError: please provide an argument for nltk.download(). e.g.,  nltk.download('all'), nltk.download('punkt')")
+
                 else:
                     tb_index = -1
                     for i in reversed(range(len(tb))):
