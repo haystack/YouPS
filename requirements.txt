@@ -19,7 +19,7 @@ mysql-python==1.2.5
 pycrypto==2.6.1
 pyspf==2.0.1
 python-gflags==3.1.0
-python-gnupg==0.4.0
+python-gnupg==0.4.4
 pytz==2016.7
 requests==2.18.4
 south==1.0.1
