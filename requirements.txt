@@ -14,7 +14,7 @@ html2text==2014.9.25
 imapclient==2.0.0
 jsonfield==1.0.3
 lamson==1.3.4
-markdown2==2.3.0
+markdown2==2.4.0
 mysql-python==1.2.5
 pycrypto==2.6.1
 pyspf==2.0.1
