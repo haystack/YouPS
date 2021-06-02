@@ -23,7 +23,7 @@ imapclient==2.1.0
 ipython==5.8.0
 jinja2==2.10.3
 jsonfield==1.0.3
-markdown2==2.3.0
+markdown2==2.4.0
 mysqlclient==1.4.6
 oauth2client==1.5.2
 pycrypto==2.6.1
