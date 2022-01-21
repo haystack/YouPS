@@ -20,7 +20,7 @@ html2text==2014.9.25
 html5lib==1.0b3
 icalendar==4.0.4
 imapclient==2.1.0
-ipython==5.8.0
+ipython==7.16.3
 jinja2==2.10.3
 jsonfield==1.0.3
 markdown2==2.3.0
